@@ -1,0 +1,182 @@
+# Strategia per ricerca full-text e geografica
+
+## Fase iniziale: PostgreSQL
+
+Per la prima versione usare PostgreSQL come motore di ricerca:
+
+- `tsvector` su titolo, descrizione, razza, comune, provincia e regione;
+- indice GIN per full-text;
+- estensioni `unaccent` e `pg_trgm` per normalizzazione, errori di battitura e
+  autocomplete;
+- PostGIS con `geography(Point, 4326)` per distanza;
+- indici GiST/SP-GiST per coordinate e geometrie;
+- materialized view o tabella denormalizzata `listing_search_documents`.
+
+Questa scelta riduce infrastruttura, mantiene consistenza con il database
+principale e basta per validare il prodotto.
+
+## Ranking iniziale
+
+Il ranking deve combinare:
+
+- pertinenza testuale;
+- distanza dal luogo cercato o dall'utente;
+- freschezza dell'annuncio;
+- presenza e qualita immagini;
+- stato pubblicabile;
+- completezza dei dati;
+- segnali di affidabilita del profilo;
+- filtri espliciti.
+
+Formula iniziale indicativa:
+
+```text
+score =
+  text_score * 0.45 +
+  distance_score * 0.25 +
+  freshness_score * 0.15 +
+  quality_score * 0.10 +
+  trust_score * 0.05
+```
+
+I pesi devono diventare configurabili dopo i primi test reali.
+
+## Evitare risultati vuoti
+
+Se la query non restituisce risultati:
+
+1. allargare la distanza geografica;
+2. rimuovere filtri meno critici, dichiarandolo all'utente;
+3. proporre risultati nella provincia o regione;
+4. suggerire luoghi o razze alternative via autocomplete;
+5. mostrare annunci recenti e di qualita nella stessa macro-area.
+
+Ogni espansione deve essere tracciata nella risposta API per permettere al
+frontend di spiegare cosa e' cambiato.
+
+## Autocomplete luoghi
+
+L'autocomplete deve cercare su:
+
+- comuni;
+- province, citta metropolitane ed enti equivalenti;
+- regioni;
+- alias e nomi normalizzati.
+
+La risposta deve includere tipo, nome, gerarchia e coordinate:
+
+```json
+{
+  "type": "municipality",
+  "label": "Aosta",
+  "subtitle": "Comune, Valle d'Aosta",
+  "istatCode": "007003",
+  "center": { "lat": 45.737, "lng": 7.321 }
+}
+```
+
+### API iniziale
+
+Endpoint:
+
+```http
+GET /places/autocomplete?q=Aosta&limit=8
+```
+
+Query params:
+
+- `q`: testo da cercare, minimo 2 caratteri, massimo 80;
+- `limit`: numero massimo di risultati, default 8, massimo 20;
+- `type`: opzionale, uno tra `municipality`, `province`, `region`.
+
+La ricerca usa i dati attivi in `geo_regions`, `geo_provinces` e
+`geo_municipalities`, normalizza accenti e punteggiatura e ordina per:
+
+- corrispondenza esatta;
+- prefisso;
+- contenuto;
+- similarita `pg_trgm`;
+- priorita comune, provincia, regione.
+
+Esempio di risposta attuale per `q=Aosta`:
+
+```json
+{
+  "items": [
+    {
+      "type": "municipality",
+      "label": "Aosta",
+      "subtitle": "Comune, Valle d'Aosta/Vallée d'Aoste",
+      "istatCode": "007003",
+      "center": null
+    }
+  ],
+  "meta": {
+    "query": "Aosta",
+    "normalizedQuery": "aosta",
+    "limit": 8,
+    "type": "all"
+  }
+}
+```
+
+`center` e' valorizzato quando la tabella geografica ha il punto calcolato dai
+confini Istat. Puo' restare `null` per unita amministrative nate dopo la data di
+riferimento del pacchetto confini disponibile.
+
+## Query Distanza
+
+Endpoint:
+
+```http
+GET /places/nearby?lat=45.7496&lng=7.3063&radiusKm=10&limit=5&type=municipality
+```
+
+Query params:
+
+- `lat`: latitudine dell'origine, tra -90 e 90;
+- `lng`: longitudine dell'origine, tra -180 e 180;
+- `radiusKm`: raggio in chilometri, default 50, massimo 500;
+- `limit`: numero massimo di risultati, default 20, massimo 50;
+- `type`: opzionale, uno tra `municipality`, `province`, `region`.
+
+La query usa `ST_DWithin` e `ST_Distance` su `geography`, quindi le distanze
+sono calcolate in metri reali a partire dai centroidi/punti delle unita
+territoriali. I risultati sono ordinati per distanza crescente e includono
+`distanceKm`.
+
+Esempio di risposta:
+
+```json
+{
+  "items": [
+    {
+      "type": "municipality",
+      "label": "Aosta",
+      "istatCode": "007003",
+      "center": { "lat": 45.74958867811587, "lng": 7.306255569117242 },
+      "distanceKm": 0
+    }
+  ],
+  "meta": {
+    "origin": { "lat": 45.7496, "lng": 7.3063 },
+    "radiusKm": 10,
+    "limit": 5,
+    "type": "municipality"
+  }
+}
+```
+
+## Evoluzione futura
+
+Introdurre un motore search dedicato solo quando:
+
+- i tempi di risposta di PostgreSQL non rispettano gli obiettivi;
+- servono ranking, sinonimi o typo tolerance piu avanzati;
+- il traffico rende utile separare search e database transazionale.
+
+Candidati futuri:
+
+- Typesense per semplicita operativa e typo tolerance;
+- Meilisearch per esperienza developer semplice;
+- OpenSearch per casi piu complessi e grandi volumi.

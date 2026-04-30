@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "geo_provinces_istat_valid_from_idx" ON "geo_provinces" USING btree ("istat_code","valid_from");

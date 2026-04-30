@@ -1,0 +1,30 @@
+# Documentazione tecnica
+
+Questa cartella raccoglie la documentazione iniziale del progetto
+adottaungatto.it.
+
+## Documenti creati
+
+- [architecture.md](architecture.md): analisi architetturale e principi guida.
+- [backend-stack.md](backend-stack.md): scelta motivata dello stack backend.
+- [monorepo-structure.md](monorepo-structure.md): struttura consigliata del monorepo.
+- [roadmap.md](roadmap.md): roadmap a milestone incrementali.
+- [modules.md](modules.md): moduli principali del sistema.
+- [data-model.md](data-model.md): modello dati iniziale.
+- [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
+- [italian-places-import.md](italian-places-import.md): import dei luoghi italiani da fonti ufficiali.
+- [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
+- [moderation.md](moderation.md): moderazione annunci e segnalazioni.
+- [images.md](images.md): gestione immagini e asset statici.
+- [local-development-docker.md](local-development-docker.md): sviluppo locale con Docker.
+- [first-technical-tasks.md](first-technical-tasks.md): primi task tecnici.
+- [adr](adr): decisioni architetturali.
+
+## Regole di aggiornamento
+
+- Ogni scelta tecnica rilevante va registrata in un ADR.
+- Ogni milestone deve aggiornare almeno roadmap, task e setup se cambia il modo
+  di sviluppare o testare in locale.
+- La documentazione deve descrivere lo stato reale del repository, non uno stato
+  desiderato non ancora implementato.
+

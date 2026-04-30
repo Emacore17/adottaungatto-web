@@ -4,9 +4,22 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "db:generate": "pnpm --filter @workspace/db db:generate",
+    "db:migrate": "pnpm --filter @workspace/db db:migrate",
+    "db:seed": "pnpm --filter @workspace/db db:seed",
+    "db:studio": "pnpm --filter @workspace/db db:studio",
     "dev": "turbo dev",
+    "docker:down": "docker compose down",
+    "docker:up": "docker compose up -d",
+    "geo:boundaries": "pnpm --filter worker geo:boundaries",
+    "geo:boundaries:apply": "pnpm --filter worker geo:boundaries:apply",
+    "geo:import": "pnpm --filter worker geo:import",
+    "geo:import:apply": "pnpm --filter worker geo:import:apply",
+    "geo:promote": "pnpm --filter worker geo:promote",
+    "geo:promote:apply": "pnpm --filter worker geo:promote:apply",
     "lint": "turbo lint",
     "format": "turbo format",
+    "test": "turbo test",
     "typecheck": "turbo typecheck"
   },
   "devDependencies": {
