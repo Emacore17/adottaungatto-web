@@ -35,6 +35,16 @@ export const authResetPasswordSchema = z.object({
   password: z.string().min(10).max(128),
 })
 
+export const authChangePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1).max(128),
+    password: z.string().min(10).max(128),
+  })
+  .refine((input) => input.currentPassword !== input.password, {
+    message: "New password must be different from the current password.",
+    path: ["password"],
+  })
+
 export type AuthRegisterInput = z.infer<typeof authRegisterSchema>
 
 export type AuthLoginInput = z.infer<typeof authLoginSchema>
@@ -46,3 +56,5 @@ export type AuthRequestPasswordResetInput = z.infer<
 >
 
 export type AuthResetPasswordInput = z.infer<typeof authResetPasswordSchema>
+
+export type AuthChangePasswordInput = z.infer<typeof authChangePasswordSchema>

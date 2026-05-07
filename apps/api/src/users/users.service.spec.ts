@@ -18,6 +18,8 @@ describe("UsersService", () => {
           phone_e164: "+39123456789",
           phone_verified_at: null,
           roles: ["registered_user"],
+          listing_moderation_decision_email_enabled: true,
+          listing_report_decision_email_enabled: false,
           created_at: "2026-04-01T09:00:00.000Z",
         },
       ]),
@@ -34,6 +36,10 @@ describe("UsersService", () => {
       phoneE164: "+39123456789",
       phoneVerifiedAt: null,
       roles: ["registered_user"],
+      notificationPreferences: {
+        listingModerationDecisionEmail: true,
+        listingReportDecisionEmail: false,
+      },
       createdAt: "2026-04-01T09:00:00.000Z",
     })
     expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
@@ -67,6 +73,8 @@ describe("UsersService", () => {
             phone_e164: null,
             phone_verified_at: null,
             roles: ["registered_user"],
+            listing_moderation_decision_email_enabled: true,
+            listing_report_decision_email_enabled: true,
             created_at: "2026-04-01T09:00:00.000Z",
           },
         ])
@@ -82,6 +90,8 @@ describe("UsersService", () => {
             phone_e164: "+39123456789",
             phone_verified_at: null,
             roles: ["registered_user"],
+            listing_moderation_decision_email_enabled: true,
+            listing_report_decision_email_enabled: true,
             created_at: "2026-04-01T09:00:00.000Z",
           },
         ]),
@@ -120,6 +130,8 @@ describe("UsersService", () => {
           phone_e164: null,
           phone_verified_at: null,
           roles: ["registered_user"],
+          listing_moderation_decision_email_enabled: true,
+          listing_report_decision_email_enabled: true,
           created_at: "2026-04-01T09:00:00.000Z",
         },
       ]),
@@ -149,6 +161,8 @@ describe("UsersService", () => {
             phone_e164: null,
             phone_verified_at: null,
             roles: ["professional_user", "registered_user"],
+            listing_moderation_decision_email_enabled: true,
+            listing_report_decision_email_enabled: true,
             created_at: "2026-04-01T09:00:00.000Z",
           },
         ])
@@ -164,6 +178,8 @@ describe("UsersService", () => {
             phone_e164: null,
             phone_verified_at: null,
             roles: ["professional_user", "registered_user"],
+            listing_moderation_decision_email_enabled: true,
+            listing_report_decision_email_enabled: true,
             created_at: "2026-04-01T09:00:00.000Z",
           },
         ]),
@@ -184,5 +200,68 @@ describe("UsersService", () => {
       null,
       "professional",
     ])
+  })
+
+  it("loads notification preferences", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          user_id: "user-id",
+          listing_moderation_decision_email_enabled: true,
+          listing_report_decision_email_enabled: false,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const service = new UsersService(databaseService)
+
+    await expect(
+      service.currentNotificationPreferences("user-id")
+    ).resolves.toEqual({
+      listingModerationDecisionEmail: true,
+      listingReportDecisionEmail: false,
+    })
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
+      "user-id",
+    ])
+  })
+
+  it("updates notification preferences", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          user_id: "user-id",
+          listing_moderation_decision_email_enabled: false,
+          listing_report_decision_email_enabled: true,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const service = new UsersService(databaseService)
+
+    await expect(
+      service.updateCurrentNotificationPreferences("user-id", {
+        listingModerationDecisionEmail: false,
+      })
+    ).resolves.toEqual({
+      listingModerationDecisionEmail: false,
+      listingReportDecisionEmail: true,
+    })
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
+      "user-id",
+      false,
+      null,
+    ])
+  })
+
+  it("throws when updating notification preferences for a missing user", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const service = new UsersService(databaseService)
+
+    await expect(
+      service.updateCurrentNotificationPreferences("missing-id", {
+        listingReportDecisionEmail: false,
+      })
+    ).rejects.toBeInstanceOf(NotFoundException)
   })
 })

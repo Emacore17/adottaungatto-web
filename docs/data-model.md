@@ -33,6 +33,13 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `granted_by_user_id`
 - `created_at`
 
+### user_notification_preferences
+
+- `user_id`
+- `listing_moderation_decision_email_enabled`
+- `listing_report_decision_email_enabled`
+- `created_at`, `updated_at`
+
 ### sessions
 
 - `id`

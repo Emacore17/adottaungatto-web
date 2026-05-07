@@ -15,6 +15,7 @@
     "geo:boundaries:apply": "pnpm --filter worker geo:boundaries:apply",
     "geo:import": "pnpm --filter worker geo:import",
     "geo:import:apply": "pnpm --filter worker geo:import:apply",
+    "media:process": "pnpm --filter worker media:process",
     "geo:promote": "pnpm --filter worker geo:promote",
     "geo:promote:apply": "pnpm --filter worker geo:promote:apply",
     "lint": "turbo lint",

@@ -34,9 +34,26 @@ URL locali:
   `POST http://localhost:4000/auth/email-verification/verify`,
   `POST http://localhost:4000/auth/password-reset/request`,
   `POST http://localhost:4000/auth/password-reset/confirm`,
+  `POST http://localhost:4000/auth/password/change`,
   `GET http://localhost:4000/auth/me`
 - API profilo: `GET http://localhost:4000/users/me`,
-  `PATCH http://localhost:4000/users/me`
+  `PATCH http://localhost:4000/users/me`,
+  `GET http://localhost:4000/users/me/notification-preferences`,
+  `PATCH http://localhost:4000/users/me/notification-preferences`
+- API bozze annunci utente: `GET http://localhost:4000/listings/me/drafts`,
+  `POST http://localhost:4000/listings/me/drafts`,
+  `POST http://localhost:4000/listings/me/drafts/:id/submit-review`,
+  `POST http://localhost:4000/listings/me/drafts/:id/images/upload-url`,
+  `POST http://localhost:4000/listings/me/drafts/:id/images/:imageId/confirm`,
+  `GET http://localhost:4000/listings/me/drafts/:id`,
+  `PATCH http://localhost:4000/listings/me/drafts/:id`,
+  `DELETE http://localhost:4000/listings/me/drafts/:id`
+- API moderazione: `GET http://localhost:4000/moderation/listings/pending-review`,
+  `GET http://localhost:4000/moderation/listings/reported`,
+  `POST http://localhost:4000/moderation/listings/cases/:caseId/approve`,
+  `POST http://localhost:4000/moderation/listings/cases/:caseId/reject`,
+  `POST http://localhost:4000/moderation/listings/cases/:caseId/suspend`
+- API segnalazioni: `POST http://localhost:4000/reports/listings/:listingId`
 - MinIO console: http://localhost:9001
 - Mailpit: http://localhost:8025
 
@@ -57,6 +74,7 @@ pnpm geo:promote
 pnpm geo:promote:apply
 pnpm geo:boundaries
 pnpm geo:boundaries:apply
+pnpm media:process
 ```
 
 ## Stato
@@ -73,7 +91,20 @@ confini amministrativi Istat 2026. Lo schema include anche immagini annuncio,
 casi di moderazione, azioni di moderazione, segnalazioni, ruoli utente e
 sessioni. L'API espone un primo modulo auth con registrazione, login, verifica
 email via Mailpit, recupero password con token monouso, sessione corrente,
-logout, profilo utente autenticato e update profilo con policy per
-`profile_type`.
+logout, cambio password autenticato con rotazione sessione, profilo utente
+autenticato, update profilo con policy per `profile_type` e CRUD autenticato
+delle bozze annuncio dell'utente con invio a moderazione e apertura caso
+iniziale. Le bozze supportano upload session presigned verso MinIO locale per
+immagini JPEG, PNG e WebP, conferma upload e processamento worker delle
+varianti `large` e `thumb` in WebP. La moderazione dispone di una prima coda
+autenticata per ruoli `moderator` e `admin`, con coda di revisione annunci,
+coda segnalazioni e decisioni tracciate per approvazione, rifiuto e
+sospensione. Gli utenti autenticati possono segnalare annunci pubblicati; la
+segnalazione apre o riusa un caso di moderazione e viene collegata ad audit
+log. Le decisioni di moderazione inviano email al proprietario dell'annuncio e,
+quando presenti, agli utenti che hanno segnalato l'annuncio.
 
 Le funzionalita applicative complete non sono ancora implementate.
+Gli utenti possono inoltre gestire preferenze email per notifiche non
+essenziali di moderazione e segnalazioni; le email di sicurezza account restano
+sempre attive.

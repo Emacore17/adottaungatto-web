@@ -155,6 +155,40 @@ describe("AuthController", () => {
     expect(authService.requestEmailVerification).toHaveBeenCalledWith("user-id")
   })
 
+  it("validates authenticated password change payloads and delegates", async () => {
+    const authService = {
+      changePassword: vi.fn().mockResolvedValue({
+        changed: true,
+        session: {},
+      }),
+    } as unknown as AuthService
+    const controller = new AuthController(authService)
+
+    await controller.changePassword(createAuth(), {
+      currentPassword: "current password",
+      password: "a changed password",
+    })
+
+    expect(authService.changePassword).toHaveBeenCalledWith("user-id", {
+      currentPassword: "current password",
+      password: "a changed password",
+    })
+  })
+
+  it("rejects invalid authenticated password change payloads", async () => {
+    const authService = {
+      changePassword: vi.fn(),
+    } as unknown as AuthService
+    const controller = new AuthController(authService)
+
+    await expect(
+      controller.changePassword(createAuth(), {
+        currentPassword: "same password",
+        password: "same password",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
+
   it("returns the guard-authenticated session", async () => {
     const authService = {
       currentSession: vi.fn(),

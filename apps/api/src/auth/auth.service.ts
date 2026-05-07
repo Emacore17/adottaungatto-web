@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
 } from "@nestjs/common"
 import type {
+  AuthChangePasswordInput,
   AuthLoginInput,
   AuthRegisterInput,
   AuthRequestPasswordResetInput,
@@ -30,6 +31,7 @@ import type {
   EmailVerificationRequestResponse,
   EmailVerificationVerifyResponse,
   LogoutResponse,
+  PasswordChangeResponse,
   PasswordResetRequestResponse,
   PasswordResetResponse,
 } from "./auth.types.js"
@@ -92,6 +94,11 @@ type PasswordResetRequestRow = {
 
 type PasswordResetTokenRow = {
   id: string
+}
+
+type PasswordChangeSessionRow = {
+  session_id: string
+  expires_at: Date | string
 }
 
 const registerSql = `
@@ -336,6 +343,46 @@ const completePasswordResetSql = `
   from updated_user
 `
 
+const userByIdForPasswordChangeSql = `
+  select
+    id::text,
+    email,
+    display_name,
+    profile_type::text as profile_type,
+    status::text as status,
+    password_hash
+  from users
+  where id = $1::uuid
+    and deleted_at is null
+  limit 1
+`
+
+const changePasswordSql = `
+  with updated_user as (
+    update users
+    set password_hash = $2,
+        updated_at = now()
+    where id = $1::uuid
+      and deleted_at is null
+    returning id
+  ),
+  revoked_sessions as (
+    update sessions
+    set revoked_at = now()
+    where user_id in (select id from updated_user)
+      and revoked_at is null
+    returning id
+  ),
+  inserted_session as (
+    insert into sessions (user_id, token_hash, expires_at)
+    select updated_user.id, $3, $4
+    from updated_user
+    returning id::text as session_id, expires_at
+  )
+  select session_id, expires_at
+  from inserted_session
+`
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -568,6 +615,60 @@ export class AuthService {
     }
 
     return { reset: true }
+  }
+
+  async changePassword(
+    userId: string,
+    input: AuthChangePasswordInput
+  ): Promise<PasswordChangeResponse> {
+    const [user] = await this.databaseService.queryRows<AuthUserLookupRow>(
+      userByIdForPasswordChangeSql,
+      [userId]
+    )
+
+    if (!user) {
+      throw new NotFoundException("User profile not found.")
+    }
+
+    assertUserCanAuthenticate(user)
+
+    if (!user.password_hash) {
+      throw new BadRequestException("User account does not have a password.")
+    }
+
+    const passwordMatches = await verifyPassword(
+      input.currentPassword,
+      user.password_hash
+    )
+
+    if (!passwordMatches) {
+      throwInvalidCredentials()
+    }
+
+    const token = createSessionToken()
+    const [session] =
+      await this.databaseService.queryRows<PasswordChangeSessionRow>(
+        changePasswordSql,
+        [
+          userId,
+          await hashPassword(input.password),
+          hashSessionToken(token),
+          getSessionExpiresAt().toISOString(),
+        ]
+      )
+
+    if (!session) {
+      throw new UnauthorizedException("Could not rotate user session.")
+    }
+
+    return {
+      changed: true,
+      session: {
+        id: session.session_id,
+        token,
+        expiresAt: toIsoString(session.expires_at),
+      },
+    }
   }
 }
 

@@ -53,6 +53,11 @@ export type PasswordResetResponse = {
   reset: boolean
 }
 
+export type PasswordChangeResponse = {
+  changed: boolean
+  session: AuthSessionWithToken
+}
+
 export type CurrentAuthSessionResponse = {
   user: AuthUser
   session: AuthSession

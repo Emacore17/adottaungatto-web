@@ -60,6 +60,59 @@ describe("UsersController", () => {
       BadRequestException
     )
   })
+
+  it("loads notification preferences", async () => {
+    const usersService = {
+      currentNotificationPreferences: vi.fn().mockResolvedValue({
+        listingModerationDecisionEmail: true,
+        listingReportDecisionEmail: false,
+      }),
+    } as unknown as UsersService
+    const controller = new UsersController(usersService)
+
+    await expect(
+      controller.notificationPreferences(createAuth())
+    ).resolves.toEqual({
+      listingModerationDecisionEmail: true,
+      listingReportDecisionEmail: false,
+    })
+
+    expect(usersService.currentNotificationPreferences).toHaveBeenCalledWith(
+      "user-id"
+    )
+  })
+
+  it("validates notification preference updates and delegates", async () => {
+    const usersService = {
+      updateCurrentNotificationPreferences: vi
+        .fn()
+        .mockResolvedValue({ listingModerationDecisionEmail: false }),
+    } as unknown as UsersService
+    const controller = new UsersController(usersService)
+
+    await expect(
+      controller.updateNotificationPreferences(createAuth(), {
+        listingModerationDecisionEmail: false,
+      })
+    ).resolves.toEqual({ listingModerationDecisionEmail: false })
+
+    expect(
+      usersService.updateCurrentNotificationPreferences
+    ).toHaveBeenCalledWith("user-id", {
+      listingModerationDecisionEmail: false,
+    })
+  })
+
+  it("rejects empty notification preference updates", async () => {
+    const usersService = {
+      updateCurrentNotificationPreferences: vi.fn(),
+    } as unknown as UsersService
+    const controller = new UsersController(usersService)
+
+    await expect(
+      controller.updateNotificationPreferences(createAuth(), {})
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
 })
 
 function createAuth(): CurrentAuthSessionResponse {

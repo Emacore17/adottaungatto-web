@@ -7,7 +7,10 @@ import {
   Patch,
   UseGuards,
 } from "@nestjs/common"
-import { userProfileUpdateSchema } from "@workspace/validation"
+import {
+  userNotificationPreferencesUpdateSchema,
+  userProfileUpdateSchema,
+} from "@workspace/validation"
 import { ZodError } from "zod"
 
 import { BearerAuthGuard } from "../auth/auth.guard.js"
@@ -43,6 +46,37 @@ export class UsersController {
       if (error instanceof ZodError) {
         throw new BadRequestException({
           message: "Invalid user profile update payload.",
+          issues: error.issues,
+        })
+      }
+
+      throw error
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Get("me/notification-preferences")
+  async notificationPreferences(
+    @CurrentAuth() auth: CurrentAuthSessionResponse
+  ) {
+    return this.usersService.currentNotificationPreferences(auth.user.id)
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Patch("me/notification-preferences")
+  async updateNotificationPreferences(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Body() body: unknown
+  ) {
+    try {
+      return this.usersService.updateCurrentNotificationPreferences(
+        auth.user.id,
+        userNotificationPreferencesUpdateSchema.parse(body)
+      )
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException({
+          message: "Invalid notification preferences payload.",
           issues: error.issues,
         })
       }

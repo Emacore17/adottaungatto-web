@@ -431,6 +431,105 @@ describe("AuthService", () => {
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
   })
+
+  it("changes a password and rotates the session", async () => {
+    const passwordHash = await hashPassword("current password")
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            id: "user-id",
+            email: "user@example.com",
+            display_name: "Emanuele",
+            profile_type: "private",
+            status: "active",
+            password_hash: passwordHash,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            session_id: "new-session-id",
+            expires_at: "2026-05-30T10:00:00.000Z",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    const response = await service.changePassword("user-id", {
+      currentPassword: "current password",
+      password: "a changed password",
+    })
+    const [, lookupParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[0]!
+    const [, changeParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[1]!
+
+    expect(response).toMatchObject({
+      changed: true,
+      session: {
+        id: "new-session-id",
+        expiresAt: "2026-05-30T10:00:00.000Z",
+      },
+    })
+    expect(response.session.token).toEqual(expect.any(String))
+    expect(lookupParameters[0]).toBe("user-id")
+    expect(changeParameters[0]).toBe("user-id")
+    await expect(
+      verifyPassword("a changed password", String(changeParameters[1]))
+    ).resolves.toBe(true)
+    expect(changeParameters[2]).toBe(hashSessionToken(response.session.token))
+    expect(changeParameters[3]).toEqual(expect.any(String))
+  })
+
+  it("rejects password changes with the wrong current password", async () => {
+    const passwordHash = await hashPassword("current password")
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          id: "user-id",
+          email: "user@example.com",
+          display_name: "Emanuele",
+          profile_type: "private",
+          status: "active",
+          password_hash: passwordHash,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.changePassword("user-id", {
+        currentPassword: "wrong password",
+        password: "a changed password",
+      })
+    ).rejects.toBeInstanceOf(UnauthorizedException)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+  })
+
+  it("rejects password changes for accounts without a local password", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          id: "user-id",
+          email: "user@example.com",
+          display_name: "Emanuele",
+          profile_type: "private",
+          status: "active",
+          password_hash: null,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.changePassword("user-id", {
+        currentPassword: "current password",
+        password: "a changed password",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+  })
 })
 
 const testEnv: ApiEnv = {
@@ -445,6 +544,12 @@ const testEnv: ApiEnv = {
   MAIL_PORT: 1025,
   PASSWORD_RESET_TTL_MINUTES: 30,
   REDIS_URL: "redis://localhost:6379",
+  S3_ACCESS_KEY_ID: "minioadmin",
+  S3_BUCKET: "adottaungatto-local",
+  S3_ENDPOINT: "http://localhost:9000",
+  S3_PUBLIC_ENDPOINT: "http://localhost:9000",
+  S3_REGION: "local",
+  S3_SECRET_ACCESS_KEY: "minioadmin",
 }
 
 function createService(databaseService: DatabaseService) {

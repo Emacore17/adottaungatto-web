@@ -14,16 +14,20 @@
 1. L'utente richiede una upload session.
 2. L'API verifica permessi e limiti.
 3. L'API genera una chiave oggetto non prevedibile.
-4. Il frontend carica su API o URL presigned, in base alla milestone.
-5. Il file entra in stato `uploaded` o `processing`.
-6. Un worker valida e processa il file.
-7. Il worker genera varianti.
-8. Il database registra metadata e stato `ready`.
-9. L'utente sceglie o aggiorna la copertina.
+4. Il frontend carica su URL presigned `PUT` verso MinIO.
+5. Il frontend conferma l'upload all'API.
+6. L'API verifica la presenza dell'oggetto originale e porta il file in
+   `processing`.
+7. Il worker valida e processa il file.
+8. Il worker genera varianti `large` e `thumb` in WebP.
+9. Il database registra metadata e stato `ready`.
+10. L'utente sceglie o aggiorna la copertina.
 
 ## Validazioni
 
 - MIME type consentiti: JPEG, PNG, WebP.
+- Dimensione massima iniziale: 10 MB.
+- Numero massimo iniziale: 10 immagini per bozza.
 - Verifica magic bytes, non solo estensione.
 - Dimensione massima file.
 - Dimensione massima pixel.
@@ -50,6 +54,24 @@ impedisce piu' copertine attive per lo stesso annuncio.
 Locale:
 
 - MinIO con bucket `adottaungatto-local`.
+- L'API crea il bucket locale alla prima richiesta di upload se non esiste.
+
+Endpoint iniziale:
+
+- `POST /listings/me/drafts/:id/images/upload-url` richiede bearer token,
+  verifica ownership e stato bozza, crea un record `listing_images`, restituisce
+  una URL presigned `PUT`, gli header richiesti e la scadenza.
+- `POST /listings/me/drafts/:id/images/:imageId/confirm` verifica l'oggetto su
+  MinIO, salva checksum/size da storage e porta il record in `processing`.
+- `pnpm media:process` processa le immagini in `processing`, genera varianti
+  WebP `large` e `thumb`, aggiorna dimensioni e stato `ready`, oppure marca
+  l'immagine `rejected` con il motivo.
+- L'invio a moderazione richiede almeno una immagine `ready`, nessuna immagine
+  ancora `uploaded`/`processing` e nessuna immagine `rejected` associata alla
+  bozza.
+- Le chiavi oggetto seguono il formato
+  `{app_env}/listings/{listing_id}/original/{random}.{ext}`.
+- Le varianti usano lo stesso nome random nelle cartelle `large` e `thumb`.
 
 Produzione futura:
 

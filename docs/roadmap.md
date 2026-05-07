@@ -57,10 +57,9 @@ Deliverable:
 - update profilo utente con policy per `profile_type`.
 - verifica email con token monouso e Mailpit locale.
 - recupero password con token monouso e revoca sessioni.
+- cambio password autenticato con rotazione sessione.
 
-Rimanente:
-
-- cambio password autenticato.
+Stato: base completata.
 
 ## Milestone 4 - Annunci e immagini
 
@@ -74,6 +73,11 @@ Deliverable:
 - varianti thumbnail;
 - immagine di copertina;
 - validazioni server-side.
+
+Stato: avviata con CRUD autenticato delle bozze annuncio dell'utente, invio a
+moderazione con controlli minimi, upload session presigned verso MinIO locale e
+worker iniziale per varianti immagini WebP. L'invio a moderazione richiede
+almeno una immagine pronta.
 
 ## Milestone 5 - Ricerca pubblica
 
@@ -101,6 +105,13 @@ Deliverable:
 - segnalazioni utenti;
 - filtri contenuti sospetti.
 
+Stato: avviata con endpoint autenticato per coda annunci `pending_review`,
+decisioni moderatore per approvazione, rifiuto e sospensione con audit log e
+segnalazioni utenti collegate ai casi di moderazione. E' presente anche una
+coda moderazione dedicata ai casi con segnalazioni utenti. Le decisioni
+chiudono le segnalazioni collegate come `resolved` o `dismissed` e inviano
+notifiche email a proprietario e reporter.
+
 ## Milestone 7 - Contatti, preferiti e notifiche
 
 Obiettivo: chiudere il ciclo utente registrato.
@@ -112,6 +123,10 @@ Deliverable:
 - like pubblici aggregati;
 - notifiche email;
 - centro notifiche minimale.
+
+Stato: avviata con preferenze email utente per notifiche non essenziali di
+moderazione annuncio e aggiornamento segnalazioni. Le email di sicurezza
+account restano fuori dall'opt-out.
 
 ## Milestone 8 - Hardening e deploy
 

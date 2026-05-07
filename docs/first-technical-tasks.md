@@ -39,7 +39,21 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 12. Fatto: aggiungere update profilo utente e policy per cambio `profile_type`.
 13. Fatto: implementare verifica email con token monouso e Mailpit in locale.
 14. Fatto: implementare recupero password con token monouso.
-15. Implementare cambio password autenticato e revoca sessioni correnti.
+15. Fatto: implementare cambio password autenticato e rotazione sessione.
+16. Fatto: avviare CRUD annunci utente in bozza.
+17. Fatto: aggiungere invio bozza a moderazione con controlli minimi.
+18. Fatto: avviare upload immagini annuncio su storage locale.
+19. Fatto: aggiungere conferma/processamento immagini e varianti thumbnail.
+20. Fatto: integrare immagini pronte nei controlli di invio a moderazione.
+21. Fatto: avviare coda moderazione admin per annunci `pending_review`.
+22. Fatto: aggiungere decisioni moderatore: approva, rifiuta, sospendi.
+23. Fatto: aggiungere segnalazioni utenti e collegamento ai casi di moderazione.
+24. Fatto: aggiungere coda moderazione per casi nati da segnalazioni utenti.
+25. Fatto: aggiungere gestione report dopo decisione: risoluzione/dismiss
+    delle segnalazioni collegate.
+26. Fatto: aggiungere notifiche email per esiti di moderazione e segnalazioni.
+27. Fatto: aggiungere preferenze notifiche e opt-out per email non essenziali.
+28. Aggiungere prime notifiche in-app e centro notifiche minimale.
 
 ## Task da non fare ancora
 

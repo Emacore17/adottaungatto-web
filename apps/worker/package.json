@@ -14,6 +14,7 @@
     "geo:promote": "tsx src/geo/promote-italian-places-cli.ts --dry-run",
     "geo:promote:apply": "tsx src/geo/promote-italian-places-cli.ts --apply",
     "lint": "eslint .",
+    "media:process": "tsx src/media/process-listing-images-cli.ts",
     "start": "node dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -21,6 +22,8 @@
   "dependencies": {
     "@workspace/db": "workspace:*",
     "drizzle-orm": "^0.45.2",
+    "minio": "^8.0.7",
+    "sharp": "^0.34.5",
     "shpjs": "^6.2.0",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"

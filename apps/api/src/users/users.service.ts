@@ -4,11 +4,17 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common"
-import type { UserProfileUpdateInput } from "@workspace/validation"
+import type {
+  UserNotificationPreferencesUpdateInput,
+  UserProfileUpdateInput,
+} from "@workspace/validation"
 
 import type { AuthUserProfileType, AuthUserStatus } from "../auth/auth.types.js"
 import { DatabaseService } from "../database/database.service.js"
-import type { CurrentUserProfile } from "./users.types.js"
+import type {
+  CurrentUserNotificationPreferences,
+  CurrentUserProfile,
+} from "./users.types.js"
 
 type CurrentUserProfileRow = {
   id: string
@@ -20,8 +26,22 @@ type CurrentUserProfileRow = {
   phone_e164: string | null
   phone_verified_at: Date | string | null
   roles: string[]
+  listing_moderation_decision_email_enabled: boolean
+  listing_report_decision_email_enabled: boolean
   created_at: Date | string
 }
+
+type UserNotificationPreferencesRow = {
+  user_id: string
+  listing_moderation_decision_email_enabled: boolean
+  listing_report_decision_email_enabled: boolean
+}
+
+type UserNotificationPreferencesFields = Pick<
+  UserNotificationPreferencesRow,
+  | "listing_moderation_decision_email_enabled"
+  | "listing_report_decision_email_enabled"
+>
 
 const privilegedProfileRoles = new Set([
   "admin",
@@ -44,10 +64,22 @@ const currentUserProfileSql = `
         filter (where roles.code is not null),
       array[]::text[]
     ) as roles,
+    coalesce(
+      bool_or(
+        notification_preferences.listing_moderation_decision_email_enabled
+      ),
+      true
+    ) as listing_moderation_decision_email_enabled,
+    coalesce(
+      bool_or(notification_preferences.listing_report_decision_email_enabled),
+      true
+    ) as listing_report_decision_email_enabled,
     users.created_at
   from users
   left join user_roles on user_roles.user_id = users.id
   left join roles on roles.id = user_roles.role_id
+  left join user_notification_preferences notification_preferences
+    on notification_preferences.user_id = users.id
   where users.id = $1::uuid
     and users.deleted_at is null
   group by users.id
@@ -71,6 +103,55 @@ const updateCurrentUserProfileSql = `
   where id = $1::uuid
     and deleted_at is null
   returning id::text
+`
+
+const currentUserNotificationPreferencesSql = `
+  select
+    users.id::text as user_id,
+    coalesce(
+      notification_preferences.listing_moderation_decision_email_enabled,
+      true
+    ) as listing_moderation_decision_email_enabled,
+    coalesce(
+      notification_preferences.listing_report_decision_email_enabled,
+      true
+    ) as listing_report_decision_email_enabled
+  from users
+  left join user_notification_preferences notification_preferences
+    on notification_preferences.user_id = users.id
+  where users.id = $1::uuid
+    and users.deleted_at is null
+  limit 1
+`
+
+const upsertCurrentUserNotificationPreferencesSql = `
+  insert into user_notification_preferences (
+    user_id,
+    listing_moderation_decision_email_enabled,
+    listing_report_decision_email_enabled
+  )
+  select
+    users.id,
+    coalesce($2::boolean, true),
+    coalesce($3::boolean, true)
+  from users
+  where users.id = $1::uuid
+    and users.deleted_at is null
+  on conflict (user_id) do update
+  set
+    listing_moderation_decision_email_enabled = coalesce(
+      $2::boolean,
+      user_notification_preferences.listing_moderation_decision_email_enabled
+    ),
+    listing_report_decision_email_enabled = coalesce(
+      $3::boolean,
+      user_notification_preferences.listing_report_decision_email_enabled
+    ),
+    updated_at = now()
+  returning
+    user_id::text,
+    listing_moderation_decision_email_enabled,
+    listing_report_decision_email_enabled
 `
 
 @Injectable()
@@ -118,6 +199,43 @@ export class UsersService {
 
     return this.currentProfile(userId)
   }
+
+  async currentNotificationPreferences(
+    userId: string
+  ): Promise<CurrentUserNotificationPreferences> {
+    const [row] =
+      await this.databaseService.queryRows<UserNotificationPreferencesRow>(
+        currentUserNotificationPreferencesSql,
+        [userId]
+      )
+
+    if (!row) {
+      throw new NotFoundException("User profile not found.")
+    }
+
+    return mapNotificationPreferences(row)
+  }
+
+  async updateCurrentNotificationPreferences(
+    userId: string,
+    input: UserNotificationPreferencesUpdateInput
+  ): Promise<CurrentUserNotificationPreferences> {
+    const [row] =
+      await this.databaseService.queryRows<UserNotificationPreferencesRow>(
+        upsertCurrentUserNotificationPreferencesSql,
+        [
+          userId,
+          input.listingModerationDecisionEmail ?? null,
+          input.listingReportDecisionEmail ?? null,
+        ]
+      )
+
+    if (!row) {
+      throw new NotFoundException("User profile not found.")
+    }
+
+    return mapNotificationPreferences(row)
+  }
 }
 
 function mapCurrentUserProfile(row: CurrentUserProfileRow): CurrentUserProfile {
@@ -131,7 +249,18 @@ function mapCurrentUserProfile(row: CurrentUserProfileRow): CurrentUserProfile {
     phoneE164: row.phone_e164,
     phoneVerifiedAt: toIsoStringOrNull(row.phone_verified_at),
     roles: row.roles,
+    notificationPreferences: mapNotificationPreferences(row),
     createdAt: toIsoString(row.created_at),
+  }
+}
+
+function mapNotificationPreferences(
+  row: UserNotificationPreferencesFields
+): CurrentUserNotificationPreferences {
+  return {
+    listingModerationDecisionEmail:
+      row.listing_moderation_decision_email_enabled,
+    listingReportDecisionEmail: row.listing_report_decision_email_enabled,
   }
 }
 

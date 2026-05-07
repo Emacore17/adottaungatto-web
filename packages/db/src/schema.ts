@@ -180,6 +180,34 @@ export const userRoles = pgTable(
   })
 )
 
+export const userNotificationPreferences = pgTable(
+  "user_notification_preferences",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingModerationDecisionEmailEnabled: boolean(
+      "listing_moderation_decision_email_enabled"
+    )
+      .notNull()
+      .default(true),
+    listingReportDecisionEmailEnabled: boolean(
+      "listing_report_decision_email_enabled"
+    )
+      .notNull()
+      .default(true),
+    ...timestamps,
+  },
+  (table) => ({
+    listingModerationDecisionEmailIdx: index(
+      "user_notification_preferences_moderation_email_idx"
+    ).on(table.listingModerationDecisionEmailEnabled),
+    listingReportDecisionEmailIdx: index(
+      "user_notification_preferences_report_email_idx"
+    ).on(table.listingReportDecisionEmailEnabled),
+  })
+)
+
 export const sessions = pgTable(
   "sessions",
   {

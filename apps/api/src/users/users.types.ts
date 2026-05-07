@@ -10,5 +10,11 @@ export type CurrentUserProfile = {
   phoneE164: string | null
   phoneVerifiedAt: string | null
   roles: string[]
+  notificationPreferences: CurrentUserNotificationPreferences
   createdAt: string
+}
+
+export type CurrentUserNotificationPreferences = {
+  listingModerationDecisionEmail: boolean
+  listingReportDecisionEmail: boolean
 }

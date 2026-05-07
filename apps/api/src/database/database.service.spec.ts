@@ -15,6 +15,12 @@ const testEnv: ApiEnv = {
   MAIL_PORT: 1025,
   PASSWORD_RESET_TTL_MINUTES: 30,
   REDIS_URL: "redis://localhost:6379",
+  S3_ACCESS_KEY_ID: "minioadmin",
+  S3_BUCKET: "adottaungatto-local",
+  S3_ENDPOINT: "http://localhost:9000",
+  S3_PUBLIC_ENDPOINT: "http://localhost:9000",
+  S3_REGION: "local",
+  S3_SECRET_ACCESS_KEY: "minioadmin",
 }
 
 describe("DatabaseService", () => {

@@ -8,6 +8,7 @@ import {
   UseGuards,
 } from "@nestjs/common"
 import {
+  authChangePasswordSchema,
   authLoginSchema,
   authRegisterSchema,
   authRequestPasswordResetSchema,
@@ -15,6 +16,7 @@ import {
   authVerifyEmailSchema,
 } from "@workspace/validation"
 import type {
+  AuthChangePasswordInput,
   AuthLoginInput,
   AuthRegisterInput,
   AuthRequestPasswordResetInput,
@@ -91,6 +93,22 @@ export class AuthController {
   }
 
   @UseGuards(BearerAuthGuard)
+  @Post("password/change")
+  async changePassword(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Body() body: unknown
+  ) {
+    try {
+      return this.authService.changePassword(
+        auth.user.id,
+        authChangePasswordSchema.parse(body)
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid password change payload.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
   @Get("me")
   async me(@CurrentAuth() auth: CurrentAuthSessionResponse) {
     return auth
@@ -119,3 +137,4 @@ export type LoginBody = AuthLoginInput
 export type VerifyEmailBody = AuthVerifyEmailInput
 export type RequestPasswordResetBody = AuthRequestPasswordResetInput
 export type ResetPasswordBody = AuthResetPasswordInput
+export type ChangePasswordBody = AuthChangePasswordInput

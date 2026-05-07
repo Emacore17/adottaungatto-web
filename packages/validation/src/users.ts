@@ -18,4 +18,18 @@ export const userProfileUpdateSchema = z
     message: "At least one profile field must be provided.",
   })
 
+export const userNotificationPreferencesUpdateSchema = z
+  .object({
+    listingModerationDecisionEmail: z.boolean().optional(),
+    listingReportDecisionEmail: z.boolean().optional(),
+  })
+  .strict()
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one notification preference must be provided.",
+  })
+
 export type UserProfileUpdateInput = z.infer<typeof userProfileUpdateSchema>
+
+export type UserNotificationPreferencesUpdateInput = z.infer<
+  typeof userNotificationPreferencesUpdateSchema
+>

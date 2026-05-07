@@ -21,6 +21,7 @@
     ".": "./src/index.ts",
     "./auth": "./src/auth.ts",
     "./env": "./src/env.ts",
+    "./listings": "./src/listings.ts",
     "./pagination": "./src/pagination.ts",
     "./places": "./src/places.ts",
     "./users": "./src/users.ts"
