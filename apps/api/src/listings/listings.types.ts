@@ -4,6 +4,7 @@ import type {
   ListingDraftUpdateInput,
   ListingImageMimeType,
   ListingImageUploadRequestInput,
+  ListingPublicListQuery,
   ListingSex,
 } from "@workspace/validation"
 
@@ -116,7 +117,69 @@ export type ListingImageConfirmationResponse = {
   image: ListingImage
 }
 
+export type PublicListingImage = {
+  id: string
+  objectKeyLarge: string | null
+  objectKeyThumb: string | null
+  width: number | null
+  height: number | null
+  blurHash: string | null
+  sortOrder: number
+  isCover: boolean
+}
+
+export type PublicListingSummary = {
+  id: string
+  title: string
+  slug: string
+  description: string
+  breed: ListingDraft["breed"]
+  sex: ListingSex
+  ageMonthsMin: number | null
+  ageMonthsMax: number | null
+  location: ListingDraftLocation | null
+  contributionCents: number | null
+  isFree: boolean
+  isVaccinated: boolean | null
+  isSterilized: boolean | null
+  isDewormed: boolean | null
+  hasMicrochip: boolean | null
+  publishedAt: string | null
+  expiresAt: string | null
+  createdAt: string
+  updatedAt: string
+  owner: {
+    id: string
+    displayName: string
+    profileType: string
+  }
+  stats: {
+    likeCount: number
+  }
+  images: {
+    readyCount: number
+    cover: PublicListingImage | null
+  }
+}
+
+export type PublicListingDetail = PublicListingSummary & {
+  images: PublicListingSummary["images"] & {
+    items: PublicListingImage[]
+  }
+}
+
+export type PublicListingListResponse = {
+  items: PublicListingSummary[]
+  meta: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
 export type ListingDraftCreateBody = ListingDraftCreateInput
 export type ListingDraftUpdateBody = ListingDraftUpdateInput
 export type ListingDraftListQueryParams = ListingDraftListQuery
+export type ListingPublicListQueryParams = ListingPublicListQuery
 export type ListingImageUploadBody = ListingImageUploadRequestInput

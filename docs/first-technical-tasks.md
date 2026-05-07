@@ -53,7 +53,11 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     delle segnalazioni collegate.
 26. Fatto: aggiungere notifiche email per esiti di moderazione e segnalazioni.
 27. Fatto: aggiungere preferenze notifiche e opt-out per email non essenziali.
-28. Aggiungere prime notifiche in-app e centro notifiche minimale.
+28. Fatto: aggiungere prime notifiche in-app e centro notifiche minimale.
+29. Fatto: avviare preferiti utente per annunci pubblicati.
+30. Fatto: avviare like pubblici aggregati per annunci pubblicati.
+31. Fatto: avviare endpoint pubblici di lista e scheda annuncio.
+32. Aggiungere filtri principali alla lista pubblica annunci.
 
 ## Task da non fare ancora
 

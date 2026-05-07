@@ -12,6 +12,7 @@ import type {
 
 import { DatabaseService } from "../database/database.service.js"
 import { MailService } from "../mail/mail.service.js"
+import { NotificationsService } from "../notifications/notifications.service.js"
 import type {
   ListingLifecycleStatus,
   ListingModerationStatus,
@@ -130,6 +131,7 @@ type ModerationDecisionRow = {
   listing_lifecycle_status: DecisionLifecycleStatus
   listing_published_at: Date | string | null
   listing_updated_at: Date | string
+  owner_user_id: string
   owner_email: string
   owner_display_name: string
   owner_listing_moderation_decision_email_enabled: boolean
@@ -143,6 +145,7 @@ type ReportNotification = {
   reporterUserId: string
   reporterEmail: string
   reporterDisplayName: string
+  listingReportDecisionEmailEnabled: boolean
   reasonCode: string
 }
 
@@ -375,6 +378,7 @@ const decideListingCaseSql = `
       listing.title,
       listing.slug,
       listing.moderation_status::text as from_status,
+      owner.id::text as owner_user_id,
       owner.email as owner_email,
       owner.display_name as owner_display_name,
       coalesce(
@@ -499,13 +503,15 @@ const decideListingCaseSql = `
             active_reports.reporter_email,
             'reporterDisplayName',
             active_reports.reporter_display_name,
+            'listingReportDecisionEmailEnabled',
+            active_reports.reporter_listing_report_decision_email_enabled,
             'reasonCode',
             active_reports.reason_code
           )
         ) filter (
           where active_reports.reporter_email is not null
+            and active_reports.reporter_user_id is not null
             and updated_reports.id is not null
-            and active_reports.reporter_listing_report_decision_email_enabled
         ),
         '[]'::jsonb
       ) as report_notifications
@@ -524,6 +530,7 @@ const decideListingCaseSql = `
     updated_listing.lifecycle_status as listing_lifecycle_status,
     updated_listing.published_at as listing_published_at,
     updated_listing.updated_at as listing_updated_at,
+    target_case.owner_user_id,
     target_case.owner_email,
     target_case.owner_display_name,
     target_case.owner_listing_moderation_decision_email_enabled,
@@ -543,7 +550,9 @@ export class ModerationService {
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
     @Inject(MailService)
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    @Inject(NotificationsService)
+    private readonly notificationsService: NotificationsService
   ) {}
 
   async pendingReviewQueue(
@@ -651,6 +660,33 @@ export class ModerationService {
       reasonCode: input.reasonCode ?? null,
       reasonText: input.reasonText ?? null,
     }
+    const reportNotifications = parseReportNotifications(
+      row.report_notifications
+    )
+
+    await this.notificationsService.createListingModerationDecisionNotification(
+      row.owner_user_id,
+      {
+        ...message,
+        caseId: row.case_id,
+        listingId: row.listing_id,
+      }
+    )
+
+    await Promise.all(
+      reportNotifications.map((report) =>
+        this.notificationsService.createListingReportDecisionNotification(
+          report.reporterUserId,
+          {
+            ...message,
+            caseId: row.case_id,
+            listingId: row.listing_id,
+            reportId: report.reportId,
+            reportResolutionStatus: row.report_resolution_status,
+          }
+        )
+      )
+    )
 
     if (row.owner_listing_moderation_decision_email_enabled) {
       await this.mailService.sendListingModerationDecision({
@@ -661,14 +697,16 @@ export class ModerationService {
     }
 
     await Promise.all(
-      parseReportNotifications(row.report_notifications).map((report) =>
-        this.mailService.sendListingReportDecision({
-          ...message,
-          displayName: report.reporterDisplayName,
-          reportResolutionStatus: row.report_resolution_status,
-          to: report.reporterEmail,
-        })
-      )
+      reportNotifications
+        .filter((report) => report.listingReportDecisionEmailEnabled)
+        .map((report) =>
+          this.mailService.sendListingReportDecision({
+            ...message,
+            displayName: report.reporterDisplayName,
+            reportResolutionStatus: row.report_resolution_status,
+            to: report.reporterEmail,
+          })
+        )
     )
   }
 }
@@ -886,6 +924,8 @@ function isReportNotification(value: unknown): value is ReportNotification {
     typeof value.reporterEmail === "string" &&
     "reporterDisplayName" in value &&
     typeof value.reporterDisplayName === "string" &&
+    "listingReportDecisionEmailEnabled" in value &&
+    typeof value.listingReportDecisionEmailEnabled === "boolean" &&
     "reasonCode" in value &&
     typeof value.reasonCode === "string"
   )

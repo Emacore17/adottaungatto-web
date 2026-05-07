@@ -264,8 +264,8 @@ migrazioni, non a congelare tutte le funzionalita future.
 
 - `id`
 - `user_id`
-- `type`
-- `payload_json`
+- `type`: `listing_moderation_decision`, `listing_report_decision`
+- `payload`
 - `read_at`
 - `created_at`
 

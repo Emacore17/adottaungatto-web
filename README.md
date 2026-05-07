@@ -28,6 +28,8 @@ URL locali:
 - API health: http://localhost:4000/health
 - API autocomplete luoghi: http://localhost:4000/places/autocomplete?q=Aosta
 - API luoghi vicini: http://localhost:4000/places/nearby?lat=45.7496&lng=7.3063&radiusKm=10&type=municipality
+- API annunci pubblici: `GET http://localhost:4000/listings`,
+  `GET http://localhost:4000/listings/:id`
 - API auth: `POST http://localhost:4000/auth/register`,
   `POST http://localhost:4000/auth/login`,
   `POST http://localhost:4000/auth/email-verification/request`,
@@ -54,6 +56,16 @@ URL locali:
   `POST http://localhost:4000/moderation/listings/cases/:caseId/reject`,
   `POST http://localhost:4000/moderation/listings/cases/:caseId/suspend`
 - API segnalazioni: `POST http://localhost:4000/reports/listings/:listingId`
+- API preferiti: `GET http://localhost:4000/favorites/listings`,
+  `POST http://localhost:4000/favorites/listings/:listingId`,
+  `DELETE http://localhost:4000/favorites/listings/:listingId`
+- API like: `GET http://localhost:4000/likes/listings/:listingId`,
+  `POST http://localhost:4000/likes/listings/:listingId`,
+  `DELETE http://localhost:4000/likes/listings/:listingId`
+- API notifiche: `GET http://localhost:4000/notifications`,
+  `GET http://localhost:4000/notifications/unread-count`,
+  `POST http://localhost:4000/notifications/:notificationId/read`,
+  `POST http://localhost:4000/notifications/read-all`
 - MinIO console: http://localhost:9001
 - Mailpit: http://localhost:8025
 
@@ -103,6 +115,15 @@ sospensione. Gli utenti autenticati possono segnalare annunci pubblicati; la
 segnalazione apre o riusa un caso di moderazione e viene collegata ad audit
 log. Le decisioni di moderazione inviano email al proprietario dell'annuncio e,
 quando presenti, agli utenti che hanno segnalato l'annuncio.
+Le stesse decisioni creano anche notifiche in-app per proprietari e reporter,
+con inbox autenticata, conteggio non lette e marcatura lettura.
+Gli utenti autenticati possono salvare annunci pubblicati nei preferiti,
+listarli e rimuoverli in modo idempotente.
+Gli annunci pubblicati espongono anche un conteggio pubblico dei like; gli
+utenti autenticati possono aggiungere o rimuovere il proprio like in modo
+idempotente.
+L'API espone una prima lista pubblica paginata degli annunci approvati e una
+scheda pubblica per UUID, con filtri base per luogo, razza e sesso.
 
 Le funzionalita applicative complete non sono ancora implementate.
 Gli utenti possono inoltre gestire preferenze email per notifiche non

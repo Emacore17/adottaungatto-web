@@ -5,6 +5,56 @@ import { ListingsController } from "./listings.controller.js"
 import type { ListingsService } from "./listings.service.js"
 
 describe("ListingsController", () => {
+  it("validates public listing queries and delegates", async () => {
+    const listingsService = {
+      listPublic: vi.fn().mockResolvedValue({ items: [], meta: {} }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.listPublic({
+      page: "2",
+      pageSize: "10",
+      sex: "female",
+      regionId: "00000000-0000-0000-0000-000000000001",
+    })
+
+    expect(listingsService.listPublic).toHaveBeenCalledWith({
+      page: 2,
+      pageSize: 10,
+      sex: "female",
+      regionId: "00000000-0000-0000-0000-000000000001",
+    })
+  })
+
+  it("rejects invalid public listing queries", async () => {
+    const listingsService = {
+      listPublic: vi.fn(),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(
+      controller.listPublic({
+        sex: "invalid",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
+  it("validates public listing ids and delegates", async () => {
+    const listingsService = {
+      publicDetail: vi.fn().mockResolvedValue({ id: "listing-id" }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.publicDetail({
+      id: "00000000-0000-0000-0000-000000000001",
+    })
+
+    expect(listingsService.publicDetail).toHaveBeenCalledWith(
+      "00000000-0000-0000-0000-000000000001"
+    )
+  })
+
   it("validates draft list queries and delegates", async () => {
     const listingsService = {
       listDrafts: vi.fn().mockResolvedValue({ items: [], meta: {} }),

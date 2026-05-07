@@ -14,7 +14,10 @@ adottaungatto.it.
 - [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
 - [italian-places-import.md](italian-places-import.md): import dei luoghi italiani da fonti ufficiali.
 - [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
+- [favorites.md](favorites.md): preferiti degli annunci pubblicati.
+- [likes.md](likes.md): like pubblici aggregati sugli annunci pubblicati.
 - [moderation.md](moderation.md): moderazione annunci e segnalazioni.
+- [notifications.md](notifications.md): centro notifiche in-app.
 - [images.md](images.md): gestione immagini e asset statici.
 - [local-development-docker.md](local-development-docker.md): sviluppo locale con Docker.
 - [first-technical-tasks.md](first-technical-tasks.md): primi task tecnici.
@@ -27,4 +30,3 @@ adottaungatto.it.
   di sviluppare o testare in locale.
 - La documentazione deve descrivere lo stato reale del repository, non uno stato
   desiderato non ancora implementato.
-

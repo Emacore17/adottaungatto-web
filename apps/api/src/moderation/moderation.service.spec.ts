@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
 import type { MailService } from "../mail/mail.service.js"
+import type { NotificationsService } from "../notifications/notifications.service.js"
 import { ModerationService } from "./moderation.service.js"
 
 describe("ModerationService", () => {
@@ -278,6 +279,7 @@ describe("ModerationService", () => {
             listing_lifecycle_status: "published",
             listing_published_at: "2026-04-01T11:00:00.000Z",
             listing_updated_at: "2026-04-01T11:00:00.000Z",
+            owner_user_id: "owner-id",
             owner_email: "owner@example.com",
             owner_display_name: "Owner",
             owner_listing_moderation_decision_email_enabled: true,
@@ -287,7 +289,8 @@ describe("ModerationService", () => {
           },
         ]),
     } as unknown as DatabaseService
-    const { mailService, service } = createService(databaseService)
+    const { mailService, notificationsService, service } =
+      createService(databaseService)
 
     await expect(
       service.decideListingCase("moderator-id", "case-id", "approve", {
@@ -329,6 +332,17 @@ describe("ModerationService", () => {
       reasonText: null,
       to: "owner@example.com",
     })
+    expect(
+      notificationsService.createListingModerationDecisionNotification
+    ).toHaveBeenCalledWith("owner-id", {
+      caseId: "case-id",
+      decision: "approved",
+      listingId: "listing-id",
+      listingSlug: "gattino-a-roma",
+      listingTitle: "Gattino a Roma",
+      reasonCode: "policy_ok",
+      reasonText: null,
+    })
     expect(mailService.sendListingReportDecision).not.toHaveBeenCalled()
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
       "case-id",
@@ -366,6 +380,7 @@ describe("ModerationService", () => {
               listing_lifecycle_status: lifecycleStatus,
               listing_published_at: null,
               listing_updated_at: "2026-04-01T11:00:00.000Z",
+              owner_user_id: "owner-id",
               owner_email: "owner@example.com",
               owner_display_name: "Owner",
               owner_listing_moderation_decision_email_enabled: true,
@@ -377,13 +392,15 @@ describe("ModerationService", () => {
                   reporterUserId: "reporter-id",
                   reporterEmail: "reporter@example.com",
                   reporterDisplayName: "Reporter",
+                  listingReportDecisionEmailEnabled: true,
                   reasonCode: "suspected_scam",
                 },
               ],
             },
           ]),
       } as unknown as DatabaseService
-      const { mailService, service } = createService(databaseService)
+      const { mailService, notificationsService, service } =
+        createService(databaseService)
 
       await expect(
         service.decideListingCase("moderator-id", "case-id", decision, {
@@ -413,6 +430,19 @@ describe("ModerationService", () => {
         reasonText: "Contenuto non conforme.",
         reportResolutionStatus: reportStatus,
         to: "reporter@example.com",
+      })
+      expect(
+        notificationsService.createListingReportDecisionNotification
+      ).toHaveBeenCalledWith("reporter-id", {
+        caseId: "case-id",
+        decision: moderationStatus,
+        listingId: "listing-id",
+        listingSlug: "gattino-a-roma",
+        listingTitle: "Gattino a Roma",
+        reasonCode: null,
+        reasonText: "Contenuto non conforme.",
+        reportId: "report-id",
+        reportResolutionStatus: reportStatus,
       })
 
       expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
@@ -447,6 +477,7 @@ describe("ModerationService", () => {
             listing_lifecycle_status: "draft",
             listing_published_at: null,
             listing_updated_at: "2026-04-01T11:00:00.000Z",
+            owner_user_id: "owner-id",
             owner_email: "owner@example.com",
             owner_display_name: "Owner",
             owner_listing_moderation_decision_email_enabled: false,
@@ -458,13 +489,15 @@ describe("ModerationService", () => {
                 reporterUserId: "reporter-id",
                 reporterEmail: "reporter@example.com",
                 reporterDisplayName: "Reporter",
+                listingReportDecisionEmailEnabled: true,
                 reasonCode: "suspected_scam",
               },
             ],
           },
         ]),
     } as unknown as DatabaseService
-    const { mailService, service } = createService(databaseService)
+    const { mailService, notificationsService, service } =
+      createService(databaseService)
 
     await expect(
       service.decideListingCase("moderator-id", "case-id", "reject", {
@@ -476,6 +509,9 @@ describe("ModerationService", () => {
       },
     })
 
+    expect(
+      notificationsService.createListingModerationDecisionNotification
+    ).toHaveBeenCalledWith("owner-id", expect.any(Object))
     expect(mailService.sendListingModerationDecision).not.toHaveBeenCalled()
     expect(mailService.sendListingReportDecision).toHaveBeenCalledWith({
       decision: "rejected",
@@ -523,9 +559,22 @@ function createService(databaseService: DatabaseService) {
     sendListingModerationDecision: vi.fn().mockResolvedValue(undefined),
     sendListingReportDecision: vi.fn().mockResolvedValue(undefined),
   } as unknown as MailService
+  const notificationsService = {
+    createListingModerationDecisionNotification: vi
+      .fn()
+      .mockResolvedValue(undefined),
+    createListingReportDecisionNotification: vi
+      .fn()
+      .mockResolvedValue(undefined),
+  } as unknown as NotificationsService
 
   return {
     mailService,
-    service: new ModerationService(databaseService, mailService),
+    notificationsService,
+    service: new ModerationService(
+      databaseService,
+      mailService,
+      notificationsService
+    ),
   }
 }

@@ -61,6 +61,10 @@ Endpoint iniziali:
   non essenziali dell'utente autenticato;
 - `PATCH /users/me/notification-preferences`: aggiorna le preferenze email non
   essenziali dell'utente autenticato;
+- `GET /listings`: lista pubblicamente gli annunci approvati, pubblicati, non
+  cancellati e non scaduti;
+- `GET /listings/:id`: restituisce la scheda pubblica di un annuncio approvato
+  usando l'UUID dell'annuncio;
 - `GET /listings/me/drafts`: lista le bozze annuncio dell'utente autenticato;
 - `POST /listings/me/drafts`: crea una bozza annuncio;
 - `POST /listings/me/drafts/:id/submit-review`: invia una bozza completa a
@@ -85,6 +89,26 @@ Endpoint iniziali:
 - `POST /moderation/listings/cases/:caseId/suspend`: sospende un caso aperto.
 - `POST /reports/listings/:listingId`: crea o riusa una segnalazione attiva
   per un annuncio pubblicato e la collega a un caso di moderazione.
+- `GET /favorites/listings`: lista gli annunci pubblici salvati nei preferiti
+  dall'utente autenticato;
+- `POST /favorites/listings/:listingId`: aggiunge un annuncio pubblico ai
+  preferiti dell'utente autenticato in modo idempotente;
+- `DELETE /favorites/listings/:listingId`: rimuove un preferito dell'utente
+  autenticato in modo idempotente;
+- `GET /likes/listings/:listingId`: restituisce il conteggio pubblico dei like
+  per un annuncio pubblicato;
+- `POST /likes/listings/:listingId`: aggiunge il like dell'utente autenticato a
+  un annuncio pubblicato in modo idempotente;
+- `DELETE /likes/listings/:listingId`: rimuove il like dell'utente autenticato
+  in modo idempotente;
+- `GET /notifications`: lista le notifiche in-app dell'utente autenticato,
+  paginabili e filtrabili su non lette;
+- `GET /notifications/unread-count`: restituisce il conteggio delle notifiche
+  non lette dell'utente autenticato;
+- `POST /notifications/:notificationId/read`: marca come letta una notifica
+  posseduta dall'utente autenticato;
+- `POST /notifications/read-all`: marca come lette tutte le notifiche non
+  lette dell'utente autenticato.
 
 Gli endpoint autenticati usano un guard bearer riusabile che valida la sessione
 e rende disponibile il contesto autenticato ai controller.
@@ -114,6 +138,18 @@ Policy iniziale per bozze annuncio:
 - l'upload accetta JPEG, PNG e WebP fino a 10 MB e limita ogni bozza a 10
   immagini.
 
+Policy iniziale per annunci pubblici:
+
+- non richiedono autenticazione;
+- includono solo annunci con `moderation_status = approved`,
+  `lifecycle_status = published`, `deleted_at is null` e non scaduti;
+- la lista e' paginata e supporta filtri base per razza, comune, provincia,
+  regione e sesso;
+- la scheda pubblica usa l'UUID dell'annuncio, non lo slug, per evitare
+  ambiguita finche lo slug non e' unico globalmente;
+- la risposta include riepilogo proprietario, luogo, conteggio like, conteggio
+  immagini pronte, copertina e, nella scheda, gallery immagini pronte.
+
 Policy iniziale per moderazione:
 
 - la coda moderazione richiede bearer token valido;
@@ -138,6 +174,8 @@ Policy iniziale per moderazione:
   motivazione se il proprietario non ha disattivato queste notifiche; se il
   caso contiene segnalazioni attive, inviano anche un aggiornamento ai reporter
   interessati che non hanno disattivato queste notifiche.
+- le decisioni creano notifiche in-app per il proprietario dell'annuncio e per
+  i reporter collegati, indipendentemente dalle preferenze email.
 
 Policy iniziale per segnalazioni:
 
@@ -157,6 +195,29 @@ Policy iniziale per segnalazioni:
 - i reporter ricevono una email di aggiornamento quando la segnalazione viene
   risolta o archiviata.
 
+Policy iniziale per preferiti:
+
+- richiedono bearer token valido;
+- l'aggiunta e' consentita solo su annunci pubblici:
+  `moderation_status = approved`, `lifecycle_status = published`,
+  `deleted_at is null` e non scaduti;
+- l'aggiunta e' idempotente e restituisce se il preferito e' stato creato o era
+  gia presente;
+- la lista mostra solo preferiti che puntano ad annunci ancora pubblici;
+- la rimozione e' idempotente e puo pulire preferiti anche se l'annuncio non e'
+  piu pubblico.
+
+Policy iniziale per like:
+
+- il conteggio like e' pubblico solo per annunci pubblicati:
+  `moderation_status = approved`, `lifecycle_status = published`,
+  `deleted_at is null` e non scaduti;
+- aggiunta e rimozione del proprio like richiedono bearer token valido;
+- l'aggiunta e' consentita solo su annunci pubblici;
+- ogni utente puo avere un solo like per annuncio;
+- aggiunta e rimozione sono idempotenti e restituiscono il conteggio aggregato
+  aggiornato.
+
 Policy iniziale per `profile_type`:
 
 - l'utente puo sempre mantenere il valore attuale o tornare a `private`;
@@ -174,6 +235,15 @@ Preferenze notifiche:
   segnalazione;
 - le email di verifica account, recupero password e altre comunicazioni di
   sicurezza non sono disattivabili da queste preferenze.
+
+Centro notifiche in-app:
+
+- richiede bearer token valido;
+- ogni utente vede e modifica solo le proprie notifiche;
+- la lista supporta `page`, `pageSize` e `unreadOnly`;
+- il conteggio non lette e' disponibile separatamente per badge UI;
+- le notifiche iniziali sono generate dagli esiti di moderazione annuncio e
+  dagli aggiornamenti sulle segnalazioni.
 
 Verifica email:
 

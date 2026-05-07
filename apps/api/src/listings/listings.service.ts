@@ -10,6 +10,7 @@ import type {
   ListingDraftListQuery,
   ListingDraftUpdateInput,
   ListingImageUploadRequestInput,
+  ListingPublicListQuery,
   ListingSex,
 } from "@workspace/validation"
 
@@ -24,6 +25,10 @@ import type {
   ListingImage,
   ListingImageConfirmationResponse,
   ListingImageUploadResponse,
+  PublicListingDetail,
+  PublicListingImage,
+  PublicListingListResponse,
+  PublicListingSummary,
   ListingReviewSubmission,
 } from "./listings.types.js"
 
@@ -72,6 +77,28 @@ type ListingReviewSubmissionRow = ListingOwnerRow<"pending_review", "draft">
 
 type ListingDraftListRow = ListingDraftRow & {
   total_count: number | string
+}
+
+type PublicListingRow = Omit<
+  ListingOwnerRow<"pending_review", "draft">,
+  "moderation_status" | "lifecycle_status"
+> & {
+  total_count?: number | string
+  owner_user_id: string
+  owner_display_name: string
+  owner_profile_type: string
+  published_at: Date | string | null
+  expires_at: Date | string | null
+  like_count: number | string
+  ready_image_count: number | string
+  cover_image_id: string | null
+  cover_object_key_large: string | null
+  cover_object_key_thumb: string | null
+  cover_width: number | null
+  cover_height: number | null
+  cover_blur_hash: string | null
+  cover_sort_order: number | null
+  cover_is_cover: boolean | null
 }
 
 type MunicipalityLocationRow = {
@@ -125,6 +152,17 @@ type ListingImageReadinessRow = {
   rejected_count: number | string
 }
 
+type PublicListingImageRow = {
+  id: string
+  object_key_large: string | null
+  object_key_thumb: string | null
+  width: number | null
+  height: number | null
+  blur_hash: string | null
+  sort_order: number
+  is_cover: boolean
+}
+
 const listingDraftSelectFields = `
   listing.id::text,
   listing.title,
@@ -165,6 +203,59 @@ const listingDraftSelectFields = `
   listing.updated_at
 `
 
+const publicListingSelectFields = `
+  listing.id::text,
+  listing.title,
+  listing.slug,
+  listing.description,
+  listing.breed_id::text as breed_id,
+  breed.name as breed_name,
+  breed.slug as breed_slug,
+  listing.sex::text as sex,
+  listing.age_months_min,
+  listing.age_months_max,
+  listing.municipality_id::text as municipality_id,
+  municipality.name as municipality_name,
+  municipality.istat_code as municipality_istat_code,
+  listing.province_id::text as province_id,
+  province.name as province_name,
+  province.istat_code as province_istat_code,
+  listing.region_id::text as region_id,
+  region.name as region_name,
+  region.istat_code as region_istat_code,
+  case
+    when listing.location_point is null then null
+    else ST_Y(listing.location_point)::float8
+  end as location_lat,
+  case
+    when listing.location_point is null then null
+    else ST_X(listing.location_point)::float8
+  end as location_lng,
+  listing.contribution_cents,
+  listing.is_free,
+  listing.is_vaccinated,
+  listing.is_sterilized,
+  listing.is_dewormed,
+  listing.has_microchip,
+  listing.published_at,
+  listing.expires_at,
+  listing.created_at,
+  listing.updated_at,
+  owner.id::text as owner_user_id,
+  owner.display_name as owner_display_name,
+  owner.profile_type::text as owner_profile_type,
+  coalesce(like_counts.like_count, 0)::int as like_count,
+  coalesce(ready_images.ready_image_count, 0)::int as ready_image_count,
+  cover_images.cover_image_id,
+  cover_images.object_key_large as cover_object_key_large,
+  cover_images.object_key_thumb as cover_object_key_thumb,
+  cover_images.width as cover_width,
+  cover_images.height as cover_height,
+  cover_images.blur_hash as cover_blur_hash,
+  cover_images.sort_order as cover_sort_order,
+  cover_images.is_cover as cover_is_cover
+`
+
 const listingDraftJoins = `
   left join cat_breeds breed on breed.id = listing.breed_id
   left join geo_municipalities municipality
@@ -173,11 +264,61 @@ const listingDraftJoins = `
   left join geo_regions region on region.id = listing.region_id
 `
 
+const publicListingJoins = `
+  join users owner on owner.id = listing.owner_user_id
+  left join cat_breeds breed on breed.id = listing.breed_id
+  left join geo_municipalities municipality
+    on municipality.id = listing.municipality_id
+  left join geo_provinces province on province.id = listing.province_id
+  left join geo_regions region on region.id = listing.region_id
+  left join (
+    select
+      listing_id,
+      count(*)::int as ready_image_count
+    from listing_images
+    where status = 'ready'
+      and deleted_at is null
+    group by listing_id
+  ) ready_images on ready_images.listing_id = listing.id
+  left join (
+    select distinct on (listing_id)
+      listing_id,
+      id::text as cover_image_id,
+      object_key_large,
+      object_key_thumb,
+      width,
+      height,
+      blur_hash,
+      sort_order,
+      is_cover
+    from listing_images
+    where status = 'ready'
+      and deleted_at is null
+      and is_cover = true
+    order by listing_id, sort_order, created_at
+  ) cover_images on cover_images.listing_id = listing.id
+  left join (
+    select
+      listing_id,
+      count(*)::int as like_count
+    from listing_likes
+    group by listing_id
+  ) like_counts on like_counts.listing_id = listing.id
+`
+
 const activeDraftWhereSql = `
   listing.owner_user_id = $1::uuid
   and listing.moderation_status = 'draft'
   and listing.lifecycle_status = 'draft'
   and listing.deleted_at is null
+`
+
+const publicListingWhereSql = `
+  listing.moderation_status = 'approved'
+  and listing.lifecycle_status = 'published'
+  and listing.deleted_at is null
+  and owner.deleted_at is null
+  and (listing.expires_at is null or listing.expires_at > now())
 `
 
 const activeMunicipalityLocationSql = `
@@ -223,6 +364,49 @@ const getUserDraftSql = `
   where ${activeDraftWhereSql}
     and listing.id = $2::uuid
   limit 1
+`
+
+const listPublicListingsSql = `
+  select
+    ${publicListingSelectFields},
+    count(*) over()::int as total_count
+  from listings listing
+  ${publicListingJoins}
+  where ${publicListingWhereSql}
+    and ($3::uuid is null or listing.breed_id = $3::uuid)
+    and ($4::uuid is null or listing.municipality_id = $4::uuid)
+    and ($5::uuid is null or listing.province_id = $5::uuid)
+    and ($6::uuid is null or listing.region_id = $6::uuid)
+    and ($7::listing_sex is null or listing.sex = $7::listing_sex)
+  order by listing.published_at desc nulls last, listing.updated_at desc, listing.id
+  limit $1::int
+  offset $2::int
+`
+
+const getPublicListingSql = `
+  select ${publicListingSelectFields}
+  from listings listing
+  ${publicListingJoins}
+  where ${publicListingWhereSql}
+    and listing.id = $1::uuid
+  limit 1
+`
+
+const listPublicListingImagesSql = `
+  select
+    id::text,
+    object_key_large,
+    object_key_thumb,
+    width,
+    height,
+    blur_hash,
+    sort_order,
+    is_cover
+  from listing_images
+  where listing_id = $1::uuid
+    and status = 'ready'
+    and deleted_at is null
+  order by sort_order asc, created_at asc, id asc
 `
 
 const createUserDraftSql = `
@@ -587,6 +771,58 @@ export class ListingsService {
     private readonly objectStorageService: ObjectStorageService
   ) {}
 
+  async listPublic(
+    query: ListingPublicListQuery
+  ): Promise<PublicListingListResponse> {
+    const rows = await this.databaseService.queryRows<PublicListingRow>(
+      listPublicListingsSql,
+      [
+        query.pageSize,
+        (query.page - 1) * query.pageSize,
+        query.breedId ?? null,
+        query.municipalityId ?? null,
+        query.provinceId ?? null,
+        query.regionId ?? null,
+        query.sex ?? null,
+      ]
+    )
+    const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0
+
+    return {
+      items: rows.map(mapPublicListingSummaryRow),
+      meta: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total,
+        totalPages: Math.ceil(total / query.pageSize),
+      },
+    }
+  }
+
+  async publicDetail(id: string): Promise<PublicListingDetail> {
+    const [row] = await this.databaseService.queryRows<PublicListingRow>(
+      getPublicListingSql,
+      [id]
+    )
+
+    if (!row) {
+      throw new NotFoundException("Public listing not found.")
+    }
+
+    const images = await this.databaseService.queryRows<PublicListingImageRow>(
+      listPublicListingImagesSql,
+      [id]
+    )
+
+    return {
+      ...mapPublicListingSummaryRow(row),
+      images: {
+        ...mapPublicListingImages(row),
+        items: images.map(mapPublicListingImageRow),
+      },
+    }
+  }
+
   async listDrafts(
     userId: string,
     query: ListingDraftListQuery
@@ -803,10 +1039,11 @@ export class ListingsService {
     input: ListingImageUploadRequestInput
   ): Promise<ListingImageUploadResponse> {
     const draft = await this.draft(userId, listingId)
-    const [countRow] = await this.databaseService.queryRows<ListingImageCountRow>(
-      countDraftImagesSql,
-      [userId, listingId]
-    )
+    const [countRow] =
+      await this.databaseService.queryRows<ListingImageCountRow>(
+        countDraftImagesSql,
+        [userId, listingId]
+      )
     const imageCount = countRow ? Number(countRow.image_count) : 0
 
     if (imageCount >= maxListingImages) {
@@ -900,11 +1137,10 @@ export class ListingsService {
       return null
     }
 
-    const [row] =
-      await this.databaseService.queryRows<MunicipalityLocationRow>(
-        activeMunicipalityLocationSql,
-        [municipalityId]
-      )
+    const [row] = await this.databaseService.queryRows<MunicipalityLocationRow>(
+      activeMunicipalityLocationSql,
+      [municipalityId]
+    )
 
     if (!row) {
       throw new BadRequestException("Municipality not found or inactive.")
@@ -993,8 +1229,27 @@ function mapListingReviewSubmissionRow(
   }
 }
 
+function mapPublicListingSummaryRow(
+  row: PublicListingRow
+): PublicListingSummary {
+  return {
+    ...mapListingSharedFields(row),
+    publishedAt: toIsoStringOrNull(row.published_at),
+    expiresAt: toIsoStringOrNull(row.expires_at),
+    owner: {
+      id: row.owner_user_id,
+      displayName: row.owner_display_name,
+      profileType: row.owner_profile_type,
+    },
+    stats: {
+      likeCount: Number(row.like_count),
+    },
+    images: mapPublicListingImages(row),
+  }
+}
+
 function mapListingSharedFields(
-  row: ListingDraftRow | ListingReviewSubmissionRow
+  row: ListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
 ) {
   return {
     id: row.id,
@@ -1024,8 +1279,28 @@ function mapListingSharedFields(
   }
 }
 
+function mapPublicListingImages(
+  row: PublicListingRow
+): PublicListingSummary["images"] {
+  return {
+    readyCount: Number(row.ready_image_count),
+    cover: row.cover_image_id
+      ? {
+          id: row.cover_image_id,
+          objectKeyLarge: row.cover_object_key_large,
+          objectKeyThumb: row.cover_object_key_thumb,
+          width: row.cover_width,
+          height: row.cover_height,
+          blurHash: row.cover_blur_hash,
+          sortOrder: row.cover_sort_order ?? 0,
+          isCover: row.cover_is_cover ?? true,
+        }
+      : null,
+  }
+}
+
 function mapListingLocation(
-  row: ListingDraftRow | ListingReviewSubmissionRow
+  row: ListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
 ): ListingDraftLocation | null {
   if (
     !row.municipality_id ||
@@ -1083,6 +1358,10 @@ function toIsoString(value: Date | string) {
   return new Date(value).toISOString()
 }
 
+function toIsoStringOrNull(value: Date | string | null) {
+  return value === null ? null : toIsoString(value)
+}
+
 function mapListingImageRow(row: ListingImageRow): ListingImage {
   return {
     id: row.id,
@@ -1102,6 +1381,21 @@ function mapListingImageRow(row: ListingImageRow): ListingImage {
     rejectionReason: row.rejection_reason,
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
+  }
+}
+
+function mapPublicListingImageRow(
+  row: PublicListingImageRow
+): PublicListingImage {
+  return {
+    id: row.id,
+    objectKeyLarge: row.object_key_large,
+    objectKeyThumb: row.object_key_thumb,
+    width: row.width,
+    height: row.height,
+    blurHash: row.blur_hash,
+    sortOrder: row.sort_order,
+    isCover: row.is_cover,
   }
 }
 
@@ -1174,14 +1468,16 @@ function validateDraftImageReadiness(imageReadiness: {
   if (imageReadiness.readyCount === 0) {
     issues.push({
       path: ["images"],
-      message: "At least one processed image is required before review submission.",
+      message:
+        "At least one processed image is required before review submission.",
     })
   }
 
   if (imageReadiness.pendingCount > 0) {
     issues.push({
       path: ["images"],
-      message: "All uploaded images must finish processing before review submission.",
+      message:
+        "All uploaded images must finish processing before review submission.",
     })
   }
 

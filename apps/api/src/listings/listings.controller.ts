@@ -17,6 +17,8 @@ import {
   listingDraftListQuerySchema,
   listingDraftUpdateSchema,
   listingImageUploadRequestSchema,
+  listingPublicIdParamSchema,
+  listingPublicListQuerySchema,
 } from "@workspace/validation"
 import { ZodError } from "zod"
 
@@ -31,6 +33,28 @@ export class ListingsController {
     @Inject(ListingsService)
     private readonly listingsService: ListingsService
   ) {}
+
+  @Get()
+  async listPublic(@Query() query: Record<string, unknown>) {
+    try {
+      return this.listingsService.listPublic(
+        listingPublicListQuerySchema.parse(query)
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid public listing query.")
+    }
+  }
+
+  @Get(":id")
+  async publicDetail(@Param() params: Record<string, unknown>) {
+    try {
+      const { id } = listingPublicIdParamSchema.parse(params)
+
+      return this.listingsService.publicDetail(id)
+    } catch (error) {
+      throwValidationError(error, "Invalid public listing id.")
+    }
+  }
 
   @UseGuards(BearerAuthGuard)
   @Get("me/drafts")

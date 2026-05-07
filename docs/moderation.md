@@ -87,6 +87,8 @@ Ogni decisione:
 - invia email applicative, rispettando le preferenze opt-out dell'utente:
   - al proprietario dell'annuncio con esito e motivazione;
   - ai reporter collegati ai report attivi chiusi dalla decisione.
+- crea notifiche in-app per proprietario e reporter collegati,
+  indipendentemente dalle preferenze email.
 
 Effetti sugli annunci:
 
@@ -125,6 +127,7 @@ ricevono `resolved_at` e passano a `dismissed` se il moderatore conferma
 l'annuncio, oppure a `resolved` se il moderatore rifiuta o sospende l'annuncio.
 I reporter vengono avvisati via email con un riepilogo dell'esito se non hanno
 disattivato questa preferenza.
+Ricevono inoltre una notifica in-app leggibile dal centro notifiche.
 
 ## Persistenza
 

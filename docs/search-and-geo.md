@@ -41,6 +41,35 @@ score =
 
 I pesi devono diventare configurabili dopo i primi test reali.
 
+## Lista e scheda pubblica iniziali
+
+Endpoint:
+
+```http
+GET /listings?page=1&pageSize=20
+GET /listings/:id
+```
+
+La lista pubblica iniziale non usa ancora ranking full-text. Restituisce solo
+annunci pubblicabili, ordinati per pubblicazione recente:
+
+- `moderation_status = approved`;
+- `lifecycle_status = published`;
+- `deleted_at is null`;
+- `expires_at is null` oppure futura.
+
+Filtri iniziali:
+
+- `breedId`;
+- `municipalityId`;
+- `provinceId`;
+- `regionId`;
+- `sex`.
+
+La scheda pubblica usa l'UUID dell'annuncio per evitare collisioni tra slug.
+Include gallery delle immagini pronte, conteggio like e dati geografici
+completi quando disponibili.
+
 ## Evitare risultati vuoti
 
 Se la query non restituisce risultati:

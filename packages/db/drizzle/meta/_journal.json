@@ -57,6 +57,27 @@
       "when": 1778153389230,
       "tag": "0007_uneven_kylun",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1778154016125,
+      "tag": "0008_classy_changeling",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778154505721,
+      "tag": "0009_luxuriant_quicksilver",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1778154999350,
+      "tag": "0010_tiny_reaper",
+      "breakpoints": true
     }
   ]
 }

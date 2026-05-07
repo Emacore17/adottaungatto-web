@@ -121,6 +121,11 @@ export const reportStatus = pgEnum("report_status", [
   "dismissed",
 ])
 
+export const notificationType = pgEnum("notification_type", [
+  "listing_moderation_decision",
+  "listing_report_decision",
+])
+
 export const users = pgTable(
   "users",
   {
@@ -576,6 +581,58 @@ export const listingImages = pgTable(
   })
 )
 
+export const listingFavorites = pgTable(
+  "listing_favorites",
+  {
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    listingIdx: index("listing_favorites_listing_idx").on(table.listingId),
+    pk: primaryKey({
+      columns: [table.listingId, table.userId],
+      name: "listing_favorites_pk",
+    }),
+    userCreatedIdx: index("listing_favorites_user_created_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+  })
+)
+
+export const listingLikes = pgTable(
+  "listing_likes",
+  {
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    listingIdx: index("listing_likes_listing_idx").on(table.listingId),
+    pk: primaryKey({
+      columns: [table.listingId, table.userId],
+      name: "listing_likes_pk",
+    }),
+    userCreatedIdx: index("listing_likes_user_created_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+  })
+)
+
 export const moderationCases = pgTable(
   "moderation_cases",
   {
@@ -653,6 +710,36 @@ export const reports = pgTable(
       table.targetType,
       table.targetId,
       table.status
+    ),
+  })
+)
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationType("type").notNull(),
+    payload: jsonb("payload")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default(sql`'{}'`),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    userCreatedIdx: index("notifications_user_created_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+    userReadCreatedIdx: index("notifications_user_read_created_idx").on(
+      table.userId,
+      table.readAt,
+      table.createdAt
     ),
   })
 )

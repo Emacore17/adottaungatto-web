@@ -55,18 +55,30 @@ export const listingDraftListQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(50).default(20),
 })
 
+export const listingPublicListQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+    breedId: z.string().uuid().optional(),
+    municipalityId: z.string().uuid().optional(),
+    provinceId: z.string().uuid().optional(),
+    regionId: z.string().uuid().optional(),
+    sex: z.enum(listingSexes).optional(),
+  })
+  .strict()
+
 export const listingDraftIdParamSchema = z.object({
+  id: z.string().uuid(),
+})
+
+export const listingPublicIdParamSchema = z.object({
   id: z.string().uuid(),
 })
 
 export const listingImageUploadRequestSchema = z
   .object({
     mimeType: z.enum(listingImageMimeTypes),
-    sizeBytes: z.coerce
-      .number()
-      .int()
-      .min(1)
-      .max(listingImageMaxSizeBytes),
+    sizeBytes: z.coerce.number().int().min(1).max(listingImageMaxSizeBytes),
     isCover: z.boolean().default(false),
   })
   .strict()
@@ -75,16 +87,14 @@ export type ListingSex = (typeof listingSexes)[number]
 
 export type ListingImageMimeType = (typeof listingImageMimeTypes)[number]
 
-export type ListingDraftCreateInput = z.infer<
-  typeof listingDraftCreateSchema
->
+export type ListingDraftCreateInput = z.infer<typeof listingDraftCreateSchema>
 
-export type ListingDraftUpdateInput = z.infer<
-  typeof listingDraftUpdateSchema
->
+export type ListingDraftUpdateInput = z.infer<typeof listingDraftUpdateSchema>
 
-export type ListingDraftListQuery = z.infer<
-  typeof listingDraftListQuerySchema
+export type ListingDraftListQuery = z.infer<typeof listingDraftListQuerySchema>
+
+export type ListingPublicListQuery = z.infer<
+  typeof listingPublicListQuerySchema
 >
 
 export type ListingImageUploadRequestInput = z.infer<

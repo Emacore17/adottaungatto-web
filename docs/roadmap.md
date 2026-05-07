@@ -92,6 +92,10 @@ Deliverable:
 - ricerca geografica;
 - espansione progressiva dei risultati.
 
+Stato: avviata con `GET /listings` per lista pubblica paginata degli annunci
+approvati e `GET /listings/:id` per scheda pubblica per UUID. La lista supporta
+filtri base per `breedId`, `municipalityId`, `provinceId`, `regionId` e `sex`.
+
 ## Milestone 6 - Moderazione
 
 Obiettivo: controllare pubblicazione e qualita dei contenuti.
@@ -126,7 +130,13 @@ Deliverable:
 
 Stato: avviata con preferenze email utente per notifiche non essenziali di
 moderazione annuncio e aggiornamento segnalazioni. Le email di sicurezza
-account restano fuori dall'opt-out.
+account restano fuori dall'opt-out. E' presente anche un primo centro notifiche
+in-app autenticato con inbox, conteggio non lette e marcatura lettura; le
+decisioni di moderazione generano notifiche per proprietari e reporter. I
+preferiti utente sono avviati per annunci pubblicati, con lista autenticata,
+aggiunta idempotente e rimozione idempotente. I like pubblici aggregati sono
+avviati con conteggio pubblico per annuncio pubblicato e mutazioni autenticate
+idempotenti.
 
 ## Milestone 8 - Hardening e deploy
 

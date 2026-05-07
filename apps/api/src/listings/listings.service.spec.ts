@@ -11,6 +11,130 @@ describe("ListingsService", () => {
     expect(createListingSlug("!!!")).toBe("annuncio")
   })
 
+  it("lists public listings with filters and pagination metadata", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          ...createPublicListingRow(),
+          total_count: "1",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 2,
+        pageSize: 10,
+        regionId: "region-id",
+        sex: "female",
+      })
+    ).resolves.toEqual({
+      items: [
+        expect.objectContaining({
+          id: "listing-id",
+          title: "Gattino a Roma",
+          publishedAt: "2026-04-20T10:00:00.000Z",
+          createdAt: "2026-04-01T09:00:00.000Z",
+          owner: {
+            id: "owner-id",
+            displayName: "Owner",
+            profileType: "private",
+          },
+          stats: {
+            likeCount: 4,
+          },
+          images: {
+            readyCount: 2,
+            cover: {
+              id: "cover-image-id",
+              objectKeyLarge: "local/listings/listing-id/large/cover.webp",
+              objectKeyThumb: "local/listings/listing-id/thumb/cover.webp",
+              width: 1200,
+              height: 800,
+              blurHash: "blurhash",
+              sortOrder: 0,
+              isCover: true,
+            },
+          },
+        }),
+      ],
+      meta: {
+        page: 2,
+        pageSize: 10,
+        total: 1,
+        totalPages: 1,
+      },
+    })
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
+      10,
+      10,
+      null,
+      null,
+      null,
+      "region-id",
+      "female",
+    ])
+  })
+
+  it("loads a public listing detail with ready images", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([createPublicListingRow()])
+        .mockResolvedValueOnce([
+          {
+            id: "cover-image-id",
+            object_key_large: "local/listings/listing-id/large/cover.webp",
+            object_key_thumb: "local/listings/listing-id/thumb/cover.webp",
+            width: 1200,
+            height: 800,
+            blur_hash: "blurhash",
+            sort_order: 0,
+            is_cover: true,
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(service.publicDetail("listing-id")).resolves.toMatchObject({
+      id: "listing-id",
+      images: {
+        readyCount: 2,
+        items: [
+          {
+            id: "cover-image-id",
+            objectKeyLarge: "local/listings/listing-id/large/cover.webp",
+            objectKeyThumb: "local/listings/listing-id/thumb/cover.webp",
+            width: 1200,
+            height: 800,
+            blurHash: "blurhash",
+            sortOrder: 0,
+            isCover: true,
+          },
+        ],
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "listing-id",
+    ])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      "listing-id",
+    ])
+  })
+
+  it("throws when a public listing detail is missing", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(service.publicDetail("missing-id")).rejects.toBeInstanceOf(
+      NotFoundException
+    )
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+  })
+
   it("lists user drafts with pagination metadata", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([
@@ -181,11 +305,11 @@ describe("ListingsService", () => {
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
-    await expect(
-      service.deleteDraft("user-id", "listing-id")
-    ).resolves.toEqual({
-      deleted: true,
-    })
+    await expect(service.deleteDraft("user-id", "listing-id")).resolves.toEqual(
+      {
+        deleted: true,
+      }
+    )
     expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
       "listing-id",
       "user-id",
@@ -543,6 +667,55 @@ function createDraftRow() {
     lifecycle_status: "draft",
     created_at: "2026-04-01T09:00:00.000Z",
     updated_at: "2026-04-01T10:00:00.000Z",
+  }
+}
+
+function createPublicListingRow() {
+  return {
+    id: "listing-id",
+    title: "Gattino a Roma",
+    slug: "gattino-a-roma",
+    description: "Cerca una famiglia",
+    breed_id: "breed-id",
+    breed_name: "Europeo",
+    breed_slug: "europeo",
+    sex: "female",
+    age_months_min: 2,
+    age_months_max: 4,
+    municipality_id: "municipality-id",
+    municipality_name: "Roma",
+    municipality_istat_code: "058091",
+    province_id: "province-id",
+    province_name: "Roma",
+    province_istat_code: "058",
+    region_id: "region-id",
+    region_name: "Lazio",
+    region_istat_code: "12",
+    location_lat: "41.8931",
+    location_lng: "12.4828",
+    contribution_cents: null,
+    is_free: true,
+    is_vaccinated: true,
+    is_sterilized: null,
+    is_dewormed: true,
+    has_microchip: false,
+    published_at: "2026-04-20T10:00:00.000Z",
+    expires_at: null,
+    created_at: "2026-04-01T09:00:00.000Z",
+    updated_at: "2026-04-20T10:00:00.000Z",
+    owner_user_id: "owner-id",
+    owner_display_name: "Owner",
+    owner_profile_type: "private",
+    like_count: "4",
+    ready_image_count: "2",
+    cover_image_id: "cover-image-id",
+    cover_object_key_large: "local/listings/listing-id/large/cover.webp",
+    cover_object_key_thumb: "local/listings/listing-id/thumb/cover.webp",
+    cover_width: 1200,
+    cover_height: 800,
+    cover_blur_hash: "blurhash",
+    cover_sort_order: 0,
+    cover_is_cover: true,
   }
 }
 
