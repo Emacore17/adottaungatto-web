@@ -14,6 +14,11 @@ describe("ListingsController", () => {
     await controller.listPublic({
       page: "2",
       pageSize: "10",
+      ageMonthsMin: "2",
+      ageMonthsMax: "12",
+      hasImages: "true",
+      hasMicrochip: "false",
+      isFree: "true",
       sex: "female",
       regionId: "00000000-0000-0000-0000-000000000001",
     })
@@ -21,6 +26,11 @@ describe("ListingsController", () => {
     expect(listingsService.listPublic).toHaveBeenCalledWith({
       page: 2,
       pageSize: 10,
+      ageMonthsMin: 2,
+      ageMonthsMax: 12,
+      hasImages: true,
+      hasMicrochip: false,
+      isFree: true,
       sex: "female",
       regionId: "00000000-0000-0000-0000-000000000001",
     })
@@ -35,6 +45,21 @@ describe("ListingsController", () => {
     await expect(
       controller.listPublic({
         sex: "invalid",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
+  it("rejects invalid public listing age ranges", async () => {
+    const listingsService = {
+      listPublic: vi.fn(),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(
+      controller.listPublic({
+        ageMonthsMin: "24",
+        ageMonthsMax: "12",
       })
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(listingsService.listPublic).not.toHaveBeenCalled()

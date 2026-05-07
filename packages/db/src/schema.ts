@@ -540,6 +540,37 @@ export const listings = pgTable(
       "gist",
       table.locationPoint
     ),
+    publicAgeIdx: index("listings_public_age_idx")
+      .on(table.ageMonthsMin, table.ageMonthsMax)
+      .where(
+        sql`${table.moderationStatus} = 'approved' AND ${table.lifecycleStatus} = 'published' AND ${table.deletedAt} IS NULL`
+      ),
+    publicBreedSexIdx: index("listings_public_breed_sex_idx")
+      .on(table.breedId, table.sex)
+      .where(
+        sql`${table.moderationStatus} = 'approved' AND ${table.lifecycleStatus} = 'published' AND ${table.deletedAt} IS NULL`
+      ),
+    publicCareIdx: index("listings_public_care_idx")
+      .on(
+        table.isFree,
+        table.isVaccinated,
+        table.isSterilized,
+        table.isDewormed,
+        table.hasMicrochip
+      )
+      .where(
+        sql`${table.moderationStatus} = 'approved' AND ${table.lifecycleStatus} = 'published' AND ${table.deletedAt} IS NULL`
+      ),
+    publicLocationIdx: index("listings_public_location_idx")
+      .on(table.regionId, table.provinceId, table.municipalityId)
+      .where(
+        sql`${table.moderationStatus} = 'approved' AND ${table.lifecycleStatus} = 'published' AND ${table.deletedAt} IS NULL`
+      ),
+    publicRecentIdx: index("listings_public_recent_idx")
+      .on(table.publishedAt, table.updatedAt, table.id)
+      .where(
+        sql`${table.moderationStatus} = 'approved' AND ${table.lifecycleStatus} = 'published' AND ${table.deletedAt} IS NULL`
+      ),
   })
 )
 

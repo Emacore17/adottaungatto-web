@@ -14,6 +14,18 @@ gatti e gattini.
 - `packages/ui`: componenti shadcn/ui del template.
 - `docs`: documentazione architetturale e ADR.
 
+## Documentazione operativa
+
+- [docs/project-state.md](docs/project-state.md): stato reale e gap principali.
+- [docs/production-readiness.md](docs/production-readiness.md): cosa manca per
+  la produzione.
+- [docs/local-testing-and-mocks.md](docs/local-testing-and-mocks.md): mock,
+  fixture e prova locale.
+- [docs/ops-monitoring-release.md](docs/ops-monitoring-release.md): ambienti,
+  osservabilita, Dynatrace e CI/CD.
+- [docs/agent-documentation-plan.md](docs/agent-documentation-plan.md): piano
+  documentale per i prossimi lavori con agenti AI.
+
 ## Servizi locali
 
 ```bash
@@ -123,7 +135,8 @@ Gli annunci pubblicati espongono anche un conteggio pubblico dei like; gli
 utenti autenticati possono aggiungere o rimuovere il proprio like in modo
 idempotente.
 L'API espone una prima lista pubblica paginata degli annunci approvati e una
-scheda pubblica per UUID, con filtri base per luogo, razza e sesso.
+scheda pubblica per UUID, con filtri per luogo, razza, sesso, fascia eta,
+gratuitita, dati sanitari e presenza immagini.
 
 Le funzionalita applicative complete non sono ancora implementate.
 Gli utenti possono inoltre gestire preferenze email per notifiche non

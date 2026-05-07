@@ -11,9 +11,15 @@ adottaungatto.it.
 - [roadmap.md](roadmap.md): roadmap a milestone incrementali.
 - [modules.md](modules.md): moduli principali del sistema.
 - [data-model.md](data-model.md): modello dati iniziale.
+- [project-state.md](project-state.md): stato reale del repository e gap principali.
 - [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
 - [italian-places-import.md](italian-places-import.md): import dei luoghi italiani da fonti ufficiali.
 - [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
+- [production-readiness.md](production-readiness.md): checklist per arrivare a produzione.
+- [ops-monitoring-release.md](ops-monitoring-release.md): ambienti, osservabilita, Dynatrace e CI/CD.
+- [local-testing-and-mocks.md](local-testing-and-mocks.md): mock, fixture e prova locale.
+- [sponsored-listings-business.md](sponsored-listings-business.md): strategia per annunci sponsorizzati.
+- [agent-documentation-plan.md](agent-documentation-plan.md): piano documentale ottimizzato per agenti AI.
 - [favorites.md](favorites.md): preferiti degli annunci pubblicati.
 - [likes.md](likes.md): like pubblici aggregati sugli annunci pubblicati.
 - [moderation.md](moderation.md): moderazione annunci e segnalazioni.

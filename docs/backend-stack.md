@@ -10,7 +10,7 @@ Lo stack backend proposto e':
 - Database: PostgreSQL con estensione PostGIS.
 - Accesso dati e migrazioni: Drizzle ORM e Drizzle Kit.
 - Cache, rate limiting e code: Redis.
-- Job queue: BullMQ.
+- Job queue: BullMQ come target, non ancora integrato.
 - Storage immagini: API S3-compatible, MinIO in locale.
 - Validazione: Zod o class-validator, con preferenza per schemi condivisibili
   quando utile tra API e frontend.
@@ -47,8 +47,9 @@ importante per full-text search, estensioni, indici GIN/GiST e query geografiche
 
 ### Redis + BullMQ
 
-Redis serve per cache breve, rate limit e code. BullMQ copre job asincroni come:
-processamento immagini, invio email, notifiche, import luoghi e pulizia dati.
+Redis serve per cache breve, rate limit e code. BullMQ resta il target per job
+asincroni come processamento immagini, invio email, notifiche, import luoghi e
+pulizia dati; al momento il worker usa comandi espliciti senza coda persistente.
 
 ### S3-compatible storage
 
@@ -64,4 +65,3 @@ Google Cloud Storage compatibile o altri provider.
 - Motore search dedicato obbligatorio da subito: PostgreSQL basta per validare
   prodotto e ranking iniziale.
 - Kubernetes: utile solo quando esistono ambienti e carichi che lo giustificano.
-

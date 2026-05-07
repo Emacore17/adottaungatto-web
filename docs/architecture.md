@@ -39,7 +39,8 @@ Il sistema e' diviso in questi blocchi:
 - Worker: processi asincroni per import luoghi, immagini, notifiche e job
   periodici.
 - Database: PostgreSQL con PostGIS come fonte dati primaria.
-- Cache/code: Redis per rate limiting, cache breve e job queue.
+- Cache/code: Redis come base per rate limiting, cache breve e job queue
+  futura.
 - Object storage: MinIO in locale, S3-compatible in cloud.
 - Email provider: Mailpit in locale, provider transazionale in produzione.
 
@@ -75,4 +76,3 @@ In produzione futura:
 - Immagini: upload non validati sono un vettore di sicurezza e costo.
 - Ricerca: risultati vuoti peggiorano il prodotto; il ranking deve poter
   espandere luogo e filtri in modo esplicito.
-

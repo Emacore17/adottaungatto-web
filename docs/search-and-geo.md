@@ -64,11 +64,23 @@ Filtri iniziali:
 - `municipalityId`;
 - `provinceId`;
 - `regionId`;
-- `sex`.
+- `sex`;
+- `ageMonthsMin`;
+- `ageMonthsMax`;
+- `isFree`;
+- `isVaccinated`;
+- `isSterilized`;
+- `isDewormed`;
+- `hasMicrochip`;
+- `hasImages`.
 
 La scheda pubblica usa l'UUID dell'annuncio per evitare collisioni tra slug.
 Include gallery delle immagini pronte, conteggio like e dati geografici
 completi quando disponibili.
+
+Stato: la lista pubblica filtrabile e' implementata. Full-text search, ranking,
+benchmark e fallback per risultati vuoti non sono ancora implementati; sono il
+prossimo blocco tecnico della milestone ricerca.
 
 ## Evitare risultati vuoti
 

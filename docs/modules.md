@@ -69,7 +69,7 @@
 ## Notifications
 
 - Email transazionali.
-- Notifiche interne future.
+- Notifiche interne in-app.
 - Eventi legati a stato annuncio, contatti e moderazione.
 
 ## Admin
@@ -79,4 +79,3 @@
 - Gestione segnalazioni.
 - Configurazioni semi-statiche.
 - Monitor import e job.
-

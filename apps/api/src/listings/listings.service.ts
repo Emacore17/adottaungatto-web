@@ -378,6 +378,23 @@ const listPublicListingsSql = `
     and ($5::uuid is null or listing.province_id = $5::uuid)
     and ($6::uuid is null or listing.region_id = $6::uuid)
     and ($7::listing_sex is null or listing.sex = $7::listing_sex)
+    and (
+      $8::int is null
+      or coalesce(listing.age_months_max, listing.age_months_min) >= $8::int
+    )
+    and (
+      $9::int is null
+      or coalesce(listing.age_months_min, listing.age_months_max) <= $9::int
+    )
+    and ($10::boolean is null or listing.is_free = $10::boolean)
+    and ($11::boolean is null or listing.is_vaccinated = $11::boolean)
+    and ($12::boolean is null or listing.is_sterilized = $12::boolean)
+    and ($13::boolean is null or listing.is_dewormed = $13::boolean)
+    and ($14::boolean is null or listing.has_microchip = $14::boolean)
+    and (
+      $15::boolean is null
+      or (coalesce(ready_images.ready_image_count, 0) > 0) = $15::boolean
+    )
   order by listing.published_at desc nulls last, listing.updated_at desc, listing.id
   limit $1::int
   offset $2::int
@@ -784,6 +801,14 @@ export class ListingsService {
         query.provinceId ?? null,
         query.regionId ?? null,
         query.sex ?? null,
+        query.ageMonthsMin ?? null,
+        query.ageMonthsMax ?? null,
+        query.isFree ?? null,
+        query.isVaccinated ?? null,
+        query.isSterilized ?? null,
+        query.isDewormed ?? null,
+        query.hasMicrochip ?? null,
+        query.hasImages ?? null,
       ]
     )
     const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0

@@ -158,3 +158,10 @@ segnalazioni utente al target e, quando disponibile, al caso di moderazione.
 - Revisione immagini automatica.
 - Policy interne versionate.
 - Template di motivazione per moderatori.
+
+## Gap produzione
+
+La moderazione backend e' avviata, ma l'area amministrativa completa non esiste
+ancora. Prima di un rilascio pubblico servono UI interna protetta, MFA per
+ruoli interni, audit piu esteso, gestione ruoli, strumenti anti-abuso, filtri
+coda avanzati e logging/alert sulle azioni ad alto rischio.

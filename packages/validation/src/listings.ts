@@ -12,6 +12,11 @@ export const listingImageMaxSizeBytes = 10 * 1024 * 1024
 
 const nullableUuidSchema = z.string().uuid().nullable()
 
+const queryBooleanSchema = z.union([
+  z.boolean(),
+  z.enum(["true", "false"]).transform((value) => value === "true"),
+])
+
 const listingDraftFieldsSchema = z.object({
   title: z.string().trim().min(3).max(120),
   description: z.string().trim().min(10).max(5000),
@@ -64,8 +69,17 @@ export const listingPublicListQuerySchema = z
     provinceId: z.string().uuid().optional(),
     regionId: z.string().uuid().optional(),
     sex: z.enum(listingSexes).optional(),
+    ageMonthsMin: z.coerce.number().int().min(0).max(360).optional(),
+    ageMonthsMax: z.coerce.number().int().min(0).max(360).optional(),
+    isFree: queryBooleanSchema.optional(),
+    isVaccinated: queryBooleanSchema.optional(),
+    isSterilized: queryBooleanSchema.optional(),
+    isDewormed: queryBooleanSchema.optional(),
+    hasMicrochip: queryBooleanSchema.optional(),
+    hasImages: queryBooleanSchema.optional(),
   })
   .strict()
+  .superRefine(validatePublicListQuery)
 
 export const listingDraftIdParamSchema = z.object({
   id: z.string().uuid(),
@@ -142,6 +156,26 @@ function validateDraftFields(
       code: z.ZodIssueCode.custom,
       message: "Paid listings require a contribution amount.",
       path: ["contributionCents"],
+    })
+  }
+}
+
+function validatePublicListQuery(
+  input: {
+    ageMonthsMin?: number
+    ageMonthsMax?: number
+  },
+  context: z.RefinementCtx
+) {
+  if (
+    input.ageMonthsMin !== undefined &&
+    input.ageMonthsMax !== undefined &&
+    input.ageMonthsMin > input.ageMonthsMax
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Minimum age cannot be greater than maximum age.",
+      path: ["ageMonthsMax"],
     })
   }
 }

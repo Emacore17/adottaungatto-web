@@ -1,11 +1,13 @@
-# Modello dati iniziale
+# Modello dati
 
-Questo modello e' intenzionalmente iniziale. Serve a guidare schema e
-migrazioni, non a congelare tutte le funzionalita future.
+Questo documento descrive lo stato reale dello schema Drizzle al 7 maggio 2026
+e separa gli elementi gia implementati da quelli pianificati.
 
-## Tabelle identity
+## Implementato
 
-### users
+### Identity
+
+`users`
 
 - `id`
 - `email`
@@ -15,32 +17,28 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `phone_e164`
 - `phone_verified_at`
 - `display_name`
-- `profile_type`: `private`, `professional`, `association`, `shelter`, `breeder`
+- `profile_type`: `private`, `professional`, `association`, `shelter`,
+  `breeder`
 - `status`: `active`, `pending_verification`, `suspended`, `deleted`
-- `created_at`, `updated_at`, `deleted_at`
+- `deleted_at`
+- `created_at`, `updated_at`
 
-### roles
+`roles`
 
 - `id`
-- `code`: `registered_user`, `professional_user`, `moderator`, `admin`
+- `code`
 - `name`
 - `description`
+- `created_at`, `updated_at`
 
-### user_roles
+`user_roles`
 
 - `user_id`
 - `role_id`
 - `granted_by_user_id`
 - `created_at`
 
-### user_notification_preferences
-
-- `user_id`
-- `listing_moderation_decision_email_enabled`
-- `listing_report_decision_email_enabled`
-- `created_at`, `updated_at`
-
-### sessions
+`sessions`
 
 - `id`
 - `user_id`
@@ -50,7 +48,7 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `last_seen_at`
 - `revoked_at`
 
-### email_verification_tokens
+`email_verification_tokens`
 
 - `id`
 - `user_id`
@@ -60,7 +58,7 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `consumed_at`
 - `created_at`, `updated_at`
 
-### password_reset_tokens
+`password_reset_tokens`
 
 - `id`
 - `user_id`
@@ -70,9 +68,16 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `consumed_at`
 - `created_at`, `updated_at`
 
-## Tabelle geografia
+`user_notification_preferences`
 
-### geo_regions
+- `user_id`
+- `listing_moderation_decision_email_enabled`
+- `listing_report_decision_email_enabled`
+- `created_at`, `updated_at`
+
+### Geografia
+
+`geo_regions`
 
 - `id`
 - `istat_code`
@@ -82,22 +87,25 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `centroid`
 - `valid_from`
 - `valid_to`
+- `created_at`, `updated_at`
 
-### geo_provinces
+`geo_provinces`
 
 - `id`
 - `region_id`
 - `istat_code`
 - `vehicle_code`
 - `name`
-- `type`: `province`, `metropolitan_city`, `free_municipal_consortium`, `autonomous_province`
+- `type`: `province`, `metropolitan_city`, `free_municipal_consortium`,
+  `autonomous_province`, `non_administrative_unit`
 - `slug`
 - `geom`
 - `centroid`
 - `valid_from`
 - `valid_to`
+- `created_at`, `updated_at`
 
-### geo_municipalities
+`geo_municipalities`
 
 - `id`
 - `province_id`
@@ -111,31 +119,72 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `valid_from`
 - `valid_to`
 - `is_active`
+- `created_at`, `updated_at`
 
-### geo_place_aliases
-
-- `id`
-- `place_type`: `region`, `province`, `municipality`
-- `place_id`
-- `alias`
-- `alias_normalized`
-- `source`
-
-### geo_import_runs
+`geo_import_runs`
 
 - `id`
 - `source_name`
 - `source_url`
-- `source_reference_date`
+- `source_checksum`
+- `source_bytes`
+- `source_fetched_at`
+- `reference_date`
+- `status`
+- `summary`
 - `started_at`
 - `finished_at`
-- `status`
-- `checksum`
-- `summary_json`
+- `created_at`, `updated_at`
 
-## Tabelle annunci
+`geo_import_staged_regions`
 
-### cat_breeds
+- `id`
+- `import_run_id`
+- `istat_code`
+- `name`
+- `slug`
+- `geographical_area_code`
+- `geographical_area_name`
+- `created_at`, `updated_at`
+
+`geo_import_staged_provinces`
+
+- `id`
+- `import_run_id`
+- `region_istat_code`
+- `istat_code`
+- `historic_province_code`
+- `name`
+- `type`
+- `slug`
+- `vehicle_code`
+- `created_at`, `updated_at`
+
+`geo_import_staged_municipalities`
+
+- `id`
+- `import_run_id`
+- `region_istat_code`
+- `province_istat_code`
+- `historic_province_code`
+- `progressive_code`
+- `istat_code`
+- `numeric_code`
+- `cadastral_code`
+- `name`
+- `italian_name`
+- `alternative_name`
+- `slug`
+- `name_normalized`
+- `is_province_capital`
+- `nuts1_2021`, `nuts2_2021`, `nuts3_2021`
+- `nuts1_2024`, `nuts2_2024`, `nuts3_2024`
+- `raw_data`
+- `created_at`, `updated_at`
+
+### Annunci
+
+`cat_breeds`
 
 - `id`
 - `name`
@@ -143,19 +192,17 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `synonyms`
 - `is_active`
 - `sort_order`
+- `created_at`, `updated_at`
 
-### listings
+`listings`
 
 - `id`
 - `owner_user_id`
 - `title`
 - `slug`
 - `description`
-- `species`: inizialmente sempre `cat`
 - `breed_id`
-- `breed_type`: `purebred`, `mixed`, `not_breed`, `unknown`
 - `sex`: `male`, `female`, `unknown`
-- `estimated_birth_date`
 - `age_months_min`
 - `age_months_max`
 - `municipality_id`
@@ -168,15 +215,24 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `is_sterilized`
 - `is_dewormed`
 - `has_microchip`
-- `contact_email_enabled`
-- `contact_phone_enabled`
-- `moderation_status`: `draft`, `pending_review`, `approved`, `rejected`, `suspended`
+- `moderation_status`: `draft`, `pending_review`, `approved`, `rejected`,
+  `suspended`
 - `lifecycle_status`: `draft`, `published`, `expired`, `adopted`, `deleted`
 - `published_at`
 - `expires_at`
-- `created_at`, `updated_at`, `deleted_at`
+- `deleted_at`
+- `created_at`, `updated_at`
 
-### listing_images
+Indici pubblici attuali:
+
+- `listings_location_point_gix`
+- `listings_public_age_idx`
+- `listings_public_breed_sex_idx`
+- `listings_public_care_idx`
+- `listings_public_location_idx`
+- `listings_public_recent_idx`
+
+`listing_images`
 
 - `id`
 - `listing_id`
@@ -193,35 +249,26 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `is_cover`
 - `status`: `uploaded`, `processing`, `ready`, `rejected`, `deleted`
 - `rejection_reason`
-- `created_at`, `updated_at`, `deleted_at`
+- `deleted_at`
+- `created_at`, `updated_at`
 
-## Tabelle interazioni
+### Interazioni
 
-### listing_likes
-
-- `listing_id`
-- `user_id`
-- `created_at`
-
-### listing_favorites
+`listing_likes`
 
 - `listing_id`
 - `user_id`
 - `created_at`
 
-### listing_contact_requests
+`listing_favorites`
 
-- `id`
 - `listing_id`
-- `requester_user_id`
-- `owner_user_id`
-- `message`
-- `status`
+- `user_id`
 - `created_at`
 
-## Tabelle moderazione
+### Moderazione
 
-### moderation_cases
+`moderation_cases`
 
 - `id`
 - `listing_id`
@@ -230,22 +277,24 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `status`: `open`, `approved`, `rejected`, `suspended`, `closed`
 - `reason_code`
 - `notes`
-- `created_at`
 - `closed_at`
+- `created_at`, `updated_at`
 
-### moderation_actions
+`moderation_actions`
 
 - `id`
 - `case_id`
 - `actor_user_id`
-- `action`
+- `action`: `opened`, `assigned`, `approved`, `rejected`, `suspended`,
+  `closed`, `commented`, `reported`
 - `reason_code`
 - `reason_text`
 - `from_status`
 - `to_status`
+- `metadata`
 - `created_at`
 
-### reports
+`reports`
 
 - `id`
 - `reporter_user_id`
@@ -255,12 +304,12 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `reason_code`
 - `description`
 - `status`: `open`, `linked`, `resolved`, `dismissed`
-- `created_at`, `updated_at`
 - `resolved_at`
+- `created_at`, `updated_at`
 
-## Tabelle trasversali
+### Notifiche
 
-### notifications
+`notifications`
 
 - `id`
 - `user_id`
@@ -269,14 +318,17 @@ migrazioni, non a congelare tutte le funzionalita future.
 - `read_at`
 - `created_at`
 
-### audit_logs
+## Pianificato
 
-- `id`
-- `actor_user_id`
-- `action`
-- `target_type`
-- `target_id`
-- `ip_address`
-- `user_agent`
-- `metadata_json`
-- `created_at`
+Questi elementi erano gia citati nella documentazione iniziale o sono emersi
+come necessari, ma non sono ancora nello schema:
+
+- `geo_place_aliases` per alias territoriali;
+- `listing_contact_requests` per contatto proprietario privacy-first;
+- `audit_logs` trasversale non legato solo alla moderazione;
+- campi profilo pubblico esteso;
+- cambio email e verifica telefono completa;
+- documenti di ricerca `listing_search_documents`;
+- entita per campagne sponsorizzate;
+- tabelle amministrative per policy interne e template motivazioni;
+- retention e richieste GDPR/export/cancellazione.

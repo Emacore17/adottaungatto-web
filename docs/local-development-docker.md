@@ -27,9 +27,9 @@ Usare [.env.example](../.env.example) come template per `.env`.
 
 Non committare mai `.env` reali.
 
-## Comandi previsti
+## Comandi disponibili
 
-Dopo lo scaffolding del monorepo, gli script dovrebbero essere:
+Gli script root attuali sono:
 
 ```bash
 pnpm dev
@@ -39,7 +39,16 @@ pnpm typecheck
 pnpm db:migrate
 pnpm db:seed
 pnpm geo:import
+pnpm geo:import:apply
+pnpm geo:promote
+pnpm geo:promote:apply
+pnpm geo:boundaries
+pnpm geo:boundaries:apply
+pnpm media:process
 ```
+
+Per dettagli su mock, fixture e script locali mancanti vedere
+[local-testing-and-mocks.md](local-testing-and-mocks.md).
 
 ## Note
 
@@ -48,4 +57,5 @@ pnpm geo:import
 - I dati Docker sono in volumi nominati.
 - Per reset locale va documentato un comando esplicito, da non eseguire
   automaticamente.
-
+- I log locali e la cache `.turbo` sono artefatti ignorati da Git e possono
+  essere rimossi durante la pulizia del workspace.

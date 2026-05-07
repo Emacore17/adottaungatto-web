@@ -94,7 +94,8 @@ Deliverable:
 
 Stato: avviata con `GET /listings` per lista pubblica paginata degli annunci
 approvati e `GET /listings/:id` per scheda pubblica per UUID. La lista supporta
-filtri base per `breedId`, `municipalityId`, `provinceId`, `regionId` e `sex`.
+filtri principali per luogo, razza, sesso, fascia eta, gratuitita, dati
+sanitari e presenza immagini.
 
 ## Milestone 6 - Moderazione
 
@@ -151,3 +152,7 @@ Deliverable:
 - metriche;
 - pipeline CI/CD;
 - deploy cloud documentato.
+
+Stato: non avviata a livello implementativo. Sono presenti checklist e piano
+operativo in `production-readiness.md` e `ops-monitoring-release.md`; il
+progetto non e' ancora rilasciabile in produzione.

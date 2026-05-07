@@ -113,6 +113,10 @@ Endpoint iniziali:
 Gli endpoint autenticati usano un guard bearer riusabile che valida la sessione
 e rende disponibile il contesto autenticato ai controller.
 
+Stato produzione: la base auth e autorizzazione e' adatta allo sviluppo, ma non
+e' ancora sufficiente per un rilascio pubblico. La checklist di hardening e'
+in [production-readiness.md](production-readiness.md).
+
 Policy iniziale per bozze annuncio:
 
 - un utente puo leggere e modificare solo le proprie bozze;
@@ -143,8 +147,9 @@ Policy iniziale per annunci pubblici:
 - non richiedono autenticazione;
 - includono solo annunci con `moderation_status = approved`,
   `lifecycle_status = published`, `deleted_at is null` e non scaduti;
-- la lista e' paginata e supporta filtri base per razza, comune, provincia,
-  regione e sesso;
+- la lista e' paginata e supporta filtri principali per razza, comune,
+  provincia, regione, sesso, fascia eta, gratuitita, dati sanitari e presenza
+  immagini;
 - la scheda pubblica usa l'UUID dell'annuncio, non lo slug, per evitare
   ambiguita finche lo slug non e' unico globalmente;
 - la risposta include riepilogo proprietario, luogo, conteggio like, conteggio

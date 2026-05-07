@@ -57,7 +57,21 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 29. Fatto: avviare preferiti utente per annunci pubblicati.
 30. Fatto: avviare like pubblici aggregati per annunci pubblicati.
 31. Fatto: avviare endpoint pubblici di lista e scheda annuncio.
-32. Aggiungere filtri principali alla lista pubblica annunci.
+32. Fatto: aggiungere filtri principali alla lista pubblica annunci.
+33. Avviare ricerca full-text per la lista pubblica annunci.
+
+## Task documentali e pre-produzione
+
+1. Fatto: ripulire artefatti locali ignorati da Git.
+2. Fatto: allineare documentazione a stato reale del repository.
+3. Fatto: aggiungere piano documentale per agenti AI.
+4. Fatto: aggiungere checklist readiness produzione.
+5. Fatto: aggiungere piano locale per mock, fixture e smoke test.
+6. Fatto: aggiungere piano osservabilita, ambienti, release e CI/CD.
+7. Dettagliare specifica tecnica della ricerca full-text e ranking.
+8. Dettagliare hardening auth/sessioni/rate limit.
+9. Dettagliare area admin/moderazione sicura.
+10. Dettagliare test data e script bootstrap locale.
 
 ## Task da non fare ancora
 

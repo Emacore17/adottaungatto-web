@@ -78,6 +78,13 @@
       "when": 1778154999350,
       "tag": "0010_tiny_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778156972374,
+      "tag": "0011_safe_kang",
+      "breakpoints": true
     }
   ]
 }

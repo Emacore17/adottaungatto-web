@@ -26,6 +26,11 @@ describe("ListingsService", () => {
       service.listPublic({
         page: 2,
         pageSize: 10,
+        ageMonthsMin: 2,
+        ageMonthsMax: 12,
+        hasImages: true,
+        hasMicrochip: false,
+        isFree: true,
         regionId: "region-id",
         sex: "female",
       })
@@ -74,6 +79,14 @@ describe("ListingsService", () => {
       null,
       "region-id",
       "female",
+      2,
+      12,
+      true,
+      null,
+      null,
+      null,
+      false,
+      true,
     ])
   })
 
