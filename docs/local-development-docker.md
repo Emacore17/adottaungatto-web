@@ -32,12 +32,16 @@ Non committare mai `.env` reali.
 Gli script root attuali sono:
 
 ```bash
+pnpm dev:demo
+pnpm demo:setup
+pnpm demo:reset
 pnpm dev
 pnpm test
 pnpm lint
 pnpm typecheck
 pnpm db:migrate
 pnpm db:seed
+pnpm db:seed:demo
 pnpm geo:import
 pnpm geo:import:apply
 pnpm geo:promote
@@ -49,6 +53,21 @@ pnpm media:process
 
 Per dettagli su mock, fixture e script locali mancanti vedere
 [local-testing-and-mocks.md](local-testing-and-mocks.md).
+
+## Demo end-to-end
+
+`pnpm dev:demo` e' il percorso consigliato dopo un clone del repository:
+
+1. avvia PostgreSQL/PostGIS, Redis, MinIO e Mailpit;
+2. attende che i servizi siano raggiungibili;
+3. applica le migrazioni;
+4. inserisce seed base e fixture demo;
+5. carica immagini placeholder nel bucket MinIO locale;
+6. avvia `pnpm dev`.
+
+`pnpm demo:setup` esegue solo la preparazione senza avviare i processi di
+sviluppo. `pnpm demo:reset` esegue `docker compose down -v --remove-orphans`:
+elimina i volumi locali Docker e consente di ripartire da un database vuoto.
 
 ## Note
 

@@ -1,10 +1,28 @@
 import type { ListingPublicSort } from "@workspace/validation/listings"
+import type { PlaceAutocompleteType } from "@workspace/validation/places"
 
 type ListingsRouteQuery = {
   page?: number
   pageSize?: number
   q?: string
+  municipalityId?: string
+  provinceId?: string
+  regionId?: string
+  sex?: string
+  ageMonthsMin?: number
+  ageMonthsMax?: number
+  isFree?: boolean
+  isVaccinated?: boolean
+  isSterilized?: boolean
+  isDewormed?: boolean
+  hasMicrochip?: boolean
+  hasImages?: boolean
+  lat?: number
+  lng?: number
+  radiusKm?: number
   sort?: ListingPublicSort
+  placeLabel?: string
+  placeType?: PlaceAutocompleteType | "position"
 }
 
 function withSearchParams(path: string, query: Record<string, unknown> = {}) {
@@ -25,7 +43,8 @@ function withSearchParams(path: string, query: Record<string, unknown> = {}) {
 
 export const routes = {
   home: "/",
-  listings: (query?: ListingsRouteQuery) => withSearchParams("/listings", query),
+  listings: (query?: ListingsRouteQuery) =>
+    withSearchParams("/listings", query),
   listing: (id: string) => `/listings/${id}`,
   login: (next?: string) => withSearchParams("/login", { next }),
   register: "/register",

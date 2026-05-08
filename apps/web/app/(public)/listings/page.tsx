@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import type { PlaceAutocompleteType } from "@workspace/validation/places"
 import { SearchIcon } from "lucide-react"
 
 import { ListingCard } from "@/app/(public)/_components/listing-card"
@@ -26,19 +27,30 @@ export const dynamic = "force-dynamic"
 export async function generateMetadata({
   searchParams,
 }: ListingsPageProps): Promise<Metadata> {
-  const parsed = parseListingSearchParams(await searchParams)
+  const params = await searchParams
+  const parsed = parseListingSearchParams(params)
 
   return createPageMetadata({
     title: parsed.query.q ? `Annunci per ${parsed.query.q}` : "Annunci",
-    path: parsed.query.q ? `/listings?q=${encodeURIComponent(parsed.query.q)}` : "/listings",
+    path: parsed.query.q
+      ? `/listings?q=${encodeURIComponent(parsed.query.q)}`
+      : "/listings",
   })
 }
 
-export default async function ListingsPage({ searchParams }: ListingsPageProps) {
-  const parsed = parseListingSearchParams(await searchParams)
+export default async function ListingsPage({
+  searchParams,
+}: ListingsPageProps) {
+  const params = await searchParams
+  const parsed = parseListingSearchParams(params)
   const listings = await listPublicListings(parsed.query)
   const items = listings.ok ? listings.data.items : []
   const meta = listings.ok ? listings.data.meta : null
+  const placeLabel =
+    typeof params.placeLabel === "string" ? params.placeLabel : null
+  const rawPlaceType =
+    typeof params.placeType === "string" ? params.placeType : null
+  const placeType = isSearchPlaceType(rawPlaceType) ? rawPlaceType : null
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -61,7 +73,13 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
             ) : null}
           </div>
         </div>
-        <ListingSearchForm defaultQuery={parsed.query.q} />
+        <ListingSearchForm
+          defaultValues={{
+            ...parsed.query,
+            placeLabel,
+            placeType,
+          }}
+        />
         {parsed.error ? (
           <p className="text-sm text-destructive">{parsed.error}</p>
         ) : null}
@@ -87,5 +105,16 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
         </Empty>
       )}
     </main>
+  )
+}
+
+function isSearchPlaceType(
+  value: string | null
+): value is PlaceAutocompleteType | "position" {
+  return (
+    value === "municipality" ||
+    value === "province" ||
+    value === "region" ||
+    value === "position"
   )
 }

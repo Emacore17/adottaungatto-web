@@ -12,6 +12,29 @@ import type {
 type SearchParamValue = string | string[] | undefined
 type SearchParamsInput = Record<string, SearchParamValue>
 
+const listingSearchParamKeys = new Set([
+  "page",
+  "pageSize",
+  "q",
+  "breedId",
+  "municipalityId",
+  "provinceId",
+  "regionId",
+  "sex",
+  "ageMonthsMin",
+  "ageMonthsMax",
+  "isFree",
+  "isVaccinated",
+  "isSterilized",
+  "isDewormed",
+  "hasMicrochip",
+  "hasImages",
+  "lat",
+  "lng",
+  "radiusKm",
+  "sort",
+])
+
 export type ParsedListingSearchParams = {
   error: string | null
   query: ListingPublicListQuery
@@ -25,6 +48,10 @@ export function parseListingSearchParams(
   const raw: Record<string, string> = {}
 
   for (const [key, value] of Object.entries(searchParams)) {
+    if (!listingSearchParamKeys.has(key)) {
+      continue
+    }
+
     const firstValue = Array.isArray(value) ? value[0] : value
 
     if (firstValue !== undefined) {

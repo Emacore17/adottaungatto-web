@@ -130,3 +130,45 @@
     cursor: pointer;
     }
 }
+
+@keyframes home-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--home-float-rotate, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(var(--home-float-rotate, 0deg));
+  }
+}
+
+@keyframes home-float-reverse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--home-float-rotate, 0deg));
+  }
+  50% {
+    transform: translate3d(8px, 12px, 0) rotate(var(--home-float-rotate, 0deg));
+  }
+}
+
+@layer utilities {
+  .home-float-slow {
+    animation: home-float 11s ease-in-out infinite;
+  }
+
+  .home-float-medium {
+    animation: home-float 8.5s ease-in-out infinite;
+  }
+
+  .home-float-reverse {
+    animation: home-float-reverse 10s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-float-slow,
+    .home-float-medium,
+    .home-float-reverse {
+      animation: none;
+    }
+  }
+}

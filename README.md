@@ -40,6 +40,30 @@ pnpm db:migrate
 pnpm dev
 ```
 
+## Demo locale da zero
+
+Per preparare infrastruttura, migrazioni, luoghi demo, annunci pubblicati,
+asset immagini e avviare web/API/worker:
+
+```bash
+pnpm dev:demo
+```
+
+Account demo:
+
+- `rifugio.torino@demo.adottaungatto.local`
+- `volontari.italia@demo.adottaungatto.local`
+- `marta.demo@demo.adottaungatto.local`
+
+Password comune: `demo-password-123`
+
+Per ricreare tutto da zero eliminando i volumi Docker locali:
+
+```bash
+pnpm demo:reset
+pnpm dev:demo
+```
+
 URL locali:
 
 - Web: http://localhost:3000
@@ -100,6 +124,10 @@ pnpm typecheck
 pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
+pnpm db:seed:demo
+pnpm demo:setup
+pnpm demo:reset
+pnpm dev:demo
 pnpm geo:import
 pnpm geo:import:apply
 pnpm geo:promote

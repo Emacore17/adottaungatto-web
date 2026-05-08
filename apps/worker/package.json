@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "demo:assets": "tsx src/demo/upload-demo-assets.ts",
     "dev": "tsx watch src/main.ts",
     "format": "prettier --write \"src/**/*.ts\"",
     "geo:boundaries": "tsx src/geo/import-italian-boundaries-cli.ts --dry-run",
