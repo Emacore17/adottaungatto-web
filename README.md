@@ -19,6 +19,12 @@ gatti e gattini.
 - [docs/project-state.md](docs/project-state.md): stato reale e gap principali.
 - [docs/production-readiness.md](docs/production-readiness.md): cosa manca per
   la produzione.
+- [docs/search-full-text-ranking.md](docs/search-full-text-ranking.md):
+  specifica operativa per ricerca full-text, ranking e benchmark.
+- [docs/search-benchmark-results.md](docs/search-benchmark-results.md):
+  risultati locali dei benchmark ricerca.
+- [docs/frontend-nextjs-shadcn-guidelines.md](docs/frontend-nextjs-shadcn-guidelines.md):
+  linee guida per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
 - [docs/local-testing-and-mocks.md](docs/local-testing-and-mocks.md): mock,
   fixture e prova locale.
 - [docs/ops-monitoring-release.md](docs/ops-monitoring-release.md): ambienti,
@@ -41,6 +47,8 @@ URL locali:
 - API autocomplete luoghi: http://localhost:4000/places/autocomplete?q=Aosta
 - API luoghi vicini: http://localhost:4000/places/nearby?lat=45.7496&lng=7.3063&radiusKm=10&type=municipality
 - API annunci pubblici: `GET http://localhost:4000/listings`,
+  `GET http://localhost:4000/listings?q=siamese%20roma&sort=relevance`,
+  `GET http://localhost:4000/listings?lat=41.8931&lng=12.4828&radiusKm=25&sort=distance`,
   `GET http://localhost:4000/listings/:id`
 - API auth: `POST http://localhost:4000/auth/register`,
   `POST http://localhost:4000/auth/login`,
@@ -99,6 +107,7 @@ pnpm geo:promote:apply
 pnpm geo:boundaries
 pnpm geo:boundaries:apply
 pnpm media:process
+pnpm search:benchmark -- --size=10000
 ```
 
 ## Stato
@@ -135,8 +144,18 @@ Gli annunci pubblicati espongono anche un conteggio pubblico dei like; gli
 utenti autenticati possono aggiungere o rimuovere il proprio like in modo
 idempotente.
 L'API espone una prima lista pubblica paginata degli annunci approvati e una
-scheda pubblica per UUID, con filtri per luogo, razza, sesso, fascia eta,
-gratuitita, dati sanitari e presenza immagini.
+scheda pubblica per UUID, con ricerca `q` full-text e filtri per luogo, razza,
+sesso, fascia eta, gratuitita, dati sanitari e presenza immagini.
+La ricerca usa PostgreSQL con `listing_search_documents` quando il documento
+indicizzato e' disponibile e mantiene un fallback inline per gli annunci non
+ancora reindicizzati. Il ranking pubblico `postgres-v1` supporta sort
+`relevance`, `recent` e `distance`, con distanza opzionale da `lat`/`lng`,
+freschezza, qualita, trust ed engagement iniziale. Se la prima pagina
+full-text non restituisce risultati, l'API usa un fallback trigram tracciato in
+`meta.expansion` senza rimuovere i filtri espliciti. Il documento viene
+aggiornato dopo moderazione, processing immagini e like/unlike. Il worker
+include anche un benchmark locale per generare dataset sintetici di ricerca e
+salvare EXPLAIN JSON delle query principali in `benchmark-results/search`.
 
 Le funzionalita applicative complete non sono ancora implementate.
 Gli utenti possono inoltre gestire preferenze email per notifiche non

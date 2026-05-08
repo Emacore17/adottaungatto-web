@@ -95,7 +95,9 @@ Deliverable:
 Stato: avviata con `GET /listings` per lista pubblica paginata degli annunci
 approvati e `GET /listings/:id` per scheda pubblica per UUID. La lista supporta
 filtri principali per luogo, razza, sesso, fascia eta, gratuitita, dati
-sanitari e presenza immagini.
+sanitari e presenza immagini. Il frontend pubblico non e' ancora implementato:
+lo scaffolding deve seguire `docs/frontend-nextjs-shadcn-guidelines.md`, con
+homepage orientata alla ricerca, lista annunci server-rendered e SEO dinamica.
 
 ## Milestone 6 - Moderazione
 

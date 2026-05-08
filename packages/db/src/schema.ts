@@ -26,6 +26,12 @@ const geometryMultiPolygon = customType<{ data: string; driverData: string }>({
   },
 })
 
+const tsVector = customType<{ data: string; driverData: string }>({
+  dataType() {
+    return "tsvector"
+  },
+})
+
 const timestamps = {
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -540,6 +546,10 @@ export const listings = pgTable(
       "gist",
       table.locationPoint
     ),
+    locationGeographyIdx: index("listings_location_geography_gix").using(
+      "gist",
+      sql`(${table.locationPoint}::geography)`
+    ),
     publicAgeIdx: index("listings_public_age_idx")
       .on(table.ageMonthsMin, table.ageMonthsMax)
       .where(
@@ -660,6 +670,65 @@ export const listingLikes = pgTable(
     userCreatedIdx: index("listing_likes_user_created_idx").on(
       table.userId,
       table.createdAt
+    ),
+  })
+)
+
+export const listingSearchDocuments = pgTable(
+  "listing_search_documents",
+  {
+    listingId: uuid("listing_id")
+      .primaryKey()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    breedName: text("breed_name"),
+    breedSlug: text("breed_slug"),
+    municipalityName: text("municipality_name"),
+    provinceName: text("province_name"),
+    regionName: text("region_name"),
+    searchText: text("search_text").notNull(),
+    searchVector: tsVector("search_vector").notNull(),
+    locationPoint: geometryPoint("location_point"),
+    publishedAt: timestamp("published_at", { withTimezone: true }).notNull(),
+    readyImageCount: integer("ready_image_count").notNull().default(0),
+    hasCoverImage: boolean("has_cover_image").notNull().default(false),
+    likeCount: integer("like_count").notNull().default(0),
+    profileType: profileType("profile_type").notNull(),
+    qualityScore: integer("quality_score").notNull().default(0),
+    trustScore: integer("trust_score").notNull().default(0),
+    indexedAt: timestamp("indexed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    ...timestamps,
+  },
+  (table) => ({
+    locationPointIdx: index(
+      "listing_search_documents_location_point_gix"
+    ).using("gist", table.locationPoint),
+    locationGeographyIdx: index(
+      "listing_search_documents_location_geography_gix"
+    ).using("gist", sql`(${table.locationPoint}::geography)`),
+    ownerUserIdx: index("listing_search_documents_owner_user_idx").on(
+      table.ownerUserId
+    ),
+    publishedIdx: index("listing_search_documents_published_idx").on(
+      table.publishedAt,
+      table.listingId
+    ),
+    qualityIdx: index("listing_search_documents_quality_idx").on(
+      table.qualityScore,
+      table.trustScore
+    ),
+    searchTextTrgmIdx: index(
+      "listing_search_documents_search_text_trgm_gin"
+    ).using("gin", sql`${table.searchText} gin_trgm_ops`),
+    searchVectorIdx: index("listing_search_documents_vector_gin").using(
+      "gin",
+      table.searchVector
     ),
   })
 )

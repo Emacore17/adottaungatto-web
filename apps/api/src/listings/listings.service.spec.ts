@@ -26,6 +26,7 @@ describe("ListingsService", () => {
       service.listPublic({
         page: 2,
         pageSize: 10,
+        q: "gattino roma",
         ageMonthsMin: 2,
         ageMonthsMax: 12,
         hasImages: true,
@@ -69,6 +70,10 @@ describe("ListingsService", () => {
         pageSize: 10,
         total: 1,
         totalPages: 1,
+        query: "gattino roma",
+        sort: "relevance",
+        rankingVersion: "postgres-v1",
+        expansion: null,
       },
     })
     expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
@@ -87,6 +92,148 @@ describe("ListingsService", () => {
       null,
       false,
       true,
+      "gattino roma",
+      null,
+      null,
+      null,
+      "relevance",
+    ])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "websearch_to_tsquery"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "listing_search_documents search_document"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "search_document.quality_score"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "search_document.like_count"
+    )
+  })
+
+  it("lists public listings sorted by distance around an origin", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          ...createPublicListingRow(),
+          total_count: "1",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 20,
+        lat: 41.8931,
+        lng: 12.4828,
+        radiusKm: 25,
+        sort: "distance",
+      })
+    ).resolves.toMatchObject({
+      meta: {
+        query: null,
+        sort: "distance",
+        rankingVersion: "postgres-v1",
+      },
+    })
+
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
+      20,
+      0,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      41.8931,
+      12.4828,
+      25,
+      "distance",
+    ])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "ST_DWithin"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "ST_Distance"
+    )
+  })
+
+  it("falls back to trigram text search when full-text returns no results", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            ...createPublicListingRow(),
+            total_count: "1",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 20,
+        q: "siameze roma",
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          id: "listing-id",
+        },
+      ],
+      meta: {
+        total: 1,
+        query: "siameze roma",
+        sort: "relevance",
+        rankingVersion: "postgres-v1",
+        expansion: {
+          type: "trigram_text",
+          reason: "empty_full_text",
+          originalQuery: "siameze roma",
+        },
+      },
+    })
+
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
+      "word_similarity"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      20,
+      0,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "siameze roma",
+      null,
+      null,
+      null,
+      "relevance",
     ])
   })
 

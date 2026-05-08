@@ -1,0 +1,2 @@
+CREATE INDEX "listing_search_documents_location_geography_gix" ON "listing_search_documents" USING gist (("location_point"::geography));--> statement-breakpoint
+CREATE INDEX "listings_location_geography_gix" ON "listings" USING gist (("location_point"::geography));

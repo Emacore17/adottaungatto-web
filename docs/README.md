@@ -12,7 +12,10 @@ adottaungatto.it.
 - [modules.md](modules.md): moduli principali del sistema.
 - [data-model.md](data-model.md): modello dati iniziale.
 - [project-state.md](project-state.md): stato reale del repository e gap principali.
+- [frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md): linee guida operative per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
 - [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
+- [search-full-text-ranking.md](search-full-text-ranking.md): specifica operativa per ranking, indici e benchmark ricerca.
+- [search-benchmark-results.md](search-benchmark-results.md): risultati locali dei benchmark ricerca.
 - [italian-places-import.md](italian-places-import.md): import dei luoghi italiani da fonti ufficiali.
 - [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
 - [production-readiness.md](production-readiness.md): checklist per arrivare a produzione.

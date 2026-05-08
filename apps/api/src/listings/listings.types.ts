@@ -168,6 +168,12 @@ export type PublicListingDetail = PublicListingSummary & {
   }
 }
 
+export type PublicListingExpansion = {
+  type: "trigram_text"
+  reason: "empty_full_text"
+  originalQuery: string
+}
+
 export type PublicListingListResponse = {
   items: PublicListingSummary[]
   meta: {
@@ -175,6 +181,10 @@ export type PublicListingListResponse = {
     pageSize: number
     total: number
     totalPages: number
+    query: string | null
+    sort: "relevance" | "recent" | "distance"
+    rankingVersion: "postgres-v1"
+    expansion: PublicListingExpansion | null
   }
 }
 

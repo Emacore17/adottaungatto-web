@@ -11,6 +11,7 @@ import type {
   ListingDraftUpdateInput,
   ListingImageUploadRequestInput,
   ListingPublicListQuery,
+  ListingPublicSort,
   ListingSex,
 } from "@workspace/validation"
 
@@ -33,6 +34,9 @@ import type {
 } from "./listings.types.js"
 
 const maxListingImages = 10
+const publicListingRankingVersion = "postgres-v1" as const
+const defaultPublicListingRadiusKm = 50
+const publicListingTrigramFallbackThreshold = 0.22
 
 type ListingOwnerRow<
   ModerationStatus extends "draft" | "pending_review",
@@ -100,6 +104,16 @@ type PublicListingRow = Omit<
   cover_sort_order: number | null
   cover_is_cover: boolean | null
 }
+
+type ResolvedPublicListingQuery = {
+  distanceLat: number | null
+  distanceLng: number | null
+  radiusKm: number | null
+  sort: ListingPublicSort
+}
+
+type PublicListingExpansion =
+  PublicListingListResponse["meta"]["expansion"]
 
 type MunicipalityLocationRow = {
   municipality_id: string
@@ -271,6 +285,8 @@ const publicListingJoins = `
     on municipality.id = listing.municipality_id
   left join geo_provinces province on province.id = listing.province_id
   left join geo_regions region on region.id = listing.region_id
+  left join listing_search_documents search_document
+    on search_document.listing_id = listing.id
   left join (
     select
       listing_id,
@@ -306,6 +322,152 @@ const publicListingJoins = `
   ) like_counts on like_counts.listing_id = listing.id
 `
 
+const publicListingInlineSearchVectorSql = `
+  setweight(
+    to_tsvector(
+      'italian',
+      unaccent(concat_ws(' ', listing.title, coalesce(breed.name, '')))
+    ),
+    'A'
+  ) ||
+  setweight(
+    to_tsvector(
+      'italian',
+      unaccent(
+        concat_ws(
+          ' ',
+          coalesce(municipality.name, ''),
+          coalesce(province.name, ''),
+          coalesce(region.name, '')
+        )
+      )
+    ),
+    'B'
+  ) ||
+  setweight(
+    to_tsvector('italian', unaccent(coalesce(listing.description, ''))),
+    'C'
+  )
+`
+
+const publicListingSearchVectorSql = `
+  coalesce(
+    search_document.search_vector,
+    ${publicListingInlineSearchVectorSql}
+  )
+`
+
+const publicListingInlineSearchTextSql = `
+  concat_ws(
+    ' ',
+    listing.title,
+    coalesce(breed.name, ''),
+    coalesce(municipality.name, ''),
+    coalesce(province.name, ''),
+    coalesce(region.name, ''),
+    listing.description
+  )
+`
+
+const publicListingSearchTextSql = `
+  coalesce(
+    search_document.search_text,
+    ${publicListingInlineSearchTextSql}
+  )
+`
+
+const publicListingNormalizedSearchTextSql = `
+  regexp_replace(
+    lower(unaccent((${publicListingSearchTextSql}))),
+    '[^a-z0-9]+',
+    ' ',
+    'g'
+  )
+`
+
+const publicListingNormalizedSearchQuerySql = `
+  regexp_replace(
+    lower(unaccent($16::text)),
+    '[^a-z0-9]+',
+    ' ',
+    'g'
+  )
+`
+
+const publicListingTrigramScoreSql = `
+  greatest(
+    similarity(
+      (${publicListingNormalizedSearchTextSql}),
+      (${publicListingNormalizedSearchQuerySql})
+    ),
+    word_similarity(
+      (${publicListingNormalizedSearchQuerySql}),
+      (${publicListingNormalizedSearchTextSql})
+    )
+  )
+`
+
+const publicListingDistanceMetersSql = `
+  case
+    when $17::float8 is null
+      or $18::float8 is null
+      or listing.location_point is null
+    then null
+    else ST_Distance(
+      listing.location_point::geography,
+      ST_SetSRID(ST_MakePoint($18::float8, $17::float8), 4326)::geography
+    )
+  end
+`
+
+const publicListingTextScoreSql = `
+  case
+    when $16::text is null then 0
+    else ts_rank_cd(
+      (${publicListingSearchVectorSql}),
+      websearch_to_tsquery('italian', unaccent($16::text))
+    )
+  end
+`
+
+const publicListingDistanceScoreSql = `
+  case
+    when (${publicListingDistanceMetersSql}) is null then 0
+    else greatest(
+      0,
+      1 - (
+        (${publicListingDistanceMetersSql}) /
+        greatest(coalesce($19::float8, ${defaultPublicListingRadiusKm}), 1) /
+        1000
+      )
+    )
+  end
+`
+
+const publicListingFreshnessScoreSql = `
+  1 / (
+    1 + (
+      greatest(
+        0,
+        extract(epoch from (now() - coalesce(listing.published_at, listing.updated_at)))
+      ) / 86400 / 30
+    )
+  )
+`
+
+const publicListingEngagementScoreSql = `
+  least(1, ln(1 + greatest(coalesce(search_document.like_count, like_counts.like_count, 0), 0)) / ln(101))
+`
+
+const publicListingRankingScoreSql = `
+  (${publicListingTextScoreSql}) * 0.45
+  + (${publicListingDistanceScoreSql}) * 0.20
+  + (${publicListingFreshnessScoreSql}) * 0.15
+  + (coalesce(search_document.quality_score, 0)::float8 / 100) * 0.12
+  + (coalesce(search_document.trust_score, 0)::float8 / 100) * 0.05
+  + (${publicListingEngagementScoreSql}) * 0.03
+`
+
 const activeDraftWhereSql = `
   listing.owner_user_id = $1::uuid
   and listing.moderation_status = 'draft'
@@ -319,6 +481,85 @@ const publicListingWhereSql = `
   and listing.deleted_at is null
   and owner.deleted_at is null
   and (listing.expires_at is null or listing.expires_at > now())
+`
+
+const publicListingExplicitFiltersSql = `
+  and ($3::uuid is null or listing.breed_id = $3::uuid)
+  and ($4::uuid is null or listing.municipality_id = $4::uuid)
+  and ($5::uuid is null or listing.province_id = $5::uuid)
+  and ($6::uuid is null or listing.region_id = $6::uuid)
+  and ($7::listing_sex is null or listing.sex = $7::listing_sex)
+  and (
+    $8::int is null
+    or coalesce(listing.age_months_max, listing.age_months_min) >= $8::int
+  )
+  and (
+    $9::int is null
+    or coalesce(listing.age_months_min, listing.age_months_max) <= $9::int
+  )
+  and ($10::boolean is null or listing.is_free = $10::boolean)
+  and ($11::boolean is null or listing.is_vaccinated = $11::boolean)
+  and ($12::boolean is null or listing.is_sterilized = $12::boolean)
+  and ($13::boolean is null or listing.is_dewormed = $13::boolean)
+  and ($14::boolean is null or listing.has_microchip = $14::boolean)
+  and (
+    $15::boolean is null
+    or (coalesce(ready_images.ready_image_count, 0) > 0) = $15::boolean
+  )
+`
+
+const publicListingGeoFilterSql = `
+  and (
+    $17::float8 is null
+    or $18::float8 is null
+    or $19::float8 is null
+    or (
+      listing.location_point is not null
+      and ST_DWithin(
+        listing.location_point::geography,
+        ST_SetSRID(ST_MakePoint($18::float8, $17::float8), 4326)::geography,
+        $19::float8 * 1000
+      )
+    )
+  )
+`
+
+const publicListingOrderSql = `
+  order by
+    case
+      when $20::text = 'distance' then (${publicListingDistanceMetersSql})
+      else null
+    end asc nulls last,
+    case
+      when $20::text = 'relevance' then (${publicListingRankingScoreSql})
+    end desc nulls last,
+    case
+      when $20::text = 'recent' then listing.published_at
+    end desc nulls last,
+    listing.published_at desc nulls last,
+    listing.updated_at desc,
+    listing.id
+`
+
+const publicListingTrigramFallbackOrderSql = `
+  order by
+    case
+      when $20::text = 'distance' then (${publicListingDistanceMetersSql})
+      else null
+    end asc nulls last,
+    case
+      when $20::text = 'relevance' then (${publicListingTrigramScoreSql})
+    end desc nulls last,
+    case
+      when $20::text = 'relevance' then (${publicListingRankingScoreSql})
+    end desc nulls last,
+    case
+      when $20::text = 'recent' then listing.published_at
+    end desc nulls last,
+    (${publicListingTrigramScoreSql}) desc nulls last,
+    listing.published_at desc nulls last,
+    listing.updated_at desc,
+    listing.id
 `
 
 const activeMunicipalityLocationSql = `
@@ -373,29 +614,30 @@ const listPublicListingsSql = `
   from listings listing
   ${publicListingJoins}
   where ${publicListingWhereSql}
-    and ($3::uuid is null or listing.breed_id = $3::uuid)
-    and ($4::uuid is null or listing.municipality_id = $4::uuid)
-    and ($5::uuid is null or listing.province_id = $5::uuid)
-    and ($6::uuid is null or listing.region_id = $6::uuid)
-    and ($7::listing_sex is null or listing.sex = $7::listing_sex)
+    ${publicListingExplicitFiltersSql}
     and (
-      $8::int is null
-      or coalesce(listing.age_months_max, listing.age_months_min) >= $8::int
+      $16::text is null
+      or (${publicListingSearchVectorSql})
+        @@ websearch_to_tsquery('italian', unaccent($16::text))
     )
-    and (
-      $9::int is null
-      or coalesce(listing.age_months_min, listing.age_months_max) <= $9::int
-    )
-    and ($10::boolean is null or listing.is_free = $10::boolean)
-    and ($11::boolean is null or listing.is_vaccinated = $11::boolean)
-    and ($12::boolean is null or listing.is_sterilized = $12::boolean)
-    and ($13::boolean is null or listing.is_dewormed = $13::boolean)
-    and ($14::boolean is null or listing.has_microchip = $14::boolean)
-    and (
-      $15::boolean is null
-      or (coalesce(ready_images.ready_image_count, 0) > 0) = $15::boolean
-    )
-  order by listing.published_at desc nulls last, listing.updated_at desc, listing.id
+    ${publicListingGeoFilterSql}
+  ${publicListingOrderSql}
+  limit $1::int
+  offset $2::int
+`
+
+const listPublicListingsTrigramFallbackSql = `
+  select
+    ${publicListingSelectFields},
+    count(*) over()::int as total_count
+  from listings listing
+  ${publicListingJoins}
+  where ${publicListingWhereSql}
+    ${publicListingExplicitFiltersSql}
+    and $16::text is not null
+    and (${publicListingTrigramScoreSql}) >= ${publicListingTrigramFallbackThreshold}
+    ${publicListingGeoFilterSql}
+  ${publicListingTrigramFallbackOrderSql}
   limit $1::int
   offset $2::int
 `
@@ -791,26 +1033,50 @@ export class ListingsService {
   async listPublic(
     query: ListingPublicListQuery
   ): Promise<PublicListingListResponse> {
-    const rows = await this.databaseService.queryRows<PublicListingRow>(
+    const resolvedQuery = resolvePublicListingQuery(query)
+    const parameters = [
+      query.pageSize,
+      (query.page - 1) * query.pageSize,
+      query.breedId ?? null,
+      query.municipalityId ?? null,
+      query.provinceId ?? null,
+      query.regionId ?? null,
+      query.sex ?? null,
+      query.ageMonthsMin ?? null,
+      query.ageMonthsMax ?? null,
+      query.isFree ?? null,
+      query.isVaccinated ?? null,
+      query.isSterilized ?? null,
+      query.isDewormed ?? null,
+      query.hasMicrochip ?? null,
+      query.hasImages ?? null,
+      query.q ?? null,
+      resolvedQuery.distanceLat,
+      resolvedQuery.distanceLng,
+      resolvedQuery.radiusKm,
+      resolvedQuery.sort,
+    ]
+    let rows = await this.databaseService.queryRows<PublicListingRow>(
       listPublicListingsSql,
-      [
-        query.pageSize,
-        (query.page - 1) * query.pageSize,
-        query.breedId ?? null,
-        query.municipalityId ?? null,
-        query.provinceId ?? null,
-        query.regionId ?? null,
-        query.sex ?? null,
-        query.ageMonthsMin ?? null,
-        query.ageMonthsMax ?? null,
-        query.isFree ?? null,
-        query.isVaccinated ?? null,
-        query.isSterilized ?? null,
-        query.isDewormed ?? null,
-        query.hasMicrochip ?? null,
-        query.hasImages ?? null,
-      ]
+      parameters
     )
+    let expansion: PublicListingExpansion = null
+
+    if (rows.length === 0 && query.page === 1 && query.q) {
+      rows = await this.databaseService.queryRows<PublicListingRow>(
+        listPublicListingsTrigramFallbackSql,
+        parameters
+      )
+
+      if (rows.length > 0) {
+        expansion = {
+          type: "trigram_text",
+          reason: "empty_full_text",
+          originalQuery: query.q,
+        }
+      }
+    }
+
     const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0
 
     return {
@@ -820,6 +1086,10 @@ export class ListingsService {
         pageSize: query.pageSize,
         total,
         totalPages: Math.ceil(total / query.pageSize),
+        query: query.q ?? null,
+        sort: resolvedQuery.sort,
+        rankingVersion: publicListingRankingVersion,
+        expansion,
       },
     }
   }
@@ -1270,6 +1540,23 @@ function mapPublicListingSummaryRow(
       likeCount: Number(row.like_count),
     },
     images: mapPublicListingImages(row),
+  }
+}
+
+function resolvePublicListingQuery(
+  query: ListingPublicListQuery
+): ResolvedPublicListingQuery {
+  const hasDistanceOrigin = query.lat !== undefined && query.lng !== undefined
+  const sort: ListingPublicSort =
+    query.sort ?? (query.q ? "relevance" : "recent")
+
+  return {
+    distanceLat: hasDistanceOrigin ? (query.lat ?? null) : null,
+    distanceLng: hasDistanceOrigin ? (query.lng ?? null) : null,
+    radiusKm: hasDistanceOrigin
+      ? (query.radiusKm ?? defaultPublicListingRadiusKm)
+      : null,
+    sort,
   }
 }
 

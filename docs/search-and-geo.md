@@ -10,7 +10,7 @@ Per la prima versione usare PostgreSQL come motore di ricerca:
   autocomplete;
 - PostGIS con `geography(Point, 4326)` per distanza;
 - indici GiST/SP-GiST per coordinate e geometrie;
-- materialized view o tabella denormalizzata `listing_search_documents`.
+- tabella denormalizzata `listing_search_documents`.
 
 Questa scelta riduce infrastruttura, mantiene consistenza con il database
 principale e basta per validare il prodotto.
@@ -33,10 +33,11 @@ Formula iniziale indicativa:
 ```text
 score =
   text_score * 0.45 +
-  distance_score * 0.25 +
+  distance_score * 0.20 +
   freshness_score * 0.15 +
-  quality_score * 0.10 +
-  trust_score * 0.05
+  quality_score * 0.12 +
+  trust_score * 0.05 +
+  engagement_score * 0.03
 ```
 
 I pesi devono diventare configurabili dopo i primi test reali.
@@ -46,20 +47,31 @@ I pesi devono diventare configurabili dopo i primi test reali.
 Endpoint:
 
 ```http
-GET /listings?page=1&pageSize=20
+GET /listings?page=1&pageSize=20&q=siamese%20roma
 GET /listings/:id
 ```
 
-La lista pubblica iniziale non usa ancora ranking full-text. Restituisce solo
-annunci pubblicabili, ordinati per pubblicazione recente:
+La lista pubblica iniziale restituisce solo annunci pubblicabili:
 
 - `moderation_status = approved`;
 - `lifecycle_status = published`;
 - `deleted_at is null`;
 - `expires_at is null` oppure futura.
 
+Quando `q` e' presente, la lista applica ricerca full-text PostgreSQL con
+`websearch_to_tsquery`, `unaccent` e ranking `ts_rank_cd` su titolo,
+descrizione, razza e luogo. La query usa `listing_search_documents` quando il
+documento indicizzato esiste e cade sul vettore inline se il documento non e'
+ancora stato costruito. Se la prima pagina full-text non restituisce risultati,
+esegue un fallback `pg_trgm` tracciato in `meta.expansion`, senza rilassare i
+filtri espliciti. Il ranking `postgres-v1` combina testo, distanza opzionale,
+freschezza, qualita, trust ed engagement iniziale. Senza `q`, resta ordinata
+per pubblicazione recente; con `sort=distance` e coordinate esplicite ordina
+per distanza entro `radiusKm`.
+
 Filtri iniziali:
 
+- `q`;
 - `breedId`;
 - `municipalityId`;
 - `provinceId`;
@@ -73,24 +85,43 @@ Filtri iniziali:
 - `isDewormed`;
 - `hasMicrochip`;
 - `hasImages`.
+- `lat`;
+- `lng`;
+- `radiusKm`;
+- `sort`: `relevance`, `recent`, `distance`.
 
 La scheda pubblica usa l'UUID dell'annuncio per evitare collisioni tra slug.
 Include gallery delle immagini pronte, conteggio like e dati geografici
 completi quando disponibili.
 
-Stato: la lista pubblica filtrabile e' implementata. Full-text search, ranking,
-benchmark e fallback per risultati vuoti non sono ancora implementati; sono il
-prossimo blocco tecnico della milestone ricerca.
+Stato: la lista pubblica filtrabile, `q` full-text e il documento
+denormalizzato `listing_search_documents` sono implementati. La migrazione
+`0012_aromatic_lyja.sql` crea la tabella, gli indici GIN/GiST/btree e il
+backfill iniziale degli annunci gia pubblicati. La migrazione
+`0013_elite_juggernaut.sql` aggiunge indici GiST expression su
+`location_point::geography` per query distanza. Il refresh e' collegato a
+decisioni di moderazione, processing immagini del worker e like/unlike. Il
+worker espone `pnpm search:benchmark` per creare dataset sintetici marcati,
+aggiornare il documento ricerca in bulk e salvare EXPLAIN JSON locali. Non sono
+ancora implementati refresh sul futuro endpoint di modifica annunci pubblicati,
+espansioni geografiche per risultati vuoti e benchmark con fixture realistiche.
+I benchmark locali 10k/100k sono registrati in
+[search-benchmark-results.md](search-benchmark-results.md).
+
+La specifica operativa per implementare questo blocco e' in
+[search-full-text-ranking.md](search-full-text-ranking.md).
 
 ## Evitare risultati vuoti
 
 Se la query non restituisce risultati:
 
-1. allargare la distanza geografica;
-2. rimuovere filtri meno critici, dichiarandolo all'utente;
-3. proporre risultati nella provincia o regione;
-4. suggerire luoghi o razze alternative via autocomplete;
-5. mostrare annunci recenti e di qualita nella stessa macro-area.
+1. usare typo tolerance trigram, gia implementata per la prima pagina
+   full-text vuota;
+2. allargare la distanza geografica;
+3. rimuovere filtri meno critici, dichiarandolo all'utente;
+4. proporre risultati nella provincia o regione;
+5. suggerire luoghi o razze alternative via autocomplete;
+6. mostrare annunci recenti e di qualita nella stessa macro-area.
 
 Ogni espansione deve essere tracciata nella risposta API per permettere al
 frontend di spiegare cosa e' cambiato.

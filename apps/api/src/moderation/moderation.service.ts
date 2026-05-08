@@ -11,6 +11,7 @@ import type {
 } from "@workspace/validation"
 
 import { DatabaseService } from "../database/database.service.js"
+import { ListingSearchDocumentsService } from "../listing-search-documents/listing-search-documents.service.js"
 import { MailService } from "../mail/mail.service.js"
 import { NotificationsService } from "../notifications/notifications.service.js"
 import type {
@@ -549,6 +550,8 @@ export class ModerationService {
   constructor(
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
+    @Inject(ListingSearchDocumentsService)
+    private readonly listingSearchDocumentsService: ListingSearchDocumentsService,
     @Inject(MailService)
     private readonly mailService: MailService,
     @Inject(NotificationsService)
@@ -629,6 +632,8 @@ export class ModerationService {
     if (!row) {
       throw new NotFoundException("Moderation case not found or not decidable.")
     }
+
+    await this.listingSearchDocumentsService.refreshListing(row.listing_id)
 
     const response = mapDecisionRow(row, config.action, input)
 

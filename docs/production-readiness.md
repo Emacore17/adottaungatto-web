@@ -51,6 +51,25 @@ Mancano:
 - backup cifrati e retention definita;
 - policy privacy, cookie, termini e gestione richieste GDPR.
 
+## Frontend e SEO
+
+Lo scaffolding Next.js esiste, ma prima di costruire viste pubbliche reali
+servono:
+
+- configurazione centrale per env, site metadata, routes, API client e SEO;
+- route groups per pubblico, auth, account e admin;
+- pagine pubbliche Server Component con metadata, canonical, Open Graph e
+  JSON-LD;
+- `robots.ts` e `sitemap.ts` coerenti con ambienti e annunci pubblicati;
+- gestione sessione browser con cookie sicuri e CSRF se si useranno mutazioni
+  cookie-based;
+- policy noindex per account, admin, preview e combinazioni search rumorose;
+- verifica performance mobile, accessibilita e Core Web Vitals sulle route
+  pubbliche principali.
+
+Le convenzioni sono in
+[frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md).
+
 ## Scalabilita
 
 Il modular monolith e' adatto alla fase iniziale e puo servire un pubblico ampio
@@ -69,18 +88,19 @@ Prima di dichiararlo scalabile servono:
 
 ## Ricerca
 
-La ricerca e' il fulcro del prodotto, ma oggi e' solo una lista pubblica
-filtrabile. Non c'e ancora ranking. Prossimi requisiti:
+La ricerca e' il fulcro del prodotto. Oggi esiste una lista pubblica filtrabile
+con query full-text `q`, ranking `postgres-v1` e documento denormalizzato
+`listing_search_documents` con backfill iniziale e refresh sui flussi principali
+di moderazione, immagini e like. Prossimi requisiti:
 
-- tabella o materialized view `listing_search_documents`;
-- tsvector con `unaccent`, trigrammi e pesi per titolo, descrizione, razza e
-  luogo;
-- ranking testuale combinato con freschezza, distanza, qualita immagini,
-  affidabilita profilo e segnali sponsorizzati;
+- refresh del documento ricerca sul futuro endpoint di modifica annunci
+  pubblicati;
 - filtri espliciti sempre applicati prima del ranking;
-- fallback per risultati vuoti con espansione geografica tracciata;
-- benchmark con almeno 10k, 100k e 1M annunci sintetici;
-- EXPLAIN salvati per query principali;
+- espansioni geografiche o filtri soft per risultati vuoti, oltre al fallback
+  trigram gia implementato;
+- benchmark limite 1M o con fixture realistiche oltre ai 10k/100k sintetici gia
+  eseguiti localmente;
+- confronto periodico degli EXPLAIN JSON salvati per query principali;
 - soglie p95: lista pubblica sotto 300 ms su dataset iniziale, sotto 500 ms con
   ranking e filtri complessi;
 - test antiregressione sugli indici.
@@ -88,6 +108,9 @@ filtrabile. Non c'e ancora ranking. Prossimi requisiti:
 PostgreSQL puo gestire migliaia di annunci senza problemi se indicizzato e
 misurato. Per centinaia di migliaia o ranking piu evoluto, valutare Typesense,
 Meilisearch o OpenSearch con sincronizzazione event-driven.
+
+La specifica tecnica del primo ranking PostgreSQL e' in
+[search-full-text-ranking.md](search-full-text-ranking.md).
 
 ## Annunci sponsorizzati
 

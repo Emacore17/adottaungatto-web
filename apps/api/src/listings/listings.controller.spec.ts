@@ -14,24 +14,34 @@ describe("ListingsController", () => {
     await controller.listPublic({
       page: "2",
       pageSize: "10",
+      q: "  Gattino Roma  ",
       ageMonthsMin: "2",
       ageMonthsMax: "12",
       hasImages: "true",
       hasMicrochip: "false",
       isFree: "true",
+      lat: "41.8931",
+      lng: "12.4828",
+      radiusKm: "25",
       sex: "female",
+      sort: "distance",
       regionId: "00000000-0000-0000-0000-000000000001",
     })
 
     expect(listingsService.listPublic).toHaveBeenCalledWith({
       page: 2,
       pageSize: 10,
+      q: "Gattino Roma",
       ageMonthsMin: 2,
       ageMonthsMax: 12,
       hasImages: true,
       hasMicrochip: false,
       isFree: true,
+      lat: 41.8931,
+      lng: 12.4828,
+      radiusKm: 25,
       sex: "female",
+      sort: "distance",
       regionId: "00000000-0000-0000-0000-000000000001",
     })
   })
@@ -60,6 +70,34 @@ describe("ListingsController", () => {
       controller.listPublic({
         ageMonthsMin: "24",
         ageMonthsMax: "12",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
+  it("rejects invalid public listing search queries", async () => {
+    const listingsService = {
+      listPublic: vi.fn(),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(
+      controller.listPublic({
+        q: "!!!",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
+  it("rejects distance sorting without an origin", async () => {
+    const listingsService = {
+      listPublic: vi.fn(),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(
+      controller.listPublic({
+        sort: "distance",
       })
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(listingsService.listPublic).not.toHaveBeenCalled()

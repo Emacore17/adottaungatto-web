@@ -8,6 +8,7 @@
     "DATABASE_URL",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
+    "INIT_CWD",
     "MAIL_FROM",
     "MAIL_HOST",
     "MAIL_PORT",

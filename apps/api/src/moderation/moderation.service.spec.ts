@@ -6,6 +6,7 @@ import {
 import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
+import type { ListingSearchDocumentsService } from "../listing-search-documents/listing-search-documents.service.js"
 import type { MailService } from "../mail/mail.service.js"
 import type { NotificationsService } from "../notifications/notifications.service.js"
 import { ModerationService } from "./moderation.service.js"
@@ -289,8 +290,12 @@ describe("ModerationService", () => {
           },
         ]),
     } as unknown as DatabaseService
-    const { mailService, notificationsService, service } =
-      createService(databaseService)
+    const {
+      listingSearchDocumentsService,
+      mailService,
+      notificationsService,
+      service,
+    } = createService(databaseService)
 
     await expect(
       service.decideListingCase("moderator-id", "case-id", "approve", {
@@ -344,6 +349,9 @@ describe("ModerationService", () => {
       reasonText: null,
     })
     expect(mailService.sendListingReportDecision).not.toHaveBeenCalled()
+    expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
+      "listing-id"
+    )
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
       "case-id",
       "moderator-id",
@@ -399,8 +407,12 @@ describe("ModerationService", () => {
             },
           ]),
       } as unknown as DatabaseService
-      const { mailService, notificationsService, service } =
-        createService(databaseService)
+      const {
+        listingSearchDocumentsService,
+        mailService,
+        notificationsService,
+        service,
+      } = createService(databaseService)
 
       await expect(
         service.decideListingCase("moderator-id", "case-id", decision, {
@@ -456,6 +468,9 @@ describe("ModerationService", () => {
         "Contenuto non conforme.",
         reportStatus,
       ])
+      expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
+        "listing-id"
+      )
     }
   )
 
@@ -496,8 +511,12 @@ describe("ModerationService", () => {
           },
         ]),
     } as unknown as DatabaseService
-    const { mailService, notificationsService, service } =
-      createService(databaseService)
+    const {
+      listingSearchDocumentsService,
+      mailService,
+      notificationsService,
+      service,
+    } = createService(databaseService)
 
     await expect(
       service.decideListingCase("moderator-id", "case-id", "reject", {
@@ -523,6 +542,9 @@ describe("ModerationService", () => {
       reportResolutionStatus: "resolved",
       to: "reporter@example.com",
     })
+    expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
+      "listing-id"
+    )
   })
 
   it("rejects moderation decisions without a reason", async () => {
@@ -555,6 +577,14 @@ describe("ModerationService", () => {
 })
 
 function createService(databaseService: DatabaseService) {
+  const listingSearchDocumentsService = {
+    refreshListing: vi.fn().mockResolvedValue({
+      listingId: "listing-id",
+      found: true,
+      indexed: true,
+      deleted: false,
+    }),
+  } as unknown as ListingSearchDocumentsService
   const mailService = {
     sendListingModerationDecision: vi.fn().mockResolvedValue(undefined),
     sendListingReportDecision: vi.fn().mockResolvedValue(undefined),
@@ -569,10 +599,12 @@ function createService(databaseService: DatabaseService) {
   } as unknown as NotificationsService
 
   return {
+    listingSearchDocumentsService,
     mailService,
     notificationsService,
     service: new ModerationService(
       databaseService,
+      listingSearchDocumentsService,
       mailService,
       notificationsService
     ),

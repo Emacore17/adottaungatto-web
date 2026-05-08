@@ -12,7 +12,7 @@ forzare complessita prematura.
 adottaungatto-it/
   apps/
     web/
-      # Next.js, shadcn/ui, pagine pubbliche e area utente/admin
+      # Next.js App Router, shadcn/ui, SEO, pagine pubbliche e area utente/admin
     api/
       # NestJS API backend
     worker/
@@ -54,13 +54,16 @@ adottaungatto-it/
 
 ## Note operative
 
-- `apps/web` deve essere creato con il comando indicato nel prompt master.
+- `apps/web` e' il punto di ingresso per route, layout, metadata, SEO e
+  componenti applicativi Next.js. Le regole operative sono in
+  `docs/frontend-nextjs-shadcn-guidelines.md`.
 - `apps/api` e `apps/worker` devono partire come scheletri minimi, non come
   implementazioni complete.
+- `packages/ui` ospita le primitive shadcn condivise; i blocchi applicativi
+  specifici restano in `apps/web/components` o nei segmenti route.
 - `packages/db` deve essere l'unico punto proprietario di schema e migrazioni.
 - `packages/domain` non deve dipendere da framework.
 - `packages/validation` puo dipendere da Zod, ma deve rimanere indipendente da
   NestJS e Next.js.
 - `infra/helm` resta vuota o documentale finche non serve davvero un deploy
   Kubernetes.
-

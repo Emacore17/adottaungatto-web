@@ -14,6 +14,10 @@ node_modules
 
 # Testing
 coverage
+benchmark-results
+playwright-report
+test-results
+storybook-static
 
 # Turbo
 .turbo
@@ -26,6 +30,7 @@ coverage
 out/
 build
 dist
+*.tsbuildinfo
 
 
 # Debug

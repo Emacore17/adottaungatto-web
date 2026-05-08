@@ -226,6 +226,7 @@ e separa gli elementi gia implementati da quelli pianificati.
 Indici pubblici attuali:
 
 - `listings_location_point_gix`
+- `listings_location_geography_gix`
 - `listings_public_age_idx`
 - `listings_public_breed_sex_idx`
 - `listings_public_care_idx`
@@ -265,6 +266,49 @@ Indici pubblici attuali:
 - `listing_id`
 - `user_id`
 - `created_at`
+
+### Ricerca annunci
+
+`listing_search_documents`
+
+- `listing_id`
+- `owner_user_id`
+- `title`
+- `description`
+- `breed_name`
+- `breed_slug`
+- `municipality_name`
+- `province_name`
+- `region_name`
+- `search_text`
+- `search_vector`
+- `location_point`
+- `published_at`
+- `ready_image_count`
+- `has_cover_image`
+- `like_count`
+- `profile_type`
+- `quality_score`
+- `trust_score`
+- `indexed_at`
+
+Indici principali:
+
+- `listing_search_documents_vector_gin`
+- `listing_search_documents_search_text_trgm_gin`
+- `listing_search_documents_location_point_gix`
+- `listing_search_documents_location_geography_gix`
+- `listing_search_documents_published_idx`
+- `listing_search_documents_quality_idx`
+- `listing_search_documents_owner_user_idx`
+- `created_at`, `updated_at`
+
+La tabella e' denormalizzata per la ricerca pubblica PostgreSQL. La migrazione
+`0012_aromatic_lyja.sql` la popola inizialmente dagli annunci gia pubblicati e
+crea indici GIN, GiST e btree. La migrazione `0013_elite_juggernaut.sql`
+aggiunge indici GiST expression su `location_point::geography` per query
+distanza. Il refresh idempotente e' collegato a decisioni di moderazione,
+processing immagini del worker e like/unlike.
 
 ### Moderazione
 
@@ -328,7 +372,6 @@ come necessari, ma non sono ancora nello schema:
 - `audit_logs` trasversale non legato solo alla moderazione;
 - campi profilo pubblico esteso;
 - cambio email e verifica telefono completa;
-- documenti di ricerca `listing_search_documents`;
 - entita per campagne sponsorizzate;
 - tabelle amministrative per policy interne e template motivazioni;
 - retention e richieste GDPR/export/cancellazione.

@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common"
 
 import { DatabaseService } from "../database/database.service.js"
+import { ListingSearchDocumentsService } from "../listing-search-documents/listing-search-documents.service.js"
 import type {
   ListingLikeCountResponse,
   ListingLikeMutationResponse,
@@ -88,7 +89,9 @@ const removeLikeSql = `
 export class LikesService {
   constructor(
     @Inject(DatabaseService)
-    private readonly databaseService: DatabaseService
+    private readonly databaseService: DatabaseService,
+    @Inject(ListingSearchDocumentsService)
+    private readonly listingSearchDocumentsService: ListingSearchDocumentsService
   ) {}
 
   async publicLikeCount(listingId: string): Promise<ListingLikeCountResponse> {
@@ -117,6 +120,10 @@ export class LikesService {
       throw new NotFoundException("Public listing not found.")
     }
 
+    if (row.changed) {
+      await this.listingSearchDocumentsService.refreshListing(row.listing_id)
+    }
+
     return {
       ...mapLikeCountRow(row),
       liked: true,
@@ -132,6 +139,9 @@ export class LikesService {
       removeLikeSql,
       [userId, listingId]
     )
+    if (row?.changed) {
+      await this.listingSearchDocumentsService.refreshListing(row.listing_id)
+    }
 
     return {
       ...mapLikeCountRow(

@@ -1,6 +1,7 @@
 import { z } from "zod"
 
 export const listingSexes = ["male", "female", "unknown"] as const
+export const listingPublicSorts = ["relevance", "recent", "distance"] as const
 
 export const listingImageMimeTypes = [
   "image/jpeg",
@@ -16,6 +17,32 @@ const queryBooleanSchema = z.union([
   z.boolean(),
   z.enum(["true", "false"]).transform((value) => value === "true"),
 ])
+
+const optionalSearchQuerySchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z
+    .string()
+    .trim()
+    .min(2)
+    .max(120)
+    .refine((value) => /[\p{L}\p{N}]/u.test(value), {
+      message: "Search query must contain at least one letter or number.",
+    })
+    .optional()
+)
+
+const optionalLatitudeSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.coerce.number().min(-90).max(90).optional()
+)
+
+const optionalLongitudeSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.coerce.number().min(-180).max(180).optional()
+)
 
 const listingDraftFieldsSchema = z.object({
   title: z.string().trim().min(3).max(120),
@@ -64,6 +91,7 @@ export const listingPublicListQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(50).default(20),
+    q: optionalSearchQuerySchema,
     breedId: z.string().uuid().optional(),
     municipalityId: z.string().uuid().optional(),
     provinceId: z.string().uuid().optional(),
@@ -77,6 +105,10 @@ export const listingPublicListQuerySchema = z
     isDewormed: queryBooleanSchema.optional(),
     hasMicrochip: queryBooleanSchema.optional(),
     hasImages: queryBooleanSchema.optional(),
+    lat: optionalLatitudeSchema,
+    lng: optionalLongitudeSchema,
+    radiusKm: z.coerce.number().min(1).max(500).optional(),
+    sort: z.enum(listingPublicSorts).optional(),
   })
   .strict()
   .superRefine(validatePublicListQuery)
@@ -98,6 +130,8 @@ export const listingImageUploadRequestSchema = z
   .strict()
 
 export type ListingSex = (typeof listingSexes)[number]
+
+export type ListingPublicSort = (typeof listingPublicSorts)[number]
 
 export type ListingImageMimeType = (typeof listingImageMimeTypes)[number]
 
@@ -164,6 +198,10 @@ function validatePublicListQuery(
   input: {
     ageMonthsMin?: number
     ageMonthsMax?: number
+    lat?: number
+    lng?: number
+    radiusKm?: number
+    sort?: ListingPublicSort
   },
   context: z.RefinementCtx
 ) {
@@ -176,6 +214,33 @@ function validatePublicListQuery(
       code: z.ZodIssueCode.custom,
       message: "Minimum age cannot be greater than maximum age.",
       path: ["ageMonthsMax"],
+    })
+  }
+
+  const hasLat = input.lat !== undefined
+  const hasLng = input.lng !== undefined
+
+  if (hasLat !== hasLng) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Latitude and longitude must be provided together.",
+      path: hasLat ? ["lng"] : ["lat"],
+    })
+  }
+
+  if (input.radiusKm !== undefined && (!hasLat || !hasLng)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Radius requires latitude and longitude.",
+      path: ["radiusKm"],
+    })
+  }
+
+  if (input.sort === "distance" && (!hasLat || !hasLng)) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Distance sorting requires latitude and longitude.",
+      path: ["sort"],
     })
   }
 }

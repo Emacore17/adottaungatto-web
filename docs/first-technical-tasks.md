@@ -58,7 +58,31 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 30. Fatto: avviare like pubblici aggregati per annunci pubblicati.
 31. Fatto: avviare endpoint pubblici di lista e scheda annuncio.
 32. Fatto: aggiungere filtri principali alla lista pubblica annunci.
-33. Avviare ricerca full-text per la lista pubblica annunci.
+33. Fatto: avviare ricerca full-text per la lista pubblica annunci.
+34. Fatto: aggiungere schema e migrazione `listing_search_documents` con
+    backfill iniziale e uso nella query pubblica.
+35. Fatto: aggiungere refresh automatico del documento ricerca dopo decisioni
+    di moderazione, processing immagini e like/unlike.
+36. Collegare il refresh al futuro endpoint di modifica annunci pubblicati.
+37. Fatto: aggiungere CLI benchmark ricerca con dataset sintetici ed EXPLAIN
+    JSON salvati localmente.
+38. Fatto: eseguire benchmark 10k/100k, confrontare EXPLAIN e aggiungere indici
+    geography per le query distanza.
+39. Eseguire benchmark limite 1M o fixture realistiche quando serve misurare il
+    margine prima della produzione.
+40. Fatto: aggiungere ranking pubblico `postgres-v1` con distanza opzionale,
+    freschezza ed engagement iniziale.
+41. Fatto: aggiungere fallback trigram tracciato per ricerche full-text senza
+    risultati in prima pagina.
+42. Fatto: aggiungere linee guida frontend Next.js/shadcn per scaffolding,
+    SEO, Server/Client Components e lavoro agentico a basso consumo token.
+43. Creare configurazione frontend centrale: env, site, routes, SEO helper e
+    client API tipizzato.
+44. Sostituire la placeholder page Next.js con una homepage pubblica orientata
+    a ricerca e annunci.
+45. Aggiungere layout route group pubblici, auth, account e admin/moderazione.
+46. Aggiungere `robots.ts`, `sitemap.ts`, metadata dinamici e primi JSON-LD per
+    pagine pubbliche indicizzabili.
 
 ## Task documentali e pre-produzione
 
@@ -68,7 +92,7 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 4. Fatto: aggiungere checklist readiness produzione.
 5. Fatto: aggiungere piano locale per mock, fixture e smoke test.
 6. Fatto: aggiungere piano osservabilita, ambienti, release e CI/CD.
-7. Dettagliare specifica tecnica della ricerca full-text e ranking.
+7. Fatto: dettagliare specifica tecnica della ricerca full-text e ranking.
 8. Dettagliare hardening auth/sessioni/rate limit.
 9. Dettagliare area admin/moderazione sicura.
 10. Dettagliare test data e script bootstrap locale.

@@ -1,6 +1,6 @@
 import { Readable } from "node:stream"
 
-import { createDatabase } from "@workspace/db"
+import { createDatabase, refreshListingSearchDocumentSql } from "@workspace/db"
 import { Client } from "minio"
 import type { ClientOptions } from "minio"
 import sharp from "sharp"
@@ -215,6 +215,7 @@ async function processPendingImage(
         processed.height,
       ]
     )
+    await refreshListingSearchDocument(databaseClient, image.listing_id)
 
     return {
       imageId: image.id,
@@ -236,6 +237,7 @@ async function processPendingImage(
       `,
       [image.id, reason.slice(0, 500)]
     )
+    await refreshListingSearchDocument(databaseClient, image.listing_id)
 
     return {
       imageId: image.id,
@@ -243,6 +245,13 @@ async function processPendingImage(
       reason,
     }
   }
+}
+
+async function refreshListingSearchDocument(
+  databaseClient: ReturnType<typeof createDatabase>["client"],
+  listingId: string
+) {
+  await databaseClient.unsafe(refreshListingSearchDocumentSql, [listingId])
 }
 
 async function getObjectBuffer(

@@ -15,6 +15,7 @@
     "geo:promote:apply": "tsx src/geo/promote-italian-places-cli.ts --apply",
     "lint": "eslint .",
     "media:process": "tsx src/media/process-listing-images-cli.ts",
+    "search:benchmark": "tsx src/search/benchmark-search-cli.ts",
     "start": "node dist/main.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

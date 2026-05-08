@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
+import type { ListingSearchDocumentsService } from "../listing-search-documents/listing-search-documents.service.js"
 import { LikesService } from "./likes.service.js"
 
 describe("LikesService", () => {
@@ -14,7 +15,7 @@ describe("LikesService", () => {
         },
       ]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { service } = createService(databaseService)
 
     await expect(service.publicLikeCount("listing-id")).resolves.toEqual({
       listingId: "listing-id",
@@ -29,7 +30,7 @@ describe("LikesService", () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { service } = createService(databaseService)
 
     await expect(service.publicLikeCount("listing-id")).rejects.toBeInstanceOf(
       NotFoundException
@@ -46,7 +47,8 @@ describe("LikesService", () => {
         },
       ]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { listingSearchDocumentsService, service } =
+      createService(databaseService)
 
     await expect(service.likeListing("user-id", "listing-id")).resolves.toEqual(
       {
@@ -60,6 +62,9 @@ describe("LikesService", () => {
       "user-id",
       "listing-id",
     ])
+    expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
+      "listing-id"
+    )
   })
 
   it("returns changed false when the like already exists", async () => {
@@ -72,7 +77,8 @@ describe("LikesService", () => {
         },
       ]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { listingSearchDocumentsService, service } =
+      createService(databaseService)
 
     await expect(service.likeListing("user-id", "listing-id")).resolves.toEqual(
       {
@@ -82,17 +88,20 @@ describe("LikesService", () => {
         changed: false,
       }
     )
+    expect(listingSearchDocumentsService.refreshListing).not.toHaveBeenCalled()
   })
 
   it("rejects likes for non-public listings", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { listingSearchDocumentsService, service } =
+      createService(databaseService)
 
     await expect(
       service.likeListing("user-id", "listing-id")
     ).rejects.toBeInstanceOf(NotFoundException)
+    expect(listingSearchDocumentsService.refreshListing).not.toHaveBeenCalled()
   })
 
   it("unlikes a listing idempotently", async () => {
@@ -114,7 +123,8 @@ describe("LikesService", () => {
           },
         ]),
     } as unknown as DatabaseService
-    const service = new LikesService(databaseService)
+    const { listingSearchDocumentsService, service } =
+      createService(databaseService)
 
     await expect(
       service.unlikeListing("user-id", "listing-id")
@@ -132,5 +142,27 @@ describe("LikesService", () => {
       liked: false,
       changed: false,
     })
+    expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledTimes(
+      1
+    )
+    expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
+      "listing-id"
+    )
   })
 })
+
+function createService(databaseService: DatabaseService) {
+  const listingSearchDocumentsService = {
+    refreshListing: vi.fn().mockResolvedValue({
+      listingId: "listing-id",
+      found: true,
+      indexed: true,
+      deleted: false,
+    }),
+  } as unknown as ListingSearchDocumentsService
+
+  return {
+    listingSearchDocumentsService,
+    service: new LikesService(databaseService, listingSearchDocumentsService),
+  }
+}

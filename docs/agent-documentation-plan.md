@@ -17,6 +17,14 @@ esplicitamente, script/documenti di supporto.
 3. Il documento dell'area toccata.
 4. `docs/first-technical-tasks.md` solo se si aggiorna la roadmap operativa.
 
+Per task frontend Next.js/shadcn leggere invece:
+
+1. `docs/project-state.md`
+2. `docs/frontend-nextjs-shadcn-guidelines.md`
+3. Il documento di dominio toccato, per esempio ricerca, auth o immagini.
+
+Non caricare tutta `docs/` per task frontend locali.
+
 ## Ordine consigliato dei prossimi step
 
 1. Consolidare documenti di produzione:
@@ -37,20 +45,33 @@ esplicitamente, script/documenti di supporto.
    - ranking;
    - indici;
    - benchmark;
-   - fallback risultati vuoti.
-5. Specificare admin/moderazione:
+   - espansioni risultati vuoti.
+
+   Stato: specifica iniziale completata in
+   `docs/search-full-text-ranking.md`.
+5. Fatto: specificare frontend Next.js/shadcn:
+   - struttura app;
+   - Server e Client Components;
+   - shadcn/ui monorepo;
+   - SEO;
+   - auth/proxy;
+   - configurazione centrale.
+
+   Stato: specifica iniziale completata in
+   `docs/frontend-nextjs-shadcn-guidelines.md`.
+6. Specificare admin/moderazione:
    - ruoli;
    - MFA;
    - audit;
    - UI interna;
    - policy operative.
-6. Specificare osservabilita e release:
+7. Specificare osservabilita e release:
    - Dynatrace/OpenTelemetry;
    - log;
    - dashboard;
    - CI/CD;
    - rollback.
-7. Specificare business:
+8. Specificare business:
    - sponsorizzazioni;
    - profili professionali;
    - reportistica.

@@ -113,6 +113,8 @@ Regole:
 - migrazioni distruttive solo con piano backfill e rollback;
 - per tabelle grandi usare deploy in piu fasi: add nullable, backfill, enforce;
 - eseguire migrazioni in staging prima della produzione;
+- applicare le migrazioni additive richieste dall'app prima di avviare nuove
+  versioni di API o worker che leggono quelle tabelle;
 - salvare output e durata delle migrazioni critiche.
 
 ## Deploy

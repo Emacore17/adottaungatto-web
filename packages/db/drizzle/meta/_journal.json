@@ -85,6 +85,20 @@
       "when": 1778156972374,
       "tag": "0011_safe_kang",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778168166768,
+      "tag": "0012_aromatic_lyja",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1778229299182,
+      "tag": "0013_elite_juggernaut",
+      "breakpoints": true
     }
   ]
 }

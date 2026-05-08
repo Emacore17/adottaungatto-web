@@ -1,6 +1,6 @@
 # Stato attuale del progetto
 
-Aggiornato al 7 maggio 2026.
+Aggiornato all'8 maggio 2026.
 
 Questo documento e' il riepilogo breve da leggere prima di avviare nuovi
 sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
@@ -10,9 +10,12 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Monorepo pnpm con app `web`, `api`, `worker` e pacchetti condivisi.
 - Docker Compose locale con PostgreSQL/PostGIS, Redis, MinIO e Mailpit.
 - Configurazione TypeScript, ESLint, Vitest, Turbo e Drizzle.
+- Scaffolding frontend Next.js `16.1.6`, React `19.2.4`, Tailwind CSS `4` e
+  shadcn/ui monorepo `radix-vega`, con linee guida operative in
+  `docs/frontend-nextjs-shadcn-guidelines.md`.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0011_safe_kang.sql`.
+- Migrazioni Drizzle fino a `0013_elite_juggernaut.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -26,7 +29,19 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Email applicative via Mailpit locale e notifiche in-app.
 - Preferiti e like per annunci pubblicati.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
-  principali.
+  principali, ricerca full-text con `q` e documento denormalizzato
+  `listing_search_documents` usato quando disponibile.
+- Ranking pubblico `postgres-v1` con sort `relevance`, `recent`, `distance`,
+  distanza opzionale, freschezza, qualita, trust ed engagement iniziale.
+- Fallback trigram tracciato per la prima pagina di ricerche full-text senza
+  risultati.
+- Refresh del documento ricerca dopo decisioni di moderazione, processing
+  immagini e like/unlike.
+- CLI worker `pnpm search:benchmark` per generare dataset sintetici di ricerca,
+  aggiornare `listing_search_documents` in bulk e salvare EXPLAIN JSON locali
+  per query principali.
+- Benchmark locali ricerca eseguiti su 10k e 100k annunci sintetici, con piani
+  EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
 
 ## Non pronto per produzione
 
@@ -38,19 +53,30 @@ produzione. Mancano almeno:
 - logging strutturato, trace id, metriche, alert e audit centralizzato;
 - pipeline CI/CD e ambienti separati;
 - backup/restore verificati e strategia rollback migrazioni;
-- ricerca full-text con ranking e benchmark;
+- espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
+  refresh sul futuro update di annunci pubblicati;
 - amministrazione completa e UI interna protetta;
+- scaffolding frontend applicativo: homepage reale, layout pubblici/account,
+  client API tipizzato, SEO dinamica, sitemap/robots e gestione sessione
+  browser;
 - contatto proprietario con privacy by default;
 - test end-to-end e fixture dati realistiche;
 - policy GDPR/privacy/cookie e retention dati.
 
 ## Stato ricerca
 
-La ricerca pubblica attuale e' una lista SQL paginata ordinata per pubblicazione
-recente. I filtri principali sono presenti e indicizzati, ma non esiste ancora
-un ranking full-text, un sistema di espansione risultati o un benchmark di
-carico. Per migliaia di annunci la base PostgreSQL e' ragionevole, ma va
-validata con EXPLAIN, dati realistici e test di carico.
+La ricerca pubblica attuale e' una lista SQL paginata con filtri principali e
+query `q` full-text su PostgreSQL. Quando `q` e' presente usa
+`listing_search_documents.search_vector` se disponibile, cade sul vettore
+inline se l'annuncio non e' ancora indicizzato e ordina per rilevanza testuale
+con ranking `postgres-v1`. Se la prima pagina full-text e' vuota, esegue un
+fallback `pg_trgm` e lo dichiara in `meta.expansion`. Senza `q` ordina per
+pubblicazione recente; con `lat`, `lng` e `sort=distance` filtra e ordina per
+distanza. Il refresh e' collegato a moderazione, immagini e like; resta da
+agganciare al futuro update degli annunci pubblicati. Il CLI worker benchmark
+ha prodotto misure locali su 10k e 100k annunci sintetici, entrambe sotto le
+soglie iniziali documentate. Mancano espansioni geografiche o filtri soft,
+benchmark limite 1M, fixture realistiche e test di carico API.
 
 ## Stato sicurezza
 
@@ -65,6 +91,14 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 Prima della produzione servono rate limit, policy sessioni, cookie sicuri se
 usati dal browser, log redatti, segreti gestiti da provider, hardening upload,
 backup, alert e audit amministrativo piu esteso.
+
+## Stato frontend
+
+`apps/web` e' ancora uno shell Next.js minimale con tema e button shadcn. Il
+prossimo sviluppo frontend deve partire da
+`docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
+client solo come foglie interattive, configurazioni centralizzate, SEO prima
+della UI avanzata e uso della CLI shadcn da `apps/web`.
 
 ## Regole per prossimi interventi
 
