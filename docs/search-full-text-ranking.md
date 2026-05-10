@@ -8,6 +8,7 @@ Implementato:
 
 - `GET /listings` pubblico, paginato e filtrabile;
 - `GET /listings/:id` per scheda pubblica;
+- `GET /listings/breeds` per filtri razza pubblici;
 - query `q` con full-text PostgreSQL inline;
 - tabella denormalizzata `listing_search_documents` con migrazione e backfill
   iniziale;
@@ -19,8 +20,8 @@ Implementato:
 - refresh idempotente del documento ricerca dopo decisioni di moderazione,
   processing immagini del worker e like/unlike;
 - CLI worker per dataset sintetici di ricerca ed EXPLAIN JSON locali;
-- filtri principali su luogo, razza, sesso, eta, gratuitita, dati sanitari e
-  presenza immagini;
+- filtri principali su luogo, razza, sesso, eta, gratuitita, fascia contributo,
+  dati sanitari e presenza immagini;
 - indici parziali sugli annunci pubblici.
 
 Non implementato:
@@ -57,6 +58,7 @@ Endpoint:
 
 ```http
 GET /listings?q=siamese%20roma&page=1&pageSize=20
+GET /listings/breeds
 ```
 
 Query param aggiuntivi:

@@ -215,6 +215,7 @@ e separa gli elementi gia implementati da quelli pianificati.
 - `is_sterilized`
 - `is_dewormed`
 - `has_microchip`
+- `contact_requests_enabled`
 - `moderation_status`: `draft`, `pending_review`, `approved`, `rejected`,
   `suspended`
 - `lifecycle_status`: `draft`, `published`, `expired`, `adopted`, `deleted`
@@ -362,13 +363,29 @@ processing immagini del worker e like/unlike.
 - `read_at`
 - `created_at`
 
+### Contatti
+
+`listing_contact_requests`
+
+- `id`
+- `listing_id`
+- `requester_user_id`
+- `owner_user_id`
+- `requester_display_name_snapshot`
+- `message`
+- `status`: `pending`, `sent`, `failed`
+- `email_shared`
+- `delivered_at`
+- `failed_at`
+- `failure_reason`
+- `created_at`, `updated_at`
+
 ## Pianificato
 
 Questi elementi erano gia citati nella documentazione iniziale o sono emersi
 come necessari, ma non sono ancora nello schema:
 
 - `geo_place_aliases` per alias territoriali;
-- `listing_contact_requests` per contatto proprietario privacy-first;
 - `audit_logs` trasversale non legato solo alla moderazione;
 - campi profilo pubblico esteso;
 - cambio email e verifica telefono completa;

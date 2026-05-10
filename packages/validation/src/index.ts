@@ -1,4 +1,5 @@
 export * from "./auth.js"
+export * from "./contacts.js"
 export * from "./env.js"
 export * from "./favorites.js"
 export * from "./likes.js"

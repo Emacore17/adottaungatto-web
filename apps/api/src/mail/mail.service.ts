@@ -43,6 +43,16 @@ type ListingReportDecisionMessage = {
   to: string
 }
 
+type ListingContactRequestMessage = {
+  listingId: string
+  listingTitle: string
+  message: string
+  ownerDisplayName: string
+  requesterDisplayName: string
+  requesterEmail: string
+  to: string
+}
+
 @Injectable()
 export class MailService implements OnApplicationShutdown {
   private readonly transporter: Transporter
@@ -169,6 +179,38 @@ export class MailService implements OnApplicationShutdown {
     })
   }
 
+  async sendListingContactRequest(message: ListingContactRequestMessage) {
+    const listingUrl = createListingDetailUrl(
+      this.env.APP_URL,
+      message.listingId
+    )
+
+    await this.transporter.sendMail({
+      from: this.env.MAIL_FROM,
+      replyTo: message.requesterEmail,
+      to: message.to,
+      subject: `Nuova richiesta per "${message.listingTitle}"`,
+      text: [
+        `Ciao ${message.ownerDisplayName},`,
+        "",
+        `${message.requesterDisplayName} ti ha scritto per l'annuncio "${message.listingTitle}".`,
+        "",
+        message.message,
+        "",
+        "Puoi rispondere direttamente a questa email: il tuo indirizzo non e' stato mostrato al richiedente dalla piattaforma.",
+        "",
+        listingUrl,
+      ].join("\n"),
+      html: [
+        `<p>Ciao ${escapeHtml(message.ownerDisplayName)},</p>`,
+        `<p>${escapeHtml(message.requesterDisplayName)} ti ha scritto per l'annuncio "${escapeHtml(message.listingTitle)}".</p>`,
+        `<p>${escapeHtml(message.message).replace(/\n/g, "<br />")}</p>`,
+        "<p>Puoi rispondere direttamente a questa email: il tuo indirizzo non e' stato mostrato al richiedente dalla piattaforma.</p>",
+        `<p><a href="${listingUrl}">Apri annuncio</a></p>`,
+      ].join(""),
+    })
+  }
+
   async onApplicationShutdown() {
     this.transporter.close()
   }
@@ -176,6 +218,10 @@ export class MailService implements OnApplicationShutdown {
 
 function createListingUrl(appUrl: string, listingSlug: string) {
   return new URL(`/annunci/${listingSlug}`, appUrl).toString()
+}
+
+function createListingDetailUrl(appUrl: string, listingId: string) {
+  return new URL(`/listings/${listingId}`, appUrl).toString()
 }
 
 function moderationDecisionCopy(decision: ListingModerationDecision) {

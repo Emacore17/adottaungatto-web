@@ -131,8 +131,8 @@ Il profilo base esiste. Mancano:
 
 - avatar e immagini profilo con moderazione;
 - descrizione pubblica, tipo soggetto e dati associazione;
-- contatti con privacy by default;
-- preferenze contatto per annuncio;
+- eventuali canali aggiuntivi o finestre orarie per il contatto proprietario;
+- estensione anti-abuso contatti oltre al primo rate limit dedicato;
 - verifica telefono;
 - gestione sessioni attive;
 - cambio email;

@@ -75,6 +75,40 @@ describe("ListingsController", () => {
     expect(listingsService.listPublic).not.toHaveBeenCalled()
   })
 
+  it("validates public listing contribution ranges", async () => {
+    const listingsService = {
+      listPublic: vi.fn().mockResolvedValue({ items: [], meta: {} }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.listPublic({
+      contributionCentsMin: "5000",
+      contributionCentsMax: "15000",
+    })
+
+    expect(listingsService.listPublic).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 20,
+      contributionCentsMin: 5000,
+      contributionCentsMax: 15000,
+    })
+  })
+
+  it("rejects public listing free filters mixed with contribution ranges", async () => {
+    const listingsService = {
+      listPublic: vi.fn(),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(
+      controller.listPublic({
+        isFree: "true",
+        contributionCentsMax: "5000",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
   it("rejects invalid public listing search queries", async () => {
     const listingsService = {
       listPublic: vi.fn(),
@@ -101,6 +135,16 @@ describe("ListingsController", () => {
       })
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(listingsService.listPublic).not.toHaveBeenCalled()
+  })
+
+  it("delegates public breed lists", async () => {
+    const listingsService = {
+      listPublicCatBreeds: vi.fn().mockResolvedValue([]),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await expect(controller.listPublicBreeds()).resolves.toEqual([])
+    expect(listingsService.listPublicCatBreeds).toHaveBeenCalledWith()
   })
 
   it("validates public listing ids and delegates", async () => {
@@ -151,7 +195,29 @@ describe("ListingsController", () => {
       description: "Cerca una famiglia",
       sex: "unknown",
       isFree: true,
+      contactRequestsEnabled: true,
     })
+  })
+
+  it("validates draft contact preference updates and delegates", async () => {
+    const listingsService = {
+      updateDraft: vi.fn().mockResolvedValue({ id: "listing-id" }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.updateDraft(
+      createAuth(),
+      { id: "00000000-0000-0000-0000-000000000001" },
+      { contactRequestsEnabled: false }
+    )
+
+    expect(listingsService.updateDraft).toHaveBeenCalledWith(
+      "user-id",
+      "00000000-0000-0000-0000-000000000001",
+      {
+        contactRequestsEnabled: false,
+      }
+    )
   })
 
   it("rejects invalid draft update payloads", async () => {
@@ -225,6 +291,87 @@ describe("ListingsController", () => {
     })
 
     expect(listingsService.confirmDraftImageUpload).toHaveBeenCalledWith(
+      "user-id",
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000002"
+    )
+  })
+
+  it("validates draft image list ids and delegates", async () => {
+    const listingsService = {
+      listDraftImages: vi.fn().mockResolvedValue({ items: [] }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.listDraftImages(createAuth(), {
+      id: "00000000-0000-0000-0000-000000000001",
+    })
+
+    expect(listingsService.listDraftImages).toHaveBeenCalledWith(
+      "user-id",
+      "00000000-0000-0000-0000-000000000001"
+    )
+  })
+
+  it("validates draft image order payloads and delegates", async () => {
+    const listingsService = {
+      reorderDraftImages: vi.fn().mockResolvedValue({ images: { items: [] } }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.reorderDraftImages(
+      createAuth(),
+      { id: "00000000-0000-0000-0000-000000000001" },
+      {
+        imageIds: [
+          "00000000-0000-0000-0000-000000000002",
+          "00000000-0000-0000-0000-000000000003",
+        ],
+      }
+    )
+
+    expect(listingsService.reorderDraftImages).toHaveBeenCalledWith(
+      "user-id",
+      "00000000-0000-0000-0000-000000000001",
+      {
+        imageIds: [
+          "00000000-0000-0000-0000-000000000002",
+          "00000000-0000-0000-0000-000000000003",
+        ],
+      }
+    )
+  })
+
+  it("validates draft image cover ids and delegates", async () => {
+    const listingsService = {
+      setDraftImageCover: vi.fn().mockResolvedValue({ image: {} }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.setDraftImageCover(createAuth(), {
+      id: "00000000-0000-0000-0000-000000000001",
+      imageId: "00000000-0000-0000-0000-000000000002",
+    })
+
+    expect(listingsService.setDraftImageCover).toHaveBeenCalledWith(
+      "user-id",
+      "00000000-0000-0000-0000-000000000001",
+      "00000000-0000-0000-0000-000000000002"
+    )
+  })
+
+  it("validates draft image delete ids and delegates", async () => {
+    const listingsService = {
+      deleteDraftImage: vi.fn().mockResolvedValue({ deleted: true }),
+    } as unknown as ListingsService
+    const controller = new ListingsController(listingsService)
+
+    await controller.deleteDraftImage(createAuth(), {
+      id: "00000000-0000-0000-0000-000000000001",
+      imageId: "00000000-0000-0000-0000-000000000002",
+    })
+
+    expect(listingsService.deleteDraftImage).toHaveBeenCalledWith(
       "user-id",
       "00000000-0000-0000-0000-000000000001",
       "00000000-0000-0000-0000-000000000002"

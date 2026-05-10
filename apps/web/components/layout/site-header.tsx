@@ -20,9 +20,9 @@ async function SiteHeader() {
   const mobileAction = getMobileAction(navigation.right)
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 [transform:translateZ(0)] px-3 pt-3 [backface-visibility:hidden] sm:px-6 sm:pt-4">
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="relative rounded-[2rem] border border-border/70 bg-background/82 px-3 py-2.5 text-foreground shadow-[0_24px_70px_-42px_rgba(20,14,20,0.56)] backdrop-blur-2xl supports-backdrop-filter:bg-background/76 sm:px-4 lg:px-5">
+    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 [backface-visibility:hidden] [transform:translateZ(0)] transition-[padding] duration-300 ease-out sm:px-6 lg:px-8 xl:transition-[padding,top] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)]">
+      <div className="mx-auto w-full max-w-[96rem] transition-all duration-300 ease-out xl:origin-top xl:scale-[0.995] xl:transition-[max-width,transform] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)] xl:will-change-[max-width,transform] 2xl:max-w-[100rem]">
+        <div className="site-header-glass relative rounded-[2rem] border border-white/14 bg-black/34 px-4 py-3 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.8)] transition-all duration-300 ease-out supports-backdrop-filter:backdrop-blur-2xl sm:px-6 xl:origin-top xl:translate-y-0 xl:px-5 xl:transition-[border-radius,box-shadow,background-color,padding,transform] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)] xl:will-change-[border-radius,box-shadow,background-color,padding] 2xl:px-6">
           <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 lg:hidden">
             <div className="flex min-w-0 justify-start">
               {mobileAction ? (

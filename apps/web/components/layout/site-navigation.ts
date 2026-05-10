@@ -69,11 +69,11 @@ const accountNavigationItem = {
 } as const satisfies SiteNavigationItem
 
 const draftsNavigationItem = {
-  href: routes.accountDrafts,
-  label: "Bozze",
-  description: "Riprendi gli annunci salvati in bozza.",
-  activePaths: [routes.accountDrafts],
-  activeMatch: "section",
+  href: routes.accountDraftNew,
+  label: "Inserisci annuncio",
+  description: "Crea una nuova bozza di annuncio.",
+  activePaths: [routes.accountDraftNew],
+  activeMatch: "exact",
   icon: "file-text",
   variant: "accent",
 } as const satisfies SiteNavigationItem

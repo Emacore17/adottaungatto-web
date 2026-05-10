@@ -11,6 +11,12 @@ export type PublicListingImage = {
   isCover: boolean
 }
 
+export type PublicCatBreed = {
+  id: string
+  name: string
+  slug: string
+}
+
 export type PublicListingSummary = {
   id: string
   title: string
@@ -51,6 +57,7 @@ export type PublicListingSummary = {
   isSterilized: boolean | null
   isDewormed: boolean | null
   hasMicrochip: boolean | null
+  contactRequestsEnabled: boolean
   publishedAt: string | null
   expiresAt: string | null
   createdAt: string

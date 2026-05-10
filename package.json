@@ -23,6 +23,7 @@
     "geo:promote:apply": "pnpm --filter worker geo:promote:apply",
     "media:process": "pnpm --filter worker media:process",
     "search:benchmark": "pnpm --filter worker search:benchmark",
+    "smoke:e2e": "node scripts/local/e2e-smoke.mjs",
     "lint": "turbo lint",
     "format": "turbo format",
     "test": "turbo test",

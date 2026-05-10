@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common"
 
 import { AuthModule } from "./auth/auth.module.js"
 import { ConfigModule } from "./config/config.module.js"
+import { ContactsModule } from "./contacts/contacts.module.js"
 import { DatabaseModule } from "./database/database.module.js"
 import { FavoritesModule } from "./favorites/favorites.module.js"
 import { HealthModule } from "./health/health.module.js"
@@ -29,6 +30,7 @@ import { UsersModule } from "./users/users.module.js"
     NotificationsModule,
     FavoritesModule,
     LikesModule,
+    ContactsModule,
   ],
 })
 export class AppModule {}

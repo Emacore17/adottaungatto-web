@@ -109,6 +109,9 @@ Endpoint iniziali:
   posseduta dall'utente autenticato;
 - `POST /notifications/read-all`: marca come lette tutte le notifiche non
   lette dell'utente autenticato.
+- `POST /contacts/listings/:listingId`: invia al proprietario una richiesta di
+  contatto per un annuncio pubblico, senza restituire dati di contatto del
+  proprietario.
 
 Gli endpoint autenticati usano un guard bearer riusabile che valida la sessione
 e rende disponibile il contesto autenticato ai controller.
@@ -249,6 +252,17 @@ Centro notifiche in-app:
 - il conteggio non lette e' disponibile separatamente per badge UI;
 - le notifiche iniziali sono generate dagli esiti di moderazione annuncio e
   dagli aggiornamenti sulle segnalazioni.
+
+Contatto proprietario privacy-first:
+
+- solo utenti autenticati possono inviare richieste di contatto;
+- il contatto e' consentito solo per annunci pubblici, approvati, pubblicati,
+  non cancellati, non scaduti e con `contact_requests_enabled = true`;
+- il proprietario non puo contattare il proprio annuncio;
+- l'API non espone email o telefono del proprietario;
+- l'email del richiedente viene condivisa come risposta al messaggio solo dopo
+  consenso esplicito;
+- ogni richiesta viene tracciata in `listing_contact_requests`.
 
 Verifica email:
 

@@ -1,6 +1,6 @@
 # Stato attuale del progetto
 
-Aggiornato all'8 maggio 2026.
+Aggiornato al 9 maggio 2026.
 
 Questo documento e' il riepilogo breve da leggere prima di avviare nuovi
 sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
@@ -10,12 +10,13 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Monorepo pnpm con app `web`, `api`, `worker` e pacchetti condivisi.
 - Docker Compose locale con PostgreSQL/PostGIS, Redis, MinIO e Mailpit.
 - Configurazione TypeScript, ESLint, Vitest, Turbo e Drizzle.
-- Scaffolding frontend Next.js `16.1.6`, React `19.2.4`, Tailwind CSS `4` e
-  shadcn/ui monorepo `radix-vega`, con linee guida operative in
-  `docs/frontend-nextjs-shadcn-guidelines.md`.
+- Frontend Next.js `16.1.6`, React `19.2.4`, Tailwind CSS `4` e shadcn/ui
+  monorepo `radix-vega`, con linee guida operative in
+  `docs/frontend-nextjs-shadcn-guidelines.md`, configurazione centrale, route
+  builder, client API tipizzato, layout pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0013_elite_juggernaut.sql`.
+- Migrazioni Drizzle fino a `0015_uneven_cobalt_man.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -28,11 +29,31 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `moderation_actions`.
 - Email applicative via Mailpit locale e notifiche in-app.
 - Preferiti e like per annunci pubblicati.
+- Contatto proprietario privacy-first con richiesta autenticata, inoltro email
+  backend, tracciamento `listing_contact_requests`, rate limit dedicato e
+  preferenza per-annuncio per abilitare/disabilitare il contatto.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
   principali, ricerca full-text con `q` e documento denormalizzato
   `listing_search_documents` usato quando disponibile.
+- Endpoint pubblico `GET /listings/breeds` per alimentare i filtri razza del
+  frontend.
 - Ranking pubblico `postgres-v1` con sort `relevance`, `recent`, `distance`,
   distanza opzionale, freschezza, qualita, trust ed engagement iniziale.
+- Homepage pubblica server-rendered orientata alla ricerca, pagina lista
+  annunci con filtri client isolati, scheda annuncio pubblica con metadata
+  dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
+  `error` iniziali.
+- Area account server-rendered con dashboard `/account`, lista bozze
+  `/account/listings/drafts`, lista preferiti `/account/favorites` e inbox
+  notifiche `/account/notifications` collegate in lettura alle API
+  autenticate, con prime mutazioni per cancellare bozze, rimuovere preferiti e
+  segnare notifiche come lette. Le bozze hanno anche pagine frontend per
+  creazione, modifica, upload immagine presigned, galleria immagini con stato,
+  eliminazione, riordino/copertina e invio a moderazione.
+- Route group admin iniziale con pagina `/moderation` server-rendered,
+  `noindex`, login obbligatorio, lettura delle code API `pending_review` e
+  segnalazioni, e azioni base approva/rifiuta/sospendi con motivo obbligatorio;
+  le autorizzazioni di ruolo restano applicate dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -42,13 +63,16 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   per query principali.
 - Benchmark locali ricerca eseguiti su 10k e 100k annunci sintetici, con piani
   EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
+- Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
+  auth, bozze, preferiti, like, contatto proprietario, notifiche e pagine
+  account autenticate.
 
 ## Non pronto per produzione
 
 Il progetto e' una base backend solida, ma non e' ancora rilasciabile in
 produzione. Mancano almeno:
 
-- hardening HTTP, rate limiting e protezioni anti-abuso;
+- hardening HTTP, rate limiting generalizzato e protezioni anti-abuso estese;
 - cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
 - logging strutturato, trace id, metriche, alert e audit centralizzato;
 - pipeline CI/CD e ambienti separati;
@@ -56,11 +80,10 @@ produzione. Mancano almeno:
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
   refresh sul futuro update di annunci pubblicati;
 - amministrazione completa e UI interna protetta;
-- scaffolding frontend applicativo: homepage reale, layout pubblici/account,
-  client API tipizzato, SEO dinamica, sitemap/robots e gestione sessione
-  browser;
-- contatto proprietario con privacy by default;
-- test end-to-end e fixture dati realistiche;
+- frontend applicativo oltre la consultazione pubblica: eventuali canali o
+  finestre orarie per il contatto proprietario e amministrazione interna piu
+  estesa;
+- suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
 
 ## Stato ricerca
@@ -72,11 +95,13 @@ inline se l'annuncio non e' ancora indicizzato e ordina per rilevanza testuale
 con ranking `postgres-v1`. Se la prima pagina full-text e' vuota, esegue un
 fallback `pg_trgm` e lo dichiara in `meta.expansion`. Senza `q` ordina per
 pubblicazione recente; con `lat`, `lng` e `sort=distance` filtra e ordina per
-distanza. Il refresh e' collegato a moderazione, immagini e like; resta da
-agganciare al futuro update degli annunci pubblicati. Il CLI worker benchmark
-ha prodotto misure locali su 10k e 100k annunci sintetici, entrambe sotto le
-soglie iniziali documentate. Mancano espansioni geografiche o filtri soft,
-benchmark limite 1M, fixture realistiche e test di carico API.
+distanza. I filtri pubblici includono luogo, razza, sesso, fascia eta,
+gratuita, fascia contributo, dati sanitari e presenza immagini. Il refresh e'
+collegato a moderazione, immagini e like; resta da agganciare al futuro update
+degli annunci pubblicati. Il CLI worker benchmark ha prodotto misure locali su
+10k e 100k annunci sintetici, entrambe sotto le soglie iniziali documentate.
+Mancano espansioni geografiche o filtri soft, benchmark limite 1M, fixture
+realistiche e test di carico API.
 
 ## Stato sicurezza
 
@@ -88,14 +113,26 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 - controllo ruoli su moderazione;
 - token monouso hashati per email verification e reset password.
 
-Prima della produzione servono rate limit, policy sessioni, cookie sicuri se
-usati dal browser, log redatti, segreti gestiti da provider, hardening upload,
-backup, alert e audit amministrativo piu esteso.
+Prima della produzione servono rate limit oltre al primo limite sui contatti,
+policy sessioni, cookie sicuri se usati dal browser, log redatti, segreti
+gestiti da provider, hardening upload, backup, alert e audit amministrativo
+piu esteso.
 
 ## Stato frontend
 
-`apps/web` e' ancora uno shell Next.js minimale con tema e button shadcn. Il
-prossimo sviluppo frontend deve partire da
+`apps/web` ha superato lo shell minimale: sono presenti configurazione env/site,
+route builder, helper SEO, client API, gestione sessione cookie lato server,
+layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
+annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
+JSON-LD iniziali, dashboard account con lettura bozze/preferiti/notifiche,
+form contatto proprietario sulla scheda annuncio e pagina `/moderation`
+collegata alle code API con decisioni base motivate. L'area account supporta
+rimozione preferiti, marcatura notifiche lette, cancellazione bozze ed editor
+bozze con creazione, modifica, upload immagine, galleria immagini con stato,
+eliminazione, riordino/copertina, preferenza contatto per-annuncio e invio a
+moderazione. Restano incomplete eventuali preferenze contatto per canali o
+finestre orarie e amministrazione interna piu estesa. I prossimi sviluppi
+frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
 della UI avanzata e uso della CLI shadcn da `apps/web`.
@@ -110,4 +147,5 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 - Se un documento descrive futuro o backlog, marcarlo chiaramente come
   pianificato.
 - Prima di chiudere un task eseguire almeno `pnpm typecheck`, `pnpm test`,
-  `pnpm lint` e `git diff --check` quando sono stati toccati codice o schema.
+  `pnpm lint` e `git diff --check` quando sono stati toccati codice o schema;
+  se i servizi locali sono avviati, eseguire anche `pnpm smoke:e2e`.

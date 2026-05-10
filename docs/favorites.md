@@ -32,3 +32,13 @@ Ogni item include `favoritedAt` e un riepilogo annuncio con:
 - luogo quando completo;
 - conteggio immagini pronte;
 - copertina pronta quando disponibile.
+
+## Frontend attuale
+
+- `/account` mostra un riepilogo dei preferiti recenti per utenti autenticati.
+- `/listings/:id` permette a un utente autenticato di salvare l'annuncio nei
+  preferiti tramite server action collegata a `POST /favorites/listings/:id`.
+- `/account/favorites` mostra la lista paginata dei preferiti collegata a
+  `GET /favorites/listings`.
+- `/account` e `/account/favorites` permettono di rimuovere un preferito tramite
+  server action collegata a `DELETE /favorites/listings/:listingId`.

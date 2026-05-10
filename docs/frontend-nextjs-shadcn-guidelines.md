@@ -15,8 +15,12 @@ Stack locale verificato:
 - componenti UI condivisi in `packages/ui`;
 - app frontend in `apps/web`.
 
-La UI applicativa e' ancora quasi vuota. La priorita e' creare uno scaffolding
-scalabile prima di costruire viste complete.
+La UI pubblica iniziale e' avviata: homepage di ricerca, lista annunci,
+scheda dettaglio, layout pubblici/auth/account/admin, client API, SEO base,
+sitemap, robots, JSON-LD, dashboard account con bozze/preferiti/notifiche,
+form contatto proprietario e pagina `/moderation` con decisioni base motivate
+sono presenti. La priorita ora e' consolidare i flussi operativi autenticati
+senza rompere la separazione Server/Client Components.
 
 ## Lettura minima per agenti
 
@@ -287,21 +291,31 @@ server-only.
 
 ## Piano scaffolding frontend
 
-1. Creare config centrale: env, site, routes, SEO helper.
-2. Sostituire la pagina placeholder con homepage pubblica orientata a ricerca
-   e annunci.
-3. Aggiungere layout pubblico, auth e account con route groups.
-4. Aggiungere client API tipizzato per `GET /listings`, places autocomplete,
-   auth base.
-5. Implementare lista pubblica annunci come Server Component con filtri client
-   isolati.
-6. Implementare dettaglio annuncio con metadata dinamici, Open Graph e JSON-LD.
-7. Aggiungere `robots.ts`, `sitemap.ts`, `not-found.tsx`, `loading.tsx` e
-   `error.tsx` dove servono.
-8. Introdurre login/register con validazione condivisa e gestione sessione
+1. Fatto: creare config centrale: env, site, routes, SEO helper.
+2. Fatto: sostituire la pagina placeholder con homepage pubblica orientata a
+   ricerca e annunci.
+3. Fatto: aggiungere layout pubblico, auth e account con route groups.
+4. Fatto: aggiungere client API tipizzato per `GET /listings`, places
+   autocomplete, auth base e razze pubbliche.
+5. Fatto: implementare lista pubblica annunci come Server Component con filtri
+   client isolati.
+6. Fatto: implementare dettaglio annuncio con metadata dinamici, Open Graph e
+   JSON-LD.
+7. Fatto: aggiungere `robots.ts`, `sitemap.ts`, `not-found.tsx`, `loading.tsx`
+   ed `error.tsx` iniziali.
+8. In corso: login/register con validazione condivisa e gestione sessione
    coerente con la strategia backend.
-9. Aggiungere test leggeri per helper, view model e route critiche.
-10. Solo dopo, introdurre animazioni e componenti avanzati.
+9. Fatto: route group admin/moderazione protetto, noindex e collegato in
+   lettura alle code API.
+10. Fatto: UI account per bozze annuncio, preferiti e notifiche.
+11. Fatto: azioni UI di moderazione con motivo obbligatorio.
+12. Fatto: form contatto proprietario privacy-first sulla scheda annuncio.
+13. Fatto: mutazioni account per rimozione preferiti, lettura notifiche,
+    cancellazione bozze ed editor bozze con creazione, modifica, upload
+    immagine e invio a moderazione.
+14. Aggiungere galleria/stato immagini bozza con eliminazione e riordino.
+15. Aggiungere test leggeri per helper, view model e route critiche.
+16. Solo dopo, introdurre animazioni e componenti avanzati.
 
 ## Checklist per ogni task frontend
 

@@ -11,6 +11,34 @@ describe("ListingsService", () => {
     expect(createListingSlug("!!!")).toBe("annuncio")
   })
 
+  it("lists active public cat breeds ordered by the database", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          id: "breed-id",
+          name: "Europeo",
+          slug: "europeo",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(service.listPublicCatBreeds()).resolves.toEqual([
+      {
+        id: "breed-id",
+        name: "Europeo",
+        slug: "europeo",
+      },
+    ])
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "from cat_breeds"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "where is_active = true"
+    )
+  })
+
   it("lists public listings with filters and pagination metadata", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([
@@ -40,6 +68,7 @@ describe("ListingsService", () => {
         expect.objectContaining({
           id: "listing-id",
           title: "Gattino a Roma",
+          contactRequestsEnabled: true,
           publishedAt: "2026-04-20T10:00:00.000Z",
           createdAt: "2026-04-01T09:00:00.000Z",
           owner: {
@@ -97,6 +126,8 @@ describe("ListingsService", () => {
       null,
       null,
       "relevance",
+      null,
+      null,
     ])
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "websearch_to_tsquery"
@@ -109,6 +140,9 @@ describe("ListingsService", () => {
     )
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "search_document.like_count"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "listing.contribution_cents"
     )
   })
 
@@ -161,6 +195,8 @@ describe("ListingsService", () => {
       12.4828,
       25,
       "distance",
+      null,
+      null,
     ])
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "ST_DWithin"
@@ -234,6 +270,8 @@ describe("ListingsService", () => {
       null,
       null,
       "relevance",
+      null,
+      null,
     ])
   })
 
@@ -364,6 +402,7 @@ describe("ListingsService", () => {
         municipalityId: "municipality-id",
         contributionCents: 1500,
         isFree: false,
+        contactRequestsEnabled: false,
       })
     ).resolves.toMatchObject({
       id: "listing-id",
@@ -389,6 +428,7 @@ describe("ListingsService", () => {
       1500,
       false,
     ])
+    expect(createParameters[19]).toBe(false)
   })
 
   it("rejects drafts with unknown municipalities", async () => {
@@ -404,6 +444,7 @@ describe("ListingsService", () => {
         sex: "unknown",
         municipalityId: "missing-municipality-id",
         isFree: true,
+        contactRequestsEnabled: true,
       })
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
@@ -446,6 +487,32 @@ describe("ListingsService", () => {
     expect(updateParameters[22]).toBe(1500)
     expect(updateParameters[23]).toBe(true)
     expect(updateParameters[24]).toBe(false)
+    expect(updateParameters[33]).toBe(false)
+  })
+
+  it("updates draft contact preferences", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          ...createDraftRow(),
+          contact_requests_enabled: false,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.updateDraft("user-id", "listing-id", {
+        contactRequestsEnabled: false,
+      })
+    ).resolves.toMatchObject({
+      contactRequestsEnabled: false,
+    })
+    const [, updateParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[0]!
+
+    expect(updateParameters[33]).toBe(true)
+    expect(updateParameters[34]).toBe(false)
   })
 
   it("throws when a draft is missing", async () => {
@@ -753,6 +820,214 @@ describe("ListingsService", () => {
     expect(objectStorageService.statObject).not.toHaveBeenCalled()
   })
 
+  it("lists draft images with readiness metadata", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([
+          createImageRow({
+            object_key_large: "local/listings/listing-id/large/image.webp",
+            object_key_thumb: "local/listings/listing-id/thumb/image.webp",
+            status: "ready",
+          }),
+          createImageRow({
+            id: "image-id-2",
+            is_cover: false,
+            status: "processing",
+          }),
+          createImageRow({
+            id: "image-id-3",
+            is_cover: false,
+            status: "rejected",
+          }),
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listDraftImages("user-id", "listing-id")
+    ).resolves.toMatchObject({
+      items: [
+        {
+          id: "image-id",
+          status: "ready",
+          isCover: true,
+        },
+        {
+          id: "image-id-2",
+          status: "processing",
+        },
+        {
+          id: "image-id-3",
+          status: "rejected",
+        },
+      ],
+      meta: {
+        total: 3,
+        readyCount: 1,
+        pendingCount: 1,
+        rejectedCount: 1,
+        coverImageId: "image-id",
+        maxItems: 10,
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      "user-id",
+      "listing-id",
+    ])
+  })
+
+  it("soft deletes a draft image", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          { id: "image-id", cover_image_id: "image-id-2" },
+        ])
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([
+          createImageRow({
+            id: "image-id-2",
+            is_cover: true,
+          }),
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.deleteDraftImage("user-id", "listing-id", "image-id")
+    ).resolves.toMatchObject({
+      deleted: true,
+      imageId: "image-id",
+      images: {
+        items: [
+          {
+            id: "image-id-2",
+            isCover: true,
+          },
+        ],
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "user-id",
+      "listing-id",
+      "image-id",
+    ])
+  })
+
+  it("sets a draft image as cover", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          createImageRow({
+            id: "image-id-2",
+            is_cover: true,
+          }),
+        ])
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([
+          createImageRow({
+            id: "image-id-2",
+            is_cover: true,
+          }),
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.setDraftImageCover("user-id", "listing-id", "image-id-2")
+    ).resolves.toMatchObject({
+      image: {
+        id: "image-id-2",
+        isCover: true,
+      },
+      images: {
+        meta: {
+          coverImageId: "image-id-2",
+        },
+      },
+    })
+  })
+
+  it("reorders draft images", async () => {
+    const firstImage = createImageRow({
+      id: "image-id-1",
+      is_cover: true,
+      sort_order: 0,
+    })
+    const secondImage = createImageRow({
+      id: "image-id-2",
+      is_cover: false,
+      sort_order: 1,
+    })
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([firstImage, secondImage])
+        .mockResolvedValueOnce([{ id: "image-id-2" }, { id: "image-id-1" }])
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([
+          { ...secondImage, sort_order: 0 },
+          { ...firstImage, sort_order: 1 },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.reorderDraftImages("user-id", "listing-id", {
+        imageIds: ["image-id-2", "image-id-1"],
+      })
+    ).resolves.toMatchObject({
+      images: {
+        items: [
+          {
+            id: "image-id-2",
+            sortOrder: 0,
+          },
+          {
+            id: "image-id-1",
+            sortOrder: 1,
+          },
+        ],
+      },
+    })
+    expect(
+      JSON.parse(String(vi.mocked(databaseService.queryRows).mock.calls[2]?.[1]?.[2]))
+    ).toEqual([
+      {
+        id: "image-id-2",
+        sort_order: 0,
+      },
+      {
+        id: "image-id-1",
+        sort_order: 1,
+      },
+    ])
+  })
+
+  it("rejects reorder payloads that omit active draft images", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([createDraftRow()])
+        .mockResolvedValueOnce([
+          createImageRow({ id: "image-id-1" }),
+          createImageRow({ id: "image-id-2", is_cover: false }),
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.reorderDraftImages("user-id", "listing-id", {
+        imageIds: ["image-id-1"],
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
+  })
+
   it("rejects confirmation when the storage object is missing", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([createImageRow()]),
@@ -823,6 +1098,7 @@ function createDraftRow() {
     is_sterilized: null,
     is_dewormed: null,
     has_microchip: null,
+    contact_requests_enabled: true,
     moderation_status: "draft",
     lifecycle_status: "draft",
     created_at: "2026-04-01T09:00:00.000Z",
@@ -859,6 +1135,7 @@ function createPublicListingRow() {
     is_sterilized: null,
     is_dewormed: true,
     has_microchip: false,
+    contact_requests_enabled: true,
     published_at: "2026-04-20T10:00:00.000Z",
     expires_at: null,
     created_at: "2026-04-01T09:00:00.000Z",
@@ -879,7 +1156,27 @@ function createPublicListingRow() {
   }
 }
 
-function createImageRow() {
+function createImageRow(
+  overrides: Partial<{
+    id: string
+    listing_id: string
+    object_key_original: string
+    object_key_large: string | null
+    object_key_thumb: string | null
+    mime_type: string
+    width: number | null
+    height: number | null
+    size_bytes: number
+    checksum: string | null
+    blur_hash: string | null
+    sort_order: number
+    is_cover: boolean
+    status: string
+    rejection_reason: string | null
+    created_at: string
+    updated_at: string
+  }> = {}
+) {
   return {
     id: "image-id",
     listing_id: "listing-id",
@@ -898,6 +1195,7 @@ function createImageRow() {
     rejection_reason: null,
     created_at: "2026-04-01T10:00:00.000Z",
     updated_at: "2026-04-01T10:00:00.000Z",
+    ...overrides,
   }
 }
 

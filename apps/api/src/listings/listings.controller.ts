@@ -16,6 +16,8 @@ import {
   listingDraftIdParamSchema,
   listingDraftListQuerySchema,
   listingDraftUpdateSchema,
+  listingImageIdParamSchema,
+  listingImageOrderSchema,
   listingImageUploadRequestSchema,
   listingPublicIdParamSchema,
   listingPublicListQuerySchema,
@@ -43,6 +45,11 @@ export class ListingsController {
     } catch (error) {
       throwValidationError(error, "Invalid public listing query.")
     }
+  }
+
+  @Get("breeds")
+  async listPublicBreeds() {
+    return this.listingsService.listPublicCatBreeds()
   }
 
   @Get(":id")
@@ -89,6 +96,21 @@ export class ListingsController {
   }
 
   @UseGuards(BearerAuthGuard)
+  @Get("me/drafts/:id/images")
+  async listDraftImages(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+
+      return this.listingsService.listDraftImages(auth.user.id, id)
+    } catch (error) {
+      throwValidationError(error, "Invalid listing draft id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
   @Post("me/drafts/:id/images/upload-url")
   async createDraftImageUpload(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
@@ -125,6 +147,62 @@ export class ListingsController {
         id,
         imageId
       )
+    } catch (error) {
+      throwValidationError(error, "Invalid listing image id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Patch("me/drafts/:id/images/order")
+  async reorderDraftImages(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>,
+    @Body() body: unknown
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+
+      return this.listingsService.reorderDraftImages(
+        auth.user.id,
+        id,
+        listingImageOrderSchema.parse(body)
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid listing image order payload.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Patch("me/drafts/:id/images/:imageId/cover")
+  async setDraftImageCover(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+      const { imageId } = listingImageIdParamSchema.parse(params)
+
+      return this.listingsService.setDraftImageCover(
+        auth.user.id,
+        id,
+        imageId
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid listing image id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Delete("me/drafts/:id/images/:imageId")
+  async deleteDraftImage(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+      const { imageId } = listingImageIdParamSchema.parse(params)
+
+      return this.listingsService.deleteDraftImage(auth.user.id, id, imageId)
     } catch (error) {
       throwValidationError(error, "Invalid listing image id.")
     }

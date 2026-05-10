@@ -125,18 +125,28 @@ const addFavoriteSql = `
     select target_listing.id, $1::uuid
     from target_listing
     on conflict (listing_id, user_id) do nothing
-    returning listing_id, user_id
+    returning listing_id, user_id, created_at
   ),
   selected_favorite as (
     select
-      listing_favorites.*,
-      exists (select 1 from inserted_favorite) as created
+      inserted_favorite.listing_id,
+      inserted_favorite.user_id,
+      inserted_favorite.created_at,
+      true as created
+    from inserted_favorite
+    union all
+    select
+      listing_favorites.listing_id,
+      listing_favorites.user_id,
+      listing_favorites.created_at,
+      false as created
     from listing_favorites
     join target_listing on target_listing.id = listing_favorites.listing_id
     where listing_favorites.user_id = $1::uuid
+      and not exists (select 1 from inserted_favorite)
   )
   select
-    selected_favorite.created,
+    listing_favorite.created,
     ${favoriteListingSelect}
   from selected_favorite listing_favorite
   ${favoriteListingJoins}

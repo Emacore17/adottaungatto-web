@@ -45,6 +45,10 @@ Un annuncio e' pubblico solo se:
 - Ordina dai casi piu' vecchi ai piu' recenti.
 - Include dati annuncio, proprietario, luogo, conteggio immagini pronte e
   copertina pronta quando disponibile.
+- Il frontend espone una prima pagina `/moderation` server-rendered, `noindex`
+  e protetta da login, che legge questa coda tramite bearer token. Se l'API
+  restituisce `403`, mostra uno stato di accesso non consentito. Ogni item
+  include un form decisione con motivo rapido o nota obbligatoria.
 
 ## Coda segnalazioni
 
@@ -56,7 +60,8 @@ La coda richiede ruolo `moderator` o `admin` e mostra casi `open` con almeno
 una segnalazione `linked` verso un annuncio. Ogni item include dati annuncio,
 proprietario, luogo, immagini pronte, conteggio segnalazioni, data della prima
 segnalazione, data dell'ultima segnalazione e dettaglio dell'ultima
-segnalazione.
+segnalazione. La pagina `/moderation` legge anche questa coda e consente le
+stesse decisioni motivate.
 
 Le decisioni `approve`, `reject` e `suspend` sono riutilizzate anche su casi da
 segnalazione collegati ad annunci gia pubblicati. In questo contesto

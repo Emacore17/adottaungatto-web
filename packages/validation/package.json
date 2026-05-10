@@ -20,10 +20,16 @@
   "exports": {
     ".": "./src/index.ts",
     "./auth": "./src/auth.ts",
+    "./contacts": "./src/contacts.ts",
     "./env": "./src/env.ts",
+    "./favorites": "./src/favorites.ts",
+    "./likes": "./src/likes.ts",
     "./listings": "./src/listings.ts",
+    "./moderation": "./src/moderation.ts",
+    "./notifications": "./src/notifications.ts",
     "./pagination": "./src/pagination.ts",
     "./places": "./src/places.ts",
+    "./reports": "./src/reports.ts",
     "./users": "./src/users.ts"
   }
 }

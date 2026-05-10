@@ -35,8 +35,26 @@ export const radiusOptions = [
   { label: "200 km", value: "200" },
 ] as const
 
+export const priceRangeOptions = [
+  { label: "Qualsiasi", value: "all" },
+  { label: "In regalo", value: "free", isFree: true },
+  { label: "Fino a 50 euro", value: "to-50", contributionCentsMax: 5000 },
+  {
+    label: "50-100 euro",
+    value: "50-100",
+    contributionCentsMin: 5000,
+    contributionCentsMax: 10000,
+  },
+  {
+    label: "100-200 euro",
+    value: "100-200",
+    contributionCentsMin: 10000,
+    contributionCentsMax: 20000,
+  },
+  { label: "Oltre 200 euro", value: "over-200", contributionCentsMin: 20000 },
+] as const
+
 export const booleanFilterOptions = [
-  { label: "Solo gratuite", key: "isFree" },
   { label: "Con foto", key: "hasImages" },
   { label: "Vaccinati", key: "isVaccinated" },
   { label: "Sterilizzati", key: "isSterilized" },

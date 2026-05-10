@@ -48,6 +48,7 @@ Endpoint:
 
 ```http
 GET /listings?page=1&pageSize=20&q=siamese%20roma
+GET /listings/breeds
 GET /listings/:id
 ```
 
@@ -80,6 +81,8 @@ Filtri iniziali:
 - `ageMonthsMin`;
 - `ageMonthsMax`;
 - `isFree`;
+- `contributionCentsMin`;
+- `contributionCentsMax`;
 - `isVaccinated`;
 - `isSterilized`;
 - `isDewormed`;
@@ -90,15 +93,16 @@ Filtri iniziali:
 - `radiusKm`;
 - `sort`: `relevance`, `recent`, `distance`.
 
-La scheda pubblica usa l'UUID dell'annuncio per evitare collisioni tra slug.
-Include gallery delle immagini pronte, conteggio like e dati geografici
-completi quando disponibili.
+`GET /listings/breeds` restituisce le razze attive ordinate per uso nei filtri
+pubblici. La scheda pubblica usa l'UUID dell'annuncio per evitare collisioni
+tra slug. Include gallery delle immagini pronte, conteggio like e dati
+geografici completi quando disponibili.
 
-Stato: la lista pubblica filtrabile, `q` full-text e il documento
-denormalizzato `listing_search_documents` sono implementati. La migrazione
-`0012_aromatic_lyja.sql` crea la tabella, gli indici GIN/GiST/btree e il
-backfill iniziale degli annunci gia pubblicati. La migrazione
-`0013_elite_juggernaut.sql` aggiunge indici GiST expression su
+Stato: la lista pubblica filtrabile, `q` full-text, filtri fascia contributo,
+endpoint razze e documento denormalizzato `listing_search_documents` sono
+implementati. La migrazione `0012_aromatic_lyja.sql` crea la tabella, gli
+indici GIN/GiST/btree e il backfill iniziale degli annunci gia pubblicati. La
+migrazione `0013_elite_juggernaut.sql` aggiunge indici GiST expression su
 `location_point::geography` per query distanza. Il refresh e' collegato a
 decisioni di moderazione, processing immagini del worker e like/unlike. Il
 worker espone `pnpm search:benchmark` per creare dataset sintetici marcati,

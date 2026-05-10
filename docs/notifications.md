@@ -36,3 +36,13 @@ I payload sono JSON e includono almeno:
 
 Le notifiche da segnalazione includono anche `reportId` e
 `reportResolutionStatus`.
+
+## Frontend attuale
+
+- `/account` mostra un riepilogo delle notifiche recenti e il conteggio non
+  lette.
+- `/account/notifications` mostra la inbox paginata collegata a
+  `GET /notifications`, con filtro `unreadOnly`.
+- `/account/notifications` permette di marcare una singola notifica come letta
+  e di marcare tutte le notifiche non lette tramite gli endpoint `POST`
+  esistenti.

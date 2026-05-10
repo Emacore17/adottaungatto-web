@@ -9,8 +9,10 @@ function HomeHeroBackground() {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+      className="pointer-events-none absolute inset-0 overflow-hidden"
     >
+      <div className="home-hero-gradient-wash absolute inset-[-18%] motion-reduce:animate-none" />
+      <div className="home-hero-top-glow absolute inset-x-[-10%] top-[-18%] h-[58%] motion-reduce:animate-none" />
       <CatIcon
         className="home-float-slow absolute top-[14%] right-[8%] size-24 text-primary/12 sm:size-32"
         style={floatStyle("6deg")}

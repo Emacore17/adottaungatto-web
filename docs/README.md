@@ -23,6 +23,7 @@ adottaungatto.it.
 - [local-testing-and-mocks.md](local-testing-and-mocks.md): mock, fixture e prova locale.
 - [sponsored-listings-business.md](sponsored-listings-business.md): strategia per annunci sponsorizzati.
 - [agent-documentation-plan.md](agent-documentation-plan.md): piano documentale ottimizzato per agenti AI.
+- [contacts.md](contacts.md): contatto proprietario privacy-first.
 - [favorites.md](favorites.md): preferiti degli annunci pubblicati.
 - [likes.md](likes.md): like pubblici aggregati sugli annunci pubblicati.
 - [moderation.md](moderation.md): moderazione annunci e segnalazioni.

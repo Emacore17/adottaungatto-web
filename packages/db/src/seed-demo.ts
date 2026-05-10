@@ -121,7 +121,12 @@ const clearDemoSql = `
 
   delete from listings
   where id in (${quotedList(demoListingIds)})
-    or owner_user_id in (${quotedList(demoUserIds)});
+    or owner_user_id in (
+      select id
+      from users
+      where id in (${quotedList(demoUserIds)})
+        or email_normalized like '%@demo.adottaungatto.local'
+    );
 
   delete from user_roles
   where user_id in (${quotedList(demoUserIds)});

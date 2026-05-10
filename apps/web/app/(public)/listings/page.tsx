@@ -5,6 +5,7 @@ import { SearchIcon } from "lucide-react"
 import { ListingCard } from "@/app/(public)/_components/listing-card"
 import { ListingSearchForm } from "@/app/(public)/_components/listing-search-form"
 import {
+  listPublicCatBreeds,
   listPublicListings,
   parseListingSearchParams,
 } from "@/lib/api/listings"
@@ -43,9 +44,13 @@ export default async function ListingsPage({
 }: ListingsPageProps) {
   const params = await searchParams
   const parsed = parseListingSearchParams(params)
-  const listings = await listPublicListings(parsed.query)
+  const [listings, breedsResult] = await Promise.all([
+    listPublicListings(parsed.query),
+    listPublicCatBreeds(),
+  ])
   const items = listings.ok ? listings.data.items : []
   const meta = listings.ok ? listings.data.meta : null
+  const breeds = breedsResult.ok ? breedsResult.data : []
   const placeLabel =
     typeof params.placeLabel === "string" ? params.placeLabel : null
   const rawPlaceType =
@@ -53,7 +58,7 @@ export default async function ListingsPage({
   const placeType = isSearchPlaceType(rawPlaceType) ? rawPlaceType : null
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pb-8 pt-28 sm:px-6 sm:pt-32 lg:px-8">
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           <Badge variant="secondary" className="w-fit">
@@ -74,6 +79,7 @@ export default async function ListingsPage({
           </div>
         </div>
         <ListingSearchForm
+          breeds={breeds}
           defaultValues={{
             ...parsed.query,
             placeLabel,

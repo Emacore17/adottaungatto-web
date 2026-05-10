@@ -63,6 +63,15 @@ Endpoint iniziale:
   una URL presigned `PUT`, gli header richiesti e la scadenza.
 - `POST /listings/me/drafts/:id/images/:imageId/confirm` verifica l'oggetto su
   MinIO, salva checksum/size da storage e porta il record in `processing`.
+- `GET /listings/me/drafts/:id/images` restituisce la galleria immagini della
+  bozza con stato, conteggi, copertina corrente e limite massimo.
+- `PATCH /listings/me/drafts/:id/images/order` aggiorna l'ordine delle immagini
+  attive validando che la richiesta contenga ogni immagine una sola volta.
+- `PATCH /listings/me/drafts/:id/images/:imageId/cover` imposta la copertina
+  della bozza garantendo una sola copertina attiva.
+- `DELETE /listings/me/drafts/:id/images/:imageId` cancella logicamente
+  l'immagine; se era copertina, la prima immagine attiva rimasta diventa
+  copertina.
 - `pnpm media:process` processa le immagini in `processing`, genera varianti
   WebP `large` e `thumb`, aggiorna dimensioni e stato `ready`, oppure marca
   l'immagine `rejected` con il motivo.

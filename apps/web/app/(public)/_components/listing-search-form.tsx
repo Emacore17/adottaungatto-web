@@ -13,11 +13,13 @@ import type { PlaceAutocompleteType } from "@workspace/validation/places"
 import {
   ageOptions,
   booleanFilterOptions,
+  priceRangeOptions,
   radiusOptions,
   sexOptions,
   sortOptions,
 } from "@/app/(public)/_components/listing-search-options"
 import { PlaceAutocompleteInput } from "@/app/(public)/_components/place-autocomplete-input"
+import type { PublicCatBreed } from "@/lib/api/types"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
@@ -29,6 +31,7 @@ type ListingSearchDefaults = Partial<ListingPublicListQuery> & {
 }
 
 type ListingSearchFormProps = {
+  breeds?: PublicCatBreed[]
   defaultValues?: ListingSearchDefaults
 }
 
@@ -40,15 +43,63 @@ type Coordinates = {
 }
 
 type SearchFilters = {
+  breedId: string
   sex: string
   ageMonthsMin: string
   ageMonthsMax: string
+  priceRange: (typeof priceRangeOptions)[number]["value"] | "custom"
   sort: ListingPublicListQuery["sort"]
   radiusKm: string
 } & Record<BooleanFilterKey, boolean>
 
 const controlClassName =
-  "h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]"
+  "h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
+
+const filterLabelClassName =
+  "text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
+
+function getPriceRangeOption(value: SearchFilters["priceRange"]) {
+  return priceRangeOptions.find((option) => option.value === value) ?? null
+}
+
+function getOptionContributionCentsMin(
+  option: (typeof priceRangeOptions)[number]
+) {
+  return "contributionCentsMin" in option
+    ? option.contributionCentsMin
+    : undefined
+}
+
+function getOptionContributionCentsMax(
+  option: (typeof priceRangeOptions)[number]
+) {
+  return "contributionCentsMax" in option
+    ? option.contributionCentsMax
+    : undefined
+}
+
+function createInitialPriceRange(
+  defaultValues: ListingSearchDefaults
+): SearchFilters["priceRange"] {
+  if (defaultValues.isFree === true) {
+    return "free"
+  }
+
+  const min = defaultValues.contributionCentsMin
+  const max = defaultValues.contributionCentsMax
+
+  if (min === undefined && max === undefined) {
+    return "all"
+  }
+
+  return (
+    priceRangeOptions.find(
+      (option) =>
+        getOptionContributionCentsMin(option) === min &&
+        getOptionContributionCentsMax(option) === max
+    )?.value ?? "custom"
+  )
+}
 
 function createDefaultPlace(
   defaultValues: ListingSearchDefaults
@@ -107,9 +158,10 @@ function createInitialFilters(
     hasImages: defaultValues.hasImages === true,
     hasMicrochip: defaultValues.hasMicrochip === true,
     isDewormed: defaultValues.isDewormed === true,
-    isFree: defaultValues.isFree === true,
     isSterilized: defaultValues.isSterilized === true,
     isVaccinated: defaultValues.isVaccinated === true,
+    breedId: defaultValues.breedId ?? "",
+    priceRange: createInitialPriceRange(defaultValues),
     radiusKm:
       defaultValues.radiusKm !== undefined
         ? String(defaultValues.radiusKm)
@@ -142,6 +194,8 @@ function getActiveFilterCount(
 
   return (
     booleanCount +
+    (filters.breedId ? 1 : 0) +
+    (filters.priceRange !== "all" ? 1 : 0) +
     (filters.sex ? 1 : 0) +
     (filters.ageMonthsMin ? 1 : 0) +
     (filters.ageMonthsMax ? 1 : 0) +
@@ -162,7 +216,10 @@ function getSelectedPlaceHiddenName(place: PlaceAutocompleteItem) {
   return "regionId"
 }
 
-function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
+function ListingSearchForm({
+  breeds = [],
+  defaultValues = {},
+}: ListingSearchFormProps) {
   const [selectedPlace, setSelectedPlace] =
     useState<PlaceAutocompleteItem | null>(() =>
       createDefaultPlace(defaultValues)
@@ -179,6 +236,9 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
   const activeFilterCount = getActiveFilterCount(filters, position)
   const effectiveSort =
     filters.sort === "distance" && !position ? "relevance" : filters.sort
+  const selectedBreedIsKnown = breeds.some(
+    (breed) => breed.id === filters.breedId
+  )
 
   const hiddenInputs = useMemo(() => {
     const entries: Array<[string, string]> = []
@@ -198,6 +258,44 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
       entries.push(["radiusKm", filters.radiusKm])
       entries.push(["placeLabel", "La tua posizione"])
       entries.push(["placeType", "position"])
+    }
+
+    if (filters.breedId) {
+      entries.push(["breedId", filters.breedId])
+    }
+
+    const priceRange = getPriceRangeOption(filters.priceRange)
+
+    if (priceRange && "isFree" in priceRange && priceRange.isFree) {
+      entries.push(["isFree", "true"])
+    } else if (priceRange) {
+      if (getOptionContributionCentsMin(priceRange) !== undefined) {
+        entries.push([
+          "contributionCentsMin",
+          String(getOptionContributionCentsMin(priceRange)),
+        ])
+      }
+
+      if (getOptionContributionCentsMax(priceRange) !== undefined) {
+        entries.push([
+          "contributionCentsMax",
+          String(getOptionContributionCentsMax(priceRange)),
+        ])
+      }
+    } else if (filters.priceRange === "custom") {
+      if (defaultValues.contributionCentsMin !== undefined) {
+        entries.push([
+          "contributionCentsMin",
+          String(defaultValues.contributionCentsMin),
+        ])
+      }
+
+      if (defaultValues.contributionCentsMax !== undefined) {
+        entries.push([
+          "contributionCentsMax",
+          String(defaultValues.contributionCentsMax),
+        ])
+      }
     }
 
     if (filters.sex) {
@@ -223,7 +321,14 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
     }
 
     return entries
-  }, [effectiveSort, filters, position, selectedPlace])
+  }, [
+    defaultValues.contributionCentsMax,
+    defaultValues.contributionCentsMin,
+    effectiveSort,
+    filters,
+    position,
+    selectedPlace,
+  ])
 
   function updateFilter<Key extends keyof SearchFilters>(
     key: Key,
@@ -294,12 +399,32 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
   }
 
   const filterControls = (
-    <div className="grid gap-4 lg:grid-cols-[0.7fr_1fr]">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-        <label className="grid gap-1.5">
-          <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-            Sesso
-          </span>
+    <div className="grid gap-4 text-left">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Razza</span>
+          <select
+            className={controlClassName}
+            value={filters.breedId}
+            disabled={breeds.length === 0}
+            onChange={(event) => updateFilter("breedId", event.target.value)}
+          >
+            <option value="">
+              {breeds.length > 0 ? "Tutte le razze" : "Razze non disponibili"}
+            </option>
+            {filters.breedId && !selectedBreedIsKnown ? (
+              <option value={filters.breedId}>Razza selezionata</option>
+            ) : null}
+            {breeds.map((breed) => (
+              <option key={breed.id} value={breed.id}>
+                {breed.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Sesso</span>
           <select
             className={controlClassName}
             value={filters.sex}
@@ -313,10 +438,65 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
           </select>
         </label>
 
-        <label className="grid gap-1.5">
-          <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-            Ordina
-          </span>
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Eta minima</span>
+          <select
+            className={controlClassName}
+            value={filters.ageMonthsMin}
+            onChange={(event) =>
+              updateFilter("ageMonthsMin", event.target.value)
+            }
+          >
+            {ageOptions.map((option) => (
+              <option key={`min-${option.value || "any"}`} value={option.value}>
+                {option.value ? `Da ${option.label}` : option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Eta massima</span>
+          <select
+            className={controlClassName}
+            value={filters.ageMonthsMax}
+            onChange={(event) =>
+              updateFilter("ageMonthsMax", event.target.value)
+            }
+          >
+            {ageOptions.map((option) => (
+              <option key={`max-${option.value || "any"}`} value={option.value}>
+                {option.value ? `Fino a ${option.label}` : option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Prezzo</span>
+          <select
+            className={controlClassName}
+            value={filters.priceRange}
+            onChange={(event) =>
+              updateFilter(
+                "priceRange",
+                event.target.value as SearchFilters["priceRange"]
+              )
+            }
+          >
+            {priceRangeOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+            {filters.priceRange === "custom" ? (
+              <option value="custom">Fascia selezionata</option>
+            ) : null}
+          </select>
+        </label>
+
+        <label className="grid gap-1.5 xl:col-span-3">
+          <span className={filterLabelClassName}>Ordina</span>
           <select
             className={controlClassName}
             value={effectiveSort}
@@ -339,34 +519,39 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
           </select>
         </label>
 
-        <div className="grid gap-2 rounded-lg border border-border bg-background/70 p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              Distanza
-            </span>
-            <button
-              type="button"
-              onClick={useCurrentPosition}
-              className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-muted"
+        <div className="grid gap-1.5 xl:col-span-6">
+          <span className={filterLabelClassName}>Distanza</span>
+          <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <select
+              className={controlClassName}
+              value={filters.radiusKm}
+              disabled={!position}
+              onChange={(event) => updateFilter("radiusKm", event.target.value)}
             >
-              <LocateFixedIcon aria-hidden="true" className="size-3.5" />
+              {radiusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={useCurrentPosition}
+              disabled={positionLoading}
+              className="h-11 rounded-md px-3"
+            >
+              <LocateFixedIcon aria-hidden="true" data-icon="inline-start" />
               {positionLoading ? "Rilevo..." : "Usa posizione"}
-            </button>
+            </Button>
           </div>
+        </div>
+      </div>
 
-          <select
-            className={controlClassName}
-            value={filters.radiusKm}
-            disabled={!position}
-            onChange={(event) => updateFilter("radiusKm", event.target.value)}
-          >
-            {radiusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-
+      {position || positionError ? (
+        <div>
           {position ? (
             <button
               type="button"
@@ -381,64 +566,21 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
             <p className="text-xs text-destructive">{positionError}</p>
           ) : null}
         </div>
-      </div>
+      ) : null}
 
-      <div className="grid gap-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="grid gap-1.5">
-            <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              Eta minima
-            </span>
-            <select
-              className={controlClassName}
-              value={filters.ageMonthsMin}
-              onChange={(event) =>
-                updateFilter("ageMonthsMin", event.target.value)
-              }
-            >
-              {ageOptions.map((option) => (
-                <option
-                  key={`min-${option.value || "any"}`}
-                  value={option.value}
-                >
-                  {option.value ? `Da ${option.label}` : option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="grid gap-1.5">
-            <span className="text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-              Eta massima
-            </span>
-            <select
-              className={controlClassName}
-              value={filters.ageMonthsMax}
-              onChange={(event) =>
-                updateFilter("ageMonthsMax", event.target.value)
-              }
-            >
-              {ageOptions.map((option) => (
-                <option
-                  key={`max-${option.value || "any"}`}
-                  value={option.value}
-                >
-                  {option.value ? `Fino a ${option.label}` : option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+      <fieldset className="rounded-md border border-border bg-background/70 px-3 pt-2 pb-3">
+        <legend className={cn(filterLabelClassName, "px-1")}>
+          Cure e caratteristiche
+        </legend>
+        <div className="flex flex-wrap gap-2">
           {booleanFilterOptions.map((option) => (
             <label
               key={option.key}
               className={cn(
-                "flex min-h-11 items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-colors",
+                "flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1.5 text-sm font-semibold transition-[border-color,background-color,color,box-shadow] focus-within:border-ring focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_20%,transparent)]",
                 filters[option.key]
-                  ? "border-primary/35 bg-primary/8 text-foreground"
-                  : "border-border bg-background/70 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  ? "border-primary bg-primary text-primary-foreground shadow-[0_10px_24px_-18px_color-mix(in_oklab,var(--color-primary)_72%,transparent)]"
+                  : "border-border bg-background/70 text-muted-foreground hover:border-primary/30 hover:bg-muted/70 hover:text-foreground"
               )}
             >
               <input
@@ -447,13 +589,13 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
                 onChange={(event) =>
                   updateFilter(option.key, event.target.checked)
                 }
-                className="size-4 accent-primary"
+                className="sr-only"
               />
-              {option.label}
+              <span className="min-w-0 flex-1">{option.label}</span>
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
     </div>
   )
 
@@ -468,22 +610,20 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
         />
       ))}
 
-      <div className="rounded-lg border border-border/80 bg-background/86 p-2 shadow-[0_26px_80px_-48px_rgba(20,14,20,0.58)] backdrop-blur-2xl">
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1.12fr)_minmax(16rem,0.88fr)_auto_auto]">
+      <div className="rounded-lg border border-border/80 bg-background/88 p-2 shadow-[0_26px_80px_-48px_rgba(20,14,20,0.58)] backdrop-blur-2xl">
+        <div className="grid gap-2 lg:grid-cols-[minmax(0,1.08fr)_minmax(16rem,0.92fr)_auto]">
           <label className="flex h-14 items-center gap-3 rounded-lg border border-border bg-background/92 px-3 transition-[border-color,box-shadow,background-color] focus-within:border-ring focus-within:bg-background focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]">
             <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
             <span className="min-w-0 flex-1">
-              <span className="block text-[0.68rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-                Cerca
-              </span>
               <input
                 name="q"
+                aria-label="Cerca annunci"
                 defaultValue={defaultValues.q ?? ""}
                 minLength={2}
                 maxLength={120}
-                placeholder="Nome, razza o parola chiave"
+                placeholder="Nome, carattere o parola chiave"
                 autoComplete="off"
-                className="mt-0.5 w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
+                className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
               />
             </span>
           </label>
@@ -493,27 +633,32 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
             onSelect={handlePlaceSelect}
           />
 
-          <Button
-            type="button"
-            variant="outline"
-            size="lg"
-            onClick={() => setFiltersOpen((current) => !current)}
-            className="h-14 rounded-lg px-4"
-            aria-expanded={filtersOpen}
-          >
-            <SlidersHorizontalIcon aria-hidden="true" />
-            Filtri
-            {activeFilterCount > 0 ? (
-              <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[0.68rem] leading-none text-primary-foreground">
-                {activeFilterCount}
-              </span>
-            ) : null}
-          </Button>
+          <div className="grid grid-cols-2 gap-2 lg:grid-cols-[auto_auto]">
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={() => setFiltersOpen((current) => !current)}
+              className="h-14 rounded-lg px-4"
+              aria-expanded={filtersOpen}
+            >
+              <SlidersHorizontalIcon
+                aria-hidden="true"
+                data-icon="inline-start"
+              />
+              Filtri
+              {activeFilterCount > 0 ? (
+                <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[0.68rem] leading-none text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </Button>
 
-          <Button type="submit" size="lg" className="h-14 rounded-lg px-5">
-            <SearchIcon aria-hidden="true" />
-            Cerca
-          </Button>
+            <Button type="submit" size="lg" className="h-14 rounded-lg px-5">
+              <SearchIcon aria-hidden="true" data-icon="inline-start" />
+              Cerca
+            </Button>
+          </div>
         </div>
 
         {position ? (
@@ -543,34 +688,43 @@ function ListingSearchForm({ defaultValues = {} }: ListingSearchFormProps) {
       </div>
 
       {filtersOpen ? (
-        <div className="fixed inset-0 z-[70] bg-foreground/18 lg:hidden">
-          <button
-            type="button"
-            aria-label="Chiudi filtri"
-            className="absolute inset-0 h-full w-full"
-            onClick={() => setFiltersOpen(false)}
-          />
-          <div className="absolute right-0 bottom-0 left-0 max-h-[88svh] overflow-y-auto rounded-t-lg border border-border bg-background shadow-[0_-24px_70px_-46px_rgba(20,14,20,0.58)]">
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b bg-background/92 px-4 py-3 backdrop-blur-xl">
-              <p className="font-semibold">Filtri</p>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="listing-filters-title"
+          className="fixed inset-0 z-[80] flex min-h-svh flex-col bg-background lg:hidden"
+        >
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b bg-background/96 px-4 py-3">
+            <h2 id="listing-filters-title" className="font-semibold">
+              Filtri
+            </h2>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setFiltersOpen(false)}
+              aria-label="Chiudi filtri"
+            >
+              <XIcon aria-hidden="true" />
+            </Button>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-6">
+            {filterControls}
+          </div>
+
+          <div className="shrink-0 border-t bg-background/96 p-4">
+            <div className="grid grid-cols-2 gap-2">
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
+                variant="outline"
                 onClick={() => setFiltersOpen(false)}
-                aria-label="Chiudi filtri"
               >
-                <XIcon aria-hidden="true" />
+                Chiudi
               </Button>
-            </div>
-            <div className="px-4 py-4">{filterControls}</div>
-            <div className="sticky bottom-0 border-t bg-background/92 p-4 backdrop-blur-xl">
-              <Button
-                type="button"
-                className="w-full"
-                onClick={() => setFiltersOpen(false)}
-              >
-                Applica filtri
+              <Button type="submit">
+                <SearchIcon aria-hidden="true" data-icon="inline-start" />
+                Vedi risultati
               </Button>
             </div>
           </div>

@@ -9,6 +9,7 @@ import type {
   ListingDraftCreateInput,
   ListingDraftListQuery,
   ListingDraftUpdateInput,
+  ListingImageOrderInput,
   ListingImageUploadRequestInput,
   ListingPublicListQuery,
   ListingPublicSort,
@@ -24,8 +25,13 @@ import type {
   ListingDraftLocation,
   ListingDraftSubmissionResponse,
   ListingImage,
+  ListingImageCoverResponse,
   ListingImageConfirmationResponse,
+  ListingImageDeleteResponse,
+  ListingImageListResponse,
+  ListingImageOrderResponse,
   ListingImageUploadResponse,
+  PublicCatBreed,
   PublicListingDetail,
   PublicListingImage,
   PublicListingListResponse,
@@ -69,6 +75,7 @@ type ListingOwnerRow<
   is_sterilized: boolean | null
   is_dewormed: boolean | null
   has_microchip: boolean | null
+  contact_requests_enabled: boolean
   moderation_status: ModerationStatus
   lifecycle_status: LifecycleStatus
   created_at: Date | string
@@ -177,6 +184,12 @@ type PublicListingImageRow = {
   is_cover: boolean
 }
 
+type PublicCatBreedRow = {
+  id: string
+  name: string
+  slug: string
+}
+
 const listingDraftSelectFields = `
   listing.id::text,
   listing.title,
@@ -211,6 +224,7 @@ const listingDraftSelectFields = `
   listing.is_sterilized,
   listing.is_dewormed,
   listing.has_microchip,
+  listing.contact_requests_enabled,
   listing.moderation_status::text as moderation_status,
   listing.lifecycle_status::text as lifecycle_status,
   listing.created_at,
@@ -251,6 +265,7 @@ const publicListingSelectFields = `
   listing.is_sterilized,
   listing.is_dewormed,
   listing.has_microchip,
+  listing.contact_requests_enabled,
   listing.published_at,
   listing.expires_at,
   listing.created_at,
@@ -498,6 +513,22 @@ const publicListingExplicitFiltersSql = `
     or coalesce(listing.age_months_min, listing.age_months_max) <= $9::int
   )
   and ($10::boolean is null or listing.is_free = $10::boolean)
+  and (
+    $21::int is null
+    or (
+      listing.is_free = false
+      and listing.contribution_cents is not null
+      and listing.contribution_cents >= $21::int
+    )
+  )
+  and (
+    $22::int is null
+    or (
+      listing.is_free = false
+      and listing.contribution_cents is not null
+      and listing.contribution_cents <= $22::int
+    )
+  )
   and ($11::boolean is null or listing.is_vaccinated = $11::boolean)
   and ($12::boolean is null or listing.is_sterilized = $12::boolean)
   and ($13::boolean is null or listing.is_dewormed = $13::boolean)
@@ -668,6 +699,16 @@ const listPublicListingImagesSql = `
   order by sort_order asc, created_at asc, id asc
 `
 
+const listPublicCatBreedsSql = `
+  select
+    id::text,
+    name,
+    slug
+  from cat_breeds
+  where is_active = true
+  order by sort_order asc, name asc, id asc
+`
+
 const createUserDraftSql = `
   with inserted as (
     insert into listings (
@@ -688,7 +729,8 @@ const createUserDraftSql = `
       is_vaccinated,
       is_sterilized,
       is_dewormed,
-      has_microchip
+      has_microchip,
+      contact_requests_enabled
     )
     values (
       $1::uuid,
@@ -711,7 +753,8 @@ const createUserDraftSql = `
       $16::boolean,
       $17::boolean,
       $18::boolean,
-      $19::boolean
+      $19::boolean,
+      $20::boolean
     )
     returning *
   )
@@ -777,6 +820,10 @@ const updateUserDraftSql = `
       has_microchip = case
         when $32::boolean then $33::boolean
         else has_microchip
+      end,
+      contact_requests_enabled = case
+        when $34::boolean then $35::boolean
+        else contact_requests_enabled
       end,
       updated_at = now()
     where id = $1::uuid
@@ -979,6 +1026,36 @@ const getDraftImageSql = `
   limit 1
 `
 
+const listDraftImagesSql = `
+  select
+    listing_image.id::text,
+    listing_image.listing_id::text,
+    listing_image.object_key_original,
+    listing_image.object_key_large,
+    listing_image.object_key_thumb,
+    listing_image.mime_type,
+    listing_image.width,
+    listing_image.height,
+    listing_image.size_bytes,
+    listing_image.checksum,
+    listing_image.blur_hash,
+    listing_image.sort_order,
+    listing_image.is_cover,
+    listing_image.status,
+    listing_image.rejection_reason,
+    listing_image.created_at,
+    listing_image.updated_at
+  from listing_images listing_image
+  join listings listing on listing.id = listing_image.listing_id
+  where listing.owner_user_id = $1::uuid
+    and listing.id = $2::uuid
+    and listing.moderation_status = 'draft'
+    and listing.lifecycle_status = 'draft'
+    and listing.deleted_at is null
+    and listing_image.deleted_at is null
+  order by listing_image.sort_order asc, listing_image.created_at asc, listing_image.id asc
+`
+
 const confirmDraftImageSql = `
   with confirmed as (
     update listing_images
@@ -1021,6 +1098,123 @@ const confirmDraftImageSql = `
   from confirmed
 `
 
+const deleteDraftImageSql = `
+  with target as (
+    select listing_image.id, listing_image.is_cover
+    from listing_images listing_image
+    join listings listing on listing.id = listing_image.listing_id
+    where listing.owner_user_id = $1::uuid
+      and listing.id = $2::uuid
+      and listing.moderation_status = 'draft'
+      and listing.lifecycle_status = 'draft'
+      and listing.deleted_at is null
+      and listing_image.id = $3::uuid
+      and listing_image.deleted_at is null
+    limit 1
+  ),
+  deleted as (
+    update listing_images listing_image
+    set
+      status = 'deleted',
+      is_cover = false,
+      deleted_at = now(),
+      updated_at = now()
+    from target
+    where listing_image.id = target.id
+    returning listing_image.id::text, target.is_cover
+  ),
+  next_cover as (
+    update listing_images listing_image
+    set
+      is_cover = true,
+      updated_at = now()
+    where listing_image.id = (
+      select candidate.id
+      from listing_images candidate
+      where candidate.listing_id = $2::uuid
+        and candidate.id <> (select target.id from target)
+        and candidate.deleted_at is null
+        and exists (select 1 from deleted where is_cover = true)
+      order by candidate.sort_order asc, candidate.created_at asc, candidate.id asc
+      limit 1
+    )
+    returning listing_image.id::text
+  )
+  select
+    deleted.id,
+    (select next_cover.id from next_cover limit 1) as cover_image_id
+  from deleted
+`
+
+const reorderDraftImagesSql = `
+  with requested as (
+    select
+      image_order.id::uuid,
+      image_order.sort_order::int
+    from jsonb_to_recordset($3::jsonb) as image_order(id text, sort_order int)
+  )
+  update listing_images listing_image
+  set
+    sort_order = requested.sort_order,
+    updated_at = now()
+  from requested, listings listing
+  where listing.id = listing_image.listing_id
+    and listing.owner_user_id = $1::uuid
+    and listing.id = $2::uuid
+    and listing.moderation_status = 'draft'
+    and listing.lifecycle_status = 'draft'
+    and listing.deleted_at is null
+    and listing_image.id = requested.id
+    and listing_image.deleted_at is null
+  returning listing_image.id::text
+`
+
+const setDraftImageCoverSql = `
+  with target as (
+    select listing_image.id
+    from listing_images listing_image
+    join listings listing on listing.id = listing_image.listing_id
+    where listing.owner_user_id = $1::uuid
+      and listing.id = $2::uuid
+      and listing.moderation_status = 'draft'
+      and listing.lifecycle_status = 'draft'
+      and listing.deleted_at is null
+      and listing_image.id = $3::uuid
+      and listing_image.deleted_at is null
+    limit 1
+  ),
+  updated as (
+    update listing_images listing_image
+    set
+      is_cover = listing_image.id = (select target.id from target),
+      updated_at = now()
+    where listing_image.listing_id = $2::uuid
+      and listing_image.deleted_at is null
+      and exists (select 1 from target)
+    returning listing_image.*
+  )
+  select
+    id::text,
+    listing_id::text,
+    object_key_original,
+    object_key_large,
+    object_key_thumb,
+    mime_type,
+    width,
+    height,
+    size_bytes,
+    checksum,
+    blur_hash,
+    sort_order,
+    is_cover,
+    status,
+    rejection_reason,
+    created_at,
+    updated_at
+  from updated
+  where id = (select target.id from target)
+`
+
 @Injectable()
 export class ListingsService {
   constructor(
@@ -1055,6 +1249,8 @@ export class ListingsService {
       resolvedQuery.distanceLng,
       resolvedQuery.radiusKm,
       resolvedQuery.sort,
+      query.contributionCentsMin ?? null,
+      query.contributionCentsMax ?? null,
     ]
     let rows = await this.databaseService.queryRows<PublicListingRow>(
       listPublicListingsSql,
@@ -1092,6 +1288,15 @@ export class ListingsService {
         expansion,
       },
     }
+  }
+
+  async listPublicCatBreeds(): Promise<PublicCatBreed[]> {
+    const rows = await this.databaseService.queryRows<PublicCatBreedRow>(
+      listPublicCatBreedsSql,
+      []
+    )
+
+    return rows.map(mapPublicCatBreedRow)
   }
 
   async publicDetail(id: string): Promise<PublicListingDetail> {
@@ -1181,6 +1386,7 @@ export class ListingsService {
         input.isSterilized ?? null,
         input.isDewormed ?? null,
         input.hasMicrochip ?? null,
+        input.contactRequestsEnabled,
       ]
     )
 
@@ -1236,6 +1442,8 @@ export class ListingsService {
         input.isDewormed ?? null,
         Object.hasOwn(input, "hasMicrochip"),
         input.hasMicrochip ?? null,
+        Object.hasOwn(input, "contactRequestsEnabled"),
+        input.contactRequestsEnabled ?? null,
       ]
     )
 
@@ -1386,6 +1594,19 @@ export class ListingsService {
     }
   }
 
+  async listDraftImages(
+    userId: string,
+    listingId: string
+  ): Promise<ListingImageListResponse> {
+    const draft = await this.draft(userId, listingId)
+    const rows = await this.databaseService.queryRows<ListingImageRow>(
+      listDraftImagesSql,
+      [userId, draft.id]
+    )
+
+    return mapListingImageListResponse(rows)
+  }
+
   async confirmDraftImageUpload(
     userId: string,
     listingId: string,
@@ -1418,6 +1639,83 @@ export class ListingsService {
     return {
       confirmed: true,
       image: mapListingImageRow(confirmed),
+    }
+  }
+
+  async deleteDraftImage(
+    userId: string,
+    listingId: string,
+    imageId: string
+  ): Promise<ListingImageDeleteResponse> {
+    const [deleted] = await this.databaseService.queryRows<{
+      id: string
+      cover_image_id: string | null
+    }>(deleteDraftImageSql, [userId, listingId, imageId])
+
+    if (!deleted) {
+      throw new NotFoundException("Listing image not found.")
+    }
+
+    return {
+      deleted: true,
+      imageId: deleted.id,
+      images: await this.listDraftImages(userId, listingId),
+    }
+  }
+
+  async reorderDraftImages(
+    userId: string,
+    listingId: string,
+    input: ListingImageOrderInput
+  ): Promise<ListingImageOrderResponse> {
+    const currentImages = await this.listDraftImages(userId, listingId)
+
+    if (!hasSameImageSet(currentImages.items, input.imageIds)) {
+      throw new BadRequestException({
+        message: "Listing image order must include every active draft image.",
+        issues: [
+          {
+            path: ["imageIds"],
+            message:
+              "Provide each active draft image exactly once before reordering.",
+          },
+        ],
+      })
+    }
+
+    await this.databaseService.queryRows<{ id: string }>(reorderDraftImagesSql, [
+      userId,
+      listingId,
+      JSON.stringify(
+        input.imageIds.map((id, index) => ({
+          id,
+          sort_order: index,
+        }))
+      ),
+    ])
+
+    return {
+      images: await this.listDraftImages(userId, listingId),
+    }
+  }
+
+  async setDraftImageCover(
+    userId: string,
+    listingId: string,
+    imageId: string
+  ): Promise<ListingImageCoverResponse> {
+    const [image] = await this.databaseService.queryRows<ListingImageRow>(
+      setDraftImageCoverSql,
+      [userId, listingId, imageId]
+    )
+
+    if (!image) {
+      throw new NotFoundException("Listing image not found.")
+    }
+
+    return {
+      image: mapListingImageRow(image),
+      images: await this.listDraftImages(userId, listingId),
     }
   }
 
@@ -1543,6 +1841,14 @@ function mapPublicListingSummaryRow(
   }
 }
 
+function mapPublicCatBreedRow(row: PublicCatBreedRow): PublicCatBreed {
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+  }
+}
+
 function resolvePublicListingQuery(
   query: ListingPublicListQuery
 ): ResolvedPublicListingQuery {
@@ -1586,6 +1892,7 @@ function mapListingSharedFields(
     isSterilized: row.is_sterilized,
     isDewormed: row.is_dewormed,
     hasMicrochip: row.has_microchip,
+    contactRequestsEnabled: row.contact_requests_enabled,
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
   }
@@ -1694,6 +2001,37 @@ function mapListingImageRow(row: ListingImageRow): ListingImage {
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
   }
+}
+
+function mapListingImageListResponse(
+  rows: ListingImageRow[]
+): ListingImageListResponse {
+  const items = rows.map(mapListingImageRow)
+
+  return {
+    items,
+    meta: {
+      total: items.length,
+      readyCount: items.filter((image) => image.status === "ready").length,
+      pendingCount: items.filter((image) =>
+        ["uploaded", "processing"].includes(image.status)
+      ).length,
+      rejectedCount: items.filter((image) => image.status === "rejected")
+        .length,
+      coverImageId: items.find((image) => image.isCover)?.id ?? null,
+      maxItems: maxListingImages,
+    },
+  }
+}
+
+function hasSameImageSet(images: ListingImage[], imageIds: string[]) {
+  if (images.length !== imageIds.length) {
+    return false
+  }
+
+  const activeIds = new Set(images.map((image) => image.id))
+
+  return imageIds.every((imageId) => activeIds.has(imageId))
 }
 
 function mapPublicListingImageRow(

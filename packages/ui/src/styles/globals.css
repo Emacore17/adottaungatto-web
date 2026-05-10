@@ -151,6 +151,167 @@
   }
 }
 
+.site-header-glass {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.212 0.019 322.12);
+  --muted: oklch(1 0 0 / 14%);
+  --muted-foreground: oklch(1 0 0 / 72%);
+  --border: oklch(1 0 0 / 18%);
+  --color-foreground: oklch(0.985 0 0);
+  --color-muted: oklch(1 0 0 / 14%);
+  --color-muted-foreground: oklch(1 0 0 / 72%);
+  --color-border: oklch(1 0 0 / 18%);
+  --color-primary: oklch(0.985 0 0);
+  --color-primary-foreground: oklch(0.212 0.019 322.12);
+  isolation: isolate;
+  color: oklch(0.985 0 0);
+}
+
+.site-header-glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+.site-header-glass::before,
+.site-header-glass::after {
+  content: none;
+}
+
+.site-header-glass [aria-label="Apri menu"] {
+  color: rgb(255 255 255);
+  border-color: rgb(255 255 255 / 0.14);
+  background-color: rgb(0 0 0 / 0.2);
+  box-shadow: none;
+}
+
+.site-header-glass [aria-label="Apri menu"]:hover {
+  color: rgb(255 255 255);
+  background-color: rgb(0 0 0 / 0.3);
+}
+
+.home-hero-surface {
+  background:
+    linear-gradient(
+      135deg,
+      #fbf5ed 0%,
+      #f6e7e1 44%,
+      #f1ecdf 100%
+    );
+}
+
+.home-hero-title-accent,
+.home-hero-title-accent-alt {
+  display: inline-block;
+  padding-bottom: 0.11em;
+  margin-bottom: -0.11em;
+  line-height: 1.16;
+  vertical-align: baseline;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.home-hero-title-accent {
+  background-image: linear-gradient(
+    100deg,
+    #6d213d 0%,
+    #8f344f 52%,
+    #9b4e32 100%
+  );
+}
+
+.home-hero-title-accent-alt {
+  background-image: linear-gradient(
+    100deg,
+    #73304a 0%,
+    #9a4054 48%,
+    #91492f 100%
+  );
+}
+
+.home-hero-gradient-wash {
+  background:
+    radial-gradient(
+      ellipse at 16% 20%,
+      rgba(128, 48, 78, 0.28),
+      transparent 52%
+    ),
+    radial-gradient(
+      ellipse at 88% 18%,
+      rgba(177, 97, 55, 0.26),
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at 54% 80%,
+      rgba(114, 103, 73, 0.14),
+      transparent 56%
+    );
+  background-size:
+    130% 130%,
+    120% 120%,
+    150% 150%;
+  opacity: 0.82;
+  transform: translate3d(0, 0, 0);
+}
+
+.home-hero-top-glow {
+  background:
+    linear-gradient(
+      115deg,
+      transparent 4%,
+      rgba(125, 52, 76, 0.18) 34%,
+      rgba(178, 102, 64, 0.2) 64%,
+      transparent 96%
+    );
+  filter: blur(34px);
+  opacity: 0.72;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-hero-gradient-wash {
+    animation: home-hero-gradient-drift 24s cubic-bezier(0.37, 0, 0.63, 1)
+      infinite;
+  }
+
+  .home-hero-top-glow {
+    animation: home-hero-top-glow-drift 18s cubic-bezier(0.37, 0, 0.63, 1)
+      infinite;
+  }
+}
+
+@keyframes home-hero-gradient-drift {
+  0%,
+  100% {
+    background-position:
+      0% 0%,
+      100% 0%,
+      48% 100%;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    background-position:
+      10% 7%,
+      90% 8%,
+      54% 92%;
+    transform: translate3d(0.8rem, -0.55rem, 0) scale(1.015);
+  }
+}
+
+@keyframes home-hero-top-glow-drift {
+  0%,
+  100% {
+    transform: translate3d(-1.2rem, 0, 0) scaleX(1);
+  }
+
+  50% {
+    transform: translate3d(1.4rem, 0.5rem, 0) scaleX(1.04);
+  }
+}
+
 @layer utilities {
   .home-float-slow {
     animation: home-float 11s ease-in-out infinite;

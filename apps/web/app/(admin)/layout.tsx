@@ -1,0 +1,25 @@
+import type { Metadata } from "next"
+
+import { SiteFooter } from "@/components/layout/site-footer"
+import { SiteHeader } from "@/components/layout/site-header"
+import { createPageMetadata } from "@/lib/seo/metadata"
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Moderazione",
+  path: "/moderation",
+  noIndex: true,
+})
+
+export default function AdminLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode
+}>) {
+  return (
+    <div className="flex min-h-svh flex-col pt-24 sm:pt-28">
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </div>
+  )
+}

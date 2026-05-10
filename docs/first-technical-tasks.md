@@ -76,13 +76,32 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     risultati in prima pagina.
 42. Fatto: aggiungere linee guida frontend Next.js/shadcn per scaffolding,
     SEO, Server/Client Components e lavoro agentico a basso consumo token.
-43. Creare configurazione frontend centrale: env, site, routes, SEO helper e
-    client API tipizzato.
-44. Sostituire la placeholder page Next.js con una homepage pubblica orientata
-    a ricerca e annunci.
-45. Aggiungere layout route group pubblici, auth, account e admin/moderazione.
-46. Aggiungere `robots.ts`, `sitemap.ts`, metadata dinamici e primi JSON-LD per
-    pagine pubbliche indicizzabili.
+43. Fatto: creare configurazione frontend centrale: env, site, routes, SEO
+    helper e client API tipizzato.
+44. Fatto: sostituire la placeholder page Next.js con una homepage pubblica
+    orientata a ricerca e annunci.
+45. Fatto: aggiungere layout route group pubblici, auth e account.
+46. Fatto: aggiungere `robots.ts`, `sitemap.ts`, metadata dinamici e primi
+    JSON-LD per pagine pubbliche indicizzabili.
+47. Fatto: aggiungere endpoint pubblico razze e filtri frontend per razza e
+    fascia contributo.
+48. Fatto: aggiungere route group admin/moderazione protetto, noindex e
+    collegato in lettura alle API di moderazione esistenti.
+49. Fatto: collegare UI account a bozze annuncio, preferiti e notifiche.
+50. Fatto: implementare contatto proprietario con privacy by default.
+51. Fatto: aggiungere azioni UI di moderazione con motivo obbligatorio per
+    approvare, rifiutare e sospendere.
+52. Fatto: aggiungere mutazioni UI account per rimozione preferiti, lettura
+    notifiche, cancellazione bozze ed editor bozze.
+53. Fatto: aggiungere rate limit dedicato per il contatto proprietario.
+54. Fatto: completare editor bozze frontend con creazione, modifica, upload
+    immagini e invio a moderazione.
+55. Fatto: aggiungere galleria immagini bozza con stato processamento,
+    eliminazione e riordino/copertina.
+56. Fatto: aggiungere preferenza per-annuncio per abilitare/disabilitare il
+    contatto proprietario.
+57. Aggiungere eventuali canali aggiuntivi o finestre orarie per il contatto
+    proprietario quando saranno previsti dal prodotto.
 
 ## Task documentali e pre-produzione
 

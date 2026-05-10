@@ -1,7 +1,5 @@
 import { z } from "zod"
 
-import { paginationQuerySchema } from "./pagination.js"
-
 const queryBooleanSchema = z
   .preprocess((value) => {
     if (value === undefined) {
@@ -24,7 +22,9 @@ const queryBooleanSchema = z
   }, z.boolean())
   .default(false)
 
-export const notificationListQuerySchema = paginationQuerySchema.extend({
+export const notificationListQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(20),
   unreadOnly: queryBooleanSchema,
 })
 

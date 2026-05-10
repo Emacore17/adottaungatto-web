@@ -5,6 +5,7 @@ type ListingsRouteQuery = {
   page?: number
   pageSize?: number
   q?: string
+  breedId?: string
   municipalityId?: string
   provinceId?: string
   regionId?: string
@@ -12,6 +13,8 @@ type ListingsRouteQuery = {
   ageMonthsMin?: number
   ageMonthsMax?: number
   isFree?: boolean
+  contributionCentsMin?: number
+  contributionCentsMax?: number
   isVaccinated?: boolean
   isSterilized?: boolean
   isDewormed?: boolean
@@ -50,5 +53,9 @@ export const routes = {
   register: "/register",
   account: "/account",
   accountDrafts: "/account/listings/drafts",
+  accountDraftNew: "/account/listings/drafts/new",
+  accountDraft: (id: string) => `/account/listings/drafts/${id}`,
+  accountFavorites: "/account/favorites",
+  accountNotifications: "/account/notifications",
   moderation: "/moderation",
 }

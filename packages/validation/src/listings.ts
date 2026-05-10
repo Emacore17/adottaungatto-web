@@ -44,6 +44,12 @@ const optionalLongitudeSchema = z.preprocess(
   z.coerce.number().min(-180).max(180).optional()
 )
 
+const optionalContributionCentsSchema = z.preprocess(
+  (value) =>
+    typeof value === "string" && value.trim() === "" ? undefined : value,
+  z.coerce.number().int().min(0).max(500_000).optional()
+)
+
 const listingDraftFieldsSchema = z.object({
   title: z.string().trim().min(3).max(120),
   description: z.string().trim().min(10).max(5000),
@@ -64,12 +70,14 @@ const listingDraftFieldsSchema = z.object({
   isSterilized: z.boolean().nullable().optional(),
   isDewormed: z.boolean().nullable().optional(),
   hasMicrochip: z.boolean().nullable().optional(),
+  contactRequestsEnabled: z.boolean(),
 })
 
 export const listingDraftCreateSchema = listingDraftFieldsSchema
   .extend({
     sex: z.enum(listingSexes).default("unknown"),
     isFree: z.boolean().default(true),
+    contactRequestsEnabled: z.boolean().default(true),
   })
   .strict()
   .superRefine(validateDraftFields)
@@ -100,6 +108,8 @@ export const listingPublicListQuerySchema = z
     ageMonthsMin: z.coerce.number().int().min(0).max(360).optional(),
     ageMonthsMax: z.coerce.number().int().min(0).max(360).optional(),
     isFree: queryBooleanSchema.optional(),
+    contributionCentsMin: optionalContributionCentsSchema,
+    contributionCentsMax: optionalContributionCentsSchema,
     isVaccinated: queryBooleanSchema.optional(),
     isSterilized: queryBooleanSchema.optional(),
     isDewormed: queryBooleanSchema.optional(),
@@ -117,6 +127,10 @@ export const listingDraftIdParamSchema = z.object({
   id: z.string().uuid(),
 })
 
+export const listingImageIdParamSchema = z.object({
+  imageId: z.string().uuid(),
+})
+
 export const listingPublicIdParamSchema = z.object({
   id: z.string().uuid(),
 })
@@ -126,6 +140,18 @@ export const listingImageUploadRequestSchema = z
     mimeType: z.enum(listingImageMimeTypes),
     sizeBytes: z.coerce.number().int().min(1).max(listingImageMaxSizeBytes),
     isCover: z.boolean().default(false),
+  })
+  .strict()
+
+export const listingImageOrderSchema = z
+  .object({
+    imageIds: z
+      .array(z.string().uuid())
+      .min(1)
+      .max(10)
+      .refine((imageIds) => new Set(imageIds).size === imageIds.length, {
+        message: "Image order cannot contain duplicate images.",
+      }),
   })
   .strict()
 
@@ -147,6 +173,10 @@ export type ListingPublicListQuery = z.infer<
 
 export type ListingImageUploadRequestInput = z.infer<
   typeof listingImageUploadRequestSchema
+>
+
+export type ListingImageOrderInput = z.infer<
+  typeof listingImageOrderSchema
 >
 
 function validateDraftFields(
@@ -198,6 +228,9 @@ function validatePublicListQuery(
   input: {
     ageMonthsMin?: number
     ageMonthsMax?: number
+    contributionCentsMin?: number
+    contributionCentsMax?: number
+    isFree?: boolean
     lat?: number
     lng?: number
     radiusKm?: number
@@ -214,6 +247,33 @@ function validatePublicListQuery(
       code: z.ZodIssueCode.custom,
       message: "Minimum age cannot be greater than maximum age.",
       path: ["ageMonthsMax"],
+    })
+  }
+
+  if (
+    input.contributionCentsMin !== undefined &&
+    input.contributionCentsMax !== undefined &&
+    input.contributionCentsMin > input.contributionCentsMax
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Minimum contribution cannot be greater than maximum contribution.",
+      path: ["contributionCentsMax"],
+    })
+  }
+
+  if (
+    input.isFree === true &&
+    (input.contributionCentsMin !== undefined ||
+      input.contributionCentsMax !== undefined)
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Free listings cannot be filtered by contribution amount.",
+      path:
+        input.contributionCentsMin !== undefined
+          ? ["contributionCentsMin"]
+          : ["contributionCentsMax"],
     })
   }
 

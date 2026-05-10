@@ -5,6 +5,7 @@ import {
 
 import { apiFetch, type ApiResult } from "@/lib/api/client"
 import type {
+  PublicCatBreed,
   PublicListingDetail,
   PublicListingListResponse,
 } from "@/lib/api/types"
@@ -24,6 +25,8 @@ const listingSearchParamKeys = new Set([
   "ageMonthsMin",
   "ageMonthsMax",
   "isFree",
+  "contributionCentsMin",
+  "contributionCentsMax",
   "isVaccinated",
   "isSterilized",
   "isDewormed",
@@ -98,6 +101,13 @@ export function getPublicListing(
   })
 }
 
+export function listPublicCatBreeds(): Promise<ApiResult<PublicCatBreed[]>> {
+  return apiFetch<PublicCatBreed[]>("/listings/breeds", {
+    revalidate: 3600,
+    tags: ["public-cat-breeds"],
+  })
+}
+
 function createListingQueryParams(query: Partial<ListingPublicListQuery>) {
   const params = new URLSearchParams()
 
@@ -112,6 +122,8 @@ function createListingQueryParams(query: Partial<ListingPublicListQuery>) {
   appendParam(params, "ageMonthsMin", query.ageMonthsMin)
   appendParam(params, "ageMonthsMax", query.ageMonthsMax)
   appendParam(params, "isFree", query.isFree)
+  appendParam(params, "contributionCentsMin", query.contributionCentsMin)
+  appendParam(params, "contributionCentsMax", query.contributionCentsMax)
   appendParam(params, "isVaccinated", query.isVaccinated)
   appendParam(params, "isSterilized", query.isSterilized)
   appendParam(params, "isDewormed", query.isDewormed)

@@ -132,6 +132,11 @@ export const notificationType = pgEnum("notification_type", [
   "listing_report_decision",
 ])
 
+export const listingContactRequestStatus = pgEnum(
+  "listing_contact_request_status",
+  ["pending", "sent", "failed"]
+)
+
 export const users = pgTable(
   "users",
   {
@@ -530,6 +535,9 @@ export const listings = pgTable(
     isSterilized: boolean("is_sterilized"),
     isDewormed: boolean("is_dewormed"),
     hasMicrochip: boolean("has_microchip"),
+    contactRequestsEnabled: boolean("contact_requests_enabled")
+      .notNull()
+      .default(true),
     moderationStatus: listingModerationStatus("moderation_status")
       .notNull()
       .default("draft"),
@@ -671,6 +679,47 @@ export const listingLikes = pgTable(
       table.userId,
       table.createdAt
     ),
+  })
+)
+
+export const listingContactRequests = pgTable(
+  "listing_contact_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    requesterUserId: uuid("requester_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    ownerUserId: uuid("owner_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    requesterDisplayNameSnapshot: text(
+      "requester_display_name_snapshot"
+    ).notNull(),
+    message: text("message").notNull(),
+    status: listingContactRequestStatus("status")
+      .notNull()
+      .default("pending"),
+    emailShared: boolean("email_shared").notNull().default(false),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    failedAt: timestamp("failed_at", { withTimezone: true }),
+    failureReason: text("failure_reason"),
+    ...timestamps,
+  },
+  (table) => ({
+    listingCreatedIdx: index("listing_contact_requests_listing_created_idx").on(
+      table.listingId,
+      table.createdAt
+    ),
+    ownerCreatedIdx: index("listing_contact_requests_owner_created_idx").on(
+      table.ownerUserId,
+      table.createdAt
+    ),
+    requesterCreatedIdx: index(
+      "listing_contact_requests_requester_created_idx"
+    ).on(table.requesterUserId, table.createdAt),
   })
 )
 

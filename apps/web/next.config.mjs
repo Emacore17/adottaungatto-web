@@ -30,7 +30,7 @@ const nextConfig = {
   images: {
     remotePatterns: imageRemotePatterns,
   },
-  transpilePackages: ["@workspace/ui"],
+  transpilePackages: ["@workspace/ui", "@workspace/validation"],
 }
 
 export default nextConfig

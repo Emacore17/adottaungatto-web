@@ -2,6 +2,7 @@ import type {
   ListingDraftCreateInput,
   ListingDraftListQuery,
   ListingDraftUpdateInput,
+  ListingImageOrderInput,
   ListingImageMimeType,
   ListingImageUploadRequestInput,
   ListingPublicListQuery,
@@ -50,6 +51,7 @@ export type ListingDraft = {
   isSterilized: boolean | null
   isDewormed: boolean | null
   hasMicrochip: boolean | null
+  contactRequestsEnabled: boolean
   moderationStatus: "draft"
   lifecycleStatus: "draft"
   createdAt: string
@@ -117,6 +119,33 @@ export type ListingImageConfirmationResponse = {
   image: ListingImage
 }
 
+export type ListingImageListResponse = {
+  items: ListingImage[]
+  meta: {
+    total: number
+    readyCount: number
+    pendingCount: number
+    rejectedCount: number
+    coverImageId: string | null
+    maxItems: number
+  }
+}
+
+export type ListingImageDeleteResponse = {
+  deleted: true
+  imageId: string
+  images: ListingImageListResponse
+}
+
+export type ListingImageCoverResponse = {
+  image: ListingImage
+  images: ListingImageListResponse
+}
+
+export type ListingImageOrderResponse = {
+  images: ListingImageListResponse
+}
+
 export type PublicListingImage = {
   id: string
   objectKeyLarge: string | null
@@ -126,6 +155,12 @@ export type PublicListingImage = {
   blurHash: string | null
   sortOrder: number
   isCover: boolean
+}
+
+export type PublicCatBreed = {
+  id: string
+  name: string
+  slug: string
 }
 
 export type PublicListingSummary = {
@@ -144,6 +179,7 @@ export type PublicListingSummary = {
   isSterilized: boolean | null
   isDewormed: boolean | null
   hasMicrochip: boolean | null
+  contactRequestsEnabled: boolean
   publishedAt: string | null
   expiresAt: string | null
   createdAt: string
@@ -193,3 +229,4 @@ export type ListingDraftUpdateBody = ListingDraftUpdateInput
 export type ListingDraftListQueryParams = ListingDraftListQuery
 export type ListingPublicListQueryParams = ListingPublicListQuery
 export type ListingImageUploadBody = ListingImageUploadRequestInput
+export type ListingImageOrderBody = ListingImageOrderInput

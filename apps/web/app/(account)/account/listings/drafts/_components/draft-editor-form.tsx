@@ -1,0 +1,347 @@
+import { SaveIcon } from "lucide-react"
+
+import {
+  createDraftAction,
+  updateDraftAction,
+} from "@/app/(account)/account/actions"
+import { DraftMunicipalityField } from "@/app/(account)/account/listings/drafts/_components/draft-municipality-field"
+import type { ListingDraft } from "@/lib/api/account"
+import type { PlaceAutocompleteItem } from "@/lib/api/places"
+import type { PublicCatBreed } from "@/lib/api/types"
+import { routes } from "@/lib/routes"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@workspace/ui/components/card"
+import { Checkbox } from "@workspace/ui/components/checkbox"
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldLegend,
+  FieldSet,
+} from "@workspace/ui/components/field"
+import { Input } from "@workspace/ui/components/input"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@workspace/ui/components/native-select"
+import { Textarea } from "@workspace/ui/components/textarea"
+
+type DraftEditorFormProps = {
+  breeds: PublicCatBreed[]
+  draft?: ListingDraft
+}
+
+const booleanSelectOptions = [
+  { label: "Non indicato", value: "" },
+  { label: "Si", value: "true" },
+  { label: "No", value: "false" },
+] as const
+
+function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
+  const isEditing = Boolean(draft)
+  const action = draft ? updateDraftAction : createDraftAction
+  const currentPath = draft
+    ? routes.accountDraft(draft.id)
+    : routes.accountDraftNew
+  const initialPlace = createInitialMunicipalityPlace(draft)
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {isEditing ? "Modifica bozza" : "Dati annuncio"}
+        </CardTitle>
+        <CardDescription>
+          I dati salvati restano privati fino al passaggio in moderazione.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form action={action} className="grid gap-8">
+          <input name="nextPath" type="hidden" value={currentPath} />
+          {draft ? (
+            <input name="draftId" type="hidden" value={draft.id} />
+          ) : null}
+
+          <FieldGroup>
+            <FieldSet>
+              <FieldLegend>Annuncio</FieldLegend>
+              <div className="grid gap-4">
+                <Field>
+                  <FieldLabel htmlFor="title">Titolo</FieldLabel>
+                  <Input
+                    id="title"
+                    name="title"
+                    defaultValue={draft?.title ?? ""}
+                    maxLength={120}
+                    minLength={3}
+                    required
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="description">Descrizione</FieldLabel>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    defaultValue={draft?.description ?? ""}
+                    maxLength={5000}
+                    minLength={10}
+                    required
+                    rows={7}
+                  />
+                  <FieldDescription>
+                    Includi carattere, bisogni, contesto e condizioni di
+                    adozione.
+                  </FieldDescription>
+                </Field>
+              </div>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend>Dettagli gatto</FieldLegend>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel htmlFor="sex">Sesso</FieldLabel>
+                  <NativeSelect
+                    id="sex"
+                    name="sex"
+                    defaultValue={draft?.sex ?? "unknown"}
+                    className="w-full"
+                  >
+                    <NativeSelectOption value="unknown">
+                      Non indicato
+                    </NativeSelectOption>
+                    <NativeSelectOption value="female">
+                      Femmina
+                    </NativeSelectOption>
+                    <NativeSelectOption value="male">
+                      Maschio
+                    </NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="breedId">Razza</FieldLabel>
+                  <NativeSelect
+                    id="breedId"
+                    name="breedId"
+                    defaultValue={draft?.breed?.id ?? ""}
+                    className="w-full"
+                  >
+                    <NativeSelectOption value="">
+                      Non indicata
+                    </NativeSelectOption>
+                    {breeds.map((breed) => (
+                      <NativeSelectOption key={breed.id} value={breed.id}>
+                        {breed.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="ageMonthsMin">Eta minima</FieldLabel>
+                  <Input
+                    id="ageMonthsMin"
+                    name="ageMonthsMin"
+                    type="number"
+                    min={0}
+                    max={360}
+                    defaultValue={draft?.ageMonthsMin ?? ""}
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="ageMonthsMax">Eta massima</FieldLabel>
+                  <Input
+                    id="ageMonthsMax"
+                    name="ageMonthsMax"
+                    type="number"
+                    min={0}
+                    max={360}
+                    defaultValue={draft?.ageMonthsMax ?? ""}
+                  />
+                </Field>
+              </div>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend>Luogo e contributo</FieldLegend>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field>
+                  <FieldLabel>Comune</FieldLabel>
+                  <DraftMunicipalityField initialPlace={initialPlace} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="contributionEuro">Contributo</FieldLabel>
+                  <Input
+                    id="contributionEuro"
+                    name="contributionEuro"
+                    type="number"
+                    min={0}
+                    max={5000}
+                    step="0.01"
+                    defaultValue={formatContributionEuro(
+                      draft?.contributionCents
+                    )}
+                  />
+                  <FieldDescription>Importo in euro.</FieldDescription>
+                </Field>
+
+                <Field orientation="horizontal" className="md:col-span-2">
+                  <Checkbox
+                    id="isFree"
+                    name="isFree"
+                    value="true"
+                    defaultChecked={draft?.isFree ?? true}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor="isFree">Adozione gratuita</FieldLabel>
+                    <FieldDescription>
+                      Lascia il contributo vuoto per gli annunci gratuiti.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              </div>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend>Stato sanitario</FieldLegend>
+              <div className="grid gap-4 md:grid-cols-2">
+                <BooleanSelectField
+                  id="isVaccinated"
+                  label="Vaccinato"
+                  value={draft?.isVaccinated}
+                />
+                <BooleanSelectField
+                  id="isSterilized"
+                  label="Sterilizzato"
+                  value={draft?.isSterilized}
+                />
+                <BooleanSelectField
+                  id="isDewormed"
+                  label="Sverminato"
+                  value={draft?.isDewormed}
+                />
+                <BooleanSelectField
+                  id="hasMicrochip"
+                  label="Microchip"
+                  value={draft?.hasMicrochip}
+                />
+              </div>
+            </FieldSet>
+
+            <FieldSet>
+              <FieldLegend>Contatto</FieldLegend>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="contactRequestsEnabled"
+                  name="contactRequestsEnabled"
+                  value="true"
+                  defaultChecked={draft?.contactRequestsEnabled ?? true}
+                />
+                <FieldContent>
+                  <FieldLabel htmlFor="contactRequestsEnabled">
+                    Accetta richieste di contatto
+                  </FieldLabel>
+                  <FieldDescription>
+                    Mostra il form pubblico e ricevi le richieste via email.
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+            </FieldSet>
+          </FieldGroup>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button type="submit">
+              <SaveIcon data-icon="inline-start" aria-hidden="true" />
+              {isEditing ? "Salva modifiche" : "Crea bozza"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  )
+}
+
+function BooleanSelectField({
+  id,
+  label,
+  value,
+}: {
+  id: string
+  label: string
+  value: boolean | null | undefined
+}) {
+  return (
+    <Field>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <NativeSelect
+        id={id}
+        name={id}
+        defaultValue={formatNullableBoolean(value)}
+        className="w-full"
+      >
+        {booleanSelectOptions.map((option) => (
+          <NativeSelectOption key={option.value} value={option.value}>
+            {option.label}
+          </NativeSelectOption>
+        ))}
+      </NativeSelect>
+    </Field>
+  )
+}
+
+function createInitialMunicipalityPlace(
+  draft: ListingDraft | undefined
+): PlaceAutocompleteItem | null {
+  const location = draft?.location
+
+  if (!location) {
+    return null
+  }
+
+  return {
+    center: location.center ?? null,
+    hierarchy: {
+      province: location.province,
+      region: location.region,
+    },
+    id: location.municipality.id,
+    istatCode: location.municipality.istatCode,
+    label: location.municipality.name,
+    subtitle: `${location.province.name}, ${location.region.name}`,
+    type: "municipality",
+  }
+}
+
+function formatNullableBoolean(value: boolean | null | undefined) {
+  if (value === true) {
+    return "true"
+  }
+
+  if (value === false) {
+    return "false"
+  }
+
+  return ""
+}
+
+function formatContributionEuro(value: number | null | undefined) {
+  if (!value) {
+    return ""
+  }
+
+  return String(value / 100)
+}
+
+export { DraftEditorForm }

@@ -10,6 +10,9 @@ import { cn } from "@workspace/ui/lib/utils"
 type PlaceAutocompleteInputProps = {
   selectedPlace: PlaceAutocompleteItem | null
   onSelect: (place: PlaceAutocompleteItem | null) => void
+  type?: PlaceAutocompleteItem["type"] | "all"
+  placeholder?: string
+  ariaLabel?: string
 }
 
 type PlaceAutocompletePayload = {
@@ -21,8 +24,11 @@ function formatSelectedPlace(place: PlaceAutocompleteItem) {
 }
 
 function PlaceAutocompleteInput({
+  ariaLabel = "Luogo",
   onSelect,
+  placeholder = "Citta, provincia o regione",
   selectedPlace,
+  type = "all",
 }: PlaceAutocompleteInputProps) {
   const inputId = useId()
   const listboxId = useId()
@@ -80,6 +86,11 @@ function PlaceAutocompleteInput({
           q: normalizedQuery,
           limit: "8",
         })
+
+        if (type !== "all") {
+          params.set("type", type)
+        }
+
         const response = await fetch(
           `/api/places/autocomplete?${params.toString()}`,
           {
@@ -111,7 +122,7 @@ function PlaceAutocompleteInput({
       controller.abort()
       window.clearTimeout(timeoutId)
     }
-  }, [open, query, selectedPlace])
+  }, [open, query, selectedPlace, type])
 
   function handleSelect(place: PlaceAutocompleteItem) {
     onSelect(place)
@@ -140,14 +151,12 @@ function PlaceAutocompleteInput({
       >
         <MapPinIcon className="size-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1">
-          <span className="block text-[0.68rem] font-semibold tracking-[0.08em] text-muted-foreground uppercase">
-            Dove
-          </span>
           <input
             id={inputId}
             type="text"
             value={query}
-            placeholder="Citta, provincia o regione"
+            aria-label={ariaLabel}
+            placeholder={placeholder}
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"
@@ -195,7 +204,7 @@ function PlaceAutocompleteInput({
                 setActiveIndex(-1)
               }
             }}
-            className="mt-0.5 w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
+            className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
           />
         </span>
 

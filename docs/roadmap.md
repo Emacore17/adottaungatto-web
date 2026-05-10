@@ -76,8 +76,9 @@ Deliverable:
 
 Stato: avviata con CRUD autenticato delle bozze annuncio dell'utente, invio a
 moderazione con controlli minimi, upload session presigned verso MinIO locale e
-worker iniziale per varianti immagini WebP. L'invio a moderazione richiede
-almeno una immagine pronta.
+worker iniziale per varianti immagini WebP. Il frontend account include editor
+bozze per creazione, modifica, upload immagine e invio a moderazione. L'invio
+a moderazione richiede almeno una immagine pronta.
 
 ## Milestone 5 - Ricerca pubblica
 
@@ -93,11 +94,13 @@ Deliverable:
 - espansione progressiva dei risultati.
 
 Stato: avviata con `GET /listings` per lista pubblica paginata degli annunci
-approvati e `GET /listings/:id` per scheda pubblica per UUID. La lista supporta
-filtri principali per luogo, razza, sesso, fascia eta, gratuitita, dati
-sanitari e presenza immagini. Il frontend pubblico non e' ancora implementato:
-lo scaffolding deve seguire `docs/frontend-nextjs-shadcn-guidelines.md`, con
-homepage orientata alla ricerca, lista annunci server-rendered e SEO dinamica.
+approvati, `GET /listings/:id` per scheda pubblica per UUID e
+`GET /listings/breeds` per i filtri razza. La lista supporta filtri principali
+per luogo, razza, sesso, fascia eta, gratuitita, fascia contributo, dati
+sanitari e presenza immagini. Il frontend pubblico e' avviato con homepage
+orientata alla ricerca, lista annunci server-rendered, scheda dettaglio,
+metadata dinamici, JSON-LD, sitemap e robots. Restano da consolidare flussi
+operativi, fixture realistiche, test e area admin/moderazione.
 
 ## Milestone 6 - Moderazione
 
@@ -117,7 +120,11 @@ decisioni moderatore per approvazione, rifiuto e sospensione con audit log e
 segnalazioni utenti collegate ai casi di moderazione. E' presente anche una
 coda moderazione dedicata ai casi con segnalazioni utenti. Le decisioni
 chiudono le segnalazioni collegate come `resolved` o `dismissed` e inviano
-notifiche email a proprietario e reporter.
+notifiche email a proprietario e reporter. Il frontend ha una pagina
+`/moderation` iniziale, protetta da login, `noindex`, collegata alle code API
+e dotata di azioni base approva/rifiuta/sospendi con motivo obbligatorio.
+Restano da estendere strumenti interni, template di motivazione e workflow
+operativi piu avanzati.
 
 ## Milestone 7 - Contatti, preferiti e notifiche
 
@@ -139,7 +146,16 @@ decisioni di moderazione generano notifiche per proprietari e reporter. I
 preferiti utente sono avviati per annunci pubblicati, con lista autenticata,
 aggiunta idempotente e rimozione idempotente. I like pubblici aggregati sono
 avviati con conteggio pubblico per annuncio pubblicato e mutazioni autenticate
-idempotenti.
+idempotenti. Il frontend account mostra dashboard, preferiti e inbox notifiche
+in lettura. E' presente anche il primo contatto proprietario privacy-first:
+richiesta autenticata, inoltro email dal backend, consenso esplicito alla
+risposta via email, tracciamento in `listing_contact_requests` e rate limit
+dedicato. E' presente anche una preferenza per-annuncio per
+abilitare/disabilitare il contatto proprietario. Le mutazioni account coprono
+rimozione preferiti, lettura notifiche, cancellazione bozze ed editor bozze con
+creazione/modifica/upload, galleria immagini con stato, eliminazione,
+riordino/copertina e invio. Restano da completare eventuali canali aggiuntivi
+o finestre orarie per il contatto, se previsti dal prodotto.
 
 ## Milestone 8 - Hardening e deploy
 

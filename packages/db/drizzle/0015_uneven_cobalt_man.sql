@@ -1,0 +1,1 @@
+ALTER TABLE "listings" ADD COLUMN "contact_requests_enabled" boolean DEFAULT true NOT NULL;
