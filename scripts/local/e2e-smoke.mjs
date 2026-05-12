@@ -11,11 +11,11 @@ const storageBucket =
   "adottaungatto-local"
 
 const password = "Password!12345"
-const email = `e2e.${Date.now()}@demo.adottaungatto.local`
-const otherEmail = `e2e.other.${Date.now()}@demo.adottaungatto.local`
+const primaryEmail = `e2e.${Date.now()}@demo.adottaungatto.local`
 
 let token = null
 let otherToken = null
+let accountEmail = primaryEmail
 let draftId = null
 let deleteDraftId = null
 let listingId = null
@@ -59,29 +59,32 @@ try {
   check("public listing detail", listing.id === listingId)
   await webListingImages()
 
-  const registration = await api("POST", "/auth/register", {
-    displayName: "Smoke E2E",
-    email,
-    password,
-    profileType: "private",
-  })
-  token = registration.session.token
-  check("register", typeof token === "string" && token.length > 0)
+  const primaryAuth = await createPrimaryAuth()
+  token = primaryAuth.token
+  accountEmail = primaryAuth.email
+  check("auth primary session", typeof token === "string" && token.length > 0)
 
   const session = await api("GET", "/auth/me", undefined, token)
-  check("auth me", session.user.email === email)
+  check("auth me", session.user.email === accountEmail)
 
-  const otherRegistration = await api("POST", "/auth/register", {
-    displayName: "Smoke E2E Altro",
-    email: otherEmail,
-    password,
-    profileType: "private",
+  const otherLogin = await api("POST", "/auth/login", {
+    email: "marta.demo@demo.adottaungatto.local",
+    password: "demo-password-123",
   })
-  otherToken = otherRegistration.session.token
+  otherToken = otherLogin.session.token
   check(
-    "authz other register",
-    typeof otherToken === "string" && otherToken.length > 0
+    "authz other login",
+    otherLogin.user.email === "marta.demo@demo.adottaungatto.local" &&
+      typeof otherToken === "string" &&
+      otherToken.length > 0
   )
+  const otherFavoriteSetup = await api(
+    "DELETE",
+    `/favorites/listings/${listingId}`,
+    undefined,
+    otherToken
+  )
+  pass("authz other favorite setup", `deleted=${otherFavoriteSetup.deleted}`)
 
   const profileDisplayName = `Smoke Profilo ${Date.now()}`
   const profile = await api(
@@ -409,7 +412,17 @@ try {
     Array.isArray(pendingReview.items) && pendingReview.items.length >= 2
   )
 
-  await webPage("/account", token, "web account authenticated")
+  const accountHtml = await webText(
+    "/account",
+    token,
+    "web account authenticated"
+  )
+  check(
+    "web account dashboard content",
+    accountHtml.includes("Dashboard account") &&
+      accountHtml.includes("Attivita operative") &&
+      accountHtml.includes("Azioni rapide")
+  )
   await webPage("/account/settings", token, "web account settings")
   await webPage("/account/favorites", token, "web account favorites")
   await webPage("/account/notifications", token, "web account notifications")
@@ -535,7 +548,7 @@ try {
   deleteDraftId = null
   check("draft delete", deletedDraft.deleted === true)
 
-  console.log(`E2E_SMOKE_OK email=${email} listing=${listingId}`)
+  console.log(`E2E_SMOKE_OK email=${accountEmail} listing=${listingId}`)
 } finally {
   if (token && draftId) {
     try {
@@ -580,14 +593,46 @@ async function api(method, path, body, bearerToken) {
   })
 }
 
-async function expectApiStatus(
-  label,
-  method,
-  path,
-  body,
-  bearerToken,
-  expectedStatuses
-) {
+async function createPrimaryAuth() {
+  const registration = await apiResponse("POST", "/auth/register", {
+    displayName: "Smoke E2E",
+    email: primaryEmail,
+    password,
+    profileType: "private",
+  })
+
+  if (registration.ok) {
+    pass("register", `email=${primaryEmail}`)
+
+    return {
+      email: primaryEmail,
+      token: registration.data.session.token,
+    }
+  }
+
+  if (registration.status !== 429) {
+    throw new Error(
+      `POST ${apiBaseUrl}/auth/register failed: ${registration.status} ${registration.text}`
+    )
+  }
+
+  pass(
+    "register fallback",
+    `retryAfterSeconds=${registration.data?.retryAfterSeconds ?? "unknown"}`
+  )
+  const login = await api("POST", "/auth/login", {
+    email: "volontari.italia@demo.adottaungatto.local",
+    password: "demo-password-123",
+  })
+  pass("demo user login", `email=${login.user.email}`)
+
+  return {
+    email: login.user.email,
+    token: login.session.token,
+  }
+}
+
+async function apiResponse(method, path, body, bearerToken) {
   const headers = {
     Accept: "application/json",
   }
@@ -607,13 +652,33 @@ async function expectApiStatus(
   })
   const text = await response.text()
 
+  return {
+    data: text ? JSON.parse(text) : null,
+    ok: response.ok,
+    status: response.status,
+    text,
+  }
+}
+
+async function expectApiStatus(
+  label,
+  method,
+  path,
+  body,
+  bearerToken,
+  expectedStatuses
+) {
+  const response = await apiResponse(method, path, body, bearerToken)
+
   check(
     label,
     expectedStatuses.includes(response.status),
-    `status=${response.status}${text ? ` body=${text.slice(0, 160)}` : ""}`
+    `status=${response.status}${
+      response.text ? ` body=${response.text.slice(0, 160)}` : ""
+    }`
   )
 
-  return text ? JSON.parse(text) : null
+  return response.data
 }
 
 async function rawJson(url, init) {

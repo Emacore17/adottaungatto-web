@@ -17,10 +17,11 @@ Stack locale verificato:
 
 La UI pubblica iniziale e' avviata: homepage di ricerca, lista annunci,
 scheda dettaglio, layout pubblici/auth/account/admin, client API, SEO base,
-sitemap, robots, JSON-LD, dashboard account con bozze/preferiti/notifiche,
-form contatto proprietario e pagina `/moderation` con decisioni base motivate
-sono presenti. La priorita ora e' consolidare i flussi operativi autenticati
-senza rompere la separazione Server/Client Components.
+sitemap, robots, JSON-LD, dashboard account operativa con riepilogo, azioni
+rapide, bozze/preferiti/notifiche, form contatto proprietario e pagina
+`/moderation` con decisioni base motivate sono presenti. La priorita ora e'
+consolidare i flussi operativi autenticati senza rompere la separazione
+Server/Client Components.
 
 ## Lettura minima per agenti
 

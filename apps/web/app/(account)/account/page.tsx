@@ -1,8 +1,11 @@
 import Link from "next/link"
+import type { LucideIcon } from "lucide-react"
 import {
   BellIcon,
+  CheckCircle2Icon,
   FileTextIcon,
   HeartIcon,
+  ListChecksIcon,
   PlusIcon,
   SettingsIcon,
   UserIcon,
@@ -22,6 +25,7 @@ import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
@@ -33,6 +37,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@workspace/ui/components/empty"
+import { Separator } from "@workspace/ui/components/separator"
 
 export default async function AccountPage() {
   const { session, token } = await requireAccountSession()
@@ -41,107 +46,119 @@ export default async function AccountPage() {
     listAccountFavorites(token, { page: 1, pageSize: 3 }),
     listAccountNotifications(token, { page: 1, pageSize: 4 }),
   ])
+  const draftTotal = drafts.ok ? drafts.data.meta.total : null
+  const favoriteTotal = favorites.ok ? favorites.data.meta.total : null
+  const unreadNotifications = notifications.ok
+    ? notifications.data.meta.unreadCount
+    : null
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div className="flex flex-col gap-3">
-          <Badge variant="secondary" className="w-fit">
-            Area personale
-          </Badge>
-          <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold tracking-normal">Account</h1>
-            <p className="text-sm text-muted-foreground">
-              {session.user.displayName}
-            </p>
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
+      <header className="flex flex-col gap-5">
+        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+          <div className="flex flex-col gap-3">
+            <Badge variant="secondary" className="w-fit">
+              Area personale
+            </Badge>
+            <div className="grid gap-2">
+              <h1 className="text-3xl font-semibold tracking-normal">
+                Dashboard account
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {session.user.displayName} - {session.user.email}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline">
+              <Link href={routes.accountSettings}>
+                <SettingsIcon data-icon="inline-start" aria-hidden="true" />
+                Impostazioni
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={routes.accountDraftNew}>
+                <PlusIcon data-icon="inline-start" aria-hidden="true" />
+                Inserisci annuncio
+              </Link>
+            </Button>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button asChild variant="outline">
-            <Link href={routes.accountSettings}>
-              <SettingsIcon data-icon="inline-start" aria-hidden="true" />
-              Impostazioni
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href={routes.accountDraftNew}>
-              <PlusIcon data-icon="inline-start" aria-hidden="true" />
-              Nuovo annuncio
-            </Link>
-          </Button>
-        </div>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <SummaryCard
-          title="Profilo"
-          value={session.user.status}
-          description={session.user.email}
-          icon="user"
-        />
-        <SummaryCard
-          title="Annunci"
-          value={drafts.ok ? String(drafts.data.meta.total) : "-"}
-          description="In lavorazione"
-          icon="drafts"
-        />
-        <SummaryCard
-          title="Preferiti"
-          value={favorites.ok ? String(favorites.data.meta.total) : "-"}
-          description="Annunci seguiti"
-          icon="favorites"
-        />
-        <SummaryCard
-          title="Notifiche"
-          value={
-            notifications.ok ? String(notifications.data.meta.unreadCount) : "-"
-          }
-          description="Non lette"
-          icon="notifications"
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <section className="flex flex-col gap-4">
-          <SectionHeader
-            title="Annunci in lavorazione"
-            description="Annunci in lavorazione nel tuo account."
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <DashboardMetricCard
+            title="Profilo"
+            value={formatUserStatus(session.user.status)}
+            description={formatProfileType(session.user.profileType)}
+            icon={UserIcon}
+            href={routes.accountSettings}
+          />
+          <DashboardMetricCard
+            title="Annunci"
+            value={formatMetric(draftTotal)}
+            description="In lavorazione"
+            icon={FileTextIcon}
             href={routes.accountDrafts}
           />
-          {drafts.ok ? (
-            drafts.data.items.length > 0 ? (
-              <div className="grid gap-3">
-                {drafts.data.items.map((draft) => (
-                  <AccountDraftCard key={draft.id} draft={draft} />
-                ))}
-              </div>
-            ) : (
-              <AccountEmpty
-                title="Nessun annuncio in lavorazione"
-                description="Gli annunci inseriti appariranno qui prima della pubblicazione."
-              />
-            )
-          ) : (
-            <AccountError message={drafts.message} />
-          )}
-        </section>
+          <DashboardMetricCard
+            title="Preferiti"
+            value={formatMetric(favoriteTotal)}
+            description="Annunci salvati"
+            icon={HeartIcon}
+            href={routes.accountFavorites}
+          />
+          <DashboardMetricCard
+            title="Notifiche"
+            value={formatMetric(unreadNotifications)}
+            description="Da leggere"
+            icon={BellIcon}
+            href={routes.accountNotifications}
+          />
+        </div>
+      </header>
 
-        <aside className="flex flex-col gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profilo</CardTitle>
-              <CardDescription>{session.user.email}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4 text-sm">
-              <div className="grid gap-3">
-                <InfoRow label="Tipo" value={session.user.profileType} />
-                <InfoRow label="Stato" value={session.user.status} />
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={routes.accountSettings}>Modifica profilo</Link>
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="flex flex-col gap-6">
+          <OperationalFocus
+            draftTotal={draftTotal}
+            favoriteTotal={favoriteTotal}
+            unreadNotifications={unreadNotifications}
+          />
+
+          <section className="flex flex-col gap-4">
+            <SectionHeader
+              title="Annunci in lavorazione"
+              description="Bozze e inserimenti da completare."
+              href={routes.accountDrafts}
+            />
+            {drafts.ok ? (
+              drafts.data.items.length > 0 ? (
+                <div className="grid gap-3">
+                  {drafts.data.items.map((draft) => (
+                    <AccountDraftCard key={draft.id} draft={draft} />
+                  ))}
+                </div>
+              ) : (
+                <AccountEmpty
+                  title="Nessun annuncio in lavorazione"
+                  description="Gli annunci inseriti appariranno qui prima della pubblicazione."
+                />
+              )
+            ) : (
+              <AccountError message={drafts.message} />
+            )}
+          </section>
+        </div>
+
+        <aside className="flex flex-col gap-6">
+          <ProfileCard
+            displayName={session.user.displayName}
+            email={session.user.email}
+            profileType={session.user.profileType}
+            status={session.user.status}
+          />
+
+          <QuickActionsCard />
 
           <section className="flex flex-col gap-3">
             <SectionHeader
@@ -156,6 +173,7 @@ export default async function AccountPage() {
                     <AccountNotificationCard
                       key={notification.id}
                       notification={notification}
+                      returnPath={routes.account}
                     />
                   ))}
                 </div>
@@ -203,39 +221,219 @@ export default async function AccountPage() {
   )
 }
 
-function SummaryCard({
+function DashboardMetricCard({
   description,
   icon,
+  href,
   title,
   value,
 }: {
   description: string
-  icon: "drafts" | "favorites" | "notifications" | "user"
+  href: string
+  icon: LucideIcon
   title: string
   value: string
 }) {
-  const Icon =
-    icon === "drafts"
-      ? FileTextIcon
-      : icon === "favorites"
-        ? HeartIcon
-        : icon === "notifications"
-          ? BellIcon
-          : UserIcon
+  const Icon = icon
+
+  return (
+    <Card size="sm">
+      <CardHeader>
+        <div className="grid gap-1">
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <CardAction>
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+            <Icon aria-hidden="true" />
+          </div>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex items-end justify-between gap-3">
+        <p className="text-2xl font-semibold tracking-normal">{value}</p>
+        <Button asChild variant="outline" size="sm">
+          <Link href={href}>Apri</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function OperationalFocus({
+  draftTotal,
+  favoriteTotal,
+  unreadNotifications,
+}: {
+  draftTotal: number | null
+  favoriteTotal: number | null
+  unreadNotifications: number | null
+}) {
+  const hasDrafts = draftTotal !== null && draftTotal > 0
+  const hasUnreadNotifications =
+    unreadNotifications !== null && unreadNotifications > 0
 
   return (
     <Card>
-      <CardHeader className="flex-row items-start justify-between gap-4">
-        <div className="grid gap-1">
-          <CardTitle className="text-base">{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </div>
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-          <Icon aria-hidden="true" className="size-5" />
-        </div>
+      <CardHeader>
+        <CardTitle>Attivita operative</CardTitle>
+        <CardDescription>Le priorita correnti del tuo account.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-semibold tracking-normal">{value}</p>
+      <CardContent className="flex flex-col gap-4">
+        <PriorityRow
+          icon={hasDrafts ? ListChecksIcon : PlusIcon}
+          title={
+            hasDrafts
+              ? "Riprendi annunci in lavorazione"
+              : "Inserisci un annuncio"
+          }
+          description={
+            hasDrafts
+              ? `${draftTotal} annunci non ancora inviati a revisione.`
+              : "Nessuna bozza aperta."
+          }
+          badge={hasDrafts ? "Da completare" : "Pronto"}
+          href={hasDrafts ? routes.accountDrafts : routes.accountDraftNew}
+          actionLabel={hasDrafts ? "Vai alle bozze" : "Inserisci annuncio"}
+        />
+        <Separator />
+        <PriorityRow
+          icon={hasUnreadNotifications ? BellIcon : CheckCircle2Icon}
+          title={
+            hasUnreadNotifications
+              ? "Controlla gli aggiornamenti"
+              : "Notifiche in ordine"
+          }
+          description={
+            hasUnreadNotifications
+              ? `${unreadNotifications} notifiche non lette.`
+              : "Nessuna notifica non letta."
+          }
+          badge={hasUnreadNotifications ? "Da leggere" : "Aggiornato"}
+          href={routes.accountNotifications}
+          actionLabel="Apri notifiche"
+        />
+        <Separator />
+        <PriorityRow
+          icon={HeartIcon}
+          title="Preferiti salvati"
+          description={
+            favoriteTotal === null
+              ? "Dato non disponibile."
+              : `${favoriteTotal} annunci salvati.`
+          }
+          badge="Consultazione"
+          href={routes.accountFavorites}
+          actionLabel="Apri preferiti"
+        />
+      </CardContent>
+    </Card>
+  )
+}
+
+function PriorityRow({
+  actionLabel,
+  badge,
+  description,
+  href,
+  icon,
+  title,
+}: {
+  actionLabel: string
+  badge: string
+  description: string
+  href: string
+  icon: LucideIcon
+  title: string
+}) {
+  const Icon = icon
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <Icon aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-medium tracking-normal">{title}</h3>
+            <Badge variant="outline">{badge}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      <Button asChild variant="outline" size="sm">
+        <Link href={href}>{actionLabel}</Link>
+      </Button>
+    </div>
+  )
+}
+
+function ProfileCard({
+  displayName,
+  email,
+  profileType,
+  status,
+}: {
+  displayName: string
+  email: string
+  profileType: string
+  status: string
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profilo</CardTitle>
+        <CardDescription>{displayName}</CardDescription>
+        <CardAction>
+          <Badge variant="secondary">{formatUserStatus(status)}</Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 text-sm">
+        <div className="grid gap-3">
+          <InfoRow label="Email" value={email} />
+          <InfoRow label="Tipo" value={formatProfileType(profileType)} />
+          <InfoRow label="Stato" value={formatUserStatus(status)} />
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href={routes.accountSettings}>Modifica profilo</Link>
+        </Button>
+      </CardContent>
+    </Card>
+  )
+}
+
+function QuickActionsCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Azioni rapide</CardTitle>
+        <CardDescription>Collegamenti principali.</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-2">
+        <Button asChild className="justify-start">
+          <Link href={routes.accountDraftNew}>
+            <PlusIcon data-icon="inline-start" aria-hidden="true" />
+            Inserisci annuncio
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href={routes.accountDrafts}>
+            <FileTextIcon data-icon="inline-start" aria-hidden="true" />
+            Annunci in lavorazione
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href={routes.accountFavorites}>
+            <HeartIcon data-icon="inline-start" aria-hidden="true" />
+            Preferiti
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href={routes.accountSettings}>
+            <SettingsIcon data-icon="inline-start" aria-hidden="true" />
+            Impostazioni
+          </Link>
+        </Button>
       </CardContent>
     </Card>
   )
@@ -270,6 +468,38 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span>{value}</span>
     </div>
   )
+}
+
+function formatMetric(value: number | null) {
+  return value === null ? "-" : String(value)
+}
+
+function formatProfileType(value: string) {
+  if (value === "owner") {
+    return "Proprietario"
+  }
+
+  if (value === "association") {
+    return "Associazione"
+  }
+
+  if (value === "shelter") {
+    return "Rifugio"
+  }
+
+  return "Privato"
+}
+
+function formatUserStatus(value: string) {
+  if (value === "active") {
+    return "Attivo"
+  }
+
+  if (value === "suspended") {
+    return "Sospeso"
+  }
+
+  return value
 }
 
 function AccountEmpty({

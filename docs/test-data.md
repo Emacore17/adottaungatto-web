@@ -82,7 +82,9 @@ La demo include:
 - lista pubblica con immagini; Fatto via cover API, oggetto storage e HTML con
   URL storage diretto.
 - dettaglio annuncio;
-- registrazione e login;
+- registrazione e login; Fatto con utente effimero quando il rate limit locale
+  lo consente, fallback su account demo distinto quando la finestra IP e'
+  satura.
 - aggiornamento profilo e preferenze email; Fatto via `PATCH /users/me`,
   `PATCH /users/me/notification-preferences` e pagina `/account/settings`.
 - creazione annuncio completa;

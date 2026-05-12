@@ -86,8 +86,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
   stato UI a cuore, update profilo/preferenze, like, contatto proprietario,
   notifiche, isolamento multi-utente su bozze, immagini, preferiti e
-  notifiche, pagine account autenticate, piu login admin e coda moderazione
-  demo.
+  notifiche, contenuti chiave della dashboard account, pagine account
+  autenticate, piu login admin e coda moderazione demo.
 
 ## Non pronto per produzione
 
@@ -152,9 +152,10 @@ route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
-account con lettura annunci in lavorazione, preferiti e notifiche, pagina
-impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
-annuncio e pagina `/moderation`
+account operativa con riepilogo, attivita prioritarie, profilo, azioni rapide,
+annunci in lavorazione, preferiti e notifiche, pagina impostazioni
+profilo/preferenze email, form contatto proprietario sulla scheda annuncio e
+pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,

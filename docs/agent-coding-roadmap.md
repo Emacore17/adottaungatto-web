@@ -29,9 +29,9 @@ e ottenere una demo navigabile con:
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
 mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
-e la pagina impostazioni profilo sono funzionanti in locale. Il punto piu
-urgente resta completare Milestone C con dashboard piu ordinata e copertura
-contatti lato account/admin.
+la pagina impostazioni profilo e la dashboard account operativa sono
+funzionanti in locale. Il punto piu urgente resta definire la gestione contatti
+lato account/admin e chiudere i messaggi di errore account.
 
 ## Regole per ogni round
 
@@ -127,7 +127,7 @@ Obiettivo: rendere l'area utente comprensibile e corretta multi-utente.
 
 Task:
 
-- riorganizzare `/account` in dashboard operativa: annunci, notifiche,
+- Fatto: riorganizzare `/account` in dashboard operativa: annunci, notifiche,
   preferiti, profilo;
 - Fatto: aggiungere impostazioni profilo modificabili dall'utente;
 - Fatto: verificare ownership smoke su bozze, immagini, preferiti e
@@ -146,9 +146,12 @@ Avanzamento 12 maggio 2026:
 - Fatto: smoke E2E aggiorna profilo/preferenze e verifica la pagina settings.
 - Fatto: smoke E2E registra un secondo utente e verifica accesso negato o
   isolamento su bozza, immagini bozza, preferiti e notifiche del primo utente.
-- Da fare: completare riordino dashboard in viste operative piu chiare.
+- Fatto: `/account` mostra riepilogo operativo, attivita prioritarie, profilo,
+  azioni rapide, notifiche recenti, bozze e preferiti recenti.
+- Fatto: smoke E2E verifica i contenuti chiave della dashboard account.
 - Da fare: aggiungere superficie contatti per proprietario/admin e relativa
   copertura authz.
+- Da fare: rendere i messaggi di errore account leggibili e non tecnici.
 
 Done:
 
@@ -227,5 +230,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone C completando il riordino dashboard account in viste
-operative piu chiare.
+Proseguire con Milestone C/E definendo la superficie contatti per proprietario
+o admin, cosi da coprire anche ownership e privacy dei contatti sensibili.
