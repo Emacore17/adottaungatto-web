@@ -19,6 +19,7 @@ import type {
   ListingModerationStatus,
   ModerationDecisionAction,
   ModerationDecisionResponse,
+  ModerationAuditAction,
   ModerationQueueItem,
   ModerationQueueResponse,
   ReportResolutionStatus,
@@ -61,6 +62,7 @@ type PendingReviewQueueRow = {
   cover_image_id: string | null
   cover_object_key_thumb: string | null
   cover_object_key_large: string | null
+  audit_actions: unknown
 }
 
 type ReportedListingQueueRow = {
@@ -106,6 +108,7 @@ type ReportedListingQueueRow = {
   latest_report_reason_code: string | null
   latest_report_description: string | null
   latest_report_created_at: Date | string | null
+  audit_actions: unknown
 }
 
 type ModerationDecisionStatus = "approved" | "rejected" | "suspended"
@@ -151,6 +154,25 @@ type ReportNotification = {
 }
 
 const moderatorRoles = new Set(["admin", "moderator"])
+
+const moderationAuditActionTypes = new Set([
+  "opened",
+  "assigned",
+  "approved",
+  "rejected",
+  "suspended",
+  "closed",
+  "commented",
+  "reported",
+])
+
+const listingModerationStatuses = new Set([
+  "draft",
+  "pending_review",
+  "approved",
+  "rejected",
+  "suspended",
+])
 
 const moderationDecisionConfigs = {
   approve: {
@@ -207,6 +229,53 @@ const pendingReviewQueueSql = `
       and deleted_at is null
       and is_cover = true
     order by listing_id, sort_order, created_at
+  ),
+  audit_action_summaries as (
+    select
+      ranked_action.case_id,
+      jsonb_agg(
+        jsonb_build_object(
+          'id',
+          ranked_action.id::text,
+          'action',
+          ranked_action.action::text,
+          'reasonCode',
+          ranked_action.reason_code,
+          'reasonText',
+          ranked_action.reason_text,
+          'fromStatus',
+          ranked_action.from_status::text,
+          'toStatus',
+          ranked_action.to_status::text,
+          'createdAt',
+          ranked_action.created_at,
+          'actor',
+          case
+            when actor.id is null then null
+            else jsonb_build_object(
+              'id',
+              actor.id::text,
+              'email',
+              actor.email,
+              'displayName',
+              actor.display_name
+            )
+          end
+        )
+        order by ranked_action.created_at desc, ranked_action.id desc
+      ) as audit_actions
+    from (
+      select
+        moderation_action.*,
+        row_number() over (
+          partition by moderation_action.case_id
+          order by moderation_action.created_at desc, moderation_action.id desc
+        ) as action_rank
+      from moderation_actions moderation_action
+    ) ranked_action
+    left join users actor on actor.id = ranked_action.actor_user_id
+    where ranked_action.action_rank <= 5
+    group by ranked_action.case_id
   )
   select
     count(*) over()::int as total_count,
@@ -238,7 +307,11 @@ const pendingReviewQueueSql = `
     coalesce(ready_images.ready_image_count, 0)::int as ready_image_count,
     cover_images.cover_image_id,
     cover_images.object_key_thumb as cover_object_key_thumb,
-    cover_images.object_key_large as cover_object_key_large
+    cover_images.object_key_large as cover_object_key_large,
+    coalesce(
+      audit_action_summaries.audit_actions,
+      '[]'::jsonb
+    ) as audit_actions
   from moderation_cases moderation_case
   join listings listing on listing.id = moderation_case.listing_id
   join users owner on owner.id = listing.owner_user_id
@@ -248,6 +321,8 @@ const pendingReviewQueueSql = `
   left join geo_regions region on region.id = listing.region_id
   left join ready_images on ready_images.listing_id = listing.id
   left join cover_images on cover_images.listing_id = listing.id
+  left join audit_action_summaries
+    on audit_action_summaries.case_id = moderation_case.id
   where moderation_case.status = 'open'
     and listing.moderation_status = 'pending_review'
     and listing.lifecycle_status = 'draft'
@@ -306,6 +381,53 @@ const reportedListingsQueueSql = `
     where report.target_type = 'listing'
       and report.status = 'linked'
     order by report.moderation_case_id, report.created_at desc, report.id desc
+  ),
+  audit_action_summaries as (
+    select
+      ranked_action.case_id,
+      jsonb_agg(
+        jsonb_build_object(
+          'id',
+          ranked_action.id::text,
+          'action',
+          ranked_action.action::text,
+          'reasonCode',
+          ranked_action.reason_code,
+          'reasonText',
+          ranked_action.reason_text,
+          'fromStatus',
+          ranked_action.from_status::text,
+          'toStatus',
+          ranked_action.to_status::text,
+          'createdAt',
+          ranked_action.created_at,
+          'actor',
+          case
+            when actor.id is null then null
+            else jsonb_build_object(
+              'id',
+              actor.id::text,
+              'email',
+              actor.email,
+              'displayName',
+              actor.display_name
+            )
+          end
+        )
+        order by ranked_action.created_at desc, ranked_action.id desc
+      ) as audit_actions
+    from (
+      select
+        moderation_action.*,
+        row_number() over (
+          partition by moderation_action.case_id
+          order by moderation_action.created_at desc, moderation_action.id desc
+        ) as action_rank
+      from moderation_actions moderation_action
+    ) ranked_action
+    left join users actor on actor.id = ranked_action.actor_user_id
+    where ranked_action.action_rank <= 5
+    group by ranked_action.case_id
   )
   select
     count(*) over()::int as total_count,
@@ -349,7 +471,11 @@ const reportedListingsQueueSql = `
     latest_reports.latest_reporter_display_name,
     latest_reports.latest_report_reason_code,
     latest_reports.latest_report_description,
-    latest_reports.latest_report_created_at
+    latest_reports.latest_report_created_at,
+    coalesce(
+      audit_action_summaries.audit_actions,
+      '[]'::jsonb
+    ) as audit_actions
   from moderation_cases moderation_case
   join report_summaries
     on report_summaries.moderation_case_id = moderation_case.id
@@ -363,6 +489,8 @@ const reportedListingsQueueSql = `
   left join cover_images on cover_images.listing_id = listing.id
   left join latest_reports
     on latest_reports.moderation_case_id = moderation_case.id
+  left join audit_action_summaries
+    on audit_action_summaries.case_id = moderation_case.id
   where moderation_case.status = 'open'
     and listing.deleted_at is null
     and owner.deleted_at is null
@@ -757,6 +885,9 @@ function mapQueueRow(row: PendingReviewQueueRow): ModerationQueueItem {
           }
         : null,
     },
+    audit: {
+      actions: parseAuditActions(row.audit_actions),
+    },
   }
 }
 
@@ -798,6 +929,9 @@ function mapReportedListingRow(
             objectKeyLarge: row.cover_object_key_large,
           }
         : null,
+    },
+    audit: {
+      actions: parseAuditActions(row.audit_actions),
     },
     reports: {
       count: Number(row.report_count),
@@ -855,6 +989,93 @@ function mapLocation(
       istatCode: row.region_istat_code,
     },
   }
+}
+
+function parseAuditActions(value: unknown): ModerationAuditAction[] {
+  const parsed = typeof value === "string" ? parseJson(value) : value
+
+  if (!Array.isArray(parsed)) {
+    return []
+  }
+
+  return parsed.flatMap((item) => {
+    if (!isRecord(item)) {
+      return []
+    }
+
+    const { action, createdAt, id } = item
+    const fromStatus = readNullableString(item, "fromStatus")
+    const toStatus = readNullableString(item, "toStatus")
+
+    if (
+      typeof id !== "string" ||
+      typeof action !== "string" ||
+      !isModerationAuditActionType(action) ||
+      typeof createdAt !== "string" ||
+      !isNullableListingModerationStatus(fromStatus) ||
+      !isNullableListingModerationStatus(toStatus)
+    ) {
+      return []
+    }
+
+    return [
+      {
+        id,
+        action,
+        reasonCode: readNullableString(item, "reasonCode"),
+        reasonText: readNullableString(item, "reasonText"),
+        fromStatus,
+        toStatus,
+        createdAt: toIsoString(createdAt),
+        actor: mapAuditActor(item.actor),
+      },
+    ]
+  })
+}
+
+function mapAuditActor(value: unknown): ModerationAuditAction["actor"] {
+  if (!isRecord(value)) {
+    return null
+  }
+
+  if (
+    typeof value.id !== "string" ||
+    typeof value.email !== "string" ||
+    typeof value.displayName !== "string"
+  ) {
+    return null
+  }
+
+  return {
+    id: value.id,
+    email: value.email,
+    displayName: value.displayName,
+  }
+}
+
+function readNullableString(
+  value: Record<string, unknown>,
+  key: string
+): string | null {
+  const item = value[key]
+
+  return typeof item === "string" ? item : null
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null
+}
+
+function isModerationAuditActionType(
+  value: string
+): value is ModerationAuditAction["action"] {
+  return moderationAuditActionTypes.has(value)
+}
+
+function isNullableListingModerationStatus(
+  value: string | null
+): value is ListingModerationStatus | null {
+  return value === null || listingModerationStatuses.has(value)
 }
 
 function toIsoString(value: Date | string) {

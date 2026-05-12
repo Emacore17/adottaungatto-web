@@ -78,9 +78,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   code API `pending_review` e segnalazioni, e azioni base
   approva/rifiuta/sospendi con motivo obbligatorio; la pagina include un
   filtro operativo `queue=all|pending|reported`, dettaglio operativo caso,
-  template motivazioni orientati all'azione e stato accesso negato per utenti
-  senza ruolo interno, mentre le autorizzazioni di ruolo restano applicate
-  dalle API.
+  audit caso alimentato da `moderation_actions`, template motivazioni orientati
+  all'azione e stato accesso negato per utenti senza ruolo interno, mentre le
+  autorizzazioni di ruolo restano applicate dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -103,12 +103,12 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
   chiave della dashboard account, pagine account autenticate, piu login admin,
-  coda moderazione demo, filtro code, dettaglio operativo e accesso negato
-  alla moderazione per utente non abilitato. Lo smoke carica piu immagini reali da
-  `immagini-gattini/` quando disponibili, verifica il carosello del dettaglio
-  annuncio pubblicato, controlla la notifica di invio a revisione e controlla
-  la ricezione real-time delle notifiche di contatto proprietario e
-  approvazione moderatore senza refresh manuale.
+  coda moderazione demo, filtro code, dettaglio operativo, audit caso e accesso
+  negato alla moderazione per utente non abilitato. Lo smoke carica piu
+  immagini reali da `immagini-gattini/` quando disponibili, verifica il
+  carosello del dettaglio annuncio pubblicato, controlla la notifica di invio a
+  revisione e controlla la ricezione real-time delle notifiche di contatto
+  proprietario e approvazione moderatore senza refresh manuale.
 
 ## Non pronto per produzione
 
@@ -122,7 +122,7 @@ produzione. Mancano almeno:
 - backup/restore verificati e strategia rollback migrazioni;
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
   refresh sul futuro update di annunci pubblicati;
-- amministrazione completa e UI interna piu estesa;
+- amministrazione completa oltre la moderazione locale e UI interna piu estesa;
 - frontend applicativo oltre la consultazione pubblica: eventuale estensione
   delle notifiche in-app real-time ad altri eventi prodotto, eventuali canali o
   finestre orarie per il contatto proprietario e amministrazione interna piu
@@ -180,8 +180,8 @@ operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
 impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
 annuncio e pagina `/moderation` dentro layout interno separato, collegata alle
-code API con filtro code, dettaglio operativo caso, template motivazioni e
-decisioni base motivate. L'area account supporta
+code API con filtro code, dettaglio operativo caso, audit caso, template
+motivazioni e decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,

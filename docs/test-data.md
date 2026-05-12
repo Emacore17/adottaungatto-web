@@ -21,8 +21,10 @@ Esistono:
   presente e fallback placeholder se assente;
 - smoke E2E locale `pnpm smoke:e2e` con login admin, controllo coda
   `pending_review`, filtro segnalazioni, dettaglio operativo caso, template
-  motivazioni, accesso negato per utente non moderatore e verifica dello shell
-  interno di moderazione.
+  motivazioni, audit caso, accesso negato per utente non moderatore e verifica
+  dello shell interno di moderazione. Se il login admin demo e' limitato da
+  rate limit locale dopo run ravvicinati, lo smoke usa il moderatore demo come
+  fallback equivalente per la coda interna.
 
 Gap attuali:
 
@@ -99,6 +101,8 @@ La demo include:
 - filtro code moderazione; Fatto verificando `/moderation?queue=reported`.
 - dettaglio operativo moderazione; Fatto verificando la presenza dei dati caso
   nella dashboard admin.
+- audit caso moderazione; Fatto verificando la sezione `Audit caso` e le azioni
+  recenti nelle code admin.
 - accesso negato moderazione; Fatto verificando la UI per utente non
   moderatore.
 - annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.

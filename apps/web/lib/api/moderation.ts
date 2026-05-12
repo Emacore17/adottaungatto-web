@@ -37,6 +37,43 @@ type ModerationQueueMeta = {
   totalPages: number
 }
 
+type ModerationAudit = {
+  actions: Array<{
+    id: string
+    action:
+      | "opened"
+      | "assigned"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | "closed"
+      | "commented"
+      | "reported"
+    reasonCode: string | null
+    reasonText: string | null
+    fromStatus:
+      | "draft"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | null
+    toStatus:
+      | "draft"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | null
+    createdAt: string
+    actor: {
+      id: string
+      email: string
+      displayName: string
+    } | null
+  }>
+}
+
 export type ModerationQueueItem = {
   case: {
     id: string
@@ -62,6 +99,7 @@ export type ModerationQueueItem = {
   }
   location: ModerationLocation
   images: ModerationImages
+  audit: ModerationAudit
 }
 
 export type ModerationQueueResponse = {
@@ -91,6 +129,7 @@ export type ReportedListingQueueItem = {
   owner: ModerationQueueItem["owner"]
   location: ModerationLocation
   images: ModerationImages
+  audit: ModerationAudit
   reports: {
     count: number
     firstReportedAt: string

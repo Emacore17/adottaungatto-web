@@ -5,6 +5,7 @@ import {
   CheckIcon,
   CirclePauseIcon,
   FileTextIcon,
+  HistoryIcon,
   ImageIcon,
   ShieldAlertIcon,
   XCircleIcon,
@@ -387,6 +388,7 @@ function ModerationItemCard({
           </div>
 
           <OperationalCaseDetails item={item} />
+          <ModerationAuditTrail item={item} />
 
           {latestReport ? (
             <div className="mt-4 rounded-md border bg-muted/40 p-3 text-sm">
@@ -413,6 +415,79 @@ function ModerationItemCard({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ModerationAuditTrail({
+  item,
+}: {
+  item: ModerationQueueItem | ReportedListingQueueItem
+}) {
+  return (
+    <section
+      aria-label="Audit caso"
+      className="mt-4 rounded-md border bg-background/70 p-3"
+    >
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline">
+            <HistoryIcon aria-hidden="true" />
+            Audit caso
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            Ultime {item.audit.actions.length} azioni registrate
+          </span>
+        </div>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Storico essenziale alimentato da `moderation_actions`, utile per
+          ricostruire apertura, segnalazioni e decisioni.
+        </p>
+      </div>
+
+      {item.audit.actions.length > 0 ? (
+        <div className="mt-3 grid gap-2">
+          {item.audit.actions.map((action) => (
+            <div
+              key={action.id}
+              className="grid gap-2 rounded-md border bg-muted/20 p-3 text-xs md:grid-cols-[minmax(0,1fr)_auto]"
+            >
+              <div className="grid min-w-0 gap-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="secondary">
+                    Azione {formatAuditAction(action.action)}
+                  </Badge>
+                  <span className="text-muted-foreground">
+                    {formatDateTime(action.createdAt)}
+                  </span>
+                </div>
+                <p className="font-medium break-words">
+                  {formatAuditStatusChange(action.fromStatus, action.toStatus)}
+                </p>
+                <p className="break-words text-muted-foreground">
+                  Motivo: {action.reasonCode ?? "non indicato"}
+                  {action.reasonText ? ` - ${action.reasonText}` : ""}
+                </p>
+              </div>
+              <div className="grid gap-1 md:min-w-44 md:text-right">
+                <span className="text-muted-foreground">Operatore</span>
+                <span className="font-medium break-words">
+                  {action.actor?.displayName ?? "Sistema"}
+                </span>
+                {action.actor?.email ? (
+                  <span className="break-words text-muted-foreground">
+                    {action.actor.email}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Nessuna azione audit registrata per questo caso.
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -685,6 +760,46 @@ function formatDecisionAction(value: string | null) {
   }
 
   return "decisione"
+}
+
+function formatAuditAction(
+  value: ModerationQueueItem["audit"]["actions"][number]["action"]
+) {
+  switch (value) {
+    case "approved":
+      return "approved"
+    case "assigned":
+      return "assigned"
+    case "closed":
+      return "closed"
+    case "commented":
+      return "commented"
+    case "opened":
+      return "opened"
+    case "rejected":
+      return "rejected"
+    case "reported":
+      return "reported"
+    case "suspended":
+      return "suspended"
+  }
+
+  return value
+}
+
+function formatAuditStatusChange(
+  fromStatus: string | null,
+  toStatus: string | null
+) {
+  if (!fromStatus && !toStatus) {
+    return "Stato non registrato"
+  }
+
+  if (fromStatus === toStatus) {
+    return `Stato invariato: ${fromStatus ?? "non indicato"}`
+  }
+
+  return `${fromStatus ?? "non indicato"} -> ${toStatus ?? "non indicato"}`
 }
 
 function formatLocation(

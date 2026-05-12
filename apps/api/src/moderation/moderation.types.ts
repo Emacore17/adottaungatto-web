@@ -12,6 +12,33 @@ export type ListingLifecycleStatus =
   | "adopted"
   | "deleted"
 
+export type ModerationAuditAction = {
+  id: string
+  action:
+    | "opened"
+    | "assigned"
+    | "approved"
+    | "rejected"
+    | "suspended"
+    | "closed"
+    | "commented"
+    | "reported"
+  reasonCode: string | null
+  reasonText: string | null
+  fromStatus: ListingModerationStatus | null
+  toStatus: ListingModerationStatus | null
+  createdAt: string
+  actor: {
+    id: string
+    email: string
+    displayName: string
+  } | null
+}
+
+export type ModerationAudit = {
+  actions: ModerationAuditAction[]
+}
+
 export type ModerationQueueItem = {
   case: {
     id: string
@@ -60,6 +87,7 @@ export type ModerationQueueItem = {
       objectKeyLarge: string | null
     } | null
   }
+  audit: ModerationAudit
 }
 
 export type ModerationQueueResponse = {
@@ -99,6 +127,7 @@ export type ReportedListingQueueItem = {
   }
   location: ModerationQueueItem["location"]
   images: ModerationQueueItem["images"]
+  audit: ModerationAudit
   reports: {
     count: number
     firstReportedAt: string

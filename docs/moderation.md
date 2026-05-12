@@ -57,6 +57,9 @@ Un annuncio e' pubblico solo se:
 - Ogni card mostra un dettaglio operativo del caso con ID caso, ID annuncio,
   stato ciclo, motivo apertura, assegnazione, ownership e riferimenti di
   segnalazione quando il caso nasce da report utente.
+- Ogni item di coda include le ultime azioni `moderation_actions` del caso e
+  la UI le espone come audit consultabile con azione, operatore, motivo, cambio
+  stato e data.
 - I motivi rapidi della decisione sono esposti come template orientati
   all'azione: approvazione conforme, rifiuto per policy, rifiuto per dati
   insufficienti, sospensione per rischio e altro con nota obbligatoria.
@@ -152,8 +155,11 @@ Ricevono inoltre una notifica in-app leggibile dal centro notifiche.
 ## Persistenza
 
 Lo schema iniziale usa `moderation_cases` per la coda operativa,
-`moderation_actions` per audit delle decisioni e `reports` per collegare le
-segnalazioni utente al target e, quando disponibile, al caso di moderazione.
+`moderation_actions` per audit di apertura, segnalazioni e decisioni e
+`reports` per collegare le segnalazioni utente al target e, quando disponibile,
+al caso di moderazione. La dashboard interna mostra le ultime azioni per ogni
+caso in coda; per produzione l'audit deve diventare completo, non modificabile
+e ricercabile.
 
 ## Controlli automatici iniziali
 
@@ -175,7 +181,7 @@ segnalazioni utente al target e, quando disponibile, al caso di moderazione.
 
 - Estendere l'area admin separata e protetta oltre la dashboard moderazione
   iniziale.
-- Dashboard moderatore con storico audit consultabile.
+- Audit completo e non modificabile per produzione.
 - Scoring rischio.
 - Coda prioritaria per annunci con molte segnalazioni.
 - Revisione immagini automatica.

@@ -244,9 +244,9 @@ Task:
 
 - Fatto: separare visivamente e strutturalmente area admin/moderazione;
 - Fatto: aggiungere ruoli demo moderatore e admin;
-- migliorare code, filtri, dettaglio annuncio e template motivazioni;
-- verificare MFA o requisito equivalente almeno come backlog hardening;
-- aggiungere audit leggibile e test di accesso negato.
+- Fatto: migliorare code, filtri, dettaglio annuncio e template motivazioni;
+- Fatto: verificare MFA o requisito equivalente almeno come backlog hardening;
+- Fatto: aggiungere audit leggibile e test di accesso negato.
 
 Avanzamento 12 maggio 2026:
 
@@ -262,10 +262,16 @@ Avanzamento 12 maggio 2026:
   presenti.
 - Fatto: i motivi rapidi sono presentati come template orientati all'azione
   prevista: approva, rifiuta o sospendi.
+- Fatto: le code API includono le ultime azioni `moderation_actions` e la UI
+  mostra un audit caso consultabile per ogni item.
+- Fatto: MFA per ruoli interni e' tracciata come backlog hardening produzione
+  in `docs/production-readiness.md`.
 - Fatto: lo smoke E2E verifica login admin, coda `pending_review` e presenza
   dello shell admin separato, filtro segnalazioni, dettaglio operativo,
-  template motivazione e accesso negato per utente non moderatore.
-- Da fare: aggiungere audit consultabile da UI.
+  template motivazione, audit caso e accesso negato per utente non moderatore.
+
+Stato: Milestone F completata per il giro locale prodotto. Restano hardening
+MFA, gestione ruoli e audit non modificabile per produzione.
 
 Done:
 
@@ -290,5 +296,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone F aggiungendo audit consultabile da UI e backlog
-hardening MFA per ruoli interni.
+Proseguire con Milestone G iniziando dal rate limit per upload/admin e dalla
+strumentazione operativa minima.

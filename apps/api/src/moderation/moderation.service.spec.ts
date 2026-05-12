@@ -51,6 +51,22 @@ describe("ModerationService", () => {
               "local/listings/listing-id/thumb/image.webp",
             cover_object_key_large:
               "local/listings/listing-id/large/image.webp",
+            audit_actions: [
+              {
+                id: "action-id",
+                action: "opened",
+                reasonCode: "listing_submission",
+                reasonText: "Invio a revisione.",
+                fromStatus: "draft",
+                toStatus: "pending_review",
+                createdAt: "2026-04-01T10:00:00.000Z",
+                actor: {
+                  id: "owner-id",
+                  email: "owner@example.com",
+                  displayName: "Owner",
+                },
+              },
+            ],
           },
         ]),
     } as unknown as DatabaseService
@@ -110,6 +126,24 @@ describe("ModerationService", () => {
               objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
               objectKeyLarge: "local/listings/listing-id/large/image.webp",
             },
+          },
+          audit: {
+            actions: [
+              {
+                id: "action-id",
+                action: "opened",
+                reasonCode: "listing_submission",
+                reasonText: "Invio a revisione.",
+                fromStatus: "draft",
+                toStatus: "pending_review",
+                createdAt: "2026-04-01T10:00:00.000Z",
+                actor: {
+                  id: "owner-id",
+                  email: "owner@example.com",
+                  displayName: "Owner",
+                },
+              },
+            ],
           },
         },
       ],
@@ -177,6 +211,22 @@ describe("ModerationService", () => {
             latest_report_reason_code: "suspected_scam",
             latest_report_description: "Richiesta sospetta.",
             latest_report_created_at: "2026-04-01T12:00:00.000Z",
+            audit_actions: [
+              {
+                id: "action-id",
+                action: "reported",
+                reasonCode: "suspected_scam",
+                reasonText: "Richiesta sospetta.",
+                fromStatus: "approved",
+                toStatus: "approved",
+                createdAt: "2026-04-01T12:00:00.000Z",
+                actor: {
+                  id: "reporter-id",
+                  email: "reporter@example.com",
+                  displayName: "Reporter",
+                },
+              },
+            ],
           },
         ]),
     } as unknown as DatabaseService
@@ -218,6 +268,24 @@ describe("ModerationService", () => {
           images: {
             readyCount: 1,
             cover: null,
+          },
+          audit: {
+            actions: [
+              {
+                id: "action-id",
+                action: "reported",
+                reasonCode: "suspected_scam",
+                reasonText: "Richiesta sospetta.",
+                fromStatus: "approved",
+                toStatus: "approved",
+                createdAt: "2026-04-01T12:00:00.000Z",
+                actor: {
+                  id: "reporter-id",
+                  email: "reporter@example.com",
+                  displayName: "Reporter",
+                },
+              },
+            ],
           },
           reports: {
             count: 3,

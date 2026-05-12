@@ -192,6 +192,9 @@ Policy iniziale per moderazione:
   segnalazione, ultima segnalazione e dati del reporter piu recente;
 - ogni decisione richiede una motivazione, chiude il caso, aggiorna lo stato
   dell'annuncio e crea audit log in `moderation_actions`.
+- le code di moderazione espongono un audit recente del caso dalla tabella
+  `moderation_actions`; l'audit completo non modificabile resta requisito di
+  produzione.
 - le decisioni operano su casi aperti collegati ad annunci in
   `pending_review`/`draft` oppure ad annunci gia `approved`/`published`.
 - le decisioni chiudono anche le segnalazioni attive collegate al caso:

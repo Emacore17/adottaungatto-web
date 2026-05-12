@@ -128,11 +128,11 @@ chiudono le segnalazioni collegate come `resolved` o `dismissed` e inviano
 notifiche email a proprietario e reporter. Il frontend ha un route group admin
 con layout interno dedicato e pagina `/moderation` iniziale, protetta da login,
 `noindex`, collegata alle code API, filtrabile per tipo coda, con dettaglio
-operativo caso e dotata di azioni base approva/rifiuta/sospendi con template
-motivazione e nota opzionale/obbligatoria secondo il motivo. Le decisioni di
-moderazione creano anche notifiche in-app consegnate via stream real-time
-locale. Restano da estendere audit consultabile e workflow operativi piu
-avanzati.
+operativo caso, audit consultabile e dotata di azioni base
+approva/rifiuta/sospendi con template motivazione e nota opzionale/obbligatoria
+secondo il motivo. Le decisioni di moderazione creano anche notifiche in-app
+consegnate via stream real-time locale. Restano workflow operativi piu avanzati
+e hardening produzione.
 
 ## Milestone 7 - Contatti, preferiti e notifiche
 
@@ -203,8 +203,8 @@ Deliverable:
 - preferiti con cuore toggle;
 - dashboard account e impostazioni profilo ordinate;
 - lista annunci a card orizzontali con slot sponsorizzato;
-- admin/moderazione protetta e separata; Fatto per shell interna e dashboard
-  moderazione iniziale.
+- admin/moderazione protetta e separata; Fatto per il giro locale con shell
+  interna, dashboard moderazione, filtri, dettaglio caso, audit e smoke.
 - smoke locale aggiornato.
 
 Stato: pianificata. La sequenza operativa e' in

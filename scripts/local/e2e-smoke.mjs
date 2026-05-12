@@ -456,15 +456,14 @@ try {
   const readAll = await api("POST", "/notifications/read-all", {}, token)
   check("notifications read all", readAll.updatedCount >= 0)
 
-  const adminLogin = await api("POST", "/auth/login", {
-    email: "admin@demo.adottaungatto.local",
-    password: "demo-password-123",
-  })
+  const adminLogin = await loginDemoInternalModerator()
   const adminToken = adminLogin.session.token
   check(
     "demo admin login",
-    adminLogin.user.email === "admin@demo.adottaungatto.local" &&
-      typeof adminToken === "string"
+    [
+      "admin@demo.adottaungatto.local",
+      "moderatore@demo.adottaungatto.local",
+    ].includes(adminLogin.user.email) && typeof adminToken === "string"
   )
 
   const pendingReview = await api(
@@ -511,6 +510,9 @@ try {
       moderationHtml.includes("Dashboard moderazione") &&
       moderationHtml.includes("Accesso protetto") &&
       moderationHtml.includes("Dettaglio operativo caso") &&
+      moderationHtml.includes("Audit caso") &&
+      moderationHtml.includes("Azione ") &&
+      moderationHtml.includes("opened") &&
       moderationHtml.includes("Approva: conforme alle policy")
   )
   const deniedModerationHtml = await webText(
@@ -782,6 +784,45 @@ async function createPrimaryAuth() {
     email: login.user.email,
     token: login.session.token,
   }
+}
+
+async function loginDemoInternalModerator() {
+  const accounts = [
+    "admin@demo.adottaungatto.local",
+    "moderatore@demo.adottaungatto.local",
+  ]
+
+  for (const email of accounts) {
+    const login = await apiResponse("POST", "/auth/login", {
+      email,
+      password: demoPassword,
+    })
+
+    if (login.ok) {
+      pass("demo internal login", `email=${email}`)
+
+      return login.data
+    }
+
+    if (
+      login.status === 429 &&
+      login.data?.reason === "auth_login_email_limit"
+    ) {
+      pass(
+        "demo internal login skipped",
+        `email=${email} retryAfterSeconds=${
+          login.data.retryAfterSeconds ?? "unknown"
+        }`
+      )
+      continue
+    }
+
+    throw new Error(
+      `POST ${apiBaseUrl}/auth/login failed: ${login.status} ${login.text}`
+    )
+  }
+
+  throw new Error("FAIL demo admin login all internal accounts rate limited")
 }
 
 async function createSmokeContactRequest(requesterToken, excludedOwnerIds) {
