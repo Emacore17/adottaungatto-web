@@ -25,7 +25,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Rate limit Redis fixed-window iniziale sui flussi auth sensibili:
   registrazione, login, verifica email, recupero password e cambio password,
   con chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
-- Profilo utente autenticato con update e preferenze email non essenziali.
+- Profilo utente autenticato con update e preferenze email non essenziali,
+  esposti anche dalla pagina `/account/settings`.
 - CRUD bozze annuncio, invio a moderazione e upload immagini presigned.
 - Worker per processamento immagini e varianti WebP, con loop automatico
   durante l'avvio dell'app `worker` e CLI one-shot `pnpm media:process`.
@@ -52,14 +53,16 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   annunci con filtri client isolati, scheda annuncio pubblica con metadata
   dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
   `error` iniziali.
-- Area account server-rendered con dashboard `/account`, lista annunci in
-  lavorazione `/account/listings/drafts`, lista preferiti `/account/favorites`
-  e inbox notifiche `/account/notifications` collegate in lettura alle API
-  autenticate, con prime mutazioni per cancellare bozze, rimuovere preferiti e
-  segnare notifiche come lette. Gli annunci in lavorazione hanno anche pagine
-  frontend per creazione, modifica, upload immagine presigned, galleria
-  immagini con stato, eliminazione, riordino/copertina, guida passaggi dati /
-  foto / revisione, invio a revisione e conferma post-invio.
+- Area account server-rendered con dashboard `/account`, impostazioni profilo
+  `/account/settings`, lista annunci in lavorazione
+  `/account/listings/drafts`, lista preferiti `/account/favorites` e inbox
+  notifiche `/account/notifications` collegate in lettura alle API autenticate,
+  con mutazioni per aggiornare profilo/preferenze email, cancellare bozze,
+  rimuovere preferiti e segnare notifiche come lette. Gli annunci in lavorazione
+  hanno anche pagine frontend per creazione, modifica, upload immagine
+  presigned, galleria immagini con stato, eliminazione, riordino/copertina,
+  guida passaggi dati / foto / revisione, invio a revisione e conferma
+  post-invio.
 - Route group admin iniziale con pagina `/moderation` server-rendered,
   `noindex`, login obbligatorio, lettura delle code API `pending_review` e
   segnalazioni, e azioni base approva/rifiuta/sospendi con motivo obbligatorio;
@@ -81,8 +84,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
-  stato UI a cuore, like, contatto proprietario, notifiche e pagine account
-  autenticate, piu login admin e coda moderazione demo.
+  stato UI a cuore, update profilo/preferenze, like, contatto proprietario,
+  notifiche e pagine account autenticate, piu login admin e coda moderazione
+  demo.
 
 ## Non pronto per produzione
 
@@ -146,8 +150,9 @@ route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
-account con lettura annunci in lavorazione, preferiti e notifiche, form
-contatto proprietario sulla scheda annuncio e pagina `/moderation`
+account con lettura annunci in lavorazione, preferiti e notifiche, pagina
+impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
+annuncio e pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,

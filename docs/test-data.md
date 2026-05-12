@@ -83,6 +83,8 @@ La demo include:
   URL storage diretto.
 - dettaglio annuncio;
 - registrazione e login;
+- aggiornamento profilo e preferenze email; Fatto via `PATCH /users/me`,
+  `PATCH /users/me/notification-preferences` e pagina `/account/settings`.
 - creazione annuncio completa;
 - upload immagine; Fatto con immagine PNG sintetica deterministica.
 - processing immagine o fixture immagine pronta; Fatto tramite worker locale.

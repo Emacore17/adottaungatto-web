@@ -4,6 +4,7 @@ import {
   FileTextIcon,
   HeartIcon,
   PlusIcon,
+  SettingsIcon,
   UserIcon,
 } from "lucide-react"
 
@@ -55,12 +56,20 @@ export default async function AccountPage() {
             </p>
           </div>
         </div>
-        <Button asChild>
-          <Link href={routes.accountDraftNew}>
-            <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            Nuovo annuncio
-          </Link>
-        </Button>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button asChild variant="outline">
+            <Link href={routes.accountSettings}>
+              <SettingsIcon data-icon="inline-start" aria-hidden="true" />
+              Impostazioni
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={routes.accountDraftNew}>
+              <PlusIcon data-icon="inline-start" aria-hidden="true" />
+              Nuovo annuncio
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -123,9 +132,14 @@ export default async function AccountPage() {
               <CardTitle>Profilo</CardTitle>
               <CardDescription>{session.user.email}</CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <InfoRow label="Tipo" value={session.user.profileType} />
-              <InfoRow label="Stato" value={session.user.status} />
+            <CardContent className="flex flex-col gap-4 text-sm">
+              <div className="grid gap-3">
+                <InfoRow label="Tipo" value={session.user.profileType} />
+                <InfoRow label="Stato" value={session.user.status} />
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href={routes.accountSettings}>Modifica profilo</Link>
+              </Button>
             </CardContent>
           </Card>
 

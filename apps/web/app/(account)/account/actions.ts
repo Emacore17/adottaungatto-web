@@ -27,8 +27,65 @@ import {
   submitAccountDraftForReview,
   updateAccountDraft,
 } from "@/lib/api/account"
+import {
+  updateCurrentUserNotificationPreferences,
+  updateCurrentUserProfile,
+} from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
 import { routes } from "@/lib/routes"
+
+const phoneE164Pattern = /^\+[1-9]\d{7,14}$/
+
+export async function updateProfileAction(formData: FormData) {
+  const nextPath = readNextPath(formData, routes.accountSettings)
+  const token = await requireActionToken(nextPath)
+  const parsed = readAccountProfileFormPayload(formData)
+
+  if (!parsed.ok) {
+    redirectWithStatus(nextPath, "settings", "invalid-profile")
+  }
+
+  const result = await updateCurrentUserProfile(token, parsed.data)
+
+  if (!result.ok && result.status === 401) {
+    redirect(routes.login(nextPath))
+  }
+
+  if (!result.ok) {
+    redirectWithStatus(nextPath, "settings", "profile-api")
+  }
+
+  revalidateAccountPaths()
+  redirectWithStatus(nextPath, "settings", "profile-saved")
+}
+
+export async function updateNotificationPreferencesAction(formData: FormData) {
+  const nextPath = readNextPath(formData, routes.accountSettings)
+  const token = await requireActionToken(nextPath)
+  const input = {
+    listingModerationDecisionEmail: readAnyBooleanFormValue(
+      formData,
+      "listingModerationDecisionEmail"
+    ),
+    listingReportDecisionEmail: readAnyBooleanFormValue(
+      formData,
+      "listingReportDecisionEmail"
+    ),
+  }
+
+  const result = await updateCurrentUserNotificationPreferences(token, input)
+
+  if (!result.ok && result.status === 401) {
+    redirect(routes.login(nextPath))
+  }
+
+  if (!result.ok) {
+    redirectWithStatus(nextPath, "settings", "notifications-api")
+  }
+
+  revalidateAccountPaths()
+  redirectWithStatus(nextPath, "settings", "notifications-saved")
+}
 
 export async function removeFavoriteAction(formData: FormData) {
   const nextPath = readNextPath(formData)
@@ -326,7 +383,11 @@ export async function moveDraftImageAction(formData: FormData) {
   const imageIds = readFormStrings(formData, "imageIds")
   const nextImageIds =
     direction === "up" || direction === "down"
-      ? moveImageId(imageIds, image.success ? image.data.imageId : "", direction)
+      ? moveImageId(
+          imageIds,
+          image.success ? image.data.imageId : "",
+          direction
+        )
       : imageIds
   const order = listingImageOrderSchema.safeParse({
     imageIds: nextImageIds,
@@ -365,6 +426,7 @@ function revalidateAccountPaths(draftId?: string) {
   revalidatePath(routes.accountDrafts)
   revalidatePath(routes.accountFavorites)
   revalidatePath(routes.accountNotifications)
+  revalidatePath(routes.accountSettings)
 
   if (draftId) {
     revalidatePath(routes.accountDraft(draftId))
@@ -419,6 +481,37 @@ function readDraftFormPayload(formData: FormData) {
   }
 }
 
+function readAccountProfileFormPayload(formData: FormData):
+  | {
+      ok: true
+      data: {
+        displayName: string
+        phoneE164: string | null
+      }
+    }
+  | {
+      ok: false
+    } {
+  const displayName = readFormString(formData, "displayName").trim()
+  const phoneE164 = readNullableFormString(formData, "phoneE164")
+
+  if (displayName.length < 2 || displayName.length > 80) {
+    return { ok: false }
+  }
+
+  if (phoneE164 && !phoneE164Pattern.test(phoneE164)) {
+    return { ok: false }
+  }
+
+  return {
+    data: {
+      displayName,
+      phoneE164,
+    },
+    ok: true,
+  }
+}
+
 function readNullableFormString(formData: FormData, key: string) {
   const value = readFormString(formData, key).trim()
 
@@ -441,6 +534,12 @@ function readBooleanFormValue(formData: FormData, key: string) {
   const value = readFormString(formData, key)
 
   return value === "true" || value === "on"
+}
+
+function readAnyBooleanFormValue(formData: FormData, key: string) {
+  const values = readFormStrings(formData, key)
+
+  return values.some((value) => value === "true" || value === "on")
 }
 
 function readNullableFormBoolean(formData: FormData, key: string) {
@@ -497,7 +596,7 @@ function moveImageId(
 
 function redirectWithStatus(
   path: string,
-  key: "created" | "error" | "saved" | "submitted" | "uploaded",
+  key: "created" | "error" | "saved" | "settings" | "submitted" | "uploaded",
   value: string
 ): never {
   const separator = path.includes("?") ? "&" : "?"

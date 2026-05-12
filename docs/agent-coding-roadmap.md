@@ -28,9 +28,10 @@ e ottenere una demo navigabile con:
 - smoke test che copre i flussi principali senza interventi manuali.
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
-mock sponsorizzato in lista, le immagini demo locali e il cuore preferiti toggle
-sono funzionanti in locale. Il punto piu urgente passa alla dashboard account e
-alle impostazioni profilo, mantenendo prima la verifica `pnpm smoke:e2e`.
+mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
+e la pagina impostazioni profilo sono funzionanti in locale. Il punto piu
+urgente resta completare Milestone C con dashboard piu ordinata e test authz
+multi-utente.
 
 ## Regole per ogni round
 
@@ -128,10 +129,20 @@ Task:
 
 - riorganizzare `/account` in dashboard operativa: annunci, notifiche,
   preferiti, profilo;
-- aggiungere impostazioni profilo modificabili dall'utente;
+- Fatto: aggiungere impostazioni profilo modificabili dall'utente;
 - verificare ownership su bozze, immagini, preferiti, notifiche e contatti;
 - completare test authz su accesso multi-utente e dati propri;
 - rendere i messaggi di errore account leggibili e non tecnici.
+
+Avanzamento 12 maggio 2026:
+
+- Fatto: aggiunta `/account/settings` con modifica nome visualizzato,
+  telefono e preferenze email non essenziali.
+- Fatto: dashboard `/account` collegata alle impostazioni profilo.
+- Fatto: smoke E2E aggiorna profilo/preferenze e verifica la pagina settings.
+- Da fare: completare riordino dashboard in viste operative piu chiare.
+- Da fare: aggiungere test espliciti per accesso negato multi-utente su bozze,
+  immagini, preferiti, notifiche e contatti.
 
 Done:
 
@@ -210,5 +221,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone C per riordinare dashboard account e impostazioni
-profilo.
+Proseguire con Milestone C per completare riordino dashboard account e test
+authz multi-utente.

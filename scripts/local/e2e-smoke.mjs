@@ -69,6 +69,37 @@ try {
   const session = await api("GET", "/auth/me", undefined, token)
   check("auth me", session.user.email === email)
 
+  const profileDisplayName = `Smoke Profilo ${Date.now()}`
+  const profile = await api(
+    "PATCH",
+    "/users/me",
+    {
+      displayName: profileDisplayName,
+      phoneE164: "+390600000001",
+    },
+    token
+  )
+  check(
+    "account profile update",
+    profile.displayName === profileDisplayName &&
+      profile.phoneE164 === "+390600000001"
+  )
+
+  const notificationPreferences = await api(
+    "PATCH",
+    "/users/me/notification-preferences",
+    {
+      listingModerationDecisionEmail: false,
+      listingReportDecisionEmail: true,
+    },
+    token
+  )
+  check(
+    "account notification preferences update",
+    notificationPreferences.listingModerationDecisionEmail === false &&
+      notificationPreferences.listingReportDecisionEmail === true
+  )
+
   const municipality = await resolveSmokeMunicipality()
   pass("place autocomplete", `municipality=${municipality.label}`)
 
@@ -282,6 +313,7 @@ try {
   )
 
   await webPage("/account", token, "web account authenticated")
+  await webPage("/account/settings", token, "web account settings")
   await webPage("/account/favorites", token, "web account favorites")
   await webPage("/account/notifications", token, "web account notifications")
   await webPage("/account/listings/drafts", token, "web account drafts")
