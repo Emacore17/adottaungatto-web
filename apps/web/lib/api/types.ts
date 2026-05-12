@@ -1,4 +1,7 @@
-import type { ListingPublicSort, ListingSex } from "@workspace/validation/listings"
+import type {
+  ListingPublicSort,
+  ListingSex,
+} from "@workspace/validation/listings"
 
 export type PublicListingImage = {
   id: string
@@ -69,6 +72,11 @@ export type PublicListingSummary = {
   }
   stats: {
     likeCount: number
+  }
+  sponsorship: {
+    isSponsored: boolean
+    label: string | null
+    placement: string | null
   }
   images: {
     readyCount: number

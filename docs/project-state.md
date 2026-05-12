@@ -38,11 +38,14 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   preferenza per-annuncio per abilitare/disabilitare il contatto.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
   principali, ricerca full-text con `q` e documento denormalizzato
-  `listing_search_documents` usato quando disponibile.
+  `listing_search_documents` usato quando disponibile, piu promozione mock
+  dichiarata per lo slot alto della lista.
 - Endpoint pubblico `GET /listings/breeds` per alimentare i filtri razza del
   frontend.
 - Ranking pubblico `postgres-v1` con sort `relevance`, `recent`, `distance`,
-  distanza opzionale, freschezza, qualita, trust ed engagement iniziale.
+  distanza opzionale, freschezza, qualita, trust ed engagement iniziale; le
+  promozioni attive sono separate dal punteggio organico e dichiarate nella
+  risposta.
 - Homepage pubblica server-rendered orientata alla ricerca, pagina lista
   annunci con filtri client isolati, scheda annuncio pubblica con metadata
   dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
@@ -94,9 +97,9 @@ produzione. Mancano almeno:
   estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
-- giro locale prodotto non ancora completo: demo con ruoli admin/moderatore e
-  stati annuncio multipli avviati, ma ancora senza immagini realistiche e
-  annuncio sponsorizzato mock.
+- giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
+  stati annuncio multipli e sponsorizzato mock avviati, ma ancora senza
+  immagini realistiche e approvazione demo fino a pubblicazione nello smoke.
 
 ## Stato ricerca
 
@@ -163,10 +166,11 @@ rifugio, associazione, moderatore e admin. Gli annunci coprono pubblicati,
 `pending_review`, bozze, rifiutato, sospeso da segnalazione e scaduto. Il worker
 processa automaticamente le immagini in `processing` durante l'avvio
 applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
-Non copre ancora il traguardo demo definito in
-[agent-coding-roadmap.md](agent-coding-roadmap.md): mancano immagini
-realistiche complete, almeno un annuncio sponsorizzato mock e approvazione
-moderatore nello smoke fino a pubblicazione.
+La lista `/listings` usa card orizzontali, una per riga, e mostra in cima un
+annuncio sponsorizzato mock con label dichiarata. Non copre ancora il traguardo
+demo definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano
+immagini realistiche complete e approvazione moderatore nello smoke fino a
+pubblicazione.
 
 ## Regole per prossimi interventi
 

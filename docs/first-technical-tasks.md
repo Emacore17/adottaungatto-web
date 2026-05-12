@@ -106,8 +106,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     registrazione, login, verifica email, recupero password e cambio password.
 59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
 60. Avviato: completare fixture demo con ruoli moderator/admin, stati annuncio
-    multipli, asset placeholder e smoke admin; restano immagini realistiche,
-    sponsorizzato mock e approvazione demo fino a pubblicazione.
+    multipli, asset placeholder, sponsorizzato mock e smoke admin; restano
+    immagini realistiche e approvazione demo fino a pubblicazione.
 61. Fatto: correggere il flusso inserimento annuncio con processing automatico
     immagini nel worker dev, copy UI "Inserisci annuncio", stati immagine
     chiari, schermata di conferma, guida passaggi e smoke E2E completo.
@@ -115,7 +115,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     riuscito.
 63. Riorganizzare dashboard account e aggiungere impostazioni profilo utente.
 64. Trasformare preferiti in cuore toggle con animazione su lista e scheda.
-65. Rendere `/listings` una lista a card orizzontali con slot sponsorizzato.
+65. Fatto: rendere `/listings` una lista a card orizzontali con slot
+    sponsorizzato.
 66. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione

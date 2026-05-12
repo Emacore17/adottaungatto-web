@@ -192,6 +192,11 @@ export type PublicListingSummary = {
   stats: {
     likeCount: number
   }
+  sponsorship: {
+    isSponsored: boolean
+    label: string | null
+    placement: string | null
+  }
   images: {
     readyCount: number
     cover: PublicListingImage | null

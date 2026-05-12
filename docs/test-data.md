@@ -15,6 +15,8 @@ Esistono:
   moderatore e admin;
 - 15 annunci/casi demo: pubblicati, in revisione, bozze, rifiutato, sospeso e
   scaduto;
+- 1 promozione mock attiva su un annuncio pubblicato, visibile in cima a
+  `/listings`;
 - upload asset demo su MinIO per 11 annunci;
 - smoke E2E locale `pnpm smoke:e2e` con login admin e controllo coda
   `pending_review`.
@@ -25,7 +27,8 @@ Gap attuali:
 - lo smoke copre upload immagine sintetica, processing worker e invio a
   revisione riuscito, ma non usa ancora immagini demo realistiche e non approva
   un caso demo fino alla pubblicazione;
-- non esiste un annuncio sponsorizzato mock visibile in lista.
+- il mock sponsorizzato non e' ancora collegato a un flusso pagamento/campagna
+  reale.
 
 ## Account target
 
@@ -55,9 +58,8 @@ La demo include:
 - 1 bozza completa con immagini pronte;
 - 1 annuncio rifiutato con motivazione;
 - 1 annuncio sospeso da segnalazione;
-- 1 annuncio scaduto non visibile pubblicamente.
-
-Manca ancora 1 annuncio sponsorizzato mock, approvato e pubblicato.
+- 1 annuncio scaduto non visibile pubblicamente;
+- 1 annuncio sponsorizzato mock, approvato e pubblicato.
 
 ## Immagini target
 
@@ -82,6 +84,7 @@ Manca ancora 1 annuncio sponsorizzato mock, approvato e pubblicato.
 - processing immagine o fixture immagine pronta; Fatto tramite worker locale.
 - invio a revisione riuscito; Fatto.
 - login admin e coda `pending_review`; Fatto.
+- annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.
 - approvazione moderatore;
 - annuncio pubblicato visibile;
 - preferito toggle;

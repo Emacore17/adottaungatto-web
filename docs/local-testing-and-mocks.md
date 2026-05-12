@@ -20,9 +20,8 @@ In locale sono disponibili:
 - smoke E2E locale `pnpm smoke:e2e`.
 
 Esiste quindi un percorso demo unico, ma non e' ancora completo come demo
-prodotto: mancano fixture realistiche per moderazione/admin, immagini complete
-per tutti gli annunci e un test del flusso upload immagine + invio a revisione
-riuscito.
+prodotto: mancano immagini realistiche e un test del flusso moderatore che
+approva un caso demo fino alla pubblicazione visibile.
 
 ## Obiettivo locale
 
@@ -59,7 +58,7 @@ Vedere [test-data.md](test-data.md) per il contratto completo. In sintesi:
 - annunci pubblicati, in revisione, bozza incompleta, bozza completa,
   rifiutati, sospesi e scaduti;
 - immagini pronte per tutti gli annunci pubblici e in revisione;
-- annuncio sponsorizzato mock per testare la UI lista.
+- annuncio sponsorizzato mock per testare la UI lista; Fatto.
 
 ## Mock esterni
 

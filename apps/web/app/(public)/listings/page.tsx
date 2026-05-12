@@ -58,7 +58,7 @@ export default async function ListingsPage({
   const placeType = isSearchPlaceType(rawPlaceType) ? rawPlaceType : null
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pb-8 pt-28 sm:px-6 sm:pt-32 lg:px-8">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:px-8">
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
           <Badge variant="secondary" className="w-fit">
@@ -92,7 +92,7 @@ export default async function ListingsPage({
       </section>
 
       {items.length > 0 ? (
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="flex flex-col gap-4">
           {items.map((listing) => (
             <ListingCard key={listing.id} listing={listing} />
           ))}

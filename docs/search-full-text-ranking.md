@@ -14,6 +14,8 @@ Implementato:
   iniziale;
 - ranking `postgres-v1` con testo, distanza opzionale, freschezza, qualita,
   trust ed engagement iniziale;
+- tabella `listing_promotions` per promozioni attive dichiarate nello slot
+  alto della lista, separate dal punteggio organico;
 - sort pubblico `relevance`, `recent` e `distance`;
 - fallback trigram tracciato quando la prima pagina full-text non restituisce
   risultati;
@@ -42,13 +44,13 @@ migliaia di annunci con latenza prevedibile. Deve combinare:
 - freschezza;
 - qualita e completezza dell'annuncio;
 - affidabilita minima del profilo;
-- in futuro, segnali sponsorizzati separati e dichiarabili.
+- segnali sponsorizzati separati e dichiarabili.
 
 ## Fuori scope
 
 - Motore search dedicato.
 - Machine learning ranking.
-- Annunci sponsorizzati.
+- Gestione completa campagne/pagamenti per annunci sponsorizzati.
 - Personalizzazione per utente.
 - UI frontend.
 
@@ -70,6 +72,9 @@ Query param aggiuntivi:
 
 I filtri gia implementati restano validi e hanno priorita sul ranking. Se un
 filtro e' esplicito, non va rimosso senza dichiararlo nella risposta.
+Le promozioni attive non modificano `rankingVersion`: sono uno slot dichiarato
+e ordinato prima dei risultati organici solo quando l'annuncio promosso rispetta
+i filtri applicati.
 
 Meta risposta:
 
@@ -377,9 +382,11 @@ Log:
 12. Fatto: aggiungere CLI benchmark e dataset sintetici.
 13. Fatto: eseguire benchmark 10k/100k, confrontare EXPLAIN e aggiungere indici
     geography.
-14. Eseguire benchmark limite 1M o fixture realistiche quando serve misurare il
+14. Fatto: aggiungere `listing_promotions` e slot sponsorizzato dichiarato
+    nella lista pubblica senza mescolarlo al punteggio organico.
+15. Eseguire benchmark limite 1M o fixture realistiche quando serve misurare il
     margine prima della produzione.
-15. Valutare motore search dedicato solo se PostgreSQL non rispetta le soglie.
+16. Valutare motore search dedicato solo se PostgreSQL non rispetta le soglie.
 
 ## Rischi
 
@@ -395,5 +402,5 @@ Log:
   scelto?
 - Quali filtri sono soft e possono essere rilassati?
 - Quanto peso dare ai profili professionali rispetto agli utenti privati?
-- Quando introdurre sponsorizzazioni nel ranking senza confonderle con i
-  risultati organici?
+- Come evolvere `listing_promotions` in campagne reali senza confondere slot
+  dichiarati e risultati organici?

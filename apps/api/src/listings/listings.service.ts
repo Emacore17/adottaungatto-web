@@ -110,6 +110,9 @@ type PublicListingRow = Omit<
   cover_blur_hash: string | null
   cover_sort_order: number | null
   cover_is_cover: boolean | null
+  is_sponsored: boolean
+  sponsorship_label: string | null
+  sponsorship_placement: string | null
 }
 
 type ResolvedPublicListingQuery = {
@@ -119,8 +122,7 @@ type ResolvedPublicListingQuery = {
   sort: ListingPublicSort
 }
 
-type PublicListingExpansion =
-  PublicListingListResponse["meta"]["expansion"]
+type PublicListingExpansion = PublicListingListResponse["meta"]["expansion"]
 
 type MunicipalityLocationRow = {
   municipality_id: string
@@ -282,7 +284,10 @@ const publicListingSelectFields = `
   cover_images.height as cover_height,
   cover_images.blur_hash as cover_blur_hash,
   cover_images.sort_order as cover_sort_order,
-  cover_images.is_cover as cover_is_cover
+  cover_images.is_cover as cover_is_cover,
+  (active_promotions.listing_id is not null)::boolean as is_sponsored,
+  active_promotions.label as sponsorship_label,
+  active_promotions.placement as sponsorship_placement
 `
 
 const listingDraftJoins = `
@@ -335,6 +340,20 @@ const publicListingJoins = `
     from listing_likes
     group by listing_id
   ) like_counts on like_counts.listing_id = listing.id
+  left join (
+    select distinct on (listing_id)
+      listing_id,
+      label,
+      placement,
+      priority
+    from listing_promotions
+    where placement = 'listings_top'
+      and is_active = true
+      and deleted_at is null
+      and starts_at <= now()
+      and (ends_at is null or ends_at > now())
+    order by listing_id, priority desc, starts_at desc, id
+  ) active_promotions on active_promotions.listing_id = listing.id
 `
 
 const publicListingInlineSearchVectorSql = `
@@ -557,6 +576,7 @@ const publicListingGeoFilterSql = `
 
 const publicListingOrderSql = `
   order by
+    active_promotions.priority desc nulls last,
     case
       when $20::text = 'distance' then (${publicListingDistanceMetersSql})
       else null
@@ -574,6 +594,7 @@ const publicListingOrderSql = `
 
 const publicListingTrigramFallbackOrderSql = `
   order by
+    active_promotions.priority desc nulls last,
     case
       when $20::text = 'distance' then (${publicListingDistanceMetersSql})
       else null
@@ -1683,16 +1704,19 @@ export class ListingsService {
       })
     }
 
-    await this.databaseService.queryRows<{ id: string }>(reorderDraftImagesSql, [
-      userId,
-      listingId,
-      JSON.stringify(
-        input.imageIds.map((id, index) => ({
-          id,
-          sort_order: index,
-        }))
-      ),
-    ])
+    await this.databaseService.queryRows<{ id: string }>(
+      reorderDraftImagesSql,
+      [
+        userId,
+        listingId,
+        JSON.stringify(
+          input.imageIds.map((id, index) => ({
+            id,
+            sort_order: index,
+          }))
+        ),
+      ]
+    )
 
     return {
       images: await this.listDraftImages(userId, listingId),
@@ -1836,6 +1860,11 @@ function mapPublicListingSummaryRow(
     },
     stats: {
       likeCount: Number(row.like_count),
+    },
+    sponsorship: {
+      isSponsored: row.is_sponsored,
+      label: row.sponsorship_label,
+      placement: row.sponsorship_placement,
     },
     images: mapPublicListingImages(row),
   }

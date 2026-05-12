@@ -30,7 +30,10 @@ describe("ListingsService", () => {
         slug: "europeo",
       },
     ])
-    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [])
+    expect(databaseService.queryRows).toHaveBeenCalledWith(
+      expect.any(String),
+      []
+    )
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "from cat_breeds"
     )
@@ -78,6 +81,11 @@ describe("ListingsService", () => {
           },
           stats: {
             likeCount: 4,
+          },
+          sponsorship: {
+            isSponsored: false,
+            label: null,
+            placement: null,
           },
           images: {
             readyCount: 2,
@@ -134,6 +142,9 @@ describe("ListingsService", () => {
     )
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "listing_search_documents search_document"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "listing_promotions"
     )
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
       "search_document.quality_score"
@@ -995,7 +1006,9 @@ describe("ListingsService", () => {
       },
     })
     expect(
-      JSON.parse(String(vi.mocked(databaseService.queryRows).mock.calls[2]?.[1]?.[2]))
+      JSON.parse(
+        String(vi.mocked(databaseService.queryRows).mock.calls[2]?.[1]?.[2])
+      )
     ).toEqual([
       {
         id: "image-id-2",
@@ -1153,6 +1166,9 @@ function createPublicListingRow() {
     cover_blur_hash: "blurhash",
     cover_sort_order: 0,
     cover_is_cover: true,
+    is_sponsored: false,
+    sponsorship_label: null,
+    sponsorship_placement: null,
   }
 }
 

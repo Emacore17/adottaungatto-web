@@ -27,10 +27,10 @@ e ottenere una demo navigabile con:
 - moderazione/admin protetta, separata e utilizzabile in locale;
 - smoke test che copre i flussi principali senza interventi manuali.
 
-Stato attuale: il backend, la base frontend e il giro inserimento annuncio sono
-funzionanti in locale. Il punto piu urgente e' completare la demo locale con
-immagini realistiche, sponsorizzato mock e verifica moderatore fino alla
-pubblicazione.
+Stato attuale: il backend, la base frontend, il giro inserimento annuncio e il
+mock sponsorizzato in lista sono funzionanti in locale. Il punto piu urgente e'
+completare la demo locale con immagini realistiche e verifica moderatore fino
+alla pubblicazione.
 
 ## Regole per ogni round
 
@@ -54,7 +54,7 @@ Task:
   `moderator`, `admin`;
 - Fatto: aggiungere annunci demo in tutti gli stati rilevanti;
 - Fatto: caricare immagini demo per tutti gli annunci pubblici e in revisione;
-- aggiungere almeno uno slot sponsorizzato mock o dati preparatori;
+- Fatto: aggiungere almeno uno slot sponsorizzato mock o dati preparatori;
 - Avviato: aggiornare `pnpm smoke:e2e` per verificare dati demo, immagini e
   ruoli; oggi controlla login admin e coda `pending_review`, resta approvare un
   caso fino alla pubblicazione;
@@ -70,8 +70,10 @@ Avanzamento 12 maggio 2026:
   pubblici e quelli in revisione.
 - Fatto: lo smoke E2E verifica login admin e presenza della coda
   `pending_review`.
-- Da fare: immagini realistiche o fixture visuali migliori, sponsorizzato mock
-  e smoke con decisione moderatore fino a pubblicazione visibile.
+- Fatto: promozione mock attiva su un annuncio pubblicato e visibile in cima a
+  `/listings`.
+- Da fare: immagini realistiche o fixture visuali migliori e smoke con
+  decisione moderatore fino a pubblicazione visibile.
 
 Done:
 
@@ -135,9 +137,10 @@ Obiettivo: migliorare scoperta annunci e interazioni rapide.
 
 Task:
 
-- rendere `/listings` una lista a card orizzontali, un annuncio per riga;
+- Fatto: rendere `/listings` una lista a card orizzontali, un annuncio per riga;
 - aggiungere cuore toggle per preferito con animazione e stato autenticato;
-- prevedere slot visivo per annuncio sponsorizzato in alto, con label chiara;
+- Fatto: prevedere slot visivo per annuncio sponsorizzato in alto, con label
+  chiara;
 - mantenere filtri, SEO e performance della pagina lista;
 - aggiornare test e fixture per preferiti da lista e scheda.
 
@@ -199,6 +202,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire Milestone A con annuncio sponsorizzato mock, immagini realistiche o
-fixture visuali migliori e smoke che approva un caso demo fino alla
-pubblicazione visibile.
+Proseguire Milestone A con immagini realistiche o fixture visuali migliori e
+smoke che approva un caso demo fino alla pubblicazione visibile.

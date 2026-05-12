@@ -19,6 +19,11 @@ try {
     "public listing list",
     Array.isArray(listings.items) && listings.items.length > 0
   )
+  check(
+    "public sponsored listing",
+    listings.items[0]?.sponsorship?.isSponsored === true,
+    `listing=${listings.items[0]?.id ?? "none"}`
+  )
   listingId = listings.items[0].id
   pass("public listing selected", `listing=${listingId}`)
 

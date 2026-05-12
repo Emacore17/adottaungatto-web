@@ -682,6 +682,37 @@ export const listingLikes = pgTable(
   })
 )
 
+export const listingPromotions = pgTable(
+  "listing_promotions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    placement: text("placement").notNull().default("listings_top"),
+    label: text("label").notNull().default("Sponsorizzato"),
+    priority: integer("priority").notNull().default(100),
+    startsAt: timestamp("starts_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    isActive: boolean("is_active").notNull().default(true),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    activeListingPlacementIdx: uniqueIndex(
+      "listing_promotions_active_listing_placement_idx"
+    )
+      .on(table.listingId, table.placement)
+      .where(sql`${table.isActive} = true AND ${table.deletedAt} IS NULL`),
+    activePlacementIdx: index("listing_promotions_active_placement_idx")
+      .on(table.placement, table.priority, table.startsAt, table.endsAt)
+      .where(sql`${table.isActive} = true AND ${table.deletedAt} IS NULL`),
+    listingIdx: index("listing_promotions_listing_idx").on(table.listingId),
+  })
+)
+
 export const listingContactRequests = pgTable(
   "listing_contact_requests",
   {
@@ -699,9 +730,7 @@ export const listingContactRequests = pgTable(
       "requester_display_name_snapshot"
     ).notNull(),
     message: text("message").notNull(),
-    status: listingContactRequestStatus("status")
-      .notNull()
-      .default("pending"),
+    status: listingContactRequestStatus("status").notNull().default("pending"),
     emailShared: boolean("email_shared").notNull().default(false),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     failedAt: timestamp("failed_at", { withTimezone: true }),

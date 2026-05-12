@@ -36,6 +36,8 @@ const demoListingIds = [
   "44444444-4444-4444-8444-444444444415",
 ] as const
 
+const demoPromotionIds = ["aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01"] as const
+
 const demoRegionIds = [
   "22222222-2222-4222-8222-222222222201",
   "22222222-2222-4222-8222-222222222202",
@@ -76,6 +78,7 @@ export type DemoSeedSummary = {
   provinces: number
   municipalities: number
   listings: number
+  promotions: number
   password: string
 }
 
@@ -88,6 +91,7 @@ export async function seedDemoDatabase(
     listings: demoListingIds.length,
     municipalities: demoMunicipalityIds.length,
     password: demoPassword,
+    promotions: demoPromotionIds.length,
     provinces: demoProvinceIds.length,
     regions: demoRegionIds.length,
     users: demoUserIds.length,
@@ -109,6 +113,7 @@ export async function seedDemoDatabase(
       await executeSqlBlock(transaction, seedUsersSql, [passwordHash])
       await executeSqlBlock(transaction, seedListingsSql)
       await executeSqlBlock(transaction, seedListingImagesSql)
+      await executeSqlBlock(transaction, seedPromotionsSql)
       await executeSqlBlock(transaction, seedModerationCasesSql)
       await executeSqlBlock(transaction, seedModerationActionsSql)
       await executeSqlBlock(transaction, seedReportsSql)
@@ -145,6 +150,10 @@ const clearDemoSql = `
   delete from listing_likes
   where listing_id in (${quotedList(demoListingIds)})
     or user_id in (${quotedList(demoUserIds)});
+
+  delete from listing_promotions
+  where id in (${quotedList(demoPromotionIds)})
+    or listing_id in (${quotedList(demoListingIds)});
 
   delete from listing_favorites
   where listing_id in (${quotedList(demoListingIds)})
@@ -328,6 +337,21 @@ const seedListingImagesSql = `
     ('66666666-6666-4666-8666-666666666609', '44444444-4444-4444-8444-444444444409', 'demo/listings/leo.png', 'demo/listings/leo-large.png', 'demo/listings/leo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-leo', 10, true, 'ready'),
     ('66666666-6666-4666-8666-666666666610', '44444444-4444-4444-8444-444444444410', 'demo/listings/zara.png', 'demo/listings/zara-large.png', 'demo/listings/zara-thumb.png', 'image/png', 1200, 900, 2048, 'demo-zara', 10, true, 'ready'),
     ('66666666-6666-4666-8666-666666666611', '44444444-4444-4444-8444-444444444412', 'demo/listings/timo.png', 'demo/listings/timo-large.png', 'demo/listings/timo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-timo', 10, true, 'ready');
+`
+
+const seedPromotionsSql = `
+  insert into listing_promotions (
+    id,
+    listing_id,
+    placement,
+    label,
+    priority,
+    starts_at,
+    ends_at,
+    is_active
+  )
+  values
+    ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa01', '44444444-4444-4444-8444-444444444406', 'listings_top', 'Sponsorizzato', 100, now() - interval '1 day', now() + interval '30 days', true);
 `
 
 const seedModerationCasesSql = `
