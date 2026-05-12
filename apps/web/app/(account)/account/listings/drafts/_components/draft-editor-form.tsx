@@ -57,10 +57,11 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
     <Card>
       <CardHeader>
         <CardTitle>
-          {isEditing ? "Modifica bozza" : "Dati annuncio"}
+          {isEditing ? "Modifica annuncio" : "Dati dell'annuncio"}
         </CardTitle>
         <CardDescription>
-          I dati salvati restano privati fino al passaggio in moderazione.
+          Salva i dati, poi aggiungi almeno una foto. L&apos;annuncio resta
+          privato fino alla revisione.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -264,7 +265,7 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button type="submit">
               <SaveIcon data-icon="inline-start" aria-hidden="true" />
-              {isEditing ? "Salva modifiche" : "Crea bozza"}
+              {isEditing ? "Salva modifiche" : "Continua con le foto"}
             </Button>
           </div>
         </form>

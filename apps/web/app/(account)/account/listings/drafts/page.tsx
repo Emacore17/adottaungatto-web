@@ -42,16 +42,16 @@ export default async function DraftListingsPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="grid gap-2">
           <h1 className="text-3xl font-semibold tracking-normal">
-            Bozze annunci
+            I miei annunci
           </h1>
           <p className="text-sm text-muted-foreground">
-            Annunci salvati ma non ancora pubblicati.
+            Annunci in lavorazione o in attesa prima della pubblicazione.
           </p>
         </div>
         <Button asChild>
           <Link href={routes.accountDraftNew}>
             <PlusIcon data-icon="inline-start" aria-hidden="true" />
-            Nuova bozza
+            Inserisci annuncio
           </Link>
         </Button>
       </div>
@@ -79,14 +79,15 @@ export default async function DraftListingsPage({
         ) : (
           <Empty className="border">
             <EmptyHeader>
-              <EmptyTitle>Nessuna bozza</EmptyTitle>
+              <EmptyTitle>Nessun annuncio in lavorazione</EmptyTitle>
               <EmptyDescription>
-                Le bozze salvate saranno disponibili in questa area.
+                Gli annunci inseriti saranno disponibili in questa area prima
+                della pubblicazione.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
-                <Link href={routes.accountDraftNew}>Crea bozza</Link>
+                <Link href={routes.accountDraftNew}>Inserisci annuncio</Link>
               </Button>
             </EmptyContent>
           </Empty>
@@ -94,7 +95,7 @@ export default async function DraftListingsPage({
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle>Bozze non disponibili</CardTitle>
+            <CardTitle>Annunci non disponibili</CardTitle>
             <CardDescription>{drafts.message}</CardDescription>
           </CardHeader>
         </Card>

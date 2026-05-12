@@ -35,7 +35,7 @@ export default async function EditDraftPage({
   const parsed = listingDraftIdParamSchema.safeParse({ id })
 
   if (!parsed.success) {
-    return <DraftUnavailable message="Identificativo bozza non valido." />
+    return <DraftUnavailable message="Identificativo annuncio non valido." />
   }
 
   const [draft, breeds, images] = await Promise.all([
@@ -56,13 +56,14 @@ export default async function EditDraftPage({
             {draft.data.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Aggiorna la bozza e inviala alla moderazione quando e completa.
+            Completa dati e foto. Quando una foto risulta Pronta puoi inviare
+            l&apos;annuncio in revisione.
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href={routes.accountDrafts}>
             <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-            Bozze
+            I miei annunci
           </Link>
         </Button>
       </div>
@@ -74,7 +75,8 @@ export default async function EditDraftPage({
           role="status"
           className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
         >
-          Razze non disponibili: puoi salvare la bozza con la razza corrente.
+          Razze non disponibili: puoi salvare l&apos;annuncio con la razza
+          corrente.
         </div>
       ) : null}
 
@@ -104,12 +106,12 @@ function DraftUnavailable({ message }: { message: string }) {
       <Button asChild variant="outline" className="w-fit">
         <Link href={routes.accountDrafts}>
           <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-          Bozze
+          I miei annunci
         </Link>
       </Button>
       <Card>
         <CardHeader>
-          <CardTitle>Bozza non disponibile</CardTitle>
+          <CardTitle>Annuncio non disponibile</CardTitle>
           <CardDescription>{message}</CardDescription>
         </CardHeader>
       </Card>

@@ -186,7 +186,7 @@ export async function submitDraftForReviewAction(formData: FormData) {
   }
 
   revalidateAccountPaths(id.data.id)
-  redirectWithStatus(routes.accountDrafts, "submitted", "1")
+  redirect(routes.accountListingSubmitted)
 }
 
 export async function uploadDraftImageAction(formData: FormData) {

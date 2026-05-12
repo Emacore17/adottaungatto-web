@@ -27,7 +27,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   con chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
 - Profilo utente autenticato con update e preferenze email non essenziali.
 - CRUD bozze annuncio, invio a moderazione e upload immagini presigned.
-- Worker iniziale per processamento immagini e varianti WebP.
+- Worker per processamento immagini e varianti WebP, con loop automatico
+  durante l'avvio dell'app `worker` e CLI one-shot `pnpm media:process`.
 - Moderazione annunci e segnalazioni con code, decisioni e audit su
   `moderation_actions`.
 - Email applicative via Mailpit locale e notifiche in-app.
@@ -46,13 +47,14 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   annunci con filtri client isolati, scheda annuncio pubblica con metadata
   dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
   `error` iniziali.
-- Area account server-rendered con dashboard `/account`, lista bozze
-  `/account/listings/drafts`, lista preferiti `/account/favorites` e inbox
-  notifiche `/account/notifications` collegate in lettura alle API
+- Area account server-rendered con dashboard `/account`, lista annunci in
+  lavorazione `/account/listings/drafts`, lista preferiti `/account/favorites`
+  e inbox notifiche `/account/notifications` collegate in lettura alle API
   autenticate, con prime mutazioni per cancellare bozze, rimuovere preferiti e
-  segnare notifiche come lette. Le bozze hanno anche pagine frontend per
-  creazione, modifica, upload immagine presigned, galleria immagini con stato,
-  eliminazione, riordino/copertina e invio a moderazione.
+  segnare notifiche come lette. Gli annunci in lavorazione hanno anche pagine
+  frontend per creazione, modifica, upload immagine presigned, galleria
+  immagini con stato, eliminazione, riordino/copertina, invio a revisione e
+  conferma post-invio.
 - Route group admin iniziale con pagina `/moderation` server-rendered,
   `noindex`, login obbligatorio, lettura delle code API `pending_review` e
   segnalazioni, e azioni base approva/rifiuta/sospendi con motivo obbligatorio;
@@ -93,7 +95,7 @@ produzione. Mancano almeno:
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo senza ruoli admin/moderatore
   completi, stati annuncio multipli, immagini realistiche per tutti i casi e
-  flusso inserimento annuncio con upload + invio a revisione senza attriti.
+  smoke del flusso inserimento annuncio con upload + invio a revisione.
 
 ## Stato ricerca
 
@@ -133,15 +135,18 @@ hardening upload, backup, alert e audit amministrativo piu esteso.
 route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
-JSON-LD iniziali, dashboard account con lettura bozze/preferiti/notifiche,
-form contatto proprietario sulla scheda annuncio e pagina `/moderation`
+JSON-LD iniziali, dashboard account con lettura annunci in lavorazione,
+preferiti e notifiche, form contatto proprietario sulla scheda annuncio e
+pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta
-rimozione preferiti, marcatura notifiche lette, cancellazione bozze ed editor
-bozze con creazione, modifica, upload immagine, galleria immagini con stato,
-eliminazione, riordino/copertina, preferenza contatto per-annuncio e invio a
-moderazione. Restano incomplete eventuali preferenze contatto per canali o
-finestre orarie e amministrazione interna piu estesa. I prossimi sviluppi
-frontend devono continuare a seguire
+rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
+lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
+upload immagine, galleria immagini con stato chiaro, eliminazione,
+riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
+schermata di conferma. Restano incompleti wizard unico, smoke upload +
+revisione, eventuali preferenze contatto per canali o finestre orarie e
+amministrazione interna piu estesa. I prossimi sviluppi frontend devono
+continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
 della UI avanzata e uso della CLI shadcn da `apps/web`.
@@ -150,7 +155,9 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 
 `pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Oggi
 prepara servizi Docker, migrazioni, seed base, 3 utenti demo, 8 annunci
-pubblicati e 5 asset immagine placeholder. Non copre ancora il traguardo demo
+pubblicati e 5 asset immagine placeholder. Il worker processa automaticamente
+le immagini in `processing` durante l'avvio applicativo, quindi il flusso locale
+standard non richiede piu' la CLI manuale. Non copre ancora il traguardo demo
 definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano utenti
 moderatore/admin, annunci in moderazione o stati negativi, immagini realistiche
 complete, annuncio sponsorizzato mock e smoke del flusso completo di creazione

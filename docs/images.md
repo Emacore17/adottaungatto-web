@@ -72,9 +72,11 @@ Endpoint iniziale:
 - `DELETE /listings/me/drafts/:id/images/:imageId` cancella logicamente
   l'immagine; se era copertina, la prima immagine attiva rimasta diventa
   copertina.
-- `pnpm media:process` processa le immagini in `processing`, genera varianti
-  WebP `large` e `thumb`, aggiorna dimensioni e stato `ready`, oppure marca
-  l'immagine `rejected` con il motivo.
+- L'app `worker` processa automaticamente le immagini in `processing`
+  all'avvio e poi a intervalli regolari; `pnpm media:process` resta disponibile
+  come comando one-shot.
+- Il processamento genera varianti WebP `large` e `thumb`, aggiorna dimensioni
+  e stato `ready`, oppure marca l'immagine `rejected` con il motivo.
 - L'invio a moderazione richiede almeno una immagine `ready`, nessuna immagine
   ancora `uploaded`/`processing` e nessuna immagine `rejected` associata alla
   bozza.
@@ -99,11 +101,11 @@ Produzione futura:
 
 ## Gap locale attuale
 
-- Il flusso utente espone ancora "bozza" e separa troppo creazione dati,
-  upload immagini e invio a revisione.
+- La UI iniziale ora espone "Inserisci annuncio" e stati immagine piu'
+  leggibili, ma serve ancora un wizard unico o guidato per ridurre i passaggi.
 - Se l'immagine resta in `uploaded` o `processing`, l'invio a revisione fallisce
-  con stato non pronto; la UI deve guidare l'utente e indicare l'azione
-  richiesta.
+  con stato non pronto; la UI indica l'azione richiesta, ma lo smoke deve
+  verificare il comportamento end-to-end.
 - Lo smoke locale deve coprire almeno un upload immagine e un invio a revisione
   riuscito.
 - La demo deve avere immagini pronte per tutti gli annunci pubblici e in

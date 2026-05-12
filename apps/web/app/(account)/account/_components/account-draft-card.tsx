@@ -28,7 +28,7 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
       <CardContent className="flex flex-col gap-4 p-4">
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">Bozza</Badge>
+            <Badge variant="secondary">In lavorazione</Badge>
             <Badge variant="outline">{draft.sex}</Badge>
             {draft.breed ? (
               <Badge variant="outline">{draft.breed.name}</Badge>
@@ -65,7 +65,7 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
               <input type="hidden" name="nextPath" value={returnPath} />
               <Button type="submit" variant="destructive" size="sm">
                 <Trash2Icon data-icon="inline-start" aria-hidden="true" />
-                Elimina bozza
+                Elimina annuncio
               </Button>
             </form>
           ) : null}

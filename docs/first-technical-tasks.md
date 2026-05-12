@@ -106,8 +106,10 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     registrazione, login, verifica email, recupero password e cambio password.
 59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
 60. Completare fixture demo con ruoli moderator/admin e stati annuncio multipli.
-61. Correggere il flusso inserimento annuncio: dati, immagini, invio a
-    revisione e schermata di conferma senza errore generico.
+61. Avviato: correggere il flusso inserimento annuncio. Fatto il processing
+    automatico immagini nel worker dev, copy UI "Inserisci annuncio", stati
+    immagine piu' chiari e schermata di conferma; restano wizard guidato e
+    verifica E2E completa.
 62. Aggiungere smoke E2E per upload immagine e invio a revisione riuscito.
 63. Riorganizzare dashboard account e aggiungere impostazioni profilo utente.
 64. Trasformare preferiti in cuore toggle con animazione su lista e scheda.

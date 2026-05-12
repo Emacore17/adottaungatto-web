@@ -3,15 +3,18 @@ type DraftActionMessageProps = {
 }
 
 const messages = {
-  created: "Bozza creata.",
-  saved: "Bozza salvata.",
-  submitted: "Bozza inviata in moderazione.",
-  uploaded: "Immagine caricata. La lavorazione prosegue in background.",
+  created:
+    "Dati salvati. Aggiungi almeno una foto e attendi che diventi Pronta.",
+  saved: "Modifiche salvate.",
+  submitted:
+    "Annuncio inserito e inviato in revisione. Riceverai una notifica quando sara pubblicato.",
+  uploaded:
+    "Immagine caricata. Il worker la prepara automaticamente: se resta In preparazione, attendi qualche secondo e aggiorna.",
 } as const
 
 const errors = {
   api: "Operazione non completata. Riprova tra poco.",
-  invalid: "Controlla i campi della bozza.",
+  invalid: "Controlla i campi dell'annuncio.",
   "invalid-image": "Seleziona un file JPG, PNG o WebP fino a 10 MB.",
   "image-api": "Upload non inizializzato. Riprova tra poco.",
   "image-storage": "Upload file non completato.",
@@ -20,7 +23,7 @@ const errors = {
   "image-delete": "Immagine non eliminata.",
   "image-order": "Ordine immagini non aggiornato.",
   "not-ready":
-    "La bozza non e ancora pronta: controlla dati, comune e immagini processate.",
+    "Annuncio non pronto: servono dati completi, comune e almeno una immagine Pronta. Se una foto e In preparazione, attendi qualche secondo e riprova.",
 } as const
 
 function DraftActionMessage({ searchParams }: DraftActionMessageProps) {

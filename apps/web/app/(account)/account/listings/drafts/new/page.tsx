@@ -24,17 +24,17 @@ export default async function NewDraftPage({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="grid gap-2">
           <h1 className="text-3xl font-semibold tracking-normal">
-            Nuovo annuncio
+            Inserisci annuncio
           </h1>
           <p className="text-sm text-muted-foreground">
-            Crea l&apos;annuncio e completalo prima dell&apos;invio in
-            moderazione.
+            Compila i dati principali, poi continua con foto e invio a
+            revisione.
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href={routes.accountDrafts}>
             <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-            Bozze
+            I miei annunci
           </Link>
         </Button>
       </div>
@@ -46,7 +46,7 @@ export default async function NewDraftPage({
           role="status"
           className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
         >
-          Razze non disponibili: puoi salvare la bozza senza razza.
+          Razze non disponibili: puoi salvare l&apos;annuncio senza razza.
         </div>
       ) : null}
 

@@ -52,8 +52,8 @@ type DraftImagePanelProps = {
 }
 
 const imageStatusLabels: Record<ListingImage["status"], string> = {
-  uploaded: "Caricata",
-  processing: "In lavorazione",
+  uploaded: "Da preparare",
+  processing: "In preparazione",
   ready: "Pronta",
   rejected: "Rifiutata",
 }
@@ -64,7 +64,8 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
       <CardHeader>
         <CardTitle>Immagini</CardTitle>
         <CardDescription>
-          Carica foto JPG, PNG o WebP fino a 10 MB.
+          Carica foto JPG, PNG o WebP fino a 10 MB. Dopo il caricamento vengono
+          preparate automaticamente.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -116,7 +117,7 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
           <div className="flex justify-end">
             <Button type="submit" variant="outline">
               <ImageUpIcon data-icon="inline-start" aria-hidden="true" />
-              Carica immagine
+              Aggiungi foto
             </Button>
           </div>
         </form>
@@ -145,7 +146,8 @@ function DraftImageGallery({
           </EmptyMedia>
           <EmptyTitle>Nessuna immagine</EmptyTitle>
           <EmptyDescription>
-            Aggiungi almeno una foto prima della revisione.
+            Aggiungi almeno una foto: diventera Pronta prima dell&apos;invio a
+            revisione.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -209,7 +211,7 @@ function DraftImageItem({
           {previewUrl ? (
             <Image
               src={previewUrl}
-              alt="Anteprima immagine bozza"
+              alt="Anteprima immagine annuncio"
               fill
               className="object-cover"
               sizes="88px"

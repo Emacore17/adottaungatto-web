@@ -52,6 +52,7 @@ export const routes = {
   login: (next?: string) => withSearchParams("/login", { next }),
   register: "/register",
   account: "/account",
+  accountListingSubmitted: "/account/listings/submitted",
   accountDrafts: "/account/listings/drafts",
   accountDraftNew: "/account/listings/drafts/new",
   accountDraft: (id: string) => `/account/listings/drafts/${id}`,

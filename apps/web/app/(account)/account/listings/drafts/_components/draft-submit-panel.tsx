@@ -19,12 +19,16 @@ function DraftSubmitPanel({ draftId, nextPath }: DraftSubmitPanelProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Moderazione</CardTitle>
+        <CardTitle>Invio a revisione</CardTitle>
         <CardDescription>
-          La richiesta richiede dati completi e almeno una foto processata.
+          Puoi inviare quando i dati sono completi e almeno una foto risulta
+          Pronta.
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex flex-col gap-4">
+        <p className="text-sm text-muted-foreground">
+          Se una foto e In preparazione, attendi qualche secondo e riprova.
+        </p>
         <form action={submitDraftForReviewAction} className="flex justify-end">
           <input name="draftId" type="hidden" value={draftId} />
           <input name="nextPath" type="hidden" value={nextPath} />

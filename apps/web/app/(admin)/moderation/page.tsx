@@ -154,7 +154,7 @@ export default async function ModerationPage({
 
       <QueueSection
         title="Annunci in attesa"
-        description="Bozze inviate a moderazione prima della pubblicazione."
+        description="Annunci inviati a moderazione prima della pubblicazione."
         emptyTitle="Nessun annuncio in attesa"
         emptyDescription="La coda pending_review e' vuota."
         result={pendingQueue}

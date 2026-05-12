@@ -76,6 +76,15 @@ Task:
 - rendere chiaro lo stato immagini `uploaded`, `processing`, `ready`;
 - aggiornare smoke/e2e con upload immagine e invio a revisione riuscito.
 
+Avanzamento 12 maggio 2026:
+
+- Fatto: il worker applicativo processa automaticamente le immagini in
+  `processing` all'avvio e poi a intervalli regolari.
+- Fatto: la UI account espone "Inserisci annuncio", stati immagine piu'
+  leggibili e una schermata di conferma dopo l'invio a revisione.
+- Da fare: trasformare il flusso in wizard unico o guidato, aggiungere smoke
+  E2E con upload immagine reale e verificare il giro completo su demo locale.
+
 Done:
 
 - un utente demo crea un annuncio completo, carica almeno una immagine, invia a
@@ -169,6 +178,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Partire da Milestone A oppure B. Se si vuole sbloccare subito il problema
-utente, iniziare da B e aggiornare anche lo smoke test. Se si vuole prima una
-base demo affidabile per tutti i task successivi, iniziare da A.
+Proseguire Milestone B con smoke E2E upload + invio a revisione, poi chiudere
+il wizard guidato. Subito dopo passare a Milestone A per rendere la demo locale
+piu' ricca con ruoli moderatore/admin, stati multipli e immagini realistiche.

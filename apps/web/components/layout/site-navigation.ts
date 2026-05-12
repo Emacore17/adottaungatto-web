@@ -71,7 +71,7 @@ const accountNavigationItem = {
 const draftsNavigationItem = {
   href: routes.accountDraftNew,
   label: "Inserisci annuncio",
-  description: "Crea una nuova bozza di annuncio.",
+  description: "Avvia un nuovo annuncio.",
   activePaths: [routes.accountDraftNew],
   activeMatch: "exact",
   icon: "file-text",

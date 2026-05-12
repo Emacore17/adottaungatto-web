@@ -71,9 +71,9 @@ export default async function AccountPage() {
           icon="user"
         />
         <SummaryCard
-          title="Bozze"
+          title="Annunci"
           value={drafts.ok ? String(drafts.data.meta.total) : "-"}
-          description="Annunci salvati"
+          description="In lavorazione"
           icon="drafts"
         />
         <SummaryCard
@@ -95,7 +95,7 @@ export default async function AccountPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section className="flex flex-col gap-4">
           <SectionHeader
-            title="Bozze recenti"
+            title="Annunci in lavorazione"
             description="Annunci in lavorazione nel tuo account."
             href={routes.accountDrafts}
           />
@@ -108,8 +108,8 @@ export default async function AccountPage() {
               </div>
             ) : (
               <AccountEmpty
-                title="Nessuna bozza"
-                description="Le bozze create appariranno qui."
+                title="Nessun annuncio in lavorazione"
+                description="Gli annunci inseriti appariranno qui prima della pubblicazione."
               />
             )
           ) : (
