@@ -4,6 +4,7 @@ import { ArrowLeftIcon } from "lucide-react"
 import { requireAccountSession } from "@/app/(account)/account/_lib/session"
 import { DraftActionMessage } from "@/app/(account)/account/listings/drafts/_components/draft-action-message"
 import { DraftEditorForm } from "@/app/(account)/account/listings/drafts/_components/draft-editor-form"
+import { DraftWizardProgress } from "@/app/(account)/account/listings/drafts/_components/draft-wizard-progress"
 import { listPublicCatBreeds } from "@/lib/api/listings"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
@@ -40,6 +41,7 @@ export default async function NewDraftPage({
       </div>
 
       <DraftActionMessage searchParams={params} />
+      <DraftWizardProgress />
 
       {!breeds.ok ? (
         <div

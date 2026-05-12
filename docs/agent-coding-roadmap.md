@@ -84,8 +84,11 @@ Avanzamento 12 maggio 2026:
   leggibili e una schermata di conferma dopo l'invio a revisione.
 - Fatto: `pnpm smoke:e2e` copre creazione annuncio completa, upload immagine
   presigned, processing worker, invio a revisione e pagina di conferma.
-- Da fare: trasformare il flusso in wizard unico o guidato e verificare il giro
-  anche con fixture demo realistiche.
+- Fatto: la UI mostra un flusso guidato dati, foto e revisione, con invio
+  disabilitato finche' dati e foto non sono pronti.
+
+Stato: Milestone B completata per il giro funzionale locale. La verifica con
+fixture demo realistiche resta nella Milestone A.
 
 Done:
 
@@ -180,6 +183,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Chiudere Milestone B con un wizard guidato o una schermata unica dati + foto.
-Subito dopo passare a Milestone A per rendere la demo locale piu' ricca con
-ruoli moderatore/admin, stati multipli e immagini realistiche.
+Passare a Milestone A per rendere la demo locale piu' ricca con ruoli
+moderatore/admin, stati multipli, immagini realistiche e almeno un annuncio
+sponsorizzato mock.

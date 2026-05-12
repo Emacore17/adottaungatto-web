@@ -53,8 +53,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   autenticate, con prime mutazioni per cancellare bozze, rimuovere preferiti e
   segnare notifiche come lette. Gli annunci in lavorazione hanno anche pagine
   frontend per creazione, modifica, upload immagine presigned, galleria
-  immagini con stato, eliminazione, riordino/copertina, invio a revisione e
-  conferma post-invio.
+  immagini con stato, eliminazione, riordino/copertina, guida passaggi dati /
+  foto / revisione, invio a revisione e conferma post-invio.
 - Route group admin iniziale con pagina `/moderation` server-rendered,
   `noindex`, login obbligatorio, lettura delle code API `pending_review` e
   segnalazioni, e azioni base approva/rifiuta/sospendi con motivo obbligatorio;
@@ -96,7 +96,7 @@ produzione. Mancano almeno:
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo senza ruoli admin/moderatore
   completi, stati annuncio multipli, immagini realistiche per tutti i casi e
-  wizard guidato per il flusso inserimento annuncio.
+  annuncio sponsorizzato mock.
 
 ## Stato ricerca
 
@@ -144,10 +144,12 @@ rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,
 riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
-schermata di conferma. Lo smoke locale copre anche upload immagine, processing
-worker e invio a revisione. Restano incompleti wizard unico, eventuali
-preferenze contatto per canali o finestre orarie e amministrazione interna piu
-estesa. I prossimi sviluppi frontend devono continuare a seguire
+schermata di conferma. La schermata annuncio mostra un flusso guidato dati,
+foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
+pronti. Lo smoke locale copre anche upload immagine, processing worker e invio
+a revisione. Restano incomplete eventuali preferenze contatto per canali o
+finestre orarie e amministrazione interna piu estesa. I prossimi sviluppi
+frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
 della UI avanzata e uso della CLI shadcn da `apps/web`.
@@ -161,8 +163,7 @@ le immagini in `processing` durante l'avvio applicativo, quindi il flusso locale
 standard non richiede piu' la CLI manuale. Non copre ancora il traguardo demo
 definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano utenti
 moderatore/admin, annunci in moderazione o stati negativi, immagini realistiche
-complete, annuncio sponsorizzato mock e wizard guidato per l'inserimento
-annuncio.
+complete e annuncio sponsorizzato mock.
 
 ## Regole per prossimi interventi
 

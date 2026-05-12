@@ -12,10 +12,17 @@ import {
 
 type DraftSubmitPanelProps = {
   draftId: string
+  isReady: boolean
   nextPath: string
+  readinessMessage: string
 }
 
-function DraftSubmitPanel({ draftId, nextPath }: DraftSubmitPanelProps) {
+function DraftSubmitPanel({
+  draftId,
+  isReady,
+  nextPath,
+  readinessMessage,
+}: DraftSubmitPanelProps) {
   return (
     <Card>
       <CardHeader>
@@ -27,12 +34,12 @@ function DraftSubmitPanel({ draftId, nextPath }: DraftSubmitPanelProps) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-sm text-muted-foreground">
-          Se una foto e In preparazione, attendi qualche secondo e riprova.
+          {readinessMessage}
         </p>
         <form action={submitDraftForReviewAction} className="flex justify-end">
           <input name="draftId" type="hidden" value={draftId} />
           <input name="nextPath" type="hidden" value={nextPath} />
-          <Button type="submit">
+          <Button disabled={!isReady} type="submit">
             <SendIcon data-icon="inline-start" aria-hidden="true" />
             Invia a revisione
           </Button>

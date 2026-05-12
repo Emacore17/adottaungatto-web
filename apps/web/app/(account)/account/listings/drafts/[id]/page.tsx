@@ -5,8 +5,10 @@ import { listingDraftIdParamSchema } from "@workspace/validation/listings"
 import { requireAccountSession } from "@/app/(account)/account/_lib/session"
 import { DraftActionMessage } from "@/app/(account)/account/listings/drafts/_components/draft-action-message"
 import { DraftEditorForm } from "@/app/(account)/account/listings/drafts/_components/draft-editor-form"
+import { getDraftFlowState } from "@/app/(account)/account/listings/drafts/_components/draft-flow-state"
 import { DraftImagePanel } from "@/app/(account)/account/listings/drafts/_components/draft-image-panel"
 import { DraftSubmitPanel } from "@/app/(account)/account/listings/drafts/_components/draft-submit-panel"
+import { DraftWizardProgress } from "@/app/(account)/account/listings/drafts/_components/draft-wizard-progress"
 import { getAccountDraft, listAccountDraftImages } from "@/lib/api/account"
 import { listPublicCatBreeds } from "@/lib/api/listings"
 import { routes } from "@/lib/routes"
@@ -48,6 +50,9 @@ export default async function EditDraftPage({
     return <DraftUnavailable message={draft.message} />
   }
 
+  const imageData = images.ok ? images.data : null
+  const flow = getDraftFlowState(draft.data, imageData)
+
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -69,6 +74,7 @@ export default async function EditDraftPage({
       </div>
 
       <DraftActionMessage searchParams={query} />
+      <DraftWizardProgress draft={draft.data} images={imageData} />
 
       {!breeds.ok ? (
         <div
@@ -90,10 +96,15 @@ export default async function EditDraftPage({
         <aside className="grid h-fit gap-6">
           <DraftImagePanel
             draftId={draft.data.id}
-            images={images.ok ? images.data : null}
+            images={imageData}
             nextPath={currentPath}
           />
-          <DraftSubmitPanel draftId={draft.data.id} nextPath={currentPath} />
+          <DraftSubmitPanel
+            draftId={draft.data.id}
+            isReady={flow.reviewReady}
+            nextPath={currentPath}
+            readinessMessage={flow.reviewMessage}
+          />
         </aside>
       </div>
     </main>

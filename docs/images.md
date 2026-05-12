@@ -101,8 +101,8 @@ Produzione futura:
 
 ## Gap locale attuale
 
-- La UI iniziale ora espone "Inserisci annuncio" e stati immagine piu'
-  leggibili, ma serve ancora un wizard unico o guidato per ridurre i passaggi.
+- La UI espone "Inserisci annuncio", stati immagine leggibili e una guida
+  dati / foto / revisione.
 - Se l'immagine resta in `uploaded` o `processing`, l'invio a revisione fallisce
   con stato non pronto; la UI indica l'azione richiesta e lo smoke locale copre
   il comportamento end-to-end.
