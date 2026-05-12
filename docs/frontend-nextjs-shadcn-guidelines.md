@@ -16,11 +16,11 @@ Stack locale verificato:
 - app frontend in `apps/web`.
 
 La UI pubblica iniziale e' avviata: homepage di ricerca, lista annunci,
-scheda dettaglio con carosello immagini, layout pubblici/auth/account/admin,
-client API, SEO base, sitemap, robots, JSON-LD, dashboard account operativa con
-riepilogo, azioni rapide, bozze/preferiti/notifiche, inbox contatti ricevuti,
-form contatto proprietario e pagina `/moderation` con decisioni base motivate
-sono presenti.
+scheda dettaglio con carosello immagini, layout pubblici/auth/account e shell
+admin dedicato, client API, SEO base, sitemap, robots, JSON-LD, dashboard
+account operativa con riepilogo, azioni rapide, bozze/preferiti/notifiche,
+inbox contatti ricevuti, form contatto proprietario e pagina `/moderation` con
+decisioni base motivate sono presenti.
 Il client API restituisce messaggi di errore gia' normalizzati per la UI. Le
 notifiche in-app hanno un provider real-time globale via SSE same-origin, badge
 account live e avviso visuale su nuova notifica.
@@ -314,8 +314,8 @@ server-only.
    ed `error.tsx` iniziali.
 8. In corso: login/register con validazione condivisa e gestione sessione
    coerente con la strategia backend.
-9. Fatto: route group admin/moderazione protetto, noindex e collegato in
-   lettura alle code API.
+9. Fatto: route group admin/moderazione protetto, noindex, con layout interno
+   dedicato e collegato in lettura alle code API.
 10. Fatto: UI account per bozze annuncio, preferiti e notifiche.
 11. Fatto: azioni UI di moderazione con motivo obbligatorio.
 12. Fatto: form contatto proprietario privacy-first sulla scheda annuncio.

@@ -73,10 +73,11 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   presigned, galleria immagini con stato, eliminazione, riordino/copertina,
   guida passaggi dati / foto / revisione, invio a revisione e conferma
   post-invio.
-- Route group admin iniziale con pagina `/moderation` server-rendered,
-  `noindex`, login obbligatorio, lettura delle code API `pending_review` e
-  segnalazioni, e azioni base approva/rifiuta/sospendi con motivo obbligatorio;
-  le autorizzazioni di ruolo restano applicate dalle API.
+- Route group admin iniziale con layout interno dedicato e pagina
+  `/moderation` server-rendered, `noindex`, login obbligatorio, lettura delle
+  code API `pending_review` e segnalazioni, e azioni base
+  approva/rifiuta/sospendi con motivo obbligatorio; le autorizzazioni di ruolo
+  restano applicate dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -117,7 +118,7 @@ produzione. Mancano almeno:
 - backup/restore verificati e strategia rollback migrazioni;
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
   refresh sul futuro update di annunci pubblicati;
-- amministrazione completa e UI interna protetta;
+- amministrazione completa e UI interna piu estesa;
 - frontend applicativo oltre la consultazione pubblica: eventuale estensione
   delle notifiche in-app real-time ad altri eventi prodotto, eventuali canali o
   finestre orarie per il contatto proprietario e amministrazione interna piu
@@ -166,16 +167,16 @@ hardening upload, backup, alert e audit amministrativo piu esteso.
 
 `apps/web` ha superato lo shell minimale: sono presenti configurazione env/site,
 route builder, helper SEO, client API, gestione sessione cookie lato server,
-layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
-annuncio con carosello immagini, proxy route per autocomplete/lista pubblica,
-sitemap, robots,
+layout pubblici/auth/account e shell admin dedicato, homepage pubblica, lista
+annunci, scheda annuncio con carosello immagini, proxy route per
+autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, provider
 globale per notifiche real-time con badge live sull'account, dashboard account
 operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
 impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
-annuncio e pagina `/moderation`
-collegata alle code API con decisioni base motivate. L'area account supporta
+annuncio e pagina `/moderation` dentro layout interno separato, collegata alle
+code API con decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,

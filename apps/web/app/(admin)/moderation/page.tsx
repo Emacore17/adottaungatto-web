@@ -121,11 +121,11 @@ export default async function ModerationPage({
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-3">
         <Badge variant="secondary" className="w-fit">
-          Area interna
+          Code operative
         </Badge>
         <div className="grid gap-2">
           <h1 className="text-3xl font-semibold tracking-normal">
-            Moderazione
+            Dashboard moderazione
           </h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
             Coda iniziale per revisionare annunci in attesa e casi aperti da

@@ -19,8 +19,8 @@ Esistono:
   `/listings`;
 - upload asset demo su MinIO per 11 annunci, usando `immagini-gattini/` se
   presente e fallback placeholder se assente;
-- smoke E2E locale `pnpm smoke:e2e` con login admin e controllo coda
-  `pending_review`.
+- smoke E2E locale `pnpm smoke:e2e` con login admin, controllo coda
+  `pending_review` e verifica dello shell interno di moderazione.
 
 Gap attuali:
 
@@ -92,7 +92,8 @@ La demo include:
   disponibili e fallback sintetico solo se mancano fixture locali.
 - processing immagine o fixture immagine pronta; Fatto tramite worker locale.
 - invio a revisione riuscito; Fatto.
-- login admin e coda `pending_review`; Fatto.
+- login admin e coda `pending_review`; Fatto con verifica dello shell interno
+  `/moderation`.
 - annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.
 - approvazione moderatore; Fatto con approvazione admin del caso creato dallo
   smoke.

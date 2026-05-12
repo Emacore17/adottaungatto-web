@@ -38,7 +38,7 @@ separato per condividere il telefono del richiedente. Le notifiche in-app hanno
 un canale real-time SSE locale con badge live e smoke dedicato. Invio a
 revisione, contatto proprietario e decisione di moderazione generano gia'
 notifiche in-app. Il punto piu urgente ora e' estendere la moderazione/admin
-separata.
+con strumenti operativi, dettaglio casi e audit piu leggibile.
 
 ## Regole per ogni round
 
@@ -242,11 +242,23 @@ Obiettivo: avere una piattaforma interna protetta per revisione annunci.
 
 Task:
 
-- separare visivamente e strutturalmente area admin/moderazione;
-- aggiungere ruoli demo moderatore e admin;
+- Fatto: separare visivamente e strutturalmente area admin/moderazione;
+- Fatto: aggiungere ruoli demo moderatore e admin;
 - migliorare code, filtri, dettaglio annuncio e template motivazioni;
 - verificare MFA o requisito equivalente almeno come backlog hardening;
 - aggiungere audit leggibile e test di accesso negato.
+
+Avanzamento 12 maggio 2026:
+
+- Fatto: il route group `(admin)` usa un layout interno dedicato, senza
+  header/footer pubblici, con navigazione distinta, badge area interna e link
+  rapidi verso sito pubblico e account.
+- Fatto: la pagina `/moderation` e' presentata come dashboard moderazione
+  server-rendered, protetta da login, `noindex` e collegata alle code API.
+- Fatto: lo smoke E2E verifica login admin, coda `pending_review` e presenza
+  dello shell admin separato.
+- Da fare: aggiungere dettaglio caso, filtri operativi, template motivazioni e
+  audit consultabile da UI.
 
 Done:
 
@@ -271,5 +283,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone F separando meglio area admin/moderazione e
-migliorando code, dettaglio operativo e protezioni di accesso.
+Proseguire con Milestone F migliorando code, dettaglio operativo, template di
+motivazione, audit consultabile e test di accesso negato da UI.

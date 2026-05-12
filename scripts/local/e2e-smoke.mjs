@@ -500,7 +500,17 @@ try {
     token,
     "web account draft edit"
   )
-  await webPage("/moderation", adminToken, "web moderation admin")
+  const moderationHtml = await webText(
+    "/moderation",
+    adminToken,
+    "web moderation admin"
+  )
+  check(
+    "web moderation admin shell",
+    moderationHtml.includes("Area interna") &&
+      moderationHtml.includes("Dashboard moderazione") &&
+      moderationHtml.includes("Accesso protetto")
+  )
 
   const submittedDraft = await api(
     "POST",

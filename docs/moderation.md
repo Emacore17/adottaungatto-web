@@ -47,9 +47,10 @@ Un annuncio e' pubblico solo se:
 - Include dati annuncio, proprietario, luogo, conteggio immagini pronte e
   copertina pronta quando disponibile.
 - Il frontend espone una prima pagina `/moderation` server-rendered, `noindex`
-  e protetta da login, che legge questa coda tramite bearer token. Se l'API
-  restituisce `403`, mostra uno stato di accesso non consentito. Ogni item
-  include un form decisione con motivo rapido o nota obbligatoria.
+  e protetta da login, dentro un layout interno separato dal sito pubblico.
+  La pagina legge questa coda tramite bearer token. Se l'API restituisce
+  `403`, mostra uno stato di accesso non consentito. Ogni item include un form
+  decisione con motivo rapido o nota obbligatoria.
 
 ## Coda segnalazioni
 
@@ -160,7 +161,8 @@ segnalazioni utente al target e, quando disponibile, al caso di moderazione.
 
 ## Evoluzione
 
-- Area admin separata e protetta, con navigazione distinta dall'area pubblica.
+- Estendere l'area admin separata e protetta oltre la dashboard moderazione
+  iniziale.
 - Dashboard moderatore con filtri, dettaglio annuncio, immagini e storico.
 - Scoring rischio.
 - Coda prioritaria per annunci con molte segnalazioni.
