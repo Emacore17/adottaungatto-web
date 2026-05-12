@@ -2,7 +2,9 @@ import { Geist_Mono, Inter } from "next/font/google"
 import type { Viewport } from "next"
 
 import "@workspace/ui/globals.css"
+import { RealtimeNotificationsProvider } from "@/components/providers/realtime-notifications-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { getSessionToken } from "@/lib/auth/session"
 import { siteConfig } from "@/lib/config/site"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { cn } from "@workspace/ui/lib/utils"
@@ -32,11 +34,13 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const token = await getSessionToken()
+
   return (
     <html
       lang="it"
@@ -49,7 +53,14 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-svh">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <RealtimeNotificationsProvider
+            key={token ? "authenticated" : "anonymous"}
+            enabled={Boolean(token)}
+          >
+            {children}
+          </RealtimeNotificationsProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

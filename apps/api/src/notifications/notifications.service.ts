@@ -1,5 +1,11 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common"
+import {
+  Inject,
+  Injectable,
+  type MessageEvent,
+  NotFoundException,
+} from "@nestjs/common"
 import type { NotificationListQuery } from "@workspace/validation"
+import { Observable } from "rxjs"
 
 import { DatabaseService } from "../database/database.service.js"
 import type {
@@ -8,9 +14,12 @@ import type {
   Notification,
   NotificationListResponse,
   NotificationMarkAllReadResponse,
+  NotificationRealtimeEvent,
   NotificationType,
   NotificationUnreadCountResponse,
 } from "./notifications.types.js"
+
+type NotificationStreamSubscriber = (event: MessageEvent) => void
 
 type NotificationRow = {
   id: string
@@ -103,6 +112,11 @@ const markAllNotificationsReadSql = `
 
 @Injectable()
 export class NotificationsService {
+  private readonly notificationSubscribers = new Map<
+    string,
+    Set<NotificationStreamSubscriber>
+  >()
+
   constructor(
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService
@@ -146,6 +160,44 @@ export class NotificationsService {
     }
   }
 
+  stream(userId: string): Observable<MessageEvent> {
+    return new Observable<MessageEvent>((subscriber) => {
+      const unsubscribe = this.subscribeToUser(userId, (event) => {
+        subscriber.next(event)
+      })
+      const keepAlive = setInterval(() => {
+        subscriber.next(
+          createRealtimeMessage({
+            type: "ping",
+            data: {
+              at: new Date().toISOString(),
+            },
+          })
+        )
+      }, 25_000)
+
+      void this.unreadCount(userId)
+        .then((data) => {
+          if (!subscriber.closed) {
+            subscriber.next(
+              createRealtimeMessage({
+                type: "snapshot",
+                data,
+              })
+            )
+          }
+        })
+        .catch((error: unknown) => {
+          subscriber.error(error)
+        })
+
+      return () => {
+        clearInterval(keepAlive)
+        unsubscribe()
+      }
+    })
+  }
+
   async markRead(
     userId: string,
     notificationId: string
@@ -159,7 +211,18 @@ export class NotificationsService {
       throw new NotFoundException("Notification not found.")
     }
 
-    return mapNotificationRow(row)
+    const notification = mapNotificationRow(row)
+
+    this.publishToUser(userId, async () => ({
+      type: "read",
+      data: {
+        notification,
+        notificationId: notification.id,
+        ...(await this.unreadCount(userId)),
+      },
+    }))
+
+    return notification
   }
 
   async markAllRead(userId: string): Promise<NotificationMarkAllReadResponse> {
@@ -167,9 +230,19 @@ export class NotificationsService {
       updated_count: number | string
     }>(markAllNotificationsReadSql, [userId])
 
-    return {
+    const result = {
       updatedCount: row ? Number(row.updated_count) : 0,
     }
+
+    this.publishToUser(userId, async () => ({
+      type: "read_all",
+      data: {
+        ...result,
+        ...(await this.unreadCount(userId)),
+      },
+    }))
+
+    return result
   }
 
   async createListingModerationDecisionNotification(
@@ -202,8 +275,72 @@ export class NotificationsService {
       throw new NotFoundException("Notification recipient not found.")
     }
 
-    return mapNotificationRow(row)
+    const notification = mapNotificationRow(row)
+
+    this.publishToUser(userId, async () => ({
+      type: "created",
+      data: {
+        notification,
+        ...(await this.unreadCount(userId)),
+      },
+    }))
+
+    return notification
   }
+
+  private subscribeToUser(
+    userId: string,
+    subscriber: NotificationStreamSubscriber
+  ) {
+    const subscribers =
+      this.notificationSubscribers.get(userId) ??
+      new Set<NotificationStreamSubscriber>()
+
+    subscribers.add(subscriber)
+    this.notificationSubscribers.set(userId, subscribers)
+
+    return () => {
+      subscribers.delete(subscriber)
+
+      if (subscribers.size === 0) {
+        this.notificationSubscribers.delete(userId)
+      }
+    }
+  }
+
+  private publishToUser(
+    userId: string,
+    createEvent: () => Promise<NotificationRealtimeEvent>
+  ) {
+    const subscribers = this.notificationSubscribers.get(userId)
+
+    if (!subscribers?.size) {
+      return
+    }
+
+    void createEvent()
+      .then((event) => {
+        const message = createRealtimeMessage(event)
+
+        for (const subscriber of subscribers) {
+          subscriber(message)
+        }
+      })
+      .catch(() => undefined)
+  }
+}
+
+function createRealtimeMessage(event: NotificationRealtimeEvent): MessageEvent {
+  return {
+    data: event.data,
+    id: createRealtimeEventId(),
+    retry: 3_000,
+    type: event.type,
+  }
+}
+
+function createRealtimeEventId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
 }
 
 function mapNotificationRow(row: NotificationRow): Notification {

@@ -10,6 +10,7 @@ non critici. Le preferenze email non disattivano le notifiche in-app.
 - `GET /notifications`: lista notifiche dell'utente autenticato con `page`,
   `pageSize` e `unreadOnly`.
 - `GET /notifications/unread-count`: restituisce il conteggio non lette.
+- `GET /notifications/stream`: stream SSE autenticato per eventi real-time.
 - `POST /notifications/:notificationId/read`: marca una notifica posseduta
   come letta.
 - `POST /notifications/read-all`: marca tutte le notifiche non lette come
@@ -46,6 +47,11 @@ Le notifiche da segnalazione includono anche `reportId` e
 - `/account/notifications` permette di marcare una singola notifica come letta
   e di marcare tutte le notifiche non lette tramite gli endpoint `POST`
   esistenti.
+- il layout globale monta un provider client che apre
+  `/api/notifications/stream`, route Next same-origin che inoltra al backend
+  con il bearer token letto dal cookie `aug_session`;
+- l'header mostra un badge live sull'area account e una notifica visuale quando
+  arriva un nuovo evento.
 
 ## Requisito real-time
 
@@ -55,21 +61,27 @@ refresh manuale. Il fallback polling o server-rendered serve solo per
 resilienza, recupero dopo disconnessione e primo caricamento, non come
 meccanismo principale.
 
-Target tecnico da implementare nel prossimo round:
+Implementato per il giro locale:
 
-- canale autenticato real-time, preferibilmente SSE per semplicita locale e
+- canale autenticato real-time SSE per semplicita locale e
   compatibilita con Next server-rendered;
 - evento iniziale con conteggio non lette e successivi eventi `created`,
   `read`, `read_all`;
-- store UI condiviso per badge, dashboard e inbox notifiche;
-- riconnessione con recupero dal `lastEventId` o fallback a
+- provider UI condiviso per badge e avviso live; le viste account vengono
+  rinfrescate via `router.refresh()` quando arriva un evento;
+- riconnessione automatica nativa di `EventSource`; il fallback affidabile resta
   `GET /notifications`;
-- copertura smoke su nuova notifica ricevuta senza refresh della pagina.
+- copertura smoke su nuova notifica ricevuta senza refresh della pagina durante
+  approvazione moderatore.
+
+Nota produzione: il fan-out real-time ora e' in memoria nel processo API, quindi
+va bene per demo locale e singola istanza. Prima di scalare su piu istanze va
+sostituito o affiancato con Redis Pub/Sub, stream Redis o broker equivalente.
 
 ## Prossimo target
 
 - Aggiungere notifica per annuncio inviato a revisione.
-- Aggiungere notifica o stato UI dopo approvazione pubblicazione annuncio.
-- Implementare canale real-time applicativo per tutte le notifiche.
+- Aggiungere notifiche in-app per contatto proprietario e altri eventi prodotto
+  che oggi inviano solo email o cambiano stato UI.
 - Mantenere la inbox come sorgente affidabile anche se il canale real-time non
   e' disponibile.

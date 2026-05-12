@@ -53,6 +53,17 @@ describe("NotificationsController", () => {
     expect(notificationsService.unreadCount).toHaveBeenCalledWith("user-id")
   })
 
+  it("opens the authenticated notification stream", () => {
+    const stream = { subscribe: vi.fn() }
+    const notificationsService = {
+      stream: vi.fn().mockReturnValue(stream),
+    } as unknown as NotificationsService
+    const controller = new NotificationsController(notificationsService)
+
+    expect(controller.stream(createAuth())).toBe(stream)
+    expect(notificationsService.stream).toHaveBeenCalledWith("user-id")
+  })
+
   it("validates notification ids before marking read", async () => {
     const notificationsService = {
       markRead: vi.fn().mockResolvedValue({ id: "notification-id" }),

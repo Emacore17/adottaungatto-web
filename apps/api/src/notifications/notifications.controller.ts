@@ -6,12 +6,15 @@ import {
   Param,
   Post,
   Query,
+  Sse,
   UseGuards,
+  type MessageEvent,
 } from "@nestjs/common"
 import {
   notificationIdParamSchema,
   notificationListQuerySchema,
 } from "@workspace/validation"
+import type { Observable } from "rxjs"
 import { ZodError } from "zod"
 
 import type { CurrentAuthSessionResponse } from "../auth/auth.types.js"
@@ -46,6 +49,14 @@ export class NotificationsController {
   @Get("unread-count")
   async unreadCount(@CurrentAuth() auth: CurrentAuthSessionResponse) {
     return this.notificationsService.unreadCount(auth.user.id)
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Sse("stream")
+  stream(
+    @CurrentAuth() auth: CurrentAuthSessionResponse
+  ): Observable<MessageEvent> {
+    return this.notificationsService.stream(auth.user.id)
   }
 
   @UseGuards(BearerAuthGuard)

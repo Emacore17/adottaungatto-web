@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
+import { RealtimeNotificationBadge } from "@/components/layout/realtime-notification-badge"
 import { SiteLogoLink } from "@/components/layout/site-logo-link"
 import {
   isActiveNavigationItem,
@@ -24,6 +25,7 @@ import {
   type SiteNavigationIcon,
   type SiteNavigationItem,
 } from "@/components/layout/site-navigation"
+import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 import { Separator } from "@workspace/ui/components/separator"
 import { cn } from "@workspace/ui/lib/utils"
@@ -278,7 +280,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
                       <span className="min-w-0 flex-1">
                         <span
                           className={cn(
-                            "block text-[1rem] font-semibold tracking-normal",
+                            "flex items-center gap-2 text-[1rem] font-semibold tracking-normal",
                             isAccent
                               ? "text-primary-foreground"
                               : isActive
@@ -286,7 +288,10 @@ function MobileNavigation({ items }: MobileNavigationProps) {
                                 : "text-foreground"
                           )}
                         >
-                          {item.label}
+                          <span>{item.label}</span>
+                          {item.href === routes.account ? (
+                            <RealtimeNotificationBadge />
+                          ) : null}
                         </span>
                         <span
                           className={cn(

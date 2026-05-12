@@ -125,9 +125,11 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 67. Fatto: aggiungere carosello immagini nel dettaglio annuncio pubblico.
 68. Fatto: estendere smoke upload annuncio con piu immagini reali da
     `immagini-gattini/` quando disponibili.
-69. Implementare notifiche real-time applicative per tutte le funzionalita che
-    generano eventi utente.
-70. Estendere area admin/moderazione separata e protetta.
+69. Fatto: implementare canale notifiche real-time applicative per tutti i
+    record `notifications` creati o aggiornati.
+70. Estendere notifiche in-app real-time a invio a revisione, contatto
+    proprietario e altri eventi prodotto che oggi non creano ancora notifiche.
+71. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione
 

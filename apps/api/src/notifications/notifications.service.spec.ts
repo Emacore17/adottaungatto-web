@@ -70,6 +70,85 @@ describe("NotificationsService", () => {
     })
   })
 
+  it("streams an initial unread count snapshot", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([{ unread_count: "2" }]),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+    const events: unknown[] = []
+
+    const subscription = service.stream("user-id").subscribe((event) => {
+      events.push(event)
+    })
+
+    await nextTick()
+    subscription.unsubscribe()
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        data: {
+          unreadCount: 2,
+        },
+        type: "snapshot",
+      })
+    )
+  })
+
+  it("streams created notifications to the owner", async () => {
+    const databaseService = {
+      queryRows: vi.fn((sql: string) => {
+        if (sql.includes("insert into notifications")) {
+          return Promise.resolve([
+            {
+              id: "notification-id",
+              type: "listing_moderation_decision",
+              payload: {
+                listingId: "listing-id",
+              },
+              read_at: null,
+              created_at: "2026-05-01T10:00:00.000Z",
+            },
+          ])
+        }
+
+        return Promise.resolve([{ unread_count: "1" }])
+      }),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+    const events: unknown[] = []
+    const subscription = service.stream("user-id").subscribe((event) => {
+      events.push(event)
+    })
+
+    await nextTick()
+    await service.createListingModerationDecisionNotification("user-id", {
+      caseId: "case-id",
+      decision: "approved",
+      listingId: "listing-id",
+      listingSlug: "gattino-a-roma",
+      listingTitle: "Gattino a Roma",
+      reasonCode: "policy_ok",
+      reasonText: null,
+    })
+    await nextTick()
+    subscription.unsubscribe()
+
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          notification: expect.objectContaining({
+            id: "notification-id",
+            payload: {
+              listingId: "listing-id",
+            },
+          }),
+          unreadCount: 1,
+        }),
+        type: "created",
+      })
+    )
+  })
+
   it("marks a notification as read", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([
@@ -162,3 +241,9 @@ describe("NotificationsService", () => {
     })
   })
 })
+
+function nextTick() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0)
+  })
+}

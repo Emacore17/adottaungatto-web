@@ -88,7 +88,8 @@ La demo include:
 - aggiornamento profilo e preferenze email; Fatto via `PATCH /users/me`,
   `PATCH /users/me/notification-preferences` e pagina `/account/settings`.
 - creazione annuncio completa;
-- upload immagine; Fatto con immagine PNG sintetica deterministica.
+- upload immagine; Fatto con immagini reali da `immagini-gattini/` quando
+  disponibili e fallback sintetico solo se mancano fixture locali.
 - processing immagine o fixture immagine pronta; Fatto tramite worker locale.
 - invio a revisione riuscito; Fatto.
 - login admin e coda `pending_review`; Fatto.
@@ -109,6 +110,9 @@ La demo include:
 - dettaglio annuncio pubblicato; Fatto con verifica del carosello immagini e
   conteggio foto dopo approvazione moderatore.
 - notifica generata; Fatto per decisione di moderazione approvata.
+- notifica real-time; Fatto aprendo lo stream web
+  `/api/notifications/stream` prima dell'approvazione moderatore e verificando
+  l'evento `created` senza refresh.
 - accesso negato tra utenti diversi; Fatto per bozza, immagini bozza,
   preferiti e notifiche. Da estendere ai contatti quando saranno esposti in
   una vista proprietario/admin.

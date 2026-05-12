@@ -36,7 +36,8 @@ Un annuncio e' pubblico solo se:
    `GET /moderation/listings/pending-review`.
 5. Il moderatore approva, rifiuta o sospende.
 6. Ogni decisione salva motivazione e audit log.
-7. Il proprietario riceve notifica.
+7. Il proprietario riceve notifica in-app real-time ed email se le preferenze
+   lo consentono.
 
 ## Coda iniziale
 
@@ -93,7 +94,8 @@ Ogni decisione:
   - al proprietario dell'annuncio con esito e motivazione;
   - ai reporter collegati ai report attivi chiusi dalla decisione.
 - crea notifiche in-app per proprietario e reporter collegati,
-  indipendentemente dalle preferenze email.
+  indipendentemente dalle preferenze email; in locale vengono pubblicate anche
+  sullo stream SSE `/notifications/stream`.
 
 Effetti sugli annunci:
 

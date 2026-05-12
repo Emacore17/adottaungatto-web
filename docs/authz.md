@@ -105,6 +105,8 @@ Endpoint iniziali:
   paginabili e filtrabili su non lette;
 - `GET /notifications/unread-count`: restituisce il conteggio delle notifiche
   non lette dell'utente autenticato;
+- `GET /notifications/stream`: apre uno stream SSE autenticato per snapshot
+  conteggio e eventi `created`, `read`, `read_all`;
 - `POST /notifications/:notificationId/read`: marca come letta una notifica
   posseduta dall'utente autenticato;
 - `POST /notifications/read-all`: marca come lette tutte le notifiche non
@@ -263,6 +265,8 @@ Centro notifiche in-app:
 - ogni utente vede e modifica solo le proprie notifiche;
 - la lista supporta `page`, `pageSize` e `unreadOnly`;
 - il conteggio non lette e' disponibile separatamente per badge UI;
+- lo stream real-time usa lo stesso guard bearer e pubblica solo eventi
+  dell'utente autenticato;
 - le notifiche iniziali sono generate dagli esiti di moderazione annuncio e
   dagli aggiornamenti sulle segnalazioni.
 

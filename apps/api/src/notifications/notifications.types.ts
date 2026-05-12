@@ -29,6 +29,35 @@ export type NotificationMarkAllReadResponse = {
   updatedCount: number
 }
 
+export type NotificationRealtimeEvent =
+  | {
+      type: "snapshot"
+      data: NotificationUnreadCountResponse
+    }
+  | {
+      type: "created"
+      data: NotificationUnreadCountResponse & {
+        notification: Notification
+      }
+    }
+  | {
+      type: "read"
+      data: NotificationUnreadCountResponse & {
+        notification: Notification
+        notificationId: string
+      }
+    }
+  | {
+      type: "read_all"
+      data: NotificationUnreadCountResponse & NotificationMarkAllReadResponse
+    }
+  | {
+      type: "ping"
+      data: {
+        at: string
+      }
+    }
+
 export type ListingModerationDecisionNotificationPayload = {
   caseId: string
   decision: "approved" | "rejected" | "suspended"

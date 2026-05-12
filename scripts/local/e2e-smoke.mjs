@@ -520,20 +520,47 @@ try {
   )
   pass("demo moderation submitted case", `case=${submittedCase.case.id}`)
 
-  const approval = await api(
-    "POST",
-    `/moderation/listings/cases/${submittedCase.case.id}/approve`,
-    {
-      reasonCode: "policy_ok",
-    },
-    adminToken
+  const notificationStream = await openWebNotificationStream(token)
+  const realtimeNotificationPromise = readWebNotificationEvent(
+    notificationStream,
+    (event) =>
+      event.type === "created" &&
+      event.data?.notification?.type === "listing_moderation_decision" &&
+      event.data?.notification?.payload?.listingId === submittedListingId &&
+      event.data?.notification?.payload?.decision === "approved"
   )
+  let approval = null
+
+  try {
+    approval = await api(
+      "POST",
+      `/moderation/listings/cases/${submittedCase.case.id}/approve`,
+      {
+        reasonCode: "policy_ok",
+      },
+      adminToken
+    )
+  } catch (error) {
+    notificationStream.close()
+    realtimeNotificationPromise.catch(() => undefined)
+
+    throw error
+  }
+
   check(
     "demo moderation approve",
     approval.decided === true &&
       approval.listing.id === submittedListingId &&
       approval.listing.moderationStatus === "approved" &&
       approval.listing.lifecycleStatus === "published"
+  )
+  const realtimeNotification = await realtimeNotificationPromise.finally(() => {
+    notificationStream.close()
+  })
+  check(
+    "web notification realtime stream",
+    realtimeNotification.data?.notification?.payload?.listingId ===
+      submittedListingId
   )
 
   const publishedListing = await api("GET", `/listings/${submittedListingId}`)
@@ -959,6 +986,143 @@ async function webText(path, sessionToken, label) {
   check(label, response.status === 200, `status=${response.status}`)
 
   return response.text()
+}
+
+async function openWebNotificationStream(sessionToken) {
+  const controller = new AbortController()
+  const response = await fetch(`${webBaseUrl}/api/notifications/stream`, {
+    headers: {
+      Accept: "text/event-stream",
+      Cookie: `aug_session=${sessionToken}`,
+    },
+    signal: controller.signal,
+  })
+
+  check(
+    "web notification stream open",
+    response.status === 200 && Boolean(response.body),
+    `status=${response.status}`
+  )
+  check(
+    "web notification stream content type",
+    response.headers.get("content-type")?.includes("text/event-stream"),
+    `content-type=${response.headers.get("content-type") ?? "none"}`
+  )
+
+  const reader = response.body.getReader()
+
+  return {
+    close() {
+      controller.abort()
+      void reader.cancel().catch(() => undefined)
+    },
+    reader,
+  }
+}
+
+async function readWebNotificationEvent(stream, predicate) {
+  const timeoutMs = Number(process.env.SMOKE_NOTIFICATION_TIMEOUT_MS ?? 15_000)
+  const deadline = Date.now() + timeoutMs
+  const decoder = new TextDecoder()
+  let buffer = ""
+
+  while (Date.now() < deadline) {
+    const remaining = Math.max(1, deadline - Date.now())
+    const chunk = await Promise.race([
+      stream.reader.read(),
+      sleep(remaining).then(() => ({ timeout: true })),
+    ])
+
+    if (chunk.timeout) {
+      break
+    }
+
+    if (chunk.done) {
+      throw new Error("FAIL web notification realtime stream closed")
+    }
+
+    buffer += decoder.decode(chunk.value, { stream: true })
+
+    let separator = findSseEventSeparator(buffer)
+
+    while (separator) {
+      const rawEvent = buffer.slice(0, separator.index)
+      buffer = buffer.slice(separator.index + separator.length)
+
+      const event = parseSseEvent(rawEvent)
+
+      if (event && predicate(event)) {
+        return event
+      }
+
+      separator = findSseEventSeparator(buffer)
+    }
+  }
+
+  throw new Error(
+    `FAIL web notification realtime stream timeout after ${timeoutMs}ms`
+  )
+}
+
+function findSseEventSeparator(buffer) {
+  const separators = [
+    {
+      index: buffer.indexOf("\r\n\r\n"),
+      length: 4,
+    },
+    {
+      index: buffer.indexOf("\n\n"),
+      length: 2,
+    },
+  ].filter((separator) => separator.index >= 0)
+
+  return separators.sort((left, right) => left.index - right.index)[0] ?? null
+}
+
+function parseSseEvent(rawEvent) {
+  const lines = rawEvent.split(/\r?\n/)
+  const dataLines = []
+  let type = "message"
+
+  for (const line of lines) {
+    if (!line || line.startsWith(":")) {
+      continue
+    }
+
+    const separatorIndex = line.indexOf(":")
+    const field =
+      separatorIndex >= 0 ? line.slice(0, separatorIndex) : line.trim()
+    const value =
+      separatorIndex >= 0
+        ? line.slice(separatorIndex + 1).replace(/^ /, "")
+        : ""
+
+    if (field === "event") {
+      type = value
+    }
+
+    if (field === "data") {
+      dataLines.push(value)
+    }
+  }
+
+  if (dataLines.length === 0) {
+    return null
+  }
+
+  const dataText = dataLines.join("\n")
+
+  try {
+    return {
+      data: JSON.parse(dataText),
+      type,
+    }
+  } catch {
+    return {
+      data: dataText,
+      type,
+    }
+  }
 }
 
 async function webListingImages() {

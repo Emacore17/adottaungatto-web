@@ -3,11 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 
+import { RealtimeNotificationBadge } from "@/components/layout/realtime-notification-badge"
 import {
   isActiveNavigationItem,
   isCurrentNavigationItem,
   type SiteNavigationItem,
 } from "@/components/layout/site-navigation"
+import { routes } from "@/lib/routes"
 import { cn } from "@workspace/ui/lib/utils"
 
 type DesktopNavigationProps = {
@@ -50,6 +52,9 @@ function DesktopNavigation({ align = "start", items }: DesktopNavigationProps) {
                 )}
               >
                 {item.label}
+                {item.href === routes.account ? (
+                  <RealtimeNotificationBadge className="ml-2" />
+                ) : null}
               </Link>
             </li>
           )

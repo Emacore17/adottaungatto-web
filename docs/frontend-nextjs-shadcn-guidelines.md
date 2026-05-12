@@ -21,7 +21,9 @@ client API, SEO base, sitemap, robots, JSON-LD, dashboard account operativa con
 riepilogo, azioni rapide, bozze/preferiti/notifiche, inbox contatti ricevuti,
 form contatto proprietario e pagina `/moderation` con decisioni base motivate
 sono presenti.
-Il client API restituisce messaggi di errore gia' normalizzati per la UI.
+Il client API restituisce messaggi di errore gia' normalizzati per la UI. Le
+notifiche in-app hanno un provider real-time globale via SSE same-origin, badge
+account live e avviso visuale su nuova notifica.
 La priorita ora e' consolidare i flussi operativi autenticati senza rompere la
 separazione Server/Client Components.
 
@@ -282,7 +284,9 @@ server-only.
 - Usare `next/image` e dimensioni/aspect-ratio stabili.
 - Evitare librerie animation pesanti finche CSS/Tailwind bastano.
 - Misurare pagine pubbliche con Lighthouse o Playwright quando la UI cresce.
-- Non aggiungere provider globali se servono solo a una sezione.
+- Non aggiungere provider globali se servono solo a una sezione. Il provider
+  notifiche real-time e' globale per requisito applicativo: deve restare una
+  foglia client piccola e autenticata via route proxy same-origin.
 
 ## TypeScript
 
@@ -321,8 +325,8 @@ server-only.
 14. Fatto: aggiungere galleria/stato immagini bozza con eliminazione e
     riordino.
 15. Fatto: aggiungere carosello immagini nel dettaglio annuncio pubblico.
-16. Aggiungere notifiche real-time applicative con componente client foglia e
-    fallback server-rendered.
+16. Fatto: aggiungere notifiche real-time applicative con componente client
+    foglia, route proxy same-origin e fallback server-rendered/API.
 17. Aggiungere test leggeri per helper, view model e route critiche.
 18. Solo dopo, introdurre animazioni e componenti avanzati.
 

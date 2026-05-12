@@ -34,8 +34,9 @@ mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
 e la pagina impostazioni profilo, la dashboard account operativa, la inbox
 contatti ricevuti lato proprietario e i messaggi di errore account leggibili
 sono funzionanti in locale. Il contatto proprietario supporta anche il consenso
-separato per condividere il telefono del richiedente. Il punto piu urgente ora
-e' implementare notifiche real-time applicative.
+separato per condividere il telefono del richiedente. Le notifiche in-app hanno
+un canale real-time SSE locale con badge live e smoke dedicato. Il punto piu
+urgente ora e' estendere gli eventi prodotto che generano notifiche in-app.
 
 ## Regole per ogni round
 
@@ -197,9 +198,10 @@ Task:
 - Fatto: aggiungere consenso esplicito per condividere telefono del
   richiedente;
 - Fatto: mantenere email proprietario nascosta nella UI pubblica;
-- implementare notifiche real-time applicative con fallback polling solo per
-  resilienza;
-- notificare proprietario su invio a revisione, approvazione e contatto;
+- Fatto: implementare notifiche real-time applicative con fallback server/API
+  solo per resilienza locale;
+- notificare proprietario su invio a revisione e contatto;
+- Fatto: notificare proprietario su approvazione, con consegna real-time;
 - Fatto: documentare limiti anti-abuso e preferenze contatto;
 - Fatto: inbox account per richieste ricevute con email richiedente visibile
   solo dopo consenso;
@@ -215,6 +217,13 @@ Avanzamento 12 maggio 2026:
   `phone_shared = true`.
 - Fatto: lo smoke E2E copre richiesta contatto con consenso telefono e
   visibilita lato proprietario.
+- Fatto: `GET /notifications/stream` espone SSE autenticato; Next proxy
+  `/api/notifications/stream` usa il cookie sessione senza esporre bearer token
+  al browser.
+- Fatto: il provider frontend aggiorna badge account, mostra avviso live e
+  rinfresca le viste account su eventi `created`, `read` e `read_all`.
+- Fatto: lo smoke E2E apre lo stream notifiche e verifica l'evento real-time
+  durante approvazione moderatore.
 
 Done:
 
@@ -256,5 +265,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone E implementando notifiche real-time applicative via
-canale autenticato, con fallback polling solo per resilienza.
+Proseguire con Milestone E aggiungendo notifiche in-app real-time per invio a
+revisione, contatto proprietario e altri eventi prodotto che oggi non creano
+ancora record `notifications`.

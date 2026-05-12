@@ -128,8 +128,9 @@ chiudono le segnalazioni collegate come `resolved` o `dismissed` e inviano
 notifiche email a proprietario e reporter. Il frontend ha una pagina
 `/moderation` iniziale, protetta da login, `noindex`, collegata alle code API
 e dotata di azioni base approva/rifiuta/sospendi con motivo obbligatorio.
-Restano da estendere strumenti interni, template di motivazione e workflow
-operativi piu avanzati.
+Le decisioni di moderazione creano anche notifiche in-app consegnate via stream
+real-time locale. Restano da estendere strumenti interni, template di
+motivazione e workflow operativi piu avanzati.
 
 ## Milestone 7 - Contatti, preferiti e notifiche
 
@@ -161,8 +162,11 @@ abilitare/disabilitare il contatto proprietario. Le mutazioni account coprono
 rimozione preferiti, lettura notifiche, cancellazione bozze ed editor bozze con
 creazione/modifica/upload, galleria immagini con stato, eliminazione,
 riordino/copertina, invio e carosello immagini nel dettaglio pubblico. Restano
-da completare notifiche real-time applicative, eventuali canali aggiuntivi o
-finestre orarie per il contatto, se previsti dal prodotto.
+presenti il canale notifiche real-time SSE, il provider frontend globale, il
+badge account live e lo smoke su notifica ricevuta senza refresh. Restano da
+estendere le notifiche in-app real-time agli eventi prodotto non ancora
+notificati, eventuali canali aggiuntivi o finestre orarie per il contatto, se
+previsti dal prodotto.
 
 ## Milestone 8 - Hardening e deploy
 
