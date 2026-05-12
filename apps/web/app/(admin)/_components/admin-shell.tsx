@@ -24,9 +24,8 @@ function AdminShell({ children }: AdminShellProps) {
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <SiteLogoLink
-                showLabel
                 className="shrink-0"
-                markClassName="size-9"
+                logoClassName="h-8 max-w-[10.5rem]"
               />
               <Separator
                 orientation="vertical"

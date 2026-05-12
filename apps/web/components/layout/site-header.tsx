@@ -20,11 +20,16 @@ async function SiteHeader() {
   const mobileAction = getMobileAction(navigation.right)
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 [backface-visibility:hidden] [transform:translateZ(0)] transition-[padding] duration-300 ease-out sm:px-6 lg:px-8 xl:transition-[padding,top] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)]">
+    <header className="fixed inset-x-0 top-0 z-50 [transform:translateZ(0)] px-4 pt-4 transition-[padding] duration-300 ease-out [backface-visibility:hidden] sm:px-6 lg:px-8 xl:transition-[padding,top] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)]">
       <div className="mx-auto w-full max-w-[96rem] transition-all duration-300 ease-out xl:origin-top xl:scale-[0.995] xl:transition-[max-width,transform] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)] xl:will-change-[max-width,transform] 2xl:max-w-[100rem]">
         <div className="site-header-glass relative rounded-[2rem] border border-white/14 bg-black/34 px-4 py-3 shadow-[0_24px_80px_-40px_rgba(15,23,42,0.8)] transition-all duration-300 ease-out supports-backdrop-filter:backdrop-blur-2xl sm:px-6 xl:origin-top xl:translate-y-0 xl:px-5 xl:transition-[border-radius,box-shadow,background-color,padding,transform] xl:duration-500 xl:ease-[cubic-bezier(0.22,1,0.36,1)] xl:will-change-[border-radius,box-shadow,background-color,padding] 2xl:px-6">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 lg:hidden">
-            <div className="flex min-w-0 justify-start">
+          <div className="flex items-center justify-between gap-3 lg:hidden">
+            <SiteLogoLink
+              className="min-w-0 shrink"
+              logoClassName="h-9 max-w-[42vw] max-[360px]:h-8 max-[360px]:max-w-[7.5rem] sm:h-10 sm:max-w-[11rem]"
+            />
+
+            <div className="flex shrink-0 items-center justify-end gap-2">
               {mobileAction ? (
                 <Button
                   asChild
@@ -37,14 +42,7 @@ async function SiteHeader() {
                   <Link href={mobileAction.href}>{mobileAction.label}</Link>
                 </Button>
               ) : null}
-            </div>
 
-            <SiteLogoLink
-              className="justify-self-center"
-              markClassName="size-10 max-[350px]:size-9"
-            />
-
-            <div className="flex min-w-0 justify-end">
               <MobileNavigation items={navigation.mobile} />
             </div>
           </div>
@@ -56,7 +54,7 @@ async function SiteHeader() {
 
             <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
               <div className="pointer-events-auto">
-                <SiteLogoLink markClassName="size-11" />
+                <SiteLogoLink logoClassName="h-10 max-w-[12rem] xl:h-11 xl:max-w-[13rem]" />
               </div>
             </div>
 

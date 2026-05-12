@@ -1,21 +1,19 @@
 import Link from "next/link"
-import { CatIcon } from "lucide-react"
+import Image from "next/image"
 
 import { routes } from "@/lib/routes"
 import { cn } from "@workspace/ui/lib/utils"
 
 type SiteLogoLinkProps = {
   className?: string
-  markClassName?: string
-  showLabel?: boolean
+  logoClassName?: string
   onClick?: () => void
 }
 
 function SiteLogoLink({
   className,
-  markClassName,
+  logoClassName,
   onClick,
-  showLabel = false,
 }: SiteLogoLinkProps) {
   return (
     <Link
@@ -23,23 +21,24 @@ function SiteLogoLink({
       aria-label="adottaungatto.it"
       onClick={onClick}
       className={cn(
-        "inline-flex min-w-0 items-center gap-2 rounded-full p-1 transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+        "inline-flex min-w-0 items-center rounded-sm transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
         className
       )}
     >
-      <span
+      <span className="sr-only">adottaungatto.it</span>
+      <Image
+        src="/logo.svg"
+        alt=""
+        aria-hidden="true"
+        width={2172}
+        height={724}
+        preload
+        unoptimized
         className={cn(
-          "flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_16px_36px_-24px_color-mix(in_oklab,var(--color-primary)_82%,black)] transition-[background-color,color,box-shadow]",
-          markClassName
+          "h-9 w-auto max-w-[12rem] shrink-0 object-contain sm:h-10",
+          logoClassName
         )}
-      >
-        <CatIcon aria-hidden="true" className="size-5" />
-      </span>
-      {showLabel ? (
-        <span className="truncate font-heading text-sm font-semibold tracking-normal">
-          adottaungatto.it
-        </span>
-      ) : null}
+      />
     </Link>
   )
 }
