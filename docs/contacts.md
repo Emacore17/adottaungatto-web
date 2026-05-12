@@ -10,12 +10,19 @@ proprietario nella UI o nella risposta API.
 
 - `POST /contacts/listings/:listingId`: invia una richiesta al proprietario di
   un annuncio pubblicato e approvato.
+- `GET /contacts/me/received`: lista paginata delle richieste ricevute per gli
+  annunci posseduti dall'utente autenticato.
 
-Payload:
+Payload invio:
 
 - `message`: testo tra 20 e 2000 caratteri;
 - `shareEmail`: deve essere `true`, per consenso esplicito alla risposta via
   email.
+
+Query lista ricevuti:
+
+- `page`: pagina, default `1`;
+- `pageSize`: elementi per pagina, default `20`, massimo `50`.
 
 ## Regole
 
@@ -27,6 +34,10 @@ Payload:
 - L'email del proprietario non viene restituita al richiedente.
 - L'email del richiedente viene usata come `Reply-To` solo dopo consenso
   esplicito nel form.
+- La lista dei contatti ricevuti mostra solo richieste dove l'utente
+  autenticato e' `owner_user_id`.
+- La lista dei contatti ricevuti mostra l'email del richiedente solo quando
+  `email_shared = true`.
 - Ogni richiesta viene tracciata in `listing_contact_requests` con stato
   `pending`, `sent` o `failed`.
 - Il proprietario puo disattivare le richieste di contatto per singola bozza o
@@ -49,6 +60,9 @@ Payload:
 - Se l'utente non e' autenticato, la card porta al login con `next` sulla scheda.
 - Se l'utente e' autenticato, il form invia tramite server action e mostra un
   esito locale tramite query string.
+- L'area account espone `/account/contacts` con le richieste ricevute, annuncio
+  collegato, messaggio, consenso email e indirizzo del richiedente quando
+  condiviso.
 
 ## Limiti noti
 
@@ -56,3 +70,5 @@ Payload:
 - Manca il consenso granulare per condividere telefono o altri dati di contatto
   sensibili del richiedente.
 - Non esiste ancora una messaggistica interna: la risposta avviene via email.
+- Non esiste ancora una vista admin dedicata ai contatti: l'accesso operativo e'
+  solo del proprietario.

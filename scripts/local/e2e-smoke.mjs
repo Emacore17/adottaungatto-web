@@ -11,7 +11,31 @@ const storageBucket =
   "adottaungatto-local"
 
 const password = "Password!12345"
+const demoPassword = "demo-password-123"
 const primaryEmail = `e2e.${Date.now()}@demo.adottaungatto.local`
+const demoOwnerAccounts = new Map([
+  [
+    "11111111-1111-4111-8111-111111111111",
+    {
+      email: "rifugio.torino@demo.adottaungatto.local",
+      password: demoPassword,
+    },
+  ],
+  [
+    "11111111-1111-4111-8111-111111111112",
+    {
+      email: "volontari.italia@demo.adottaungatto.local",
+      password: demoPassword,
+    },
+  ],
+  [
+    "11111111-1111-4111-8111-111111111113",
+    {
+      email: "marta.demo@demo.adottaungatto.local",
+      password: demoPassword,
+    },
+  ],
+])
 
 let token = null
 let otherToken = null
@@ -68,13 +92,13 @@ try {
   check("auth me", session.user.email === accountEmail)
 
   const otherLogin = await api("POST", "/auth/login", {
-    email: "marta.demo@demo.adottaungatto.local",
-    password: "demo-password-123",
+    email: "volontari.italia@demo.adottaungatto.local",
+    password: demoPassword,
   })
   otherToken = otherLogin.session.token
   check(
     "authz other login",
-    otherLogin.user.email === "marta.demo@demo.adottaungatto.local" &&
+    otherLogin.user.email === "volontari.italia@demo.adottaungatto.local" &&
       typeof otherToken === "string" &&
       otherToken.length > 0
   )
@@ -361,19 +385,70 @@ try {
   )
   check("like delete", removedLike.liked === false)
 
-  const contact = await api(
-    "POST",
-    `/contacts/listings/${listingId}`,
-    {
-      message:
-        "Ciao, vorrei ricevere informazioni per uno smoke test end to end.",
-      shareEmail: true,
-    },
-    token
-  )
+  const contactCase = await createSmokeContactRequest(token, [
+    session.user.id,
+    otherLogin.user.id,
+  ])
+  const contact = contactCase.contact
   check(
     "contact owner",
-    contact.sent === true && contact.request?.status === "sent"
+    contact.sent === true && contact.request?.status === "sent",
+    `listing=${contactCase.listing.id}`
+  )
+
+  const ownerAccount = demoOwnerAccounts.get(contactCase.listing.owner.id)
+  check(
+    "contact owner fixture account",
+    Boolean(ownerAccount),
+    `owner=${contactCase.listing.owner.id}`
+  )
+  const ownerLogin = await api("POST", "/auth/login", {
+    email: ownerAccount.email,
+    password: ownerAccount.password,
+  })
+  const ownerToken = ownerLogin.session.token
+  check(
+    "contact owner login",
+    ownerLogin.user.id === contactCase.listing.owner.id &&
+      typeof ownerToken === "string"
+  )
+
+  const receivedContacts = await api(
+    "GET",
+    "/contacts/me/received?page=1&pageSize=20",
+    undefined,
+    ownerToken
+  )
+  const receivedContact = receivedContacts.items.find(
+    (item) => item.id === contact.request.id
+  )
+  check(
+    "contact owner received list",
+    receivedContact?.listing.id === contactCase.listing.id &&
+      receivedContact?.requester.email === accountEmail &&
+      receivedContact?.emailShared === true
+  )
+
+  const otherReceivedContacts = await api(
+    "GET",
+    "/contacts/me/received?page=1&pageSize=20",
+    undefined,
+    otherToken
+  )
+  check(
+    "authz other contact received isolation",
+    !otherReceivedContacts.items.some((item) => item.id === contact.request.id)
+  )
+
+  const ownerContactsHtml = await webText(
+    "/account/contacts",
+    ownerToken,
+    "web account contacts"
+  )
+  check(
+    "web account contacts content",
+    ownerContactsHtml.includes("Contatti ricevuti") &&
+      ownerContactsHtml.includes(contactCase.listing.title)
   )
 
   const mailpit = await rawJson(`${mailpitBaseUrl}/api/v1/messages`)
@@ -424,6 +499,7 @@ try {
       accountHtml.includes("Azioni rapide")
   )
   await webPage("/account/settings", token, "web account settings")
+  await webPage("/account/contacts", token, "web account contacts requester")
   await webPage("/account/favorites", token, "web account favorites")
   await webPage("/account/notifications", token, "web account notifications")
   await webPage("/account/listings/drafts", token, "web account drafts")
@@ -621,8 +697,8 @@ async function createPrimaryAuth() {
     `retryAfterSeconds=${registration.data?.retryAfterSeconds ?? "unknown"}`
   )
   const login = await api("POST", "/auth/login", {
-    email: "volontari.italia@demo.adottaungatto.local",
-    password: "demo-password-123",
+    email: "marta.demo@demo.adottaungatto.local",
+    password: demoPassword,
   })
   pass("demo user login", `email=${login.user.email}`)
 
@@ -630,6 +706,58 @@ async function createPrimaryAuth() {
     email: login.user.email,
     token: login.session.token,
   }
+}
+
+async function createSmokeContactRequest(requesterToken, excludedOwnerIds) {
+  const excludedOwners = new Set(excludedOwnerIds)
+  const publicListings = await api("GET", "/listings?page=1&pageSize=20")
+  const candidates = publicListings.items.filter(
+    (item) =>
+      item.contactRequestsEnabled &&
+      item.owner?.id &&
+      !excludedOwners.has(item.owner.id) &&
+      demoOwnerAccounts.has(item.owner.id)
+  )
+
+  for (const candidate of candidates) {
+    const response = await apiResponse(
+      "POST",
+      `/contacts/listings/${candidate.id}`,
+      {
+        message:
+          "Ciao, vorrei ricevere informazioni per uno smoke test end to end.",
+        shareEmail: true,
+      },
+      requesterToken
+    )
+
+    if (response.ok) {
+      pass("contact listing selected", `listing=${candidate.id}`)
+
+      return {
+        contact: response.data,
+        listing: candidate,
+      }
+    }
+
+    if (
+      response.status === 400 ||
+      (response.status === 429 &&
+        response.data?.reason === "listing_contact_cooldown")
+    ) {
+      pass(
+        "contact listing skipped",
+        `listing=${candidate.id} status=${response.status}`
+      )
+      continue
+    }
+
+    throw new Error(
+      `POST ${apiBaseUrl}/contacts/listings/${candidate.id} failed: ${response.status} ${response.text}`
+    )
+  }
+
+  throw new Error("FAIL contact owner no contactable demo listing available")
 }
 
 async function apiResponse(method, path, body, bearerToken) {

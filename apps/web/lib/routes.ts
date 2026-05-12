@@ -56,6 +56,7 @@ export const routes = {
   accountDrafts: "/account/listings/drafts",
   accountDraftNew: "/account/listings/drafts/new",
   accountDraft: (id: string) => `/account/listings/drafts/${id}`,
+  accountContacts: "/account/contacts",
   accountFavorites: "/account/favorites",
   accountNotifications: "/account/notifications",
   accountSettings: "/account/settings",

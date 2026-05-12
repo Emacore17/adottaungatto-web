@@ -10,6 +10,76 @@ import type { MailService } from "../mail/mail.service.js"
 import { ContactsService } from "./contacts.service.js"
 
 describe("ContactsService", () => {
+  it("lists received contact requests for the owner only", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          total_count: 1,
+          id: "request-id",
+          listing_id: "listing-id",
+          listing_title: "Micia cerca casa",
+          requester_user_id: "requester-id",
+          requester_email: "requester@example.com",
+          requester_display_name_snapshot: "Requester",
+          message: "Ciao, vorrei avere informazioni sulla gatta.",
+          status: "sent",
+          email_shared: true,
+          created_at: "2026-04-01T12:00:00.000Z",
+          delivered_at: "2026-04-01T12:00:01.000Z",
+          failed_at: null,
+          failure_reason: null,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const mailService = {
+      sendListingContactRequest: vi.fn(),
+    } as unknown as MailService
+    const service = new ContactsService(databaseService, mailService)
+
+    await expect(
+      service.listReceivedContactRequests("owner-id", {
+        page: 1,
+        pageSize: 10,
+      })
+    ).resolves.toEqual({
+      items: [
+        {
+          id: "request-id",
+          listing: {
+            id: "listing-id",
+            title: "Micia cerca casa",
+          },
+          requester: {
+            id: "requester-id",
+            displayName: "Requester",
+            email: "requester@example.com",
+          },
+          message: "Ciao, vorrei avere informazioni sulla gatta.",
+          status: "sent",
+          emailShared: true,
+          createdAt: "2026-04-01T12:00:00.000Z",
+          deliveredAt: "2026-04-01T12:00:01.000Z",
+          failedAt: null,
+          failureReason: null,
+        },
+      ],
+      meta: {
+        page: 1,
+        pageSize: 10,
+        total: 1,
+        totalPages: 1,
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "where contact_request.owner_user_id = $1::uuid"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "owner-id",
+      10,
+      0,
+    ])
+  })
+
   it("creates and sends a contact request without exposing owner contact data", async () => {
     const databaseService = {
       queryRows: vi

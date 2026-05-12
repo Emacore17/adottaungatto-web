@@ -1,3 +1,5 @@
+export type ListingContactRequestStatus = "failed" | "pending" | "sent"
+
 export type ListingContactRequest = {
   id: string
   listingId: string
@@ -12,4 +14,34 @@ export type ListingContactRequest = {
 export type ListingContactRequestResponse = {
   sent: true
   request: ListingContactRequest
+}
+
+export type ReceivedListingContactRequest = {
+  id: string
+  listing: {
+    id: string
+    title: string
+  }
+  requester: {
+    id: string
+    displayName: string
+    email: string | null
+  }
+  message: string
+  status: ListingContactRequestStatus
+  emailShared: boolean
+  createdAt: string
+  deliveredAt: string | null
+  failedAt: string | null
+  failureReason: string | null
+}
+
+export type ReceivedListingContactRequestListResponse = {
+  items: ReceivedListingContactRequest[]
+  meta: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
 }

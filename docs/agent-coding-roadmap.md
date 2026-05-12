@@ -29,9 +29,10 @@ e ottenere una demo navigabile con:
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
 mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
-la pagina impostazioni profilo e la dashboard account operativa sono
-funzionanti in locale. Il punto piu urgente resta definire la gestione contatti
-lato account/admin e chiudere i messaggi di errore account.
+e la pagina impostazioni profilo, la dashboard account operativa e la inbox
+contatti ricevuti lato proprietario sono funzionanti in locale. Il punto piu
+urgente resta chiudere i messaggi di errore account e progettare i consensi
+granulari per contatti sensibili.
 
 ## Regole per ogni round
 
@@ -132,8 +133,8 @@ Task:
 - Fatto: aggiungere impostazioni profilo modificabili dall'utente;
 - Fatto: verificare ownership smoke su bozze, immagini, preferiti e
   notifiche;
-- estendere ownership e gestione contatti quando esistera' una superficie
-  account/admin dedicata;
+- Fatto: estendere ownership e gestione contatti con superficie account
+  proprietario `/account/contacts`;
 - Fatto: completare test authz smoke su accesso multi-utente e dati propri per
   bozze, immagini, preferiti e notifiche;
 - rendere i messaggi di errore account leggibili e non tecnici.
@@ -149,8 +150,9 @@ Avanzamento 12 maggio 2026:
 - Fatto: `/account` mostra riepilogo operativo, attivita prioritarie, profilo,
   azioni rapide, notifiche recenti, bozze e preferiti recenti.
 - Fatto: smoke E2E verifica i contenuti chiave della dashboard account.
-- Da fare: aggiungere superficie contatti per proprietario/admin e relativa
-  copertura authz.
+- Fatto: aggiunta lista owner `GET /contacts/me/received`, pagina
+  `/account/contacts` e smoke su isolamento owner.
+- Da fare: valutare vista admin contatti solo se serve per audit/supporto.
 - Da fare: rendere i messaggi di errore account leggibili e non tecnici.
 
 Done:
@@ -188,7 +190,11 @@ Task:
 - mantenere email proprietario nascosta nella UI pubblica;
 - progettare notifiche real-time o near-real-time con fallback polling;
 - notificare proprietario su invio a revisione, approvazione e contatto;
-- documentare limiti anti-abuso e preferenze contatto.
+- Fatto: documentare limiti anti-abuso e preferenze contatto;
+- Fatto: inbox account per richieste ricevute con email richiedente visibile
+  solo dopo consenso;
+- documentare e implementare consenso granulare per telefono o altri dati
+  sensibili.
 
 Done:
 
@@ -230,5 +236,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone C/E definendo la superficie contatti per proprietario
-o admin, cosi da coprire anche ownership e privacy dei contatti sensibili.
+Proseguire con Milestone C rendendo i messaggi di errore account leggibili e
+non tecnici, oppure con Milestone E progettando il consenso granulare per
+telefono e altri dati sensibili.

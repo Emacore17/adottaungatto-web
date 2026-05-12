@@ -2,14 +2,17 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Inject,
   Param,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common"
 import {
   listingContactCreateSchema,
   listingContactListingIdParamSchema,
+  listingContactRequestListQuerySchema,
 } from "@workspace/validation"
 import { ZodError } from "zod"
 
@@ -24,6 +27,29 @@ export class ContactsController {
     @Inject(ContactsService)
     private readonly contactsService: ContactsService
   ) {}
+
+  @UseGuards(BearerAuthGuard)
+  @Get("me/received")
+  async listReceivedContactRequests(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Query() query: Record<string, unknown>
+  ) {
+    try {
+      return this.contactsService.listReceivedContactRequests(
+        auth.user.id,
+        listingContactRequestListQuerySchema.parse(query)
+      )
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException({
+          message: "Invalid contact request list query.",
+          issues: error.issues,
+        })
+      }
+
+      throw error
+    }
+  }
 
   @UseGuards(BearerAuthGuard)
   @Post("listings/:listingId")

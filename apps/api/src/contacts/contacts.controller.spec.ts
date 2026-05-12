@@ -6,6 +6,43 @@ import { ContactsController } from "./contacts.controller.js"
 import type { ContactsService } from "./contacts.service.js"
 
 describe("ContactsController", () => {
+  it("validates the received contact request list query and delegates", async () => {
+    const contactsService = {
+      listReceivedContactRequests: vi.fn().mockResolvedValue({
+        items: [],
+        meta: {
+          page: 1,
+          pageSize: 10,
+          total: 0,
+          totalPages: 0,
+        },
+      }),
+    } as unknown as ContactsService
+    const controller = new ContactsController(contactsService)
+
+    await expect(
+      controller.listReceivedContactRequests(createAuth(), {
+        page: "1",
+        pageSize: "10",
+      })
+    ).resolves.toEqual({
+      items: [],
+      meta: {
+        page: 1,
+        pageSize: 10,
+        total: 0,
+        totalPages: 0,
+      },
+    })
+    expect(contactsService.listReceivedContactRequests).toHaveBeenCalledWith(
+      "requester-id",
+      {
+        page: 1,
+        pageSize: 10,
+      }
+    )
+  })
+
   it("validates params and payload before contacting the owner", async () => {
     const contactsService = {
       contactListingOwner: vi.fn().mockResolvedValue({

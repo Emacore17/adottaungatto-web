@@ -6,6 +6,7 @@ import {
   FileTextIcon,
   HeartIcon,
   ListChecksIcon,
+  MailIcon,
   PlusIcon,
   SettingsIcon,
   UserIcon,
@@ -420,6 +421,12 @@ function QuickActionsCard() {
           <Link href={routes.accountDrafts}>
             <FileTextIcon data-icon="inline-start" aria-hidden="true" />
             Annunci in lavorazione
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-start">
+          <Link href={routes.accountContacts}>
+            <MailIcon data-icon="inline-start" aria-hidden="true" />
+            Contatti ricevuti
           </Link>
         </Button>
         <Button asChild variant="outline" className="justify-start">

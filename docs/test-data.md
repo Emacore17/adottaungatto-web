@@ -98,7 +98,11 @@ La demo include:
 - annuncio pubblicato visibile; Fatto via dettaglio pubblico dopo approvazione.
 - preferito toggle; Fatto via add/remove API e verifica stato cuore UI su
   `/listings` e scheda annuncio.
-- contatto proprietario;
+- contatto proprietario; Fatto con scelta di un annuncio demo contattabile e
+  fallback quando il cooldown locale blocca un annuncio gia contattato.
+- inbox contatti ricevuti proprietario; Fatto via
+  `GET /contacts/me/received`, pagina `/account/contacts` e isolamento
+  multi-utente.
 - notifica generata; Fatto per decisione di moderazione approvata.
 - accesso negato tra utenti diversi; Fatto per bozza, immagini bozza,
   preferiti e notifiche. Da estendere ai contatti quando saranno esposti in

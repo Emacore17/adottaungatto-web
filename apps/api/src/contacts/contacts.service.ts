@@ -7,7 +7,10 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from "@nestjs/common"
-import type { ListingContactCreateInput } from "@workspace/validation"
+import type {
+  ListingContactCreateInput,
+  ListingContactRequestListQuery,
+} from "@workspace/validation"
 
 import type { AuthUser } from "../auth/auth.types.js"
 import { DatabaseService } from "../database/database.service.js"
@@ -15,6 +18,9 @@ import { MailService } from "../mail/mail.service.js"
 import type {
   ListingContactRequest,
   ListingContactRequestResponse,
+  ListingContactRequestStatus,
+  ReceivedListingContactRequest,
+  ReceivedListingContactRequestListResponse,
 } from "./contacts.types.js"
 
 type ContactableListingRow = {
@@ -34,6 +40,23 @@ type ContactRequestRow = {
   email_shared: boolean
   created_at: Date | string
   delivered_at: Date | string
+}
+
+type ReceivedContactRequestRow = {
+  total_count: number | string
+  id: string
+  listing_id: string
+  listing_title: string
+  requester_user_id: string
+  requester_email: string | null
+  requester_display_name_snapshot: string
+  message: string
+  status: ListingContactRequestStatus
+  email_shared: boolean
+  created_at: Date | string
+  delivered_at: Date | string | null
+  failed_at: Date | string | null
+  failure_reason: string | null
 }
 
 type FailedContactRequestRow = {
@@ -149,6 +172,34 @@ const markContactRequestFailedSql = `
   returning id::text
 `
 
+const listReceivedContactRequestsSql = `
+  select
+    count(*) over()::int as total_count,
+    contact_request.id::text,
+    contact_request.listing_id::text,
+    listing.title as listing_title,
+    contact_request.requester_user_id::text,
+    case
+      when contact_request.email_shared = true then requester.email
+      else null
+    end as requester_email,
+    contact_request.requester_display_name_snapshot,
+    contact_request.message,
+    contact_request.status::text as status,
+    contact_request.email_shared,
+    contact_request.created_at,
+    contact_request.delivered_at,
+    contact_request.failed_at,
+    contact_request.failure_reason
+  from listing_contact_requests contact_request
+  join listings listing on listing.id = contact_request.listing_id
+  join users requester on requester.id = contact_request.requester_user_id
+  where contact_request.owner_user_id = $1::uuid
+  order by contact_request.created_at desc, contact_request.id desc
+  limit $2::int
+  offset $3::int
+`
+
 @Injectable()
 export class ContactsService {
   constructor(
@@ -179,20 +230,20 @@ export class ContactsService {
 
     await this.enforceContactRateLimits(requester.id, listing)
 
-    const [createdRequest] =
-      await this.databaseService.queryRows<{ id: string }>(
-        createContactRequestSql,
-        [
-          listing.id,
-          requester.id,
-          listing.owner_user_id,
-          requester.displayName,
-          input.message,
-        ]
-      )
+    const [createdRequest] = await this.databaseService.queryRows<{
+      id: string
+    }>(createContactRequestSql, [
+      listing.id,
+      requester.id,
+      listing.owner_user_id,
+      requester.displayName,
+      input.message,
+    ])
 
     if (!createdRequest) {
-      throw new InternalServerErrorException("Unable to create contact request.")
+      throw new InternalServerErrorException(
+        "Unable to create contact request."
+      )
     }
 
     try {
@@ -220,12 +271,36 @@ export class ContactsService {
       )
 
     if (!sentRequest) {
-      throw new InternalServerErrorException("Unable to finalize contact request.")
+      throw new InternalServerErrorException(
+        "Unable to finalize contact request."
+      )
     }
 
     return {
       sent: true,
       request: mapContactRequestRow(sentRequest),
+    }
+  }
+
+  async listReceivedContactRequests(
+    ownerUserId: string,
+    query: ListingContactRequestListQuery
+  ): Promise<ReceivedListingContactRequestListResponse> {
+    const rows =
+      await this.databaseService.queryRows<ReceivedContactRequestRow>(
+        listReceivedContactRequestsSql,
+        [ownerUserId, query.pageSize, (query.page - 1) * query.pageSize]
+      )
+    const total = rows[0] ? Number(rows[0].total_count) : 0
+
+    return {
+      items: rows.map(mapReceivedContactRequestRow),
+      meta: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total,
+        totalPages: Math.ceil(total / query.pageSize),
+      },
     }
   }
 
@@ -292,7 +367,10 @@ export class ContactsService {
   }
 }
 
-function throwContactRateLimitExceeded(reason: string, retryAfterSeconds: number) {
+function throwContactRateLimitExceeded(
+  reason: string,
+  retryAfterSeconds: number
+) {
   throw new HttpException(
     {
       message: "Contact request rate limit exceeded.",
@@ -316,6 +394,34 @@ function mapContactRequestRow(row: ContactRequestRow): ListingContactRequest {
   }
 }
 
+function mapReceivedContactRequestRow(
+  row: ReceivedContactRequestRow
+): ReceivedListingContactRequest {
+  return {
+    id: row.id,
+    listing: {
+      id: row.listing_id,
+      title: row.listing_title,
+    },
+    requester: {
+      id: row.requester_user_id,
+      displayName: row.requester_display_name_snapshot,
+      email: row.requester_email,
+    },
+    message: row.message,
+    status: row.status,
+    emailShared: row.email_shared,
+    createdAt: toIsoString(row.created_at),
+    deliveredAt: toIsoStringOrNull(row.delivered_at),
+    failedAt: toIsoStringOrNull(row.failed_at),
+    failureReason: row.failure_reason,
+  }
+}
+
 function toIsoString(value: Date | string) {
   return new Date(value).toISOString()
+}
+
+function toIsoStringOrNull(value: Date | string | null) {
+  return value === null ? null : toIsoString(value)
 }

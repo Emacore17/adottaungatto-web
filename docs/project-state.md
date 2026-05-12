@@ -38,7 +38,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   redirect al login se l'utente non e' autenticato.
 - Contatto proprietario privacy-first con richiesta autenticata, inoltro email
   backend, tracciamento `listing_contact_requests`, rate limit dedicato e
-  preferenza per-annuncio per abilitare/disabilitare il contatto.
+  preferenza per-annuncio per abilitare/disabilitare il contatto, piu lista
+  owner dei contatti ricevuti.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
   principali, ricerca full-text con `q` e documento denormalizzato
   `listing_search_documents` usato quando disponibile, piu promozione mock
@@ -54,7 +55,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
   `error` iniziali.
 - Area account server-rendered con dashboard `/account`, impostazioni profilo
-  `/account/settings`, lista annunci in lavorazione
+  `/account/settings`, inbox contatti ricevuti `/account/contacts`, lista annunci in lavorazione
   `/account/listings/drafts`, lista preferiti `/account/favorites` e inbox
   notifiche `/account/notifications` collegate in lettura alle API autenticate,
   con mutazioni per aggiornare profilo/preferenze email, cancellare bozze,
@@ -85,9 +86,10 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
   stato UI a cuore, update profilo/preferenze, like, contatto proprietario,
-  notifiche, isolamento multi-utente su bozze, immagini, preferiti e
-  notifiche, contenuti chiave della dashboard account, pagine account
-  autenticate, piu login admin e coda moderazione demo.
+  inbox contatti ricevuti dal proprietario, notifiche, isolamento multi-utente
+  su bozze, immagini, preferiti, notifiche e contatti ricevuti, contenuti
+  chiave della dashboard account, pagine account autenticate, piu login admin e
+  coda moderazione demo.
 
 ## Non pronto per produzione
 
@@ -153,7 +155,7 @@ layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
 account operativa con riepilogo, attivita prioritarie, profilo, azioni rapide,
-annunci in lavorazione, preferiti e notifiche, pagina impostazioni
+annunci in lavorazione, contatti ricevuti, preferiti e notifiche, pagina impostazioni
 profilo/preferenze email, form contatto proprietario sulla scheda annuncio e
 pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta

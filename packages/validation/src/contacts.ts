@@ -1,5 +1,12 @@
 import { z } from "zod"
 
+export const listingContactRequestListQuerySchema = z
+  .object({
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(50).default(20),
+  })
+  .strict()
+
 export const listingContactListingIdParamSchema = z.object({
   listingId: z.string().uuid(),
 })
@@ -15,4 +22,8 @@ export const listingContactCreateSchema = z
 
 export type ListingContactCreateInput = z.infer<
   typeof listingContactCreateSchema
+>
+
+export type ListingContactRequestListQuery = z.infer<
+  typeof listingContactRequestListQuerySchema
 >

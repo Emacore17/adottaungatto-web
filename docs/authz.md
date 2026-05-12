@@ -112,6 +112,8 @@ Endpoint iniziali:
 - `POST /contacts/listings/:listingId`: invia al proprietario una richiesta di
   contatto per un annuncio pubblico, senza restituire dati di contatto del
   proprietario.
+- `GET /contacts/me/received`: lista le richieste di contatto ricevute per
+  annunci posseduti dall'utente autenticato.
 
 Gli endpoint autenticati usano un guard bearer riusabile che valida la sessione
 e rende disponibile il contesto autenticato ai controller.
@@ -273,6 +275,9 @@ Contatto proprietario privacy-first:
 - l'API non espone email o telefono del proprietario;
 - l'email del richiedente viene condivisa come risposta al messaggio solo dopo
   consenso esplicito;
+- la lista ricevuti filtra sempre su `owner_user_id` dell'utente autenticato;
+- la lista ricevuti espone l'email del richiedente solo quando `email_shared`
+  e' true;
 - ogni richiesta viene tracciata in `listing_contact_requests`.
 
 Verifica email:
