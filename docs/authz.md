@@ -177,6 +177,8 @@ Policy iniziale per moderazione:
 
 - la pagina frontend `/moderation` vive nel route group admin, usa un layout
   interno separato dal sito pubblico e resta `noindex`;
+- per utenti autenticati senza ruolo interno, la UI mostra accesso non
+  consentito ma non sostituisce il controllo API;
 - la coda moderazione richiede bearer token valido;
 - solo utenti con ruolo `moderator` o `admin` possono leggere la coda;
 - solo utenti con ruolo `moderator` o `admin` possono decidere un caso;

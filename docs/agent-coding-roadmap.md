@@ -257,10 +257,15 @@ Avanzamento 12 maggio 2026:
   server-rendered, protetta da login, `noindex` e collegata alle code API.
 - Fatto: la dashboard moderazione espone un filtro operativo server-rendered
   per vedere tutte le code, solo `pending_review` o solo segnalazioni.
+- Fatto: ogni card moderazione mostra un dettaglio operativo del caso con ID,
+  ownership, stato ciclo, motivo apertura e riferimenti segnalazione quando
+  presenti.
+- Fatto: i motivi rapidi sono presentati come template orientati all'azione
+  prevista: approva, rifiuta o sospendi.
 - Fatto: lo smoke E2E verifica login admin, coda `pending_review` e presenza
-  dello shell admin separato, piu il filtro segnalazioni.
-- Da fare: aggiungere dettaglio caso, template motivazioni e audit consultabile
-  da UI.
+  dello shell admin separato, filtro segnalazioni, dettaglio operativo,
+  template motivazione e accesso negato per utente non moderatore.
+- Da fare: aggiungere audit consultabile da UI.
 
 Done:
 
@@ -285,5 +290,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone F aggiungendo dettaglio operativo caso, template di
-motivazione, audit consultabile e test di accesso negato da UI.
+Proseguire con Milestone F aggiungendo audit consultabile da UI e backlog
+hardening MFA per ruoli interni.

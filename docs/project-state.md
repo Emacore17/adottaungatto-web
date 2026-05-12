@@ -77,8 +77,10 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `/moderation` server-rendered, `noindex`, login obbligatorio, lettura delle
   code API `pending_review` e segnalazioni, e azioni base
   approva/rifiuta/sospendi con motivo obbligatorio; la pagina include un
-  filtro operativo `queue=all|pending|reported`, mentre le autorizzazioni di
-  ruolo restano applicate dalle API.
+  filtro operativo `queue=all|pending|reported`, dettaglio operativo caso,
+  template motivazioni orientati all'azione e stato accesso negato per utenti
+  senza ruolo interno, mentre le autorizzazioni di ruolo restano applicate
+  dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -100,8 +102,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   consenso telefono, inbox contatti ricevuti dal proprietario, notifiche,
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
-  chiave della dashboard account, pagine account autenticate, piu login admin e
-  coda moderazione demo. Lo smoke carica piu immagini reali da
+  chiave della dashboard account, pagine account autenticate, piu login admin,
+  coda moderazione demo, filtro code, dettaglio operativo e accesso negato
+  alla moderazione per utente non abilitato. Lo smoke carica piu immagini reali da
   `immagini-gattini/` quando disponibili, verifica il carosello del dettaglio
   annuncio pubblicato, controlla la notifica di invio a revisione e controlla
   la ricezione real-time delle notifiche di contatto proprietario e
@@ -177,7 +180,8 @@ operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
 impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
 annuncio e pagina `/moderation` dentro layout interno separato, collegata alle
-code API con filtro code e decisioni base motivate. L'area account supporta
+code API con filtro code, dettaglio operativo caso, template motivazioni e
+decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,

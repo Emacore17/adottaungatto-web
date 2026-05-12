@@ -127,11 +127,12 @@ coda moderazione dedicata ai casi con segnalazioni utenti. Le decisioni
 chiudono le segnalazioni collegate come `resolved` o `dismissed` e inviano
 notifiche email a proprietario e reporter. Il frontend ha un route group admin
 con layout interno dedicato e pagina `/moderation` iniziale, protetta da login,
-`noindex`, collegata alle code API, filtrabile per tipo coda e dotata di azioni base
-approva/rifiuta/sospendi con motivo obbligatorio. Le decisioni di moderazione
-creano anche notifiche in-app consegnate via stream real-time locale. Restano
-da estendere strumenti interni, template di motivazione e workflow operativi
-piu avanzati.
+`noindex`, collegata alle code API, filtrabile per tipo coda, con dettaglio
+operativo caso e dotata di azioni base approva/rifiuta/sospendi con template
+motivazione e nota opzionale/obbligatoria secondo il motivo. Le decisioni di
+moderazione creano anche notifiche in-app consegnate via stream real-time
+locale. Restano da estendere audit consultabile e workflow operativi piu
+avanzati.
 
 ## Milestone 7 - Contatti, preferiti e notifiche
 

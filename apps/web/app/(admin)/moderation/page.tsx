@@ -78,11 +78,11 @@ const reasonSelectClassName =
   "h-10 w-full rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
 
 const moderationReasonOptions = [
-  { label: "Conforme alle policy", value: "policy_ok" },
-  { label: "Contenuto non conforme", value: "policy_violation" },
-  { label: "Informazioni insufficienti", value: "incomplete_listing" },
-  { label: "Rischio da verificare", value: "risk_review" },
-  { label: "Altro motivo", value: "other" },
+  { label: "Approva: conforme alle policy", value: "policy_ok" },
+  { label: "Rifiuta: contenuto non conforme", value: "policy_violation" },
+  { label: "Rifiuta: informazioni insufficienti", value: "incomplete_listing" },
+  { label: "Sospendi: rischio da verificare", value: "risk_review" },
+  { label: "Altro: usa nota obbligatoria", value: "other" },
 ] as const
 
 export default async function ModerationPage({
@@ -386,6 +386,8 @@ function ModerationItemCard({
             />
           </div>
 
+          <OperationalCaseDetails item={item} />
+
           {latestReport ? (
             <div className="mt-4 rounded-md border bg-muted/40 p-3 text-sm">
               <div className="flex items-start gap-2">
@@ -414,11 +416,86 @@ function ModerationItemCard({
   )
 }
 
+function OperationalCaseDetails({
+  item,
+}: {
+  item: ModerationQueueItem | ReportedListingQueueItem
+}) {
+  const reportDetails =
+    "reports" in item
+      ? [
+          {
+            label: "Prima segnalazione",
+            value: formatDateTime(item.reports.firstReportedAt),
+          },
+          {
+            label: "Ultima segnalazione",
+            value: formatDateTime(item.reports.latestReportedAt),
+          },
+        ]
+      : []
+  const details = [
+    {
+      label: "ID caso",
+      value: item.case.id,
+    },
+    {
+      label: "ID annuncio",
+      value: item.listing.id,
+    },
+    {
+      label: "Stato ciclo",
+      value: item.listing.lifecycleStatus,
+    },
+    {
+      label: "Motivo apertura",
+      value: item.case.reasonCode ?? "Non indicato",
+    },
+    {
+      label: "Assegnato a",
+      value: item.case.assignedToUserId ?? "Non assegnato",
+    },
+    {
+      label: "Email proprietario",
+      value: item.owner.email,
+    },
+    ...reportDetails,
+    {
+      label: "Ultimo aggiornamento",
+      value: formatDateTime(item.listing.updatedAt),
+    },
+  ]
+
+  return (
+    <section
+      aria-label="Dettaglio operativo caso"
+      className="mt-4 rounded-md border bg-muted/30 p-3"
+    >
+      <div className="grid gap-1">
+        <p className="text-sm font-medium">Dettaglio operativo caso</p>
+        <p className="text-xs leading-5 text-muted-foreground">
+          Dati tecnici per riconoscere il caso, verificare ownership e collegare
+          audit o supporto interno.
+        </p>
+      </div>
+      <div className="mt-3 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">
+        {details.map((detail) => (
+          <InfoBlock
+            key={detail.label}
+            label={detail.label}
+            value={detail.value}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
 function InfoBlock({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-1">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium">{value}</span>
+      <span className="font-medium break-words">{value}</span>
     </div>
   )
 }
@@ -463,7 +540,9 @@ function ModerationDecisionForm({ caseId }: { caseId: string }) {
               className="min-h-20 resize-y"
             />
             <FieldDescription>
-              Serve almeno un motivo rapido o una nota.
+              I template orientano la decisione: `policy_ok` per approvare,
+              `policy_violation` o `incomplete_listing` per rifiutare,
+              `risk_review` per sospendere.
             </FieldDescription>
           </Field>
         </div>

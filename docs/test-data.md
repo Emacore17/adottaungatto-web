@@ -20,8 +20,9 @@ Esistono:
 - upload asset demo su MinIO per 11 annunci, usando `immagini-gattini/` se
   presente e fallback placeholder se assente;
 - smoke E2E locale `pnpm smoke:e2e` con login admin, controllo coda
-  `pending_review`, filtro segnalazioni e verifica dello shell interno di
-  moderazione.
+  `pending_review`, filtro segnalazioni, dettaglio operativo caso, template
+  motivazioni, accesso negato per utente non moderatore e verifica dello shell
+  interno di moderazione.
 
 Gap attuali:
 
@@ -96,6 +97,10 @@ La demo include:
 - login admin e coda `pending_review`; Fatto con verifica dello shell interno
   `/moderation`.
 - filtro code moderazione; Fatto verificando `/moderation?queue=reported`.
+- dettaglio operativo moderazione; Fatto verificando la presenza dei dati caso
+  nella dashboard admin.
+- accesso negato moderazione; Fatto verificando la UI per utente non
+  moderatore.
 - annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.
 - approvazione moderatore; Fatto con approvazione admin del caso creato dallo
   smoke.

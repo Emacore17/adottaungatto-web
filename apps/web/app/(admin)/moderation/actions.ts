@@ -41,7 +41,11 @@ export async function decideModerationCaseAction(formData: FormData) {
     reasonText: normalizeString(formData.get("reasonText")),
   })
 
-  if (!caseId.success || !decision.success) {
+  if (
+    !caseId.success ||
+    !decision.success ||
+    requiresOtherReasonText(decision.data)
+  ) {
     redirect(`${routes.moderation}?decisionError=invalid_reason`)
   }
 
@@ -82,4 +86,11 @@ function isModerationDecisionAction(
   value: string | undefined
 ): value is ModerationDecisionAction {
   return value !== undefined && moderationDecisionActions.has(value)
+}
+
+function requiresOtherReasonText(decision: {
+  reasonCode?: string
+  reasonText?: string
+}) {
+  return decision.reasonCode === "other" && !decision.reasonText
 }

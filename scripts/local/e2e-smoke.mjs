@@ -509,7 +509,18 @@ try {
     "web moderation admin shell",
     moderationHtml.includes("Area interna") &&
       moderationHtml.includes("Dashboard moderazione") &&
-      moderationHtml.includes("Accesso protetto")
+      moderationHtml.includes("Accesso protetto") &&
+      moderationHtml.includes("Dettaglio operativo caso") &&
+      moderationHtml.includes("Approva: conforme alle policy")
+  )
+  const deniedModerationHtml = await webText(
+    "/moderation",
+    otherToken,
+    "web moderation access denied"
+  )
+  check(
+    "web moderation access denied content",
+    deniedModerationHtml.includes("Accesso alla moderazione non consentito")
   )
   const reportedModerationHtml = await webText(
     "/moderation?queue=reported",

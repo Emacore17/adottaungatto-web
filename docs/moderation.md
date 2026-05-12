@@ -54,6 +54,15 @@ Un annuncio e' pubblico solo se:
 - La pagina supporta il filtro query `queue=all|pending|reported`, usato solo
   per scegliere quali sezioni operative mostrare. Le API restano la fonte per
   autorizzazioni, paginazione e dati.
+- Ogni card mostra un dettaglio operativo del caso con ID caso, ID annuncio,
+  stato ciclo, motivo apertura, assegnazione, ownership e riferimenti di
+  segnalazione quando il caso nasce da report utente.
+- I motivi rapidi della decisione sono esposti come template orientati
+  all'azione: approvazione conforme, rifiuto per policy, rifiuto per dati
+  insufficienti, sospensione per rischio e altro con nota obbligatoria.
+- Se un utente autenticato non ha ruolo `moderator` o `admin`, il frontend
+  mostra uno stato di accesso non consentito; il blocco resta applicato dalle
+  API con risposta `403`.
 
 ## Coda segnalazioni
 
@@ -166,7 +175,7 @@ segnalazioni utente al target e, quando disponibile, al caso di moderazione.
 
 - Estendere l'area admin separata e protetta oltre la dashboard moderazione
   iniziale.
-- Dashboard moderatore con filtri, dettaglio annuncio, immagini e storico.
+- Dashboard moderatore con storico audit consultabile.
 - Scoring rischio.
 - Coda prioritaria per annunci con molte segnalazioni.
 - Revisione immagini automatica.
