@@ -9,6 +9,7 @@ let token = null
 let draftId = null
 let deleteDraftId = null
 let listingId = null
+let submittedListingId = null
 
 try {
   const health = await api("GET", "/health")
@@ -241,7 +242,52 @@ try {
     submittedDraft.submitted === true &&
       submittedDraft.listing.moderationStatus === "pending_review"
   )
+  submittedListingId = submittedDraft.listing.id
   draftId = null
+
+  const submittedCase = await findPendingReviewCase(
+    submittedListingId,
+    adminToken
+  )
+  pass("demo moderation submitted case", `case=${submittedCase.case.id}`)
+
+  const approval = await api(
+    "POST",
+    `/moderation/listings/cases/${submittedCase.case.id}/approve`,
+    {
+      reasonCode: "policy_ok",
+    },
+    adminToken
+  )
+  check(
+    "demo moderation approve",
+    approval.decided === true &&
+      approval.listing.id === submittedListingId &&
+      approval.listing.moderationStatus === "approved" &&
+      approval.listing.lifecycleStatus === "published"
+  )
+
+  const publishedListing = await api("GET", `/listings/${submittedListingId}`)
+  check(
+    "demo moderation published detail",
+    publishedListing.id === submittedListingId
+  )
+
+  const ownerNotifications = await api(
+    "GET",
+    "/notifications?page=1&pageSize=10",
+    undefined,
+    token
+  )
+  check(
+    "demo moderation owner notification",
+    ownerNotifications.items.some(
+      (item) =>
+        item.type === "listing_moderation_decision" &&
+        item.payload?.listingId === submittedListingId &&
+        item.payload?.decision === "approved"
+    )
+  )
 
   await webPage(
     "/account/listings/submitted",
@@ -393,6 +439,31 @@ async function waitForDraftImagesReady(id, bearerToken) {
       images?.meta.readyCount ?? 0
     } pending=${images?.meta.pendingCount ?? 0}. Is the worker running?`
   )
+}
+
+async function findPendingReviewCase(listingId, bearerToken) {
+  const pageSize = 100
+  let page = 1
+  let totalPages = 1
+
+  while (page <= totalPages) {
+    const queue = await api(
+      "GET",
+      `/moderation/listings/pending-review?page=${page}&pageSize=${pageSize}`,
+      undefined,
+      bearerToken
+    )
+    const item = queue.items.find((entry) => entry.listing.id === listingId)
+
+    if (item) {
+      return item
+    }
+
+    totalPages = queue.meta.totalPages
+    page += 1
+  }
+
+  throw new Error(`FAIL demo moderation submitted case listing=${listingId}`)
 }
 
 function createSmokeImageBuffer() {

@@ -29,8 +29,7 @@ e ottenere una demo navigabile con:
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio e il
 mock sponsorizzato in lista sono funzionanti in locale. Il punto piu urgente e'
-completare la demo locale con immagini realistiche e verifica moderatore fino
-alla pubblicazione.
+completare la demo locale con immagini realistiche o fixture visuali migliori.
 
 ## Regole per ogni round
 
@@ -55,9 +54,8 @@ Task:
 - Fatto: aggiungere annunci demo in tutti gli stati rilevanti;
 - Fatto: caricare immagini demo per tutti gli annunci pubblici e in revisione;
 - Fatto: aggiungere almeno uno slot sponsorizzato mock o dati preparatori;
-- Avviato: aggiornare `pnpm smoke:e2e` per verificare dati demo, immagini e
-  ruoli; oggi controlla login admin e coda `pending_review`, resta approvare un
-  caso fino alla pubblicazione;
+- Fatto: aggiornare `pnpm smoke:e2e` per verificare dati demo, immagini e
+  ruoli;
 - Fatto: documentare credenziali e casi in `docs/test-data.md`.
 
 Avanzamento 12 maggio 2026:
@@ -72,8 +70,9 @@ Avanzamento 12 maggio 2026:
   `pending_review`.
 - Fatto: promozione mock attiva su un annuncio pubblicato e visibile in cima a
   `/listings`.
-- Da fare: immagini realistiche o fixture visuali migliori e smoke con
-  decisione moderatore fino a pubblicazione visibile.
+- Fatto: lo smoke E2E approva un caso appena inviato a revisione, verifica il
+  dettaglio pubblico e la notifica al proprietario.
+- Da fare: immagini realistiche o fixture visuali migliori.
 
 Done:
 
@@ -202,5 +201,4 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire Milestone A con immagini realistiche o fixture visuali migliori e
-smoke che approva un caso demo fino alla pubblicazione visibile.
+Proseguire Milestone A con immagini realistiche o fixture visuali migliori.

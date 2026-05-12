@@ -76,8 +76,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   asset MinIO placeholder per account, annunci e code demo.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
-  revisione, preferiti, like, contatto proprietario, notifiche e pagine account
-  autenticate, piu login admin e coda moderazione demo.
+  revisione, approvazione admin fino a pubblicazione visibile, preferiti, like,
+  contatto proprietario, notifiche e pagine account autenticate, piu login admin
+  e coda moderazione demo.
 
 ## Non pronto per produzione
 
@@ -98,8 +99,8 @@ produzione. Mancano almeno:
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
-  stati annuncio multipli e sponsorizzato mock avviati, ma ancora senza
-  immagini realistiche e approvazione demo fino a pubblicazione nello smoke.
+  stati annuncio multipli, sponsorizzato mock e approvazione fino a
+  pubblicazione nello smoke avviati, ma ancora senza immagini realistiche.
 
 ## Stato ricerca
 
@@ -167,10 +168,11 @@ rifugio, associazione, moderatore e admin. Gli annunci coprono pubblicati,
 processa automaticamente le immagini in `processing` durante l'avvio
 applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
 La lista `/listings` usa card orizzontali, una per riga, e mostra in cima un
-annuncio sponsorizzato mock con label dichiarata. Non copre ancora il traguardo
-demo definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano
-immagini realistiche complete e approvazione moderatore nello smoke fino a
-pubblicazione.
+annuncio sponsorizzato mock con label dichiarata. Lo smoke approva un annuncio
+appena inviato a revisione e verifica che sia pubblicato e notificato al
+proprietario. Non copre ancora il traguardo demo definito in
+[agent-coding-roadmap.md](agent-coding-roadmap.md): mancano immagini realistiche
+complete o fixture visuali migliori.
 
 ## Regole per prossimi interventi
 

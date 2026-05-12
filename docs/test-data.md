@@ -25,8 +25,7 @@ Gap attuali:
 
 - le immagini demo sono placeholder generati, non foto realistiche di gatti;
 - lo smoke copre upload immagine sintetica, processing worker e invio a
-  revisione riuscito, ma non usa ancora immagini demo realistiche e non approva
-  un caso demo fino alla pubblicazione;
+  revisione riuscito, ma non usa ancora immagini demo realistiche;
 - il mock sponsorizzato non e' ancora collegato a un flusso pagamento/campagna
   reale.
 
@@ -85,11 +84,12 @@ La demo include:
 - invio a revisione riuscito; Fatto.
 - login admin e coda `pending_review`; Fatto.
 - annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.
-- approvazione moderatore;
-- annuncio pubblicato visibile;
+- approvazione moderatore; Fatto con approvazione admin del caso creato dallo
+  smoke.
+- annuncio pubblicato visibile; Fatto via dettaglio pubblico dopo approvazione.
 - preferito toggle;
 - contatto proprietario;
-- notifica generata;
+- notifica generata; Fatto per decisione di moderazione approvata.
 - accesso negato tra utenti diversi.
 
 ## Regole

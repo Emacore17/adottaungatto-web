@@ -106,8 +106,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     registrazione, login, verifica email, recupero password e cambio password.
 59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
 60. Avviato: completare fixture demo con ruoli moderator/admin, stati annuncio
-    multipli, asset placeholder, sponsorizzato mock e smoke admin; restano
-    immagini realistiche e approvazione demo fino a pubblicazione.
+    multipli, asset placeholder, sponsorizzato mock e smoke admin con
+    approvazione fino a pubblicazione; restano immagini realistiche.
 61. Fatto: correggere il flusso inserimento annuncio con processing automatico
     immagini nel worker dev, copy UI "Inserisci annuncio", stati immagine
     chiari, schermata di conferma, guida passaggi e smoke E2E completo.

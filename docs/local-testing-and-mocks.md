@@ -20,8 +20,7 @@ In locale sono disponibili:
 - smoke E2E locale `pnpm smoke:e2e`.
 
 Esiste quindi un percorso demo unico, ma non e' ancora completo come demo
-prodotto: mancano immagini realistiche e un test del flusso moderatore che
-approva un caso demo fino alla pubblicazione visibile.
+prodotto: mancano immagini realistiche o fixture visuali migliori.
 
 ## Obiettivo locale
 
