@@ -27,6 +27,16 @@ Usare [.env.example](../.env.example) come template per `.env`.
 
 Non committare mai `.env` reali.
 
+Variabili utili per lo sviluppo locale:
+
+- `RATE_LIMIT_ENABLED=true` mantiene attivi i rate limit Redis.
+- `RATE_LIMIT_LIMIT_MULTIPLIER=1` scala i limiti di tentativi configurati nel
+  codice.
+- `RATE_LIMIT_WINDOW_MULTIPLIER=1` scala le finestre temporali dei rate limit.
+- In caso di debug locale ravvicinato si puo aumentare
+  `RATE_LIMIT_LIMIT_MULTIPLIER`; disabilitare i rate limit va riservato solo a
+  test controllati.
+
 ## Comandi disponibili
 
 Gli script root attuali sono:

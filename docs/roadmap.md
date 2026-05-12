@@ -184,9 +184,10 @@ Deliverable:
 - deploy cloud documentato.
 
 Stato: avviata a livello implementativo con rate limit Redis per flussi auth
-sensibili, upload immagini bozza e principali endpoint admin/moderazione, piu
-prima osservabilita API con request/trace id, log JSON, readiness aggregata e
-metriche HTTP locali. Sono presenti checklist e piano operativo in
+sensibili, upload immagini bozza e principali endpoint admin/moderazione, con
+tuning base via env, piu prima osservabilita API con request/trace id, log
+JSON, readiness aggregata e metriche HTTP locali. Sono presenti checklist e
+piano operativo in
 `production-readiness.md` e `ops-monitoring-release.md`; il progetto non e'
 ancora rilasciabile in produzione.
 

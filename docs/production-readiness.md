@@ -30,9 +30,10 @@ ownership. Mancano per produzione:
 - revoke globale e gestione dispositivi/sessioni utente;
 - rate limit iniziale presente su registrazione, login, verifica email, reset
   password, cambio password, upload immagini bozza e principali endpoint
-  admin/moderazione; da rendere configurabile per ambiente, validare dietro
-  proxy fidato e completare con altri flussi sensibili e lock progressivo
-  account;
+  admin/moderazione; tuning base disponibile via `RATE_LIMIT_ENABLED`,
+  `RATE_LIMIT_LIMIT_MULTIPLIER` e `RATE_LIMIT_WINDOW_MULTIPLIER`, da validare
+  dietro proxy fidato e completare con altri flussi sensibili e lock
+  progressivo account;
 - protezione brute force e lock progressivo account;
 - OAuth Google completo, se confermato;
 - MFA almeno per admin e moderatori;
@@ -85,8 +86,8 @@ Prima di dichiararlo scalabile servono:
 - pool connessioni e PgBouncer o equivalente;
 - worker separati e code robuste per email, immagini e job lenti;
 - CDN davanti alle immagini;
-- limiti upload iniziali e protezione costi storage da completare con tuning
-  per ambiente;
+- limiti upload iniziali e protezione costi storage da completare con valori
+  calibrati per ambiente;
 - cache breve per dati geografici e metadata pubblici;
 - indici verificati con EXPLAIN su dataset realistici;
 - load test su ricerca, dettaglio annuncio, login e upload;

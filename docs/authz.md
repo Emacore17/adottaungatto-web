@@ -130,8 +130,10 @@ Rate limit auth iniziale:
 - combina limiti per IP client con limiti per email, token o utente, secondo
   il flusso;
 - restituisce `429` con `reason` e `retryAfterSeconds`;
-- resta da configurare per ambiente, validare dietro proxy fidato e integrare
-  con lock progressivo account e ulteriori flussi pubblici sensibili.
+- usa `RATE_LIMIT_ENABLED`, `RATE_LIMIT_LIMIT_MULTIPLIER` e
+  `RATE_LIMIT_WINDOW_MULTIPLIER` per tuning base per ambiente;
+- resta da validare dietro proxy fidato e integrare con lock progressivo
+  account e ulteriori flussi pubblici sensibili.
 
 Stato produzione: la base auth e autorizzazione e' adatta allo sviluppo, ma non
 e' ancora sufficiente per un rilascio pubblico. La checklist di hardening e'

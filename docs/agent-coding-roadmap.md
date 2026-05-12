@@ -285,7 +285,7 @@ Obiettivo: rendere il progetto pronto a staging chiuso e poi produzione.
 Task:
 
 - Fatto parziale: aggiungere rate limit Redis agli endpoint upload immagini
-  bozza e agli endpoint admin/moderazione principali;
+  bozza e agli endpoint admin/moderazione principali, con tuning base via env;
 - completare rate limit per gli altri flussi pubblici sensibili;
 - Fatto parziale: aggiungere logging strutturato, trace id e metriche HTTP
   locali;
@@ -308,6 +308,9 @@ Avanzamento 12 maggio 2026:
   operatore e caso.
 - Fatto: test controller API verificano l'applicazione dei limiti su upload e
   moderazione.
+- Fatto: `RATE_LIMIT_ENABLED`, `RATE_LIMIT_LIMIT_MULTIPLIER` e
+  `RATE_LIMIT_WINDOW_MULTIPLIER` permettono di abilitare/disabilitare e scalare
+  limiti e finestre per ambiente senza cambiare codice.
 - Fatto: interceptor API globale con `x-request-id`, `x-trace-id`, log JSON per
   richiesta e metriche in memoria per richieste, errori, status code e durate.
 - Fatto: `GET /health/ready` verifica database e Redis come readiness
@@ -324,5 +327,5 @@ Done:
 ## Prossimo round consigliato
 
 Proseguire con Milestone G completando alert e integrazione OpenTelemetry o
-equivalente, poi tuning configurabile dei rate limit per ambiente e primi load
-test API su ricerca/lista.
+equivalente, poi calibrare i valori dei rate limit per staging/produzione e
+avviare i primi load test API su ricerca/lista.

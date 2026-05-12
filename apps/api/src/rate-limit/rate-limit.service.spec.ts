@@ -59,6 +59,67 @@ describe("RateLimitService", () => {
     })
   })
 
+  it("applies environment multipliers to limits and windows", async () => {
+    const redisService = {
+      incrementFixedWindow: vi.fn().mockResolvedValue({
+        count: 5,
+        ttlSeconds: 1800,
+      }),
+    } as unknown as RedisService
+    const service = new RateLimitService(redisService, {
+      RATE_LIMIT_ENABLED: true,
+      RATE_LIMIT_LIMIT_MULTIPLIER: 2,
+      RATE_LIMIT_WINDOW_MULTIPLIER: 2,
+    })
+
+    await expect(
+      service.enforce([
+        {
+          identifier: "email:user@example.com",
+          limit: 2,
+          namespace: "auth:login:email",
+          reason: "auth_login_email_limit",
+          windowSeconds: 900,
+        },
+      ])
+    ).rejects.toMatchObject({
+      response: {
+        reason: "auth_login_email_limit",
+        retryAfterSeconds: 1800,
+      },
+      status: 429,
+    })
+    expect(redisService.incrementFixedWindow).toHaveBeenCalledWith(
+      expect.stringMatching(
+        /^adottaungatto:rate-limit:auth:login:email:[a-f0-9]{32}$/
+      ),
+      1800
+    )
+  })
+
+  it("skips Redis when rate limits are disabled by environment", async () => {
+    const redisService = {
+      incrementFixedWindow: vi.fn(),
+    } as unknown as RedisService
+    const service = new RateLimitService(redisService, {
+      RATE_LIMIT_ENABLED: false,
+      RATE_LIMIT_LIMIT_MULTIPLIER: 1,
+      RATE_LIMIT_WINDOW_MULTIPLIER: 1,
+    })
+
+    await service.enforce([
+      {
+        identifier: "ip:127.0.0.1",
+        limit: 2,
+        namespace: "auth:login:ip",
+        reason: "auth_login_ip_limit",
+        windowSeconds: 900,
+      },
+    ])
+
+    expect(redisService.incrementFixedWindow).not.toHaveBeenCalled()
+  })
+
   it("fails closed when Redis is unavailable", async () => {
     const redisService = {
       incrementFixedWindow: vi.fn().mockRejectedValue(new Error("redis down")),

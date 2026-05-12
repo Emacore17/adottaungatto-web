@@ -1,5 +1,26 @@
 import { z } from "zod"
 
+const booleanEnv = (defaultValue: boolean) =>
+  z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") {
+      return defaultValue
+    }
+
+    if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase()
+
+      if (["1", "true", "yes", "on"].includes(normalized)) {
+        return true
+      }
+
+      if (["0", "false", "no", "off"].includes(normalized)) {
+        return false
+      }
+    }
+
+    return value
+  }, z.boolean())
+
 const apiEnvSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   APP_ENV: z.string().default("local"),
@@ -19,6 +40,9 @@ const apiEnvSchema = z.object({
   MAIL_HOST: z.string().default("localhost"),
   MAIL_PORT: z.coerce.number().int().positive().default(1025),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_ENABLED: booleanEnv(true),
+  RATE_LIMIT_LIMIT_MULTIPLIER: z.coerce.number().positive().default(1),
+  RATE_LIMIT_WINDOW_MULTIPLIER: z.coerce.number().positive().default(1),
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
   S3_ACCESS_KEY_ID: z.string().min(1).default("minioadmin"),
   S3_BUCKET: z.string().min(3).default("adottaungatto-local"),

@@ -30,7 +30,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   recupero password e cambio password autenticato.
 - Rate limit Redis fixed-window iniziale sui flussi auth sensibili,
   sull'upload immagini bozza e sugli endpoint principali admin/moderazione, con
-  chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
+  chiavi identificative hashate, risposta `429` con `retryAfterSeconds` e
+  tuning base via `RATE_LIMIT_ENABLED`, `RATE_LIMIT_LIMIT_MULTIPLIER` e
+  `RATE_LIMIT_WINDOW_MULTIPLIER`.
 - Profilo utente autenticato con update e preferenze email non essenziali,
   esposti anche dalla pagina `/account/settings`.
 - CRUD bozze annuncio, invio a moderazione e upload immagini presigned con
@@ -123,8 +125,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 Il progetto e' una base backend solida, ma non e' ancora rilasciabile in
 produzione. Mancano almeno:
 
-- hardening HTTP, tuning dei rate limit per ambiente e protezioni anti-abuso
-  estese;
+- hardening HTTP, calibrazione dei valori di rate limit per ambiente e
+  protezioni anti-abuso estese;
 - cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
 - integrazione osservabilita production-grade con OpenTelemetry/Dynatrace o
   equivalente, alert e audit centralizzato;
@@ -171,11 +173,11 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 - controllo ruoli su moderazione;
 - token monouso hashati per email verification e reset password.
 
-Prima della produzione servono tuning dei rate limit per ambiente, supporto
-proxy fidato per l'IP client, lock progressivo account, policy sessioni, cookie
-sicuri se usati dal browser, log redatti, segreti gestiti da provider,
-hardening upload oltre i limiti iniziali, backup, alert e audit amministrativo
-piu esteso.
+Prima della produzione servono supporto proxy fidato per l'IP client,
+calibrazione dei rate limit su traffico reale, lock progressivo account, policy
+sessioni, cookie sicuri se usati dal browser, log redatti, segreti gestiti da
+provider, hardening upload oltre i limiti iniziali, backup, alert e audit
+amministrativo piu esteso.
 
 ## Stato frontend
 

@@ -77,6 +77,18 @@ Stato locale:
 - `pnpm smoke:e2e` verifica header di correlazione, readiness e metriche.
 - Restano da collegare exporter OpenTelemetry, dashboard e alert reali.
 
+## Rate Limit Per Ambiente
+
+La base API usa Redis fixed-window e accetta tuning operativo tramite:
+
+- `RATE_LIMIT_ENABLED`;
+- `RATE_LIMIT_LIMIT_MULTIPLIER`;
+- `RATE_LIMIT_WINDOW_MULTIPLIER`.
+
+I valori di default in `.env.example` mantengono il comportamento locale
+attuale. In staging/produzione i valori vanno calibrati su traffico reale,
+proxy fidato e alert anti-abuso.
+
 ## Alert
 
 Alert minimi:

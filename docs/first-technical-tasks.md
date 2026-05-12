@@ -143,8 +143,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 8. Avviato: dettagliare hardening auth/sessioni/rate limit in `docs/authz.md`
    e aggiungere rate limit Redis per auth, upload immagini bozza e principali
    endpoint admin/moderazione; restano cookie/CSRF, gestione sessioni
-   production-grade, lock progressivo account, tuning per ambiente e ulteriori
-   flussi pubblici sensibili.
+   production-grade, lock progressivo account, calibrazione dei valori per
+   ambiente e ulteriori flussi pubblici sensibili.
 9. Avviato: aggiungere osservabilita API locale con request/trace id, log JSON,
    readiness aggregata e metriche HTTP; restano exporter OpenTelemetry,
    dashboard e alert reali.

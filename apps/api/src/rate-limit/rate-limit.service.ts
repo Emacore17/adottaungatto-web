@@ -5,9 +5,12 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Optional,
   ServiceUnavailableException,
 } from "@nestjs/common"
 
+import { API_ENV } from "../config/config.module.js"
+import type { ApiEnv } from "../config/env.js"
 import { RedisService } from "../redis/redis.service.js"
 
 export type RateLimitRule = {
@@ -18,21 +21,56 @@ export type RateLimitRule = {
   windowSeconds: number
 }
 
+type RateLimitEnv = Pick<
+  ApiEnv,
+  | "RATE_LIMIT_ENABLED"
+  | "RATE_LIMIT_LIMIT_MULTIPLIER"
+  | "RATE_LIMIT_WINDOW_MULTIPLIER"
+>
+
+type RateLimitConfig = {
+  enabled: boolean
+  limitMultiplier: number
+  windowMultiplier: number
+}
+
 @Injectable()
 export class RateLimitService {
+  private readonly config: RateLimitConfig
+
   constructor(
     @Inject(RedisService)
-    private readonly redisService: RedisService
-  ) {}
+    private readonly redisService: RedisService,
+    @Optional()
+    @Inject(API_ENV)
+    env?: RateLimitEnv
+  ) {
+    this.config = resolveRateLimitConfig(env)
+  }
 
   async enforce(rules: readonly RateLimitRule[]) {
-    for (const rule of rules) {
-      const key = buildRateLimitKey(rule.namespace, rule.identifier)
-      const result = await this.incrementRule(key, rule.windowSeconds)
+    if (!this.config.enabled) {
+      return
+    }
 
-      if (result.count > rule.limit) {
+    for (const rule of rules) {
+      const resolvedRule = this.resolveRule(rule)
+      const key = buildRateLimitKey(rule.namespace, rule.identifier)
+      const result = await this.incrementRule(key, resolvedRule.windowSeconds)
+
+      if (result.count > resolvedRule.limit) {
         throwRateLimitExceeded(rule.reason, result.ttlSeconds)
       }
+    }
+  }
+
+  private resolveRule(rule: RateLimitRule) {
+    return {
+      limit: Math.max(1, Math.ceil(rule.limit * this.config.limitMultiplier)),
+      windowSeconds: Math.max(
+        1,
+        Math.ceil(rule.windowSeconds * this.config.windowMultiplier)
+      ),
     }
   }
 
@@ -44,6 +82,16 @@ export class RateLimitService {
         message: "Rate limit service unavailable.",
       })
     }
+  }
+}
+
+function resolveRateLimitConfig(
+  env: RateLimitEnv | undefined
+): RateLimitConfig {
+  return {
+    enabled: env?.RATE_LIMIT_ENABLED ?? true,
+    limitMultiplier: env?.RATE_LIMIT_LIMIT_MULTIPLIER ?? 1,
+    windowMultiplier: env?.RATE_LIMIT_WINDOW_MULTIPLIER ?? 1,
   }
 }
 
