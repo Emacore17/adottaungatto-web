@@ -98,7 +98,9 @@ La demo include:
   `/listings` e scheda annuncio.
 - contatto proprietario;
 - notifica generata; Fatto per decisione di moderazione approvata.
-- accesso negato tra utenti diversi.
+- accesso negato tra utenti diversi; Fatto per bozza, immagini bozza,
+  preferiti e notifiche. Da estendere ai contatti quando saranno esposti in
+  una vista proprietario/admin.
 
 ## Regole
 

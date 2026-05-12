@@ -12,8 +12,10 @@ const storageBucket =
 
 const password = "Password!12345"
 const email = `e2e.${Date.now()}@demo.adottaungatto.local`
+const otherEmail = `e2e.other.${Date.now()}@demo.adottaungatto.local`
 
 let token = null
+let otherToken = null
 let draftId = null
 let deleteDraftId = null
 let listingId = null
@@ -68,6 +70,18 @@ try {
 
   const session = await api("GET", "/auth/me", undefined, token)
   check("auth me", session.user.email === email)
+
+  const otherRegistration = await api("POST", "/auth/register", {
+    displayName: "Smoke E2E Altro",
+    email: otherEmail,
+    password,
+    profileType: "private",
+  })
+  otherToken = otherRegistration.session.token
+  check(
+    "authz other register",
+    typeof otherToken === "string" && otherToken.length > 0
+  )
 
   const profileDisplayName = `Smoke Profilo ${Date.now()}`
   const profile = await api(
@@ -184,6 +198,54 @@ try {
     readyImages.meta.readyCount >= 1 && readyImages.meta.pendingCount === 0
   )
 
+  await expectApiStatus(
+    "authz other draft detail denied",
+    "GET",
+    `/listings/me/drafts/${draftId}`,
+    undefined,
+    otherToken,
+    [404]
+  )
+  await expectApiStatus(
+    "authz other draft image list denied",
+    "GET",
+    `/listings/me/drafts/${draftId}/images`,
+    undefined,
+    otherToken,
+    [404]
+  )
+  await expectApiStatus(
+    "authz other draft image upload denied",
+    "POST",
+    `/listings/me/drafts/${draftId}/images/upload-url`,
+    {
+      isCover: true,
+      mimeType: "image/png",
+      sizeBytes: imageBuffer.byteLength,
+    },
+    otherToken,
+    [404]
+  )
+  await expectApiStatus(
+    "authz other draft update denied",
+    "PATCH",
+    `/listings/me/drafts/${draftId}`,
+    { title: "Tentativo utente non proprietario" },
+    otherToken,
+    [404]
+  )
+  const ownerDraftAfterAuthz = await api(
+    "GET",
+    `/listings/me/drafts/${draftId}`,
+    undefined,
+    token
+  )
+  check(
+    "authz owner draft intact",
+    ownerDraftAfterAuthz.id === draftId &&
+      ownerDraftAfterAuthz.title.startsWith("Smoke draft aggiornato")
+  )
+
   const favorite = await api(
     "POST",
     `/favorites/listings/${listingId}`,
@@ -219,6 +281,41 @@ try {
   check(
     "favorite list",
     favorites.items.some((item) => item.listing.id === listingId)
+  )
+
+  const otherFavorites = await api(
+    "GET",
+    "/favorites/listings?page=1&pageSize=10",
+    undefined,
+    otherToken
+  )
+  check(
+    "authz other favorite isolation",
+    !otherFavorites.items.some((item) => item.listing.id === listingId)
+  )
+
+  const otherFavoriteDelete = await api(
+    "DELETE",
+    `/favorites/listings/${listingId}`,
+    undefined,
+    otherToken
+  )
+  check(
+    "authz other favorite delete isolated",
+    otherFavoriteDelete.deleted === false
+  )
+
+  const ownerFavoritesAfterOtherDelete = await api(
+    "GET",
+    "/favorites/listings?page=1&pageSize=10",
+    undefined,
+    token
+  )
+  check(
+    "authz owner favorite intact",
+    ownerFavoritesAfterOtherDelete.items.some(
+      (item) => item.listing.id === listingId
+    )
   )
 
   const removedFavorite = await api(
@@ -373,13 +470,36 @@ try {
     undefined,
     token
   )
+  const ownerModerationNotification = ownerNotifications.items.find(
+    (item) =>
+      item.type === "listing_moderation_decision" &&
+      item.payload?.listingId === submittedListingId &&
+      item.payload?.decision === "approved"
+  )
   check(
     "demo moderation owner notification",
-    ownerNotifications.items.some(
+    Boolean(ownerModerationNotification)
+  )
+
+  await expectApiStatus(
+    "authz other notification read denied",
+    "POST",
+    `/notifications/${ownerModerationNotification.id}/read`,
+    {},
+    otherToken,
+    [404]
+  )
+  const ownerNotificationsAfterOtherRead = await api(
+    "GET",
+    "/notifications?page=1&pageSize=10",
+    undefined,
+    token
+  )
+  check(
+    "authz owner notification intact",
+    ownerNotificationsAfterOtherRead.items.some(
       (item) =>
-        item.type === "listing_moderation_decision" &&
-        item.payload?.listingId === submittedListingId &&
-        item.payload?.decision === "approved"
+        item.id === ownerModerationNotification.id && item.readAt === null
     )
   )
 
@@ -458,6 +578,42 @@ async function api(method, path, body, bearerToken) {
     headers,
     method,
   })
+}
+
+async function expectApiStatus(
+  label,
+  method,
+  path,
+  body,
+  bearerToken,
+  expectedStatuses
+) {
+  const headers = {
+    Accept: "application/json",
+  }
+
+  if (bearerToken) {
+    headers.Authorization = `Bearer ${bearerToken}`
+  }
+
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json"
+  }
+
+  const response = await fetch(`${apiBaseUrl}${path}`, {
+    body: body === undefined ? undefined : JSON.stringify(body),
+    headers,
+    method,
+  })
+  const text = await response.text()
+
+  check(
+    label,
+    expectedStatuses.includes(response.status),
+    `status=${response.status}${text ? ` body=${text.slice(0, 160)}` : ""}`
+  )
+
+  return text ? JSON.parse(text) : null
 }
 
 async function rawJson(url, init) {

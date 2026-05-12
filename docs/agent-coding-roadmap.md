@@ -30,8 +30,8 @@ e ottenere una demo navigabile con:
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
 mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
 e la pagina impostazioni profilo sono funzionanti in locale. Il punto piu
-urgente resta completare Milestone C con dashboard piu ordinata e test authz
-multi-utente.
+urgente resta completare Milestone C con dashboard piu ordinata e copertura
+contatti lato account/admin.
 
 ## Regole per ogni round
 
@@ -130,8 +130,12 @@ Task:
 - riorganizzare `/account` in dashboard operativa: annunci, notifiche,
   preferiti, profilo;
 - Fatto: aggiungere impostazioni profilo modificabili dall'utente;
-- verificare ownership su bozze, immagini, preferiti, notifiche e contatti;
-- completare test authz su accesso multi-utente e dati propri;
+- Fatto: verificare ownership smoke su bozze, immagini, preferiti e
+  notifiche;
+- estendere ownership e gestione contatti quando esistera' una superficie
+  account/admin dedicata;
+- Fatto: completare test authz smoke su accesso multi-utente e dati propri per
+  bozze, immagini, preferiti e notifiche;
 - rendere i messaggi di errore account leggibili e non tecnici.
 
 Avanzamento 12 maggio 2026:
@@ -140,9 +144,11 @@ Avanzamento 12 maggio 2026:
   telefono e preferenze email non essenziali.
 - Fatto: dashboard `/account` collegata alle impostazioni profilo.
 - Fatto: smoke E2E aggiorna profilo/preferenze e verifica la pagina settings.
+- Fatto: smoke E2E registra un secondo utente e verifica accesso negato o
+  isolamento su bozza, immagini bozza, preferiti e notifiche del primo utente.
 - Da fare: completare riordino dashboard in viste operative piu chiare.
-- Da fare: aggiungere test espliciti per accesso negato multi-utente su bozze,
-  immagini, preferiti, notifiche e contatti.
+- Da fare: aggiungere superficie contatti per proprietario/admin e relativa
+  copertura authz.
 
 Done:
 
@@ -221,5 +227,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone C per completare riordino dashboard account e test
-authz multi-utente.
+Proseguire con Milestone C completando il riordino dashboard account in viste
+operative piu chiare.

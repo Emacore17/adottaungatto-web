@@ -85,7 +85,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
   stato UI a cuore, update profilo/preferenze, like, contatto proprietario,
-  notifiche e pagine account autenticate, piu login admin e coda moderazione
+  notifiche, isolamento multi-utente su bozze, immagini, preferiti e
+  notifiche, pagine account autenticate, piu login admin e coda moderazione
   demo.
 
 ## Non pronto per produzione
@@ -134,7 +135,8 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 
 - bearer session token hashato lato server;
 - ruoli base;
-- ownership sulle risorse utente;
+- ownership sulle risorse utente, coperta dallo smoke locale per bozze,
+  immagini bozza, preferiti e notifiche;
 - controllo ruoli su moderazione;
 - token monouso hashati per email verification e reset password.
 
