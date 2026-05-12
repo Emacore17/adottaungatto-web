@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
+import type { RateLimitService } from "../rate-limit/rate-limit.service.js"
 import { ModerationController } from "./moderation.controller.js"
 import type { ModerationService } from "./moderation.service.js"
 
@@ -9,13 +10,31 @@ describe("ModerationController", () => {
     const moderationService = {
       pendingReviewQueue: vi.fn().mockResolvedValue({ items: [], meta: {} }),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const rateLimitService = createRateLimitService()
+    const controller = new ModerationController(
+      moderationService,
+      rateLimitService
+    )
 
-    await controller.pendingReviewQueue(createAuth(), {
-      page: "2",
-      pageSize: "10",
-    })
+    await controller.pendingReviewQueue(
+      createAuth(),
+      {
+        page: "2",
+        pageSize: "10",
+      },
+      createRequest()
+    )
 
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.20",
+        namespace: "moderation:queue:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:moderator-id",
+        namespace: "moderation:queue:pending-review:user",
+      }),
+    ])
     expect(moderationService.pendingReviewQueue).toHaveBeenCalledWith(
       "moderator-id",
       {
@@ -29,12 +48,19 @@ describe("ModerationController", () => {
     const moderationService = {
       pendingReviewQueue: vi.fn(),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await expect(
-      controller.pendingReviewQueue(createAuth(), {
-        page: "0",
-      })
+      controller.pendingReviewQueue(
+        createAuth(),
+        {
+          page: "0",
+        },
+        createRequest()
+      )
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(moderationService.pendingReviewQueue).not.toHaveBeenCalled()
   })
@@ -43,12 +69,19 @@ describe("ModerationController", () => {
     const moderationService = {
       reportedListingsQueue: vi.fn().mockResolvedValue({ items: [], meta: {} }),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
-    await controller.reportedListingsQueue(createAuth(), {
-      page: "3",
-      pageSize: "5",
-    })
+    await controller.reportedListingsQueue(
+      createAuth(),
+      {
+        page: "3",
+        pageSize: "5",
+      },
+      createRequest()
+    )
 
     expect(moderationService.reportedListingsQueue).toHaveBeenCalledWith(
       "moderator-id",
@@ -63,12 +96,19 @@ describe("ModerationController", () => {
     const moderationService = {
       reportedListingsQueue: vi.fn(),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await expect(
-      controller.reportedListingsQueue(createAuth(), {
-        pageSize: "101",
-      })
+      controller.reportedListingsQueue(
+        createAuth(),
+        {
+          pageSize: "101",
+        },
+        createRequest()
+      )
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(moderationService.reportedListingsQueue).not.toHaveBeenCalled()
   })
@@ -77,7 +117,11 @@ describe("ModerationController", () => {
     const moderationService = {
       decideListingCase: vi.fn().mockResolvedValue({ decided: true }),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const rateLimitService = createRateLimitService()
+    const controller = new ModerationController(
+      moderationService,
+      rateLimitService
+    )
 
     await controller.approveListingCase(
       createAuth(),
@@ -86,9 +130,24 @@ describe("ModerationController", () => {
       },
       {
         reasonCode: "policy_ok",
-      }
+      },
+      createRequest()
     )
 
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.20",
+        namespace: "moderation:decision:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:moderator-id",
+        namespace: "moderation:decision:approve:user",
+      }),
+      expect.objectContaining({
+        identifier: "case:11111111-1111-4111-8111-111111111111",
+        namespace: "moderation:decision:case",
+      }),
+    ])
     expect(moderationService.decideListingCase).toHaveBeenCalledWith(
       "moderator-id",
       "11111111-1111-4111-8111-111111111111",
@@ -103,7 +162,10 @@ describe("ModerationController", () => {
     const moderationService = {
       decideListingCase: vi.fn().mockResolvedValue({ decided: true }),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await controller.rejectListingCase(
       createAuth(),
@@ -112,7 +174,8 @@ describe("ModerationController", () => {
       },
       {
         reasonText: "Descrizione non conforme.",
-      }
+      },
+      createRequest()
     )
 
     expect(moderationService.decideListingCase).toHaveBeenCalledWith(
@@ -129,7 +192,10 @@ describe("ModerationController", () => {
     const moderationService = {
       decideListingCase: vi.fn().mockResolvedValue({ decided: true }),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await controller.suspendListingCase(
       createAuth(),
@@ -138,7 +204,8 @@ describe("ModerationController", () => {
       },
       {
         reasonCode: "risk_review",
-      }
+      },
+      createRequest()
     )
 
     expect(moderationService.decideListingCase).toHaveBeenCalledWith(
@@ -155,7 +222,10 @@ describe("ModerationController", () => {
     const moderationService = {
       decideListingCase: vi.fn(),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.rejectListingCase(
@@ -163,7 +233,8 @@ describe("ModerationController", () => {
         {
           caseId: "11111111-1111-4111-8111-111111111111",
         },
-        {}
+        {},
+        createRequest()
       )
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(moderationService.decideListingCase).not.toHaveBeenCalled()
@@ -173,7 +244,10 @@ describe("ModerationController", () => {
     const moderationService = {
       decideListingCase: vi.fn(),
     } as unknown as ModerationService
-    const controller = new ModerationController(moderationService)
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.approveListingCase(
@@ -183,7 +257,8 @@ describe("ModerationController", () => {
         },
         {
           reasonCode: "policy_ok",
-        }
+        },
+        createRequest()
       )
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(moderationService.decideListingCase).not.toHaveBeenCalled()
@@ -203,5 +278,17 @@ function createAuth() {
       id: "session-id",
       expiresAt: "2026-05-30T10:00:00.000Z",
     },
+  } as const
+}
+
+function createRateLimitService() {
+  return {
+    enforce: vi.fn().mockResolvedValue(undefined),
+  } as unknown as RateLimitService
+}
+
+function createRequest() {
+  return {
+    ip: "203.0.113.20",
   } as const
 }

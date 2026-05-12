@@ -125,11 +125,13 @@ Rate limit auth iniziale:
 - usa Redis con finestre fisse e chiavi applicative hashate;
 - copre registrazione, login, verifica email, richiesta e conferma reset
   password, richiesta nuova verifica email e cambio password autenticato;
+- copre anche gli endpoint upload immagini bozza e gli endpoint principali di
+  moderazione/admin con limiti per IP, utente/operatore e risorsa;
 - combina limiti per IP client con limiti per email, token o utente, secondo
   il flusso;
 - restituisce `429` con `reason` e `retryAfterSeconds`;
 - resta da configurare per ambiente, validare dietro proxy fidato e integrare
-  con lock progressivo account, upload e strumenti admin.
+  con lock progressivo account e ulteriori flussi pubblici sensibili.
 
 Stato produzione: la base auth e autorizzazione e' adatta allo sviluppo, ma non
 e' ancora sufficiente per un rilascio pubblico. La checklist di hardening e'
@@ -153,6 +155,8 @@ Policy iniziale per bozze annuncio:
 - l'invio a moderazione aggiorna `moderation_status` a `pending_review` e crea
   un record in `moderation_cases` e `moderation_actions`.
 - l'upload immagini iniziale e' consentito solo su bozze possedute dall'utente;
+- la richiesta URL upload e la conferma upload sono protette da rate limit
+  Redis per IP, utente e risorsa;
 - l'API genera una chiave oggetto non prevedibile, crea il record
   `listing_images` e restituisce una URL presigned `PUT` verso MinIO;
 - dopo il PUT, il client conferma l'upload; l'API verifica l'oggetto su MinIO e
@@ -182,6 +186,8 @@ Policy iniziale per moderazione:
 - la coda moderazione richiede bearer token valido;
 - solo utenti con ruolo `moderator` o `admin` possono leggere la coda;
 - solo utenti con ruolo `moderator` o `admin` possono decidere un caso;
+- la lettura code e le decisioni applicano rate limit Redis per IP, operatore e
+  caso quando rilevante;
 - la coda include solo casi `open` collegati ad annunci
   `moderation_status = pending_review`, `lifecycle_status = draft` e non
   cancellati;

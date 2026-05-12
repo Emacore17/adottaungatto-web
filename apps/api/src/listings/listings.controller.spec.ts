@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
+import type { RateLimitService } from "../rate-limit/rate-limit.service.js"
 import { ListingsController } from "./listings.controller.js"
 import type { ListingsService } from "./listings.service.js"
 
@@ -9,7 +10,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn().mockResolvedValue({ items: [], meta: {} }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.listPublic({
       page: "2",
@@ -50,7 +54,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.listPublic({
@@ -64,7 +71,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.listPublic({
@@ -79,7 +89,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn().mockResolvedValue({ items: [], meta: {} }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.listPublic({
       contributionCentsMin: "5000",
@@ -98,7 +111,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.listPublic({
@@ -113,7 +129,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.listPublic({
@@ -127,7 +146,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublic: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.listPublic({
@@ -141,7 +163,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listPublicCatBreeds: vi.fn().mockResolvedValue([]),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(controller.listPublicBreeds()).resolves.toEqual([])
     expect(listingsService.listPublicCatBreeds).toHaveBeenCalledWith()
@@ -151,7 +176,10 @@ describe("ListingsController", () => {
     const listingsService = {
       publicDetail: vi.fn().mockResolvedValue({ id: "listing-id" }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.publicDetail({
       id: "00000000-0000-0000-0000-000000000001",
@@ -166,7 +194,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listDrafts: vi.fn().mockResolvedValue({ items: [], meta: {} }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.listDrafts(createAuth(), {
       page: "2",
@@ -183,7 +214,10 @@ describe("ListingsController", () => {
     const listingsService = {
       createDraft: vi.fn().mockResolvedValue({ id: "listing-id" }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.createDraft(createAuth(), {
       title: "  Gattino a Roma  ",
@@ -203,7 +237,10 @@ describe("ListingsController", () => {
     const listingsService = {
       updateDraft: vi.fn().mockResolvedValue({ id: "listing-id" }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.updateDraft(
       createAuth(),
@@ -224,7 +261,10 @@ describe("ListingsController", () => {
     const listingsService = {
       updateDraft: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.updateDraft(
@@ -240,7 +280,10 @@ describe("ListingsController", () => {
     const listingsService = {
       submitDraftForReview: vi.fn().mockResolvedValue({ submitted: true }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.submitDraftForReview(createAuth(), {
       id: "00000000-0000-0000-0000-000000000001",
@@ -256,7 +299,8 @@ describe("ListingsController", () => {
     const listingsService = {
       createDraftImageUpload: vi.fn().mockResolvedValue({ image: {} }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const rateLimitService = createRateLimitService()
+    const controller = new ListingsController(listingsService, rateLimitService)
 
     await controller.createDraftImageUpload(
       createAuth(),
@@ -265,9 +309,24 @@ describe("ListingsController", () => {
         mimeType: "image/webp",
         sizeBytes: "123456",
         isCover: true,
-      }
+      },
+      createRequest()
     )
 
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.10",
+        namespace: "listings:images:upload-url:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:user-id",
+        namespace: "listings:images:upload-url:user",
+      }),
+      expect.objectContaining({
+        identifier: "draft:00000000-0000-0000-0000-000000000001",
+        namespace: "listings:images:upload-url:draft",
+      }),
+    ])
     expect(listingsService.createDraftImageUpload).toHaveBeenCalledWith(
       "user-id",
       "00000000-0000-0000-0000-000000000001",
@@ -283,13 +342,33 @@ describe("ListingsController", () => {
     const listingsService = {
       confirmDraftImageUpload: vi.fn().mockResolvedValue({ confirmed: true }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const rateLimitService = createRateLimitService()
+    const controller = new ListingsController(listingsService, rateLimitService)
 
-    await controller.confirmDraftImageUpload(createAuth(), {
-      id: "00000000-0000-0000-0000-000000000001",
-      imageId: "00000000-0000-0000-0000-000000000002",
-    })
+    await controller.confirmDraftImageUpload(
+      createAuth(),
+      {
+        id: "00000000-0000-0000-0000-000000000001",
+        imageId: "00000000-0000-0000-0000-000000000002",
+      },
+      createRequest()
+    )
 
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.10",
+        namespace: "listings:images:confirm:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:user-id",
+        namespace: "listings:images:confirm:user",
+      }),
+      expect.objectContaining({
+        identifier:
+          "image:00000000-0000-0000-0000-000000000001:00000000-0000-0000-0000-000000000002",
+        namespace: "listings:images:confirm:image",
+      }),
+    ])
     expect(listingsService.confirmDraftImageUpload).toHaveBeenCalledWith(
       "user-id",
       "00000000-0000-0000-0000-000000000001",
@@ -301,7 +380,10 @@ describe("ListingsController", () => {
     const listingsService = {
       listDraftImages: vi.fn().mockResolvedValue({ items: [] }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.listDraftImages(createAuth(), {
       id: "00000000-0000-0000-0000-000000000001",
@@ -317,7 +399,10 @@ describe("ListingsController", () => {
     const listingsService = {
       reorderDraftImages: vi.fn().mockResolvedValue({ images: { items: [] } }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.reorderDraftImages(
       createAuth(),
@@ -346,7 +431,10 @@ describe("ListingsController", () => {
     const listingsService = {
       setDraftImageCover: vi.fn().mockResolvedValue({ image: {} }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.setDraftImageCover(createAuth(), {
       id: "00000000-0000-0000-0000-000000000001",
@@ -364,7 +452,10 @@ describe("ListingsController", () => {
     const listingsService = {
       deleteDraftImage: vi.fn().mockResolvedValue({ deleted: true }),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await controller.deleteDraftImage(createAuth(), {
       id: "00000000-0000-0000-0000-000000000001",
@@ -382,7 +473,10 @@ describe("ListingsController", () => {
     const listingsService = {
       draft: vi.fn(),
     } as unknown as ListingsService
-    const controller = new ListingsController(listingsService)
+    const controller = new ListingsController(
+      listingsService,
+      createRateLimitService()
+    )
 
     await expect(
       controller.draft(createAuth(), { id: "not-a-uuid" })
@@ -403,5 +497,17 @@ function createAuth() {
       id: "session-id",
       expiresAt: "2026-05-30T10:00:00.000Z",
     },
+  } as const
+}
+
+function createRateLimitService() {
+  return {
+    enforce: vi.fn().mockResolvedValue(undefined),
+  } as unknown as RateLimitService
+}
+
+function createRequest() {
+  return {
+    ip: "203.0.113.10",
   } as const
 }

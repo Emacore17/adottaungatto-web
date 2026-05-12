@@ -37,8 +37,8 @@ sono funzionanti in locale. Il contatto proprietario supporta anche il consenso
 separato per condividere il telefono del richiedente. Le notifiche in-app hanno
 un canale real-time SSE locale con badge live e smoke dedicato. Invio a
 revisione, contatto proprietario e decisione di moderazione generano gia'
-notifiche in-app. Il punto piu urgente ora e' estendere la moderazione/admin
-con strumenti operativi, dettaglio casi e audit piu leggibile.
+notifiche in-app. Il punto piu urgente ora e' proseguire con la Milestone G:
+strumentazione operativa, tuning dei rate limit e hardening produzione.
 
 ## Regole per ogni round
 
@@ -284,11 +284,28 @@ Obiettivo: rendere il progetto pronto a staging chiuso e poi produzione.
 
 Task:
 
-- completare rate limit per upload, admin e flussi pubblici sensibili;
+- Fatto parziale: aggiungere rate limit Redis agli endpoint upload immagini
+  bozza e agli endpoint admin/moderazione principali;
+- completare rate limit per gli altri flussi pubblici sensibili;
 - aggiungere logging strutturato, trace id, metriche e alert;
 - misurare ricerca e pagina lista su fixture realistiche;
 - definire CI/CD, backup/restore e rollback;
 - completare privacy, cookie, retention dati e hardening upload.
+
+Avanzamento 12 maggio 2026:
+
+- Fatto: creati helper condivisi per identificatori rate limit e regole
+  applicative.
+- Fatto: `POST /listings/me/drafts/:id/images/upload-url` limita per IP,
+  utente e bozza.
+- Fatto: `POST /listings/me/drafts/:id/images/:imageId/confirm` limita per IP,
+  utente e immagine.
+- Fatto: `GET /moderation/listings/pending-review` e
+  `GET /moderation/listings/reported` limitano lettura code per IP e operatore.
+- Fatto: le decisioni `approve`, `reject` e `suspend` limitano per IP,
+  operatore e caso.
+- Fatto: test controller API verificano l'applicazione dei limiti su upload e
+  moderazione.
 
 Done:
 
@@ -296,5 +313,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone G iniziando dal rate limit per upload/admin e dalla
-strumentazione operativa minima.
+Proseguire con Milestone G dalla strumentazione operativa minima: logging
+strutturato, trace id, metriche/alert e tuning configurabile dei rate limit per
+ambiente.

@@ -42,6 +42,7 @@ Un annuncio e' pubblico solo se:
 ## Coda iniziale
 
 - Richiede ruolo `moderator` o `admin`.
+- Applica rate limit Redis per IP e operatore interno.
 - Mostra casi `open` collegati ad annunci in `pending_review`.
 - Ordina dai casi piu' vecchi ai piu' recenti.
 - Include dati annuncio, proprietario, luogo, conteggio immagini pronte e
@@ -78,7 +79,8 @@ una segnalazione `linked` verso un annuncio. Ogni item include dati annuncio,
 proprietario, luogo, immagini pronte, conteggio segnalazioni, data della prima
 segnalazione, data dell'ultima segnalazione e dettaglio dell'ultima
 segnalazione. La pagina `/moderation` legge anche questa coda e consente le
-stesse decisioni motivate.
+stesse decisioni motivate. Anche questa coda applica rate limit Redis per IP e
+operatore interno.
 
 Le decisioni `approve`, `reject` e `suspend` sono riutilizzate anche su casi da
 segnalazione collegati ad annunci gia pubblicati. In questo contesto
@@ -96,6 +98,7 @@ Endpoint:
 Ogni decisione:
 
 - richiede ruolo `moderator` o `admin`;
+- applica rate limit Redis per IP, operatore interno e caso;
 - richiede `reasonCode` o `reasonText` nel body;
 - opera solo su casi `open` collegati ad annunci in `pending_review` e
   `draft`, oppure ad annunci `approved` e `published`;
@@ -190,7 +193,8 @@ e ricercabile.
 
 ## Gap produzione
 
-La moderazione backend e' avviata, ma l'area amministrativa completa non esiste
-ancora. Prima di un rilascio pubblico servono UI interna protetta, MFA per
-ruoli interni, audit piu esteso, gestione ruoli, strumenti anti-abuso, filtri
-coda avanzati e logging/alert sulle azioni ad alto rischio.
+La moderazione backend e' avviata e la dashboard interna locale esiste, ma
+l'area amministrativa completa non e' pronta per produzione. Prima di un
+rilascio pubblico servono MFA per ruoli interni, audit piu esteso, gestione
+ruoli, tuning dei rate limit, strumenti anti-abuso, filtri coda avanzati e
+logging/alert sulle azioni ad alto rischio.

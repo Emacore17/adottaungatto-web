@@ -5,6 +5,7 @@ import { DatabaseModule } from "../database/database.module.js"
 import { ListingSearchDocumentsModule } from "../listing-search-documents/listing-search-documents.module.js"
 import { MailModule } from "../mail/mail.module.js"
 import { NotificationsModule } from "../notifications/notifications.module.js"
+import { RateLimitModule } from "../rate-limit/rate-limit.module.js"
 import { ModerationController } from "./moderation.controller.js"
 import { ModerationService } from "./moderation.service.js"
 
@@ -15,6 +16,7 @@ import { ModerationService } from "./moderation.service.js"
     ListingSearchDocumentsModule,
     MailModule,
     NotificationsModule,
+    RateLimitModule,
   ],
   controllers: [ModerationController],
   providers: [ModerationService],

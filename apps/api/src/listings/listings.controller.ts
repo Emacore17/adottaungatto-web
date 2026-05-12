@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from "@nestjs/common"
 import {
@@ -27,13 +28,21 @@ import { ZodError } from "zod"
 import { BearerAuthGuard } from "../auth/auth.guard.js"
 import { CurrentAuth } from "../auth/current-auth.decorator.js"
 import type { CurrentAuthSessionResponse } from "../auth/auth.types.js"
+import { RateLimitService } from "../rate-limit/rate-limit.service.js"
+import {
+  getConfirmDraftImageUploadRateLimitRules,
+  getCreateDraftImageUploadRateLimitRules,
+  type ListingsRateLimitRequest,
+} from "./listings-rate-limit.js"
 import { ListingsService } from "./listings.service.js"
 
 @Controller("listings")
 export class ListingsController {
   constructor(
     @Inject(ListingsService)
-    private readonly listingsService: ListingsService
+    private readonly listingsService: ListingsService,
+    @Inject(RateLimitService)
+    private readonly rateLimitService: RateLimitService
   ) {}
 
   @Get()
@@ -115,15 +124,21 @@ export class ListingsController {
   async createDraftImageUpload(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
     @Param() params: Record<string, unknown>,
-    @Body() body: unknown
+    @Body() body: unknown,
+    @Req() request: ListingsRateLimitRequest
   ) {
     try {
       const { id } = listingDraftIdParamSchema.parse(params)
+      const input = listingImageUploadRequestSchema.parse(body)
+
+      await this.rateLimitService.enforce(
+        getCreateDraftImageUploadRateLimitRules(auth.user.id, id, request)
+      )
 
       return this.listingsService.createDraftImageUpload(
         auth.user.id,
         id,
-        listingImageUploadRequestSchema.parse(body)
+        input
       )
     } catch (error) {
       throwValidationError(error, "Invalid listing image upload payload.")
@@ -134,13 +149,23 @@ export class ListingsController {
   @Post("me/drafts/:id/images/:imageId/confirm")
   async confirmDraftImageUpload(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
-    @Param() params: Record<string, unknown>
+    @Param() params: Record<string, unknown>,
+    @Req() request: ListingsRateLimitRequest
   ) {
     try {
       const { id } = listingDraftIdParamSchema.parse(params)
       const { id: imageId } = listingDraftIdParamSchema.parse({
         id: params.imageId,
       })
+
+      await this.rateLimitService.enforce(
+        getConfirmDraftImageUploadRateLimitRules(
+          auth.user.id,
+          id,
+          imageId,
+          request
+        )
+      )
 
       return this.listingsService.confirmDraftImageUpload(
         auth.user.id,
@@ -182,11 +207,7 @@ export class ListingsController {
       const { id } = listingDraftIdParamSchema.parse(params)
       const { imageId } = listingImageIdParamSchema.parse(params)
 
-      return this.listingsService.setDraftImageCover(
-        auth.user.id,
-        id,
-        imageId
-      )
+      return this.listingsService.setDraftImageCover(auth.user.id, id, imageId)
     } catch (error) {
       throwValidationError(error, "Invalid listing image id.")
     }

@@ -23,16 +23,18 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - API health, health database e health Redis.
 - Auth API con registrazione, login, logout, sessione corrente, verifica email,
   recupero password e cambio password autenticato.
-- Rate limit Redis fixed-window iniziale sui flussi auth sensibili:
-  registrazione, login, verifica email, recupero password e cambio password,
-  con chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
+- Rate limit Redis fixed-window iniziale sui flussi auth sensibili,
+  sull'upload immagini bozza e sugli endpoint principali admin/moderazione, con
+  chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
 - Profilo utente autenticato con update e preferenze email non essenziali,
   esposti anche dalla pagina `/account/settings`.
-- CRUD bozze annuncio, invio a moderazione e upload immagini presigned.
+- CRUD bozze annuncio, invio a moderazione e upload immagini presigned con
+  rate limit su richiesta URL upload e conferma upload.
 - Worker per processamento immagini e varianti WebP, con loop automatico
   durante l'avvio dell'app `worker` e CLI one-shot `pnpm media:process`.
 - Moderazione annunci e segnalazioni con code, decisioni e audit su
-  `moderation_actions`.
+  `moderation_actions`; lettura code e decisioni admin hanno rate limit Redis
+  iniziali per IP, operatore e caso.
 - Email applicative via Mailpit locale e notifiche in-app.
 - Canale notifiche real-time locale via SSE autenticato:
   `GET /notifications/stream` sul backend, proxy Next same-origin
@@ -115,7 +117,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 Il progetto e' una base backend solida, ma non e' ancora rilasciabile in
 produzione. Mancano almeno:
 
-- hardening HTTP, rate limiting generalizzato e protezioni anti-abuso estese;
+- hardening HTTP, tuning dei rate limit per ambiente e protezioni anti-abuso
+  estese;
 - cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
 - logging strutturato, trace id, metriche, alert e audit centralizzato;
 - pipeline CI/CD e ambienti separati;
@@ -129,10 +132,9 @@ produzione. Mancano almeno:
   estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
-- giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
-  stati annuncio multipli, sponsorizzato mock, approvazione fino a
-  pubblicazione e immagini realistiche locali avviati; restano da consolidare
-  licenza/attribuzione degli asset reali se dovranno essere versionati.
+- il giro locale prodotto e' coperto dallo smoke principale; resta da
+  consolidare licenza/attribuzione degli asset reali se dovranno essere
+  versionati.
 
 ## Stato ricerca
 
@@ -163,9 +165,10 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 - token monouso hashati per email verification e reset password.
 
 Prima della produzione servono tuning dei rate limit per ambiente, supporto
-proxy fidato per l'IP client, copertura upload/admin, policy sessioni, cookie
+proxy fidato per l'IP client, lock progressivo account, policy sessioni, cookie
 sicuri se usati dal browser, log redatti, segreti gestiti da provider,
-hardening upload, backup, alert e audit amministrativo piu esteso.
+hardening upload oltre i limiti iniziali, backup, alert e audit amministrativo
+piu esteso.
 
 ## Stato frontend
 

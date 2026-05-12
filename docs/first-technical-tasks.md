@@ -141,8 +141,10 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 6. Fatto: aggiungere piano osservabilita, ambienti, release e CI/CD.
 7. Fatto: dettagliare specifica tecnica della ricerca full-text e ranking.
 8. Avviato: dettagliare hardening auth/sessioni/rate limit in `docs/authz.md`
-   e aggiungere il primo rate limit auth; restano cookie/CSRF, gestione
-   sessioni production-grade, lock progressivo account e copertura upload/admin.
+   e aggiungere rate limit Redis per auth, upload immagini bozza e principali
+   endpoint admin/moderazione; restano cookie/CSRF, gestione sessioni
+   production-grade, lock progressivo account, tuning per ambiente e ulteriori
+   flussi pubblici sensibili.
 9. Dettagliare area admin/moderazione sicura.
 10. Fatto: dettagliare test data e script bootstrap locale in
     `docs/test-data.md` e `docs/local-testing-and-mocks.md`.

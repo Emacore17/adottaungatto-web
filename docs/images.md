@@ -60,9 +60,11 @@ Endpoint iniziale:
 
 - `POST /listings/me/drafts/:id/images/upload-url` richiede bearer token,
   verifica ownership e stato bozza, crea un record `listing_images`, restituisce
-  una URL presigned `PUT`, gli header richiesti e la scadenza.
+  una URL presigned `PUT`, gli header richiesti e la scadenza. Applica rate
+  limit Redis per IP, utente e bozza.
 - `POST /listings/me/drafts/:id/images/:imageId/confirm` verifica l'oggetto su
   MinIO, salva checksum/size da storage e porta il record in `processing`.
+  Applica rate limit Redis per IP, utente e immagine.
 - `GET /listings/me/drafts/:id/images` restituisce la galleria immagini della
   bozza con stato, conteggi, copertina corrente e limite massimo.
 - `PATCH /listings/me/drafts/:id/images/order` aggiorna l'ordine delle immagini
@@ -95,7 +97,8 @@ Produzione futura:
 
 - Oggetti organizzati per ambiente e listing.
 - Chiavi non indovinabili.
-- Upload limitati per utente e annuncio.
+- Upload limitati per IP, utente, annuncio e immagine nelle fasi presigned URL
+  e conferma.
 - Nessun eseguibile servito come immagine.
 - Content-Type impostato dal worker dopo validazione.
 
@@ -110,3 +113,5 @@ Produzione futura:
   riuscito.
 - La demo deve avere immagini pronte per tutti gli annunci pubblici e in
   revisione, come definito in `test-data.md`.
+- La configurazione dei limiti e la validazione dietro proxy fidato restano
+  requisiti di hardening produzione.
