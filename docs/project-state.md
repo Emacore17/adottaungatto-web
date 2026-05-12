@@ -13,7 +13,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Frontend Next.js `16.1.6`, React `19.2.4`, Tailwind CSS `4` e shadcn/ui
   monorepo `radix-vega`, con linee guida operative in
   `docs/frontend-nextjs-shadcn-guidelines.md`, configurazione centrale, route
-  builder, client API tipizzato, layout pubblici/auth/account e SEO di base.
+  builder, client API tipizzato con errori user-facing in italiano, layout
+  pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
 - Migrazioni Drizzle fino a `0016_futuristic_boomer.sql`.
@@ -55,8 +56,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   dinamici, JSON-LD, `robots.ts`, `sitemap.ts`, `not-found`, `loading` ed
   `error` iniziali.
 - Area account server-rendered con dashboard `/account`, impostazioni profilo
-  `/account/settings`, inbox contatti ricevuti `/account/contacts`, lista annunci in lavorazione
-  `/account/listings/drafts`, lista preferiti `/account/favorites` e inbox
+  `/account/settings`, inbox contatti ricevuti `/account/contacts`, lista
+  annunci in lavorazione `/account/listings/drafts`, lista preferiti
+  `/account/favorites` e inbox
   notifiche `/account/notifications` collegate in lettura alle API autenticate,
   con mutazioni per aggiornare profilo/preferenze email, cancellare bozze,
   rimuovere preferiti e segnare notifiche come lette. Gli annunci in lavorazione
@@ -155,9 +157,9 @@ layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
 account operativa con riepilogo, attivita prioritarie, profilo, azioni rapide,
-annunci in lavorazione, contatti ricevuti, preferiti e notifiche, pagina impostazioni
-profilo/preferenze email, form contatto proprietario sulla scheda annuncio e
-pagina `/moderation`
+annunci in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
+impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
+annuncio e pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
@@ -165,8 +167,10 @@ upload immagine, galleria immagini con stato chiaro, eliminazione,
 riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
 schermata di conferma. La schermata annuncio mostra un flusso guidato dati,
 foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
-pronti. Lo smoke locale copre anche upload immagine, processing worker e invio
-a revisione. Restano incomplete eventuali preferenze contatto per canali o
+pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
+messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
+smoke locale copre anche upload immagine, processing worker e invio a
+revisione. Restano incomplete eventuali preferenze contatto per canali o
 finestre orarie e amministrazione interna piu estesa. I prossimi sviluppi
 frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti

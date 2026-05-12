@@ -20,6 +20,7 @@ scheda dettaglio, layout pubblici/auth/account/admin, client API, SEO base,
 sitemap, robots, JSON-LD, dashboard account operativa con riepilogo, azioni
 rapide, bozze/preferiti/notifiche, inbox contatti ricevuti, form contatto
 proprietario e pagina `/moderation` con decisioni base motivate sono presenti.
+Il client API restituisce messaggi di errore gia' normalizzati per la UI.
 La priorita ora e' consolidare i flussi operativi autenticati senza rompere la
 separazione Server/Client Components.
 
@@ -194,6 +195,8 @@ export function ListingsFilters() {
   - base URL da env;
   - timeout o abort quando utile;
   - gestione errori tipizzata;
+  - messaggi `ApiResult.message` pronti per la UI, senza dettagli tecnici come
+    status HTTP grezzi o stack trace;
   - mapping da DTO API a view model solo se riduce complessita UI.
 - Non duplicare schemi: riusare `@workspace/validation` per form e query params
   quando possibile.
@@ -314,7 +317,8 @@ server-only.
 13. Fatto: mutazioni account per rimozione preferiti, lettura notifiche,
     cancellazione bozze ed editor bozze con creazione, modifica, upload
     immagine e invio a moderazione.
-14. Aggiungere galleria/stato immagini bozza con eliminazione e riordino.
+14. Fatto: aggiungere galleria/stato immagini bozza con eliminazione e
+    riordino.
 15. Aggiungere test leggeri per helper, view model e route critiche.
 16. Solo dopo, introdurre animazioni e componenti avanzati.
 

@@ -29,10 +29,10 @@ e ottenere una demo navigabile con:
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
 mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
-e la pagina impostazioni profilo, la dashboard account operativa e la inbox
-contatti ricevuti lato proprietario sono funzionanti in locale. Il punto piu
-urgente resta chiudere i messaggi di errore account e progettare i consensi
-granulari per contatti sensibili.
+e la pagina impostazioni profilo, la dashboard account operativa, la inbox
+contatti ricevuti lato proprietario e i messaggi di errore account leggibili
+sono funzionanti in locale. Il punto piu urgente ora e' progettare e
+implementare i consensi granulari per contatti sensibili.
 
 ## Regole per ogni round
 
@@ -137,7 +137,7 @@ Task:
   proprietario `/account/contacts`;
 - Fatto: completare test authz smoke su accesso multi-utente e dati propri per
   bozze, immagini, preferiti e notifiche;
-- rendere i messaggi di errore account leggibili e non tecnici.
+- Fatto: rendere i messaggi di errore account leggibili e non tecnici.
 
 Avanzamento 12 maggio 2026:
 
@@ -152,13 +152,14 @@ Avanzamento 12 maggio 2026:
 - Fatto: smoke E2E verifica i contenuti chiave della dashboard account.
 - Fatto: aggiunta lista owner `GET /contacts/me/received`, pagina
   `/account/contacts` e smoke su isolamento owner.
+- Fatto: il client API frontend normalizza errori HTTP, rate limit e timeout in
+  messaggi italiani user-facing per le schermate account.
 - Da fare: valutare vista admin contatti solo se serve per audit/supporto.
-- Da fare: rendere i messaggi di errore account leggibili e non tecnici.
 
 Done:
 
 - due utenti demo non possono leggere o modificare risorse reciproche e la UI
-  espone impostazioni personali chiare.
+  espone impostazioni personali chiare, con errori account comprensibili.
 
 ## Milestone D - Ricerca pubblica e preferiti
 
@@ -236,6 +237,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone C rendendo i messaggi di errore account leggibili e
-non tecnici, oppure con Milestone E progettando il consenso granulare per
-telefono e altri dati sensibili.
+Proseguire con Milestone E progettando e implementando il consenso granulare
+per telefono e altri dati sensibili nelle richieste di contatto.
