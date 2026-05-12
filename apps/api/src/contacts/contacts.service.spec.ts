@@ -20,10 +20,12 @@ describe("ContactsService", () => {
           listing_title: "Micia cerca casa",
           requester_user_id: "requester-id",
           requester_email: "requester@example.com",
+          requester_phone_e164: "+39123456789",
           requester_display_name_snapshot: "Requester",
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           status: "sent",
           email_shared: true,
+          phone_shared: true,
           created_at: "2026-04-01T12:00:00.000Z",
           delivered_at: "2026-04-01T12:00:01.000Z",
           failed_at: null,
@@ -53,10 +55,12 @@ describe("ContactsService", () => {
             id: "requester-id",
             displayName: "Requester",
             email: "requester@example.com",
+            phoneE164: "+39123456789",
           },
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           status: "sent",
           emailShared: true,
+          phoneShared: true,
           createdAt: "2026-04-01T12:00:00.000Z",
           deliveredAt: "2026-04-01T12:00:01.000Z",
           failedAt: null,
@@ -103,6 +107,7 @@ describe("ContactsService", () => {
             owner_user_id: "owner-id",
             status: "sent",
             email_shared: true,
+            phone_shared: false,
             created_at: "2026-04-01T12:00:00.000Z",
             delivered_at: "2026-04-01T12:00:01.000Z",
           },
@@ -126,6 +131,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).resolves.toEqual({
@@ -137,6 +143,7 @@ describe("ContactsService", () => {
         ownerUserId: "owner-id",
         status: "sent",
         emailShared: true,
+        phoneShared: false,
         createdAt: "2026-04-01T12:00:00.000Z",
         deliveredAt: "2026-04-01T12:00:01.000Z",
       },
@@ -166,7 +173,126 @@ describe("ContactsService", () => {
       "owner-id",
       "Requester",
       "Ciao, vorrei avere informazioni sulla gatta.",
+      false,
     ])
+  })
+
+  it("stores and sends requester phone only after explicit consent", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            id: "listing-id",
+            title: "Micia cerca casa",
+            owner_user_id: "owner-id",
+            owner_email: "owner@example.com",
+            owner_display_name: "Owner",
+          },
+        ])
+        .mockResolvedValueOnce([createRateLimitRow()])
+        .mockResolvedValueOnce([{ phone_e164: "+39123456789" }])
+        .mockResolvedValueOnce([{ id: "request-id" }])
+        .mockResolvedValueOnce([
+          {
+            id: "request-id",
+            listing_id: "listing-id",
+            requester_user_id: "requester-id",
+            owner_user_id: "owner-id",
+            status: "sent",
+            email_shared: true,
+            phone_shared: true,
+            created_at: "2026-04-01T12:00:00.000Z",
+            delivered_at: "2026-04-01T12:00:01.000Z",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const mailService = {
+      sendListingContactRequest: vi.fn().mockResolvedValue(undefined),
+    } as unknown as MailService
+    const service = new ContactsService(databaseService, mailService)
+
+    await expect(
+      service.contactListingOwner(
+        {
+          id: "requester-id",
+          email: "requester@example.com",
+          displayName: "Requester",
+          profileType: "private",
+          status: "active",
+        },
+        "listing-id",
+        {
+          message: "Ciao, vorrei avere informazioni sulla gatta.",
+          shareEmail: true,
+          sharePhone: true,
+        }
+      )
+    ).resolves.toMatchObject({
+      request: {
+        emailShared: true,
+        phoneShared: true,
+      },
+      sent: true,
+    })
+    expect(mailService.sendListingContactRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        requesterEmail: "requester@example.com",
+        requesterPhoneE164: "+39123456789",
+      })
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[2]?.[1]).toEqual([
+      "requester-id",
+    ])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[3]?.[1]).toEqual([
+      "listing-id",
+      "requester-id",
+      "owner-id",
+      "Requester",
+      "Ciao, vorrei avere informazioni sulla gatta.",
+      true,
+    ])
+  })
+
+  it("rejects phone sharing when the requester has no phone", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            id: "listing-id",
+            title: "Micia cerca casa",
+            owner_user_id: "owner-id",
+            owner_email: "owner@example.com",
+            owner_display_name: "Owner",
+          },
+        ])
+        .mockResolvedValueOnce([createRateLimitRow()])
+        .mockResolvedValueOnce([{ phone_e164: null }]),
+    } as unknown as DatabaseService
+    const mailService = {
+      sendListingContactRequest: vi.fn(),
+    } as unknown as MailService
+    const service = new ContactsService(databaseService, mailService)
+
+    await expect(
+      service.contactListingOwner(
+        {
+          id: "requester-id",
+          email: "requester@example.com",
+          displayName: "Requester",
+          profileType: "private",
+          status: "active",
+        },
+        "listing-id",
+        {
+          message: "Ciao, vorrei avere informazioni sulla gatta.",
+          shareEmail: true,
+          sharePhone: true,
+        }
+      )
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(mailService.sendListingContactRequest).not.toHaveBeenCalled()
   })
 
   it("rejects contact requests for own listings", async () => {
@@ -199,6 +325,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).rejects.toBeInstanceOf(BadRequestException)
@@ -227,6 +354,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).rejects.toBeInstanceOf(NotFoundException)
@@ -267,6 +395,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).rejects.toBeInstanceOf(InternalServerErrorException)
@@ -309,6 +438,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).rejects.toMatchObject({
@@ -356,6 +486,7 @@ describe("ContactsService", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: false,
         }
       )
     ).rejects.toMatchObject({

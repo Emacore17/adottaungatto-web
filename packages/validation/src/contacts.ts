@@ -17,6 +17,7 @@ export const listingContactCreateSchema = z
     shareEmail: z.boolean().refine((value) => value, {
       message: "Email sharing consent is required.",
     }),
+    sharePhone: z.boolean().default(false),
   })
   .strict()
 

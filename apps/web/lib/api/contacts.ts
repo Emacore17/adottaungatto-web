@@ -12,6 +12,7 @@ export type ListingContactRequest = {
   ownerUserId: string
   status: "sent"
   emailShared: boolean
+  phoneShared: boolean
   createdAt: string
   deliveredAt: string
 }
@@ -31,10 +32,12 @@ export type ReceivedListingContactRequest = {
     id: string
     displayName: string
     email: string | null
+    phoneE164: string | null
   }
   message: string
   status: "failed" | "pending" | "sent"
   emailShared: boolean
+  phoneShared: boolean
   createdAt: string
   deliveredAt: string | null
   failedAt: string | null

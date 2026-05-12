@@ -31,8 +31,9 @@ Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
 mock sponsorizzato in lista, le immagini demo locali, il cuore preferiti toggle
 e la pagina impostazioni profilo, la dashboard account operativa, la inbox
 contatti ricevuti lato proprietario e i messaggi di errore account leggibili
-sono funzionanti in locale. Il punto piu urgente ora e' progettare e
-implementare i consensi granulari per contatti sensibili.
+sono funzionanti in locale. Il contatto proprietario supporta anche il consenso
+separato per condividere il telefono del richiedente. Il punto piu urgente ora
+e' progettare notifiche near-real-time o preferenze contatto piu avanzate.
 
 ## Regole per ogni round
 
@@ -186,16 +187,26 @@ Obiettivo: chiudere il ciclo di comunicazione in modo privacy-first.
 
 Task:
 
-- aggiungere consenso esplicito per condividere telefono o altri contatti
-  sensibili;
-- mantenere email proprietario nascosta nella UI pubblica;
+- Fatto: aggiungere consenso esplicito per condividere telefono del
+  richiedente;
+- Fatto: mantenere email proprietario nascosta nella UI pubblica;
 - progettare notifiche real-time o near-real-time con fallback polling;
 - notificare proprietario su invio a revisione, approvazione e contatto;
 - Fatto: documentare limiti anti-abuso e preferenze contatto;
 - Fatto: inbox account per richieste ricevute con email richiedente visibile
   solo dopo consenso;
-- documentare e implementare consenso granulare per telefono o altri dati
-  sensibili.
+- Fatto: documentare e implementare consenso granulare per telefono;
+- documentare eventuali altri dati sensibili solo quando entrano nel prodotto.
+
+Avanzamento 12 maggio 2026:
+
+- Fatto: `listing_contact_requests` traccia `phone_shared`.
+- Fatto: il form contatto pubblico abilita la condivisione telefono solo se il
+  richiedente lo ha impostato nel profilo.
+- Fatto: l'inbox owner `/account/contacts` mostra il telefono solo quando
+  `phone_shared = true`.
+- Fatto: lo smoke E2E copre richiesta contatto con consenso telefono e
+  visibilita lato proprietario.
 
 Done:
 
@@ -237,5 +248,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone E progettando e implementando il consenso granulare
-per telefono e altri dati sensibili nelle richieste di contatto.
+Proseguire con Milestone E progettando notifiche near-real-time con fallback
+polling, oppure preferenze contatto piu avanzate per canali e finestre orarie.

@@ -732,6 +732,7 @@ export const listingContactRequests = pgTable(
     message: text("message").notNull(),
     status: listingContactRequestStatus("status").notNull().default("pending"),
     emailShared: boolean("email_shared").notNull().default(false),
+    phoneShared: boolean("phone_shared").notNull().default(false),
     deliveredAt: timestamp("delivered_at", { withTimezone: true }),
     failedAt: timestamp("failed_at", { withTimezone: true }),
     failureReason: text("failure_reason"),

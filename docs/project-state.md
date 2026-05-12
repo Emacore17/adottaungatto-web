@@ -17,7 +17,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0016_futuristic_boomer.sql`.
+- Migrazioni Drizzle fino a `0017_pink_pyro.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -39,8 +39,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   redirect al login se l'utente non e' autenticato.
 - Contatto proprietario privacy-first con richiesta autenticata, inoltro email
   backend, tracciamento `listing_contact_requests`, rate limit dedicato e
-  preferenza per-annuncio per abilitare/disabilitare il contatto, piu lista
-  owner dei contatti ricevuti.
+  preferenza per-annuncio per abilitare/disabilitare il contatto, consensi
+  separati per email e telefono del richiedente, piu lista owner dei contatti
+  ricevuti.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
   principali, ricerca full-text con `q` e documento denormalizzato
   `listing_search_documents` usato quando disponibile, piu promozione mock
@@ -87,9 +88,10 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
-  stato UI a cuore, update profilo/preferenze, like, contatto proprietario,
-  inbox contatti ricevuti dal proprietario, notifiche, isolamento multi-utente
-  su bozze, immagini, preferiti, notifiche e contatti ricevuti, contenuti
+  stato UI a cuore, update profilo/preferenze, like, contatto proprietario con
+  consenso telefono, inbox contatti ricevuti dal proprietario, notifiche,
+  isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
+  ricevuti, contenuti
   chiave della dashboard account, pagine account autenticate, piu login admin e
   coda moderazione demo.
 
@@ -165,13 +167,17 @@ rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,
 riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
-schermata di conferma. La schermata annuncio mostra un flusso guidato dati,
+schermata di conferma. Il form contatto pubblico permette il consenso separato
+per condividere il telefono del richiedente quando presente nel profilo, e
+`/account/contacts` lo mostra solo al proprietario autorizzato. La schermata
+annuncio mostra un flusso guidato dati,
 foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
 pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload immagine, processing worker e invio a
 revisione. Restano incomplete eventuali preferenze contatto per canali o
-finestre orarie e amministrazione interna piu estesa. I prossimi sviluppi
+finestre orarie, altri dati sensibili oltre email/telefono e amministrazione
+interna piu estesa. I prossimi sviluppi
 frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima

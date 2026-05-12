@@ -392,7 +392,9 @@ try {
   const contact = contactCase.contact
   check(
     "contact owner",
-    contact.sent === true && contact.request?.status === "sent",
+    contact.sent === true &&
+      contact.request?.status === "sent" &&
+      contact.request?.phoneShared === true,
     `listing=${contactCase.listing.id}`
   )
 
@@ -426,7 +428,9 @@ try {
     "contact owner received list",
     receivedContact?.listing.id === contactCase.listing.id &&
       receivedContact?.requester.email === accountEmail &&
-      receivedContact?.emailShared === true
+      receivedContact?.requester.phoneE164 === "+390600000001" &&
+      receivedContact?.emailShared === true &&
+      receivedContact?.phoneShared === true
   )
 
   const otherReceivedContacts = await api(
@@ -448,7 +452,8 @@ try {
   check(
     "web account contacts content",
     ownerContactsHtml.includes("Contatti ricevuti") &&
-      ownerContactsHtml.includes(contactCase.listing.title)
+      ownerContactsHtml.includes(contactCase.listing.title) &&
+      ownerContactsHtml.includes("+390600000001")
   )
 
   const mailpit = await rawJson(`${mailpitBaseUrl}/api/v1/messages`)
@@ -727,6 +732,7 @@ async function createSmokeContactRequest(requesterToken, excludedOwnerIds) {
         message:
           "Ciao, vorrei ricevere informazioni per uno smoke test end to end.",
         shareEmail: true,
+        sharePhone: true,
       },
       requesterToken
     )

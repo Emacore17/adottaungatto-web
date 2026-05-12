@@ -50,6 +50,7 @@ type ListingContactRequestMessage = {
   ownerDisplayName: string
   requesterDisplayName: string
   requesterEmail: string
+  requesterPhoneE164?: string | null
   to: string
 }
 
@@ -184,6 +185,12 @@ export class MailService implements OnApplicationShutdown {
       this.env.APP_URL,
       message.listingId
     )
+    const phoneText = message.requesterPhoneE164
+      ? ["", `Telefono condiviso: ${message.requesterPhoneE164}`]
+      : []
+    const phoneHtml = message.requesterPhoneE164
+      ? [`<p>Telefono condiviso: ${escapeHtml(message.requesterPhoneE164)}</p>`]
+      : []
 
     await this.transporter.sendMail({
       from: this.env.MAIL_FROM,
@@ -196,6 +203,7 @@ export class MailService implements OnApplicationShutdown {
         `${message.requesterDisplayName} ti ha scritto per l'annuncio "${message.listingTitle}".`,
         "",
         message.message,
+        ...phoneText,
         "",
         "Puoi rispondere direttamente a questa email: il tuo indirizzo non e' stato mostrato al richiedente dalla piattaforma.",
         "",
@@ -205,6 +213,7 @@ export class MailService implements OnApplicationShutdown {
         `<p>Ciao ${escapeHtml(message.ownerDisplayName)},</p>`,
         `<p>${escapeHtml(message.requesterDisplayName)} ti ha scritto per l'annuncio "${escapeHtml(message.listingTitle)}".</p>`,
         `<p>${escapeHtml(message.message).replace(/\n/g, "<br />")}</p>`,
+        ...phoneHtml,
         "<p>Puoi rispondere direttamente a questa email: il tuo indirizzo non e' stato mostrato al richiedente dalla piattaforma.</p>",
         `<p><a href="${listingUrl}">Apri annuncio</a></p>`,
       ].join(""),

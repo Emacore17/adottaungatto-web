@@ -120,6 +120,13 @@
       "when": 1778586922027,
       "tag": "0016_futuristic_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778595022028,
+      "tag": "0017_pink_pyro",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MailIcon, ShieldCheckIcon } from "lucide-react"
+import { MailIcon, PhoneIcon, ShieldCheckIcon } from "lucide-react"
 
 import { requireAccountSession } from "@/app/(account)/account/_lib/session"
 import {
@@ -56,8 +56,8 @@ export default async function AccountContactsPage() {
         <CardHeader>
           <CardTitle>Richieste di contatto</CardTitle>
           <CardDescription>
-            Email del richiedente visibile solo quando ha dato consenso
-            esplicito.
+            Email e telefono del richiedente sono visibili solo quando ha dato
+            consenso esplicito.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,6 +99,7 @@ function ContactRequestItem({
   contact: ReceivedListingContactRequest
 }) {
   const requesterEmail = contact.requester.email ?? "Email non condivisa"
+  const requesterPhone = contact.requester.phoneE164 ?? "Telefono non condiviso"
 
   return (
     <article className="flex flex-col gap-4">
@@ -136,13 +137,18 @@ function ContactRequestItem({
             </div>
           </div>
           <div className="flex items-start gap-2">
+            <PhoneIcon aria-hidden="true" className="mt-0.5 shrink-0" />
+            <div className="min-w-0">
+              <p className="font-medium">Telefono</p>
+              <p className="truncate text-muted-foreground">{requesterPhone}</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
             <ShieldCheckIcon aria-hidden="true" className="mt-0.5 shrink-0" />
             <div>
               <p className="font-medium">Consenso</p>
               <p className="text-muted-foreground">
-                {contact.emailShared
-                  ? "Email condivisa per la risposta."
-                  : "Email non condivisa."}
+                {formatSharedContacts(contact)}
               </p>
             </div>
           </div>
@@ -154,6 +160,17 @@ function ContactRequestItem({
       {children}
     </article>
   )
+}
+
+function formatSharedContacts(contact: ReceivedListingContactRequest) {
+  const sharedContacts = [
+    contact.emailShared ? "email" : null,
+    contact.phoneShared ? "telefono" : null,
+  ].filter(Boolean)
+
+  return sharedContacts.length > 0
+    ? `Ha condiviso: ${sharedContacts.join(", ")}.`
+    : "Nessun contatto diretto condiviso."
 }
 
 function AccountContactsError({ message }: { message: string }) {

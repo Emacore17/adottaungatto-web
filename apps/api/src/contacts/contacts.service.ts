@@ -38,8 +38,13 @@ type ContactRequestRow = {
   owner_user_id: string
   status: "sent"
   email_shared: boolean
+  phone_shared: boolean
   created_at: Date | string
   delivered_at: Date | string
+}
+
+type RequesterContactRow = {
+  phone_e164: string | null
 }
 
 type ReceivedContactRequestRow = {
@@ -49,10 +54,12 @@ type ReceivedContactRequestRow = {
   listing_title: string
   requester_user_id: string
   requester_email: string | null
+  requester_phone_e164: string | null
   requester_display_name_snapshot: string
   message: string
   status: ListingContactRequestStatus
   email_shared: boolean
+  phone_shared: boolean
   created_at: Date | string
   delivered_at: Date | string | null
   failed_at: Date | string | null
@@ -104,7 +111,8 @@ const createContactRequestSql = `
     requester_display_name_snapshot,
     message,
     status,
-    email_shared
+    email_shared,
+    phone_shared
   )
   values (
     $1::uuid,
@@ -113,9 +121,18 @@ const createContactRequestSql = `
     $4::text,
     $5::text,
     'pending',
-    true
+    true,
+    $6::boolean
   )
   returning id::text
+`
+
+const getRequesterContactSql = `
+  select phone_e164
+  from users
+  where id = $1::uuid
+    and deleted_at is null
+  limit 1
 `
 
 const countRecentContactRequestsSql = `
@@ -158,6 +175,7 @@ const markContactRequestSentSql = `
     owner_user_id::text,
     status::text as status,
     email_shared,
+    phone_shared,
     created_at,
     delivered_at
 `
@@ -183,10 +201,15 @@ const listReceivedContactRequestsSql = `
       when contact_request.email_shared = true then requester.email
       else null
     end as requester_email,
+    case
+      when contact_request.phone_shared = true then requester.phone_e164
+      else null
+    end as requester_phone_e164,
     contact_request.requester_display_name_snapshot,
     contact_request.message,
     contact_request.status::text as status,
     contact_request.email_shared,
+    contact_request.phone_shared,
     contact_request.created_at,
     contact_request.delivered_at,
     contact_request.failed_at,
@@ -229,6 +252,9 @@ export class ContactsService {
     }
 
     await this.enforceContactRateLimits(requester.id, listing)
+    const requesterPhoneE164 = input.sharePhone
+      ? await this.requireShareableRequesterPhone(requester.id)
+      : null
 
     const [createdRequest] = await this.databaseService.queryRows<{
       id: string
@@ -238,6 +264,7 @@ export class ContactsService {
       listing.owner_user_id,
       requester.displayName,
       input.message,
+      input.sharePhone,
     ])
 
     if (!createdRequest) {
@@ -254,6 +281,7 @@ export class ContactsService {
         ownerDisplayName: listing.owner_display_name,
         requesterDisplayName: requester.displayName,
         requesterEmail: requester.email,
+        ...(requesterPhoneE164 ? { requesterPhoneE164 } : {}),
         to: listing.owner_email,
       })
     } catch (error) {
@@ -365,6 +393,20 @@ export class ContactsService {
       )
     }
   }
+
+  private async requireShareableRequesterPhone(requesterUserId: string) {
+    const [requesterContact] =
+      await this.databaseService.queryRows<RequesterContactRow>(
+        getRequesterContactSql,
+        [requesterUserId]
+      )
+
+    if (!requesterContact?.phone_e164) {
+      throw new BadRequestException("Phone sharing requires a phone number.")
+    }
+
+    return requesterContact.phone_e164
+  }
 }
 
 function throwContactRateLimitExceeded(
@@ -389,6 +431,7 @@ function mapContactRequestRow(row: ContactRequestRow): ListingContactRequest {
     ownerUserId: row.owner_user_id,
     status: row.status,
     emailShared: row.email_shared,
+    phoneShared: row.phone_shared,
     createdAt: toIsoString(row.created_at),
     deliveredAt: toIsoString(row.delivered_at),
   }
@@ -407,10 +450,12 @@ function mapReceivedContactRequestRow(
       id: row.requester_user_id,
       displayName: row.requester_display_name_snapshot,
       email: row.requester_email,
+      phoneE164: row.requester_phone_e164,
     },
     message: row.message,
     status: row.status,
     emailShared: row.email_shared,
+    phoneShared: row.phone_shared,
     createdAt: toIsoString(row.created_at),
     deliveredAt: toIsoStringOrNull(row.delivered_at),
     failedAt: toIsoStringOrNull(row.failed_at),

@@ -32,6 +32,7 @@ export async function contactListingOwnerAction(formData: FormData) {
   const parsedBody = listingContactCreateSchema.safeParse({
     message: readFormString(formData, "message"),
     shareEmail: readFormString(formData, "shareEmail") === "true",
+    sharePhone: readFormString(formData, "sharePhone") === "true",
   })
 
   if (!parsedBody.success) {
@@ -53,7 +54,9 @@ export async function contactListingOwnerAction(formData: FormData) {
   }
 
   if (result.status === 404) {
-    redirect(createContactResultPath(parsedParams.data.listingId, "unavailable"))
+    redirect(
+      createContactResultPath(parsedParams.data.listingId, "unavailable")
+    )
   }
 
   redirect(createContactResultPath(parsedParams.data.listingId, "error"))

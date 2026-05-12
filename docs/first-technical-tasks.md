@@ -100,24 +100,29 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     eliminazione e riordino/copertina.
 56. Fatto: aggiungere preferenza per-annuncio per abilitare/disabilitare il
     contatto proprietario.
-57. Aggiungere eventuali canali aggiuntivi o finestre orarie per il contatto
+57. Fatto: aggiungere consenso esplicito separato per condividere il telefono
+    del richiedente nelle richieste di contatto.
+58. Aggiungere eventuali canali aggiuntivi o finestre orarie per il contatto
     proprietario quando saranno previsti dal prodotto.
-58. Fatto: aggiungere rate limit Redis iniziale sui flussi auth sensibili:
+59. Fatto: aggiungere rate limit Redis iniziale sui flussi auth sensibili:
     registrazione, login, verifica email, recupero password e cambio password.
-59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
-60. Avviato: completare fixture demo con ruoli moderator/admin, stati annuncio
+60. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
+61. Avviato: completare fixture demo con ruoli moderator/admin, stati annuncio
     multipli, asset placeholder, sponsorizzato mock e smoke admin con
-    approvazione fino a pubblicazione; restano immagini realistiche.
-61. Fatto: correggere il flusso inserimento annuncio con processing automatico
+    approvazione fino a pubblicazione; resta licenza/attribuzione se gli asset
+    reali saranno versionati.
+62. Fatto: correggere il flusso inserimento annuncio con processing automatico
     immagini nel worker dev, copy UI "Inserisci annuncio", stati immagine
     chiari, schermata di conferma, guida passaggi e smoke E2E completo.
-62. Fatto: aggiungere smoke E2E per upload immagine e invio a revisione
+63. Fatto: aggiungere smoke E2E per upload immagine e invio a revisione
     riuscito.
-63. Riorganizzare dashboard account e aggiungere impostazioni profilo utente.
-64. Trasformare preferiti in cuore toggle con animazione su lista e scheda.
-65. Fatto: rendere `/listings` una lista a card orizzontali con slot
+64. Fatto: riorganizzare dashboard account e aggiungere impostazioni profilo
+    utente.
+65. Fatto: trasformare preferiti in cuore toggle con animazione su lista e
+    scheda.
+66. Fatto: rendere `/listings` una lista a card orizzontali con slot
     sponsorizzato.
-66. Estendere area admin/moderazione separata e protetta.
+67. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione
 

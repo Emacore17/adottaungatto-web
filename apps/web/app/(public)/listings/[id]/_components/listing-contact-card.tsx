@@ -26,6 +26,7 @@ type ContactStatus = "error" | "invalid" | "sent" | "unavailable" | null
 
 type ListingContactCardProps = {
   contactStatus: ContactStatus
+  hasShareablePhone: boolean
   isAuthenticated: boolean
   isEnabled: boolean
   listingId: string
@@ -33,6 +34,7 @@ type ListingContactCardProps = {
 
 function ListingContactCard({
   contactStatus,
+  hasShareablePhone,
   isAuthenticated,
   isEnabled,
   listingId,
@@ -58,7 +60,10 @@ function ListingContactCard({
             Il proprietario non riceve richieste per questo annuncio.
           </p>
         ) : isAuthenticated ? (
-          <form action={contactListingOwnerAction} className="flex flex-col gap-4">
+          <form
+            action={contactListingOwnerAction}
+            className="flex flex-col gap-4"
+          >
             <input type="hidden" name="listingId" value={listingId} />
             <FieldGroup>
               <Field data-invalid={messageInvalid ? true : undefined}>
@@ -73,7 +78,8 @@ function ListingContactCard({
                   placeholder="Presentati e indica perche vuoi conoscere questo gatto."
                 />
                 <FieldDescription>
-                  Minimo 20 caratteri. Non inserire dati sensibili non necessari.
+                  Minimo 20 caratteri. Non inserire dati sensibili non
+                  necessari.
                 </FieldDescription>
               </Field>
               <Field
@@ -94,6 +100,35 @@ function ListingContactCard({
                   <FieldDescription>
                     Il tuo indirizzo email sara usato come risposta al messaggio
                     inviato al proprietario.
+                  </FieldDescription>
+                </FieldContent>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id="contact-share-phone"
+                  name="sharePhone"
+                  value="true"
+                  disabled={!hasShareablePhone}
+                />
+                <FieldContent>
+                  <FieldLabel htmlFor="contact-share-phone">
+                    Condividi anche il telefono
+                  </FieldLabel>
+                  <FieldDescription>
+                    {hasShareablePhone ? (
+                      "Il tuo numero sara visibile solo al proprietario per questa richiesta."
+                    ) : (
+                      <>
+                        Aggiungi un numero nelle{" "}
+                        <Link
+                          href={routes.accountSettings}
+                          className="underline underline-offset-4"
+                        >
+                          impostazioni account
+                        </Link>{" "}
+                        per abilitarlo.
+                      </>
+                    )}
                   </FieldDescription>
                 </FieldContent>
               </Field>
@@ -123,7 +158,7 @@ function ContactFeedback({ status }: { status: ContactStatus }) {
 
   const message =
     status === "sent"
-      ? "Richiesta inviata. Il proprietario potra rispondere via email."
+      ? "Richiesta inviata. Il proprietario potra rispondere usando i contatti autorizzati."
       : status === "invalid"
         ? "Controlla il messaggio e conferma il consenso email."
         : status === "unavailable"

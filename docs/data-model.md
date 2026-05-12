@@ -375,6 +375,7 @@ processing immagini del worker e like/unlike.
 - `message`
 - `status`: `pending`, `sent`, `failed`
 - `email_shared`
+- `phone_shared`
 - `delivered_at`
 - `failed_at`
 - `failure_reason`

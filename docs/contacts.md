@@ -17,7 +17,9 @@ Payload invio:
 
 - `message`: testo tra 20 e 2000 caratteri;
 - `shareEmail`: deve essere `true`, per consenso esplicito alla risposta via
-  email.
+  email;
+- `sharePhone`: opzionale, `false` di default; se `true`, il richiedente deve
+  avere un telefono impostato nel profilo.
 
 Query lista ricevuti:
 
@@ -34,10 +36,14 @@ Query lista ricevuti:
 - L'email del proprietario non viene restituita al richiedente.
 - L'email del richiedente viene usata come `Reply-To` solo dopo consenso
   esplicito nel form.
+- Il telefono del richiedente viene registrato come condivisibile solo dopo
+  consenso esplicito separato e solo se presente nel profilo.
 - La lista dei contatti ricevuti mostra solo richieste dove l'utente
   autenticato e' `owner_user_id`.
 - La lista dei contatti ricevuti mostra l'email del richiedente solo quando
   `email_shared = true`.
+- La lista dei contatti ricevuti mostra il telefono del richiedente solo quando
+  `phone_shared = true`.
 - Ogni richiesta viene tracciata in `listing_contact_requests` con stato
   `pending`, `sent` o `failed`.
 - Il proprietario puo disattivare le richieste di contatto per singola bozza o
@@ -61,14 +67,14 @@ Query lista ricevuti:
 - Se l'utente e' autenticato, il form invia tramite server action e mostra un
   esito locale tramite query string.
 - L'area account espone `/account/contacts` con le richieste ricevute, annuncio
-  collegato, messaggio, consenso email e indirizzo del richiedente quando
-  condiviso.
+  collegato, messaggio, consensi email/telefono e contatti del richiedente
+  quando condivisi.
 
 ## Limiti noti
 
 - Mancano preferenze proprietario per canali aggiuntivi e finestre orarie.
-- Manca il consenso granulare per condividere telefono o altri dati di contatto
-  sensibili del richiedente.
+- Manca il consenso granulare per altri dati di contatto sensibili oltre email
+  e telefono.
 - Non esiste ancora una messaggistica interna: la risposta avviene via email.
 - Non esiste ancora una vista admin dedicata ai contatti: l'accesso operativo e'
   solo del proprietario.

@@ -63,6 +63,7 @@ describe("ContactsController", () => {
         {
           message: "Ciao, vorrei avere informazioni sulla gatta.",
           shareEmail: true,
+          sharePhone: true,
         }
       )
     ).resolves.toEqual({
@@ -77,6 +78,7 @@ describe("ContactsController", () => {
       {
         message: "Ciao, vorrei avere informazioni sulla gatta.",
         shareEmail: true,
+        sharePhone: true,
       }
     )
   })

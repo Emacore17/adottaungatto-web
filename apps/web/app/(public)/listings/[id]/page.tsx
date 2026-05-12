@@ -15,6 +15,7 @@ import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
+import { getCurrentUserProfile } from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
@@ -76,9 +77,15 @@ export default async function ListingDetailPage({
     notFound()
   }
 
-  const favoriteListingIds = sessionToken
-    ? await listFavoriteListingIds(sessionToken, [listing.data.id])
-    : new Set<string>()
+  const [favoriteListingIds, currentUserProfile] = sessionToken
+    ? await Promise.all([
+        listFavoriteListingIds(sessionToken, [listing.data.id]),
+        getCurrentUserProfile(sessionToken),
+      ])
+    : [new Set<string>(), null]
+  const hasShareablePhone =
+    currentUserProfile?.ok === true &&
+    Boolean(currentUserProfile.data.phoneE164)
 
   const coverUrl = getPublicObjectUrl(
     listing.data.images.cover?.objectKeyLarge ??
@@ -173,6 +180,7 @@ export default async function ListingDetailPage({
           </Card>
           <ListingContactCard
             contactStatus={readContactStatus(query.contact)}
+            hasShareablePhone={hasShareablePhone}
             isAuthenticated={Boolean(sessionToken)}
             isEnabled={listing.data.contactRequestsEnabled}
             listingId={listing.data.id}

@@ -154,8 +154,9 @@ avviati con conteggio pubblico per annuncio pubblicato e mutazioni autenticate
 idempotenti. Il frontend account mostra dashboard, preferiti e inbox notifiche
 in lettura. E' presente anche il primo contatto proprietario privacy-first:
 richiesta autenticata, inoltro email dal backend, consenso esplicito alla
-risposta via email, tracciamento in `listing_contact_requests` e rate limit
-dedicato. E' presente anche una preferenza per-annuncio per
+risposta via email, consenso separato per condividere il telefono del
+richiedente, tracciamento in `listing_contact_requests` e rate limit dedicato.
+E' presente anche una preferenza per-annuncio per
 abilitare/disabilitare il contatto proprietario. Le mutazioni account coprono
 rimozione preferiti, lettura notifiche, cancellazione bozze ed editor bozze con
 creazione/modifica/upload, galleria immagini con stato, eliminazione,

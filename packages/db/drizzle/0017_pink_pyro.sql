@@ -1,0 +1,1 @@
+ALTER TABLE "listing_contact_requests" ADD COLUMN "phone_shared" boolean DEFAULT false NOT NULL;
