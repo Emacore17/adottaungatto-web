@@ -27,9 +27,10 @@ e ottenere una demo navigabile con:
 - moderazione/admin protetta, separata e utilizzabile in locale;
 - smoke test che copre i flussi principali senza interventi manuali.
 
-Stato attuale: il backend, la base frontend, il giro inserimento annuncio e il
-mock sponsorizzato in lista sono funzionanti in locale. Il punto piu urgente e'
-completare la demo locale con immagini realistiche o fixture visuali migliori.
+Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
+mock sponsorizzato in lista e le immagini demo locali sono funzionanti in
+locale. Il punto piu urgente passa a preferiti/dash account, mantenendo prima
+la verifica `pnpm smoke:e2e`.
 
 ## Regole per ogni round
 
@@ -64,15 +65,22 @@ Avanzamento 12 maggio 2026:
   moderatore e admin.
 - Fatto: 15 annunci/casi demo con pubblicati, in revisione, bozza incompleta,
   bozza completa, rifiutato, sospeso da segnalazione e scaduto.
-- Fatto: asset placeholder deterministici per 11 annunci, inclusi tutti i
-  pubblici e quelli in revisione.
+- Fatto: asset deterministici per 11 annunci, inclusi tutti i pubblici e quelli
+  in revisione.
+- Fatto: `worker demo:assets` usa le foto locali in `immagini-gattini/` quando
+  presenti e cade su placeholder generati quando non ci sono.
+- Fatto: la UI usa immagini storage non ottimizzate da Next per evitare il
+  blocco locale di MinIO su `localhost:9000`.
+- Fatto: lo smoke E2E verifica che la lista pubblica abbia cover, che l'oggetto
+  storage risponda e che l'HTML usi URL storage diretti.
 - Fatto: lo smoke E2E verifica login admin e presenza della coda
   `pending_review`.
 - Fatto: promozione mock attiva su un annuncio pubblicato e visibile in cima a
   `/listings`.
 - Fatto: lo smoke E2E approva un caso appena inviato a revisione, verifica il
   dettaglio pubblico e la notifica al proprietario.
-- Da fare: immagini realistiche o fixture visuali migliori.
+- Da fare: se gli asset reali saranno versionati, aggiungere licenza e
+  attribuzione documentata.
 
 Done:
 
@@ -201,4 +209,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire Milestone A con immagini realistiche o fixture visuali migliori.
+Proseguire con Milestone D per cuore preferito toggle da lista/scheda, oppure
+Milestone C per riordinare dashboard account e impostazioni profilo.

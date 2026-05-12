@@ -19,6 +19,9 @@ playwright-report
 test-results
 storybook-static
 
+# Local demo assets
+immagini-gattini/
+
 # Turbo
 .turbo
 

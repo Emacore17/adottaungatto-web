@@ -16,7 +16,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   builder, client API tipizzato, layout pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0015_uneven_cobalt_man.sql`.
+- Migrazioni Drizzle fino a `0016_futuristic_boomer.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -73,7 +73,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
 - Percorso demo locale con `pnpm demo:setup`, `pnpm dev:demo` e
   `pnpm demo:reset`: avvia servizi, applica migrazioni, crea dati demo e carica
-  asset MinIO placeholder per account, annunci e code demo.
+  asset MinIO per account, annunci e code demo. Se la cartella locale
+  `immagini-gattini/` esiste, `worker demo:assets` usa quelle foto come
+  sorgente; altrimenti genera placeholder deterministici.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti, like,
@@ -99,8 +101,9 @@ produzione. Mancano almeno:
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
-  stati annuncio multipli, sponsorizzato mock e approvazione fino a
-  pubblicazione nello smoke avviati, ma ancora senza immagini realistiche.
+  stati annuncio multipli, sponsorizzato mock, approvazione fino a
+  pubblicazione e immagini realistiche locali avviati; restano da consolidare
+  licenza/attribuzione degli asset reali se dovranno essere versionati.
 
 ## Stato ricerca
 
@@ -162,17 +165,18 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 
 `pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Oggi
 prepara servizi Docker, migrazioni, seed base, 5 utenti demo, 15 annunci/casi
-demo e 11 asset immagine placeholder. Gli account includono utente privato,
-rifugio, associazione, moderatore e admin. Gli annunci coprono pubblicati,
+demo e 11 asset immagine. Gli account includono utente privato, rifugio,
+associazione, moderatore e admin. Gli annunci coprono pubblicati,
 `pending_review`, bozze, rifiutato, sospeso da segnalazione e scaduto. Il worker
 processa automaticamente le immagini in `processing` durante l'avvio
 applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
-La lista `/listings` usa card orizzontali, una per riga, e mostra in cima un
-annuncio sponsorizzato mock con label dichiarata. Lo smoke approva un annuncio
-appena inviato a revisione e verifica che sia pubblicato e notificato al
-proprietario. Non copre ancora il traguardo demo definito in
-[agent-coding-roadmap.md](agent-coding-roadmap.md): mancano immagini realistiche
-complete o fixture visuali migliori.
+Gli asset demo usano le foto locali in `immagini-gattini/` quando presenti e
+cadono sui placeholder deterministici quando la cartella non esiste. La UI
+renderizza le immagini storage senza passare dall'optimizer Next, per evitare il
+blocco di `localhost:9000`/MinIO. La lista `/listings` usa card orizzontali, una
+per riga, e mostra in cima un annuncio sponsorizzato mock con label dichiarata.
+Lo smoke verifica anche URL storage diretti, approva un annuncio appena inviato
+a revisione e controlla che sia pubblicato e notificato al proprietario.
 
 ## Regole per prossimi interventi
 

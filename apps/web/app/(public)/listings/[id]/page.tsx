@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import Image from "next/image"
 import { notFound } from "next/navigation"
 import { CalendarIcon, HeartIcon, MapPinIcon } from "lucide-react"
 
@@ -12,6 +11,7 @@ import {
   type FavoriteStatus,
 } from "@/app/(public)/listings/[id]/_components/listing-favorite-card"
 import { JsonLd } from "@/components/shared/json-ld"
+import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import { getPublicListing } from "@/lib/api/listings"
 import { getSessionToken } from "@/lib/auth/session"
@@ -86,11 +86,11 @@ export default async function ListingDetailPage({
   return (
     <>
       <JsonLd data={createListingJsonLd(listing.data)} />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 pb-8 pt-28 sm:px-6 sm:pt-32 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8">
         <article className="flex min-w-0 flex-col gap-6">
           <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-muted">
             {coverUrl ? (
-              <Image
+              <StorageImage
                 src={coverUrl}
                 alt={listing.data.title}
                 fill
@@ -151,7 +151,9 @@ export default async function ListingDetailPage({
           <Card>
             <CardHeader>
               <CardTitle>Proprietario</CardTitle>
-              <CardDescription>{listing.data.owner.displayName}</CardDescription>
+              <CardDescription>
+                {listing.data.owner.displayName}
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 text-sm">
               <div className="flex justify-between gap-3">

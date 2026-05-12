@@ -8,6 +8,7 @@
     "APP_ENV",
     "APP_URL",
     "DATABASE_URL",
+    "DEMO_CAT_IMAGES_DIR",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
     "INIT_CWD",

@@ -1,7 +1,6 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import {
   ImageIcon,
@@ -10,6 +9,7 @@ import {
   RefreshCcwIcon,
 } from "lucide-react"
 
+import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type {
   PublicListingListResponse,
@@ -65,7 +65,7 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
     >
       <div className="relative aspect-[4/3] bg-muted">
         {coverUrl ? (
-          <Image
+          <StorageImage
             src={coverUrl}
             alt={listing.title}
             fill

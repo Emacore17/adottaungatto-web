@@ -1,4 +1,3 @@
-import Image from "next/image"
 import {
   ArrowDownIcon,
   ArrowUpIcon,
@@ -14,11 +13,9 @@ import {
   setDraftImageCoverAction,
   uploadDraftImageAction,
 } from "@/app/(account)/account/actions"
+import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
-import type {
-  ListingImage,
-  ListingImageListResponse,
-} from "@/lib/api/account"
+import type { ListingImage, ListingImageListResponse } from "@/lib/api/account"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -209,7 +206,7 @@ function DraftImageItem({
       <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3">
         <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
           {previewUrl ? (
-            <Image
+            <StorageImage
               src={previewUrl}
               alt="Anteprima immagine annuncio"
               fill
@@ -228,7 +225,9 @@ function DraftImageItem({
             <Badge variant={getStatusVariant(image.status)}>
               {imageStatusLabels[image.status]}
             </Badge>
-            {image.isCover ? <Badge variant="secondary">Copertina</Badge> : null}
+            {image.isCover ? (
+              <Badge variant="secondary">Copertina</Badge>
+            ) : null}
           </div>
 
           <p className="text-sm text-muted-foreground">

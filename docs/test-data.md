@@ -17,15 +17,17 @@ Esistono:
   scaduto;
 - 1 promozione mock attiva su un annuncio pubblicato, visibile in cima a
   `/listings`;
-- upload asset demo su MinIO per 11 annunci;
+- upload asset demo su MinIO per 11 annunci, usando `immagini-gattini/` se
+  presente e fallback placeholder se assente;
 - smoke E2E locale `pnpm smoke:e2e` con login admin e controllo coda
   `pending_review`.
 
 Gap attuali:
 
-- le immagini demo sono placeholder generati, non foto realistiche di gatti;
-- lo smoke copre upload immagine sintetica, processing worker e invio a
-  revisione riuscito, ma non usa ancora immagini demo realistiche;
+- le immagini realistiche locali dipendono dalla cartella `immagini-gattini/`,
+  che non e' versionata;
+- se le foto reali diventano asset di repository, servono licenza e
+  attribuzione documentate;
 - il mock sponsorizzato non e' ancora collegato a un flusso pagamento/campagna
   reale.
 
@@ -65,9 +67,11 @@ La demo include:
 - Ogni annuncio pubblico e in revisione ha almeno una immagine `ready`.
 - Almeno un annuncio deve avere piu immagini per testare galleria,
   riordino e copertina.
-- Gli asset placeholder sono generati in modo deterministico da
-  `worker demo:assets`.
-- Se si usano immagini reali, devono essere libere da vincoli di licenza e
+- `worker demo:assets` usa le foto locali in `immagini-gattini/` quando
+  presenti.
+- Se la cartella locale non esiste, gli asset placeholder sono generati in modo
+  deterministico.
+- Se si versionano immagini reali, devono essere libere da vincoli di licenza e
   archiviate con attribuzione nel documento dedicato.
 
 ## Smoke target
@@ -75,7 +79,8 @@ La demo include:
 `pnpm smoke:e2e` deve verificare:
 
 - health API, database e Redis;
-- lista pubblica con immagini;
+- lista pubblica con immagini; Fatto via cover API, oggetto storage e HTML con
+  URL storage diretto.
 - dettaglio annuncio;
 - registrazione e login;
 - creazione annuncio completa;

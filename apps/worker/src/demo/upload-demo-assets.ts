@@ -1,10 +1,15 @@
-import { pathToFileURL } from "node:url"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
+import { fileURLToPath, pathToFileURL } from "node:url"
 
 import * as Minio from "minio"
 import sharp from "sharp"
 
 const bucket = process.env.S3_BUCKET ?? "adottaungatto-local"
 const endpoint = new URL(process.env.S3_ENDPOINT ?? "http://localhost:9000")
+const sourceImageDir =
+  process.env.DEMO_CAT_IMAGES_DIR ||
+  fileURLToPath(new URL("../../../../immagini-gattini/", import.meta.url))
 
 const demoAssets = [
   {
@@ -12,72 +17,94 @@ const demoAssets = [
     background: "#f6e9ef",
     key: "demo/listings/luna",
     label: "Luna",
+    sourceImage: "gatto-2.jpg",
   },
   {
     accent: "#6f5874",
     background: "#eee9f4",
     key: "demo/listings/miro",
     label: "Miro",
+    sourceImage: "gatto-4.jpg",
   },
   {
     accent: "#5d5c63",
     background: "#ececed",
     key: "demo/listings/nebbia",
     label: "Nebbia",
+    sourceImage: "gatto-5.webp",
   },
   {
     accent: "#7d6a55",
     background: "#f0ebe4",
     key: "demo/listings/pepe",
     label: "Pepe",
+    sourceImage: "gatto-6.webp",
   },
   {
     accent: "#8c5f5b",
     background: "#f4e9e5",
     key: "demo/listings/nina",
     label: "Nina",
+    sourceImage: "gatto-7.webp",
   },
   {
     accent: "#5f6f51",
     background: "#edf2e8",
     key: "demo/listings/artu",
     label: "Artu",
+    sourceImage: "gatto-8.jpg",
   },
   {
     accent: "#b26a2e",
     background: "#f7eadc",
     key: "demo/listings/sole",
     label: "Sole",
+    sourceImage: "gatto-9.jpg",
   },
   {
     accent: "#4f6d68",
     background: "#e6efed",
     key: "demo/listings/oliva",
     label: "Oliva",
+    sourceImage: "gatto-10.jpg",
   },
   {
     accent: "#8b6f38",
     background: "#f3edda",
     key: "demo/listings/leo",
     label: "Leo",
+    sourceImage: "gatto-11.jpeg",
   },
   {
     accent: "#7c5f93",
     background: "#eee7f4",
     key: "demo/listings/zara",
     label: "Zara",
+    sourceImage: "gatto-14.jpg",
   },
   {
     accent: "#55779d",
     background: "#e6eef7",
     key: "demo/listings/timo",
     label: "Timo",
+    sourceImage: "gatto-15.jpg",
   },
 ] as const
 
 type DemoAssetSummary = {
   bucket: string
   objects: number
+  placeholderImages: number
+  sourceImageDir: string
+  sourceImages: number
+}
+
+type DemoImageOptions = {
+  accent: string
+  background: string
+  height: number
+  label: string
+  width: number
 }
 
 async function uploadDemoAssets(): Promise<DemoAssetSummary> {
@@ -98,20 +125,32 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
   await client.setBucketPolicy(bucket, createPublicReadPolicy(bucket))
 
   let objects = 0
+  let placeholderImages = 0
+  let sourceImages = 0
 
   for (const asset of demoAssets) {
-    const large = await createDemoImage({
+    const sourcePath = resolveSourceImagePath(asset.sourceImage)
+
+    if (sourcePath) {
+      sourceImages += 1
+    } else {
+      placeholderImages += 1
+    }
+
+    const large = await createAssetImage({
       accent: asset.accent,
       background: asset.background,
       height: 900,
       label: asset.label,
+      sourcePath,
       width: 1200,
     })
-    const thumb = await createDemoImage({
+    const thumb = await createAssetImage({
       accent: asset.accent,
       background: asset.background,
       height: 360,
       label: asset.label,
+      sourcePath,
       width: 480,
     })
 
@@ -124,6 +163,9 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
   return {
     bucket,
     objects,
+    placeholderImages,
+    sourceImageDir,
+    sourceImages,
   }
 }
 
@@ -141,13 +183,32 @@ function createPublicReadPolicy(targetBucket: string) {
   })
 }
 
-async function createDemoImage(options: {
-  accent: string
-  background: string
-  height: number
-  label: string
-  width: number
-}) {
+function resolveSourceImagePath(fileName: string) {
+  const imagePath = join(sourceImageDir, fileName)
+
+  return existsSync(imagePath) ? imagePath : null
+}
+
+async function createAssetImage(
+  options: DemoImageOptions & {
+    sourcePath: string | null
+  }
+) {
+  if (options.sourcePath) {
+    return sharp(options.sourcePath)
+      .rotate()
+      .resize(options.width, options.height, {
+        fit: "cover",
+        position: "attention",
+      })
+      .png()
+      .toBuffer()
+  }
+
+  return createDemoImage(options)
+}
+
+async function createDemoImage(options: DemoImageOptions) {
   const overlay = Buffer.from(`
     <svg width="${options.width}" height="${options.height}" viewBox="0 0 ${options.width} ${options.height}" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" rx="0" fill="${options.background}" />

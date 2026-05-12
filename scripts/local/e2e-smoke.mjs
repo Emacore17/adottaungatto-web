@@ -1,6 +1,14 @@
 const apiBaseUrl = readUrl(process.env.API_URL, "http://localhost:4000")
 const webBaseUrl = readUrl(process.env.WEB_URL, "http://localhost:3000")
 const mailpitBaseUrl = readUrl(process.env.MAILPIT_URL, "http://localhost:8025")
+const storagePublicUrl = readUrl(
+  process.env.NEXT_PUBLIC_S3_PUBLIC_ENDPOINT ?? process.env.S3_PUBLIC_ENDPOINT,
+  "http://localhost:9000"
+)
+const storageBucket =
+  process.env.NEXT_PUBLIC_S3_BUCKET ??
+  process.env.S3_BUCKET ??
+  "adottaungatto-local"
 
 const password = "Password!12345"
 const email = `e2e.${Date.now()}@demo.adottaungatto.local`
@@ -26,10 +34,28 @@ try {
     `listing=${listings.items[0]?.id ?? "none"}`
   )
   listingId = listings.items[0].id
+  const coverObjectKey =
+    listings.items[0]?.images?.cover?.objectKeyLarge ??
+    listings.items[0]?.images?.cover?.objectKeyThumb
+
+  check(
+    "public listing cover image",
+    typeof coverObjectKey === "string" && coverObjectKey.length > 0
+  )
+
+  const coverStorage = await fetch(
+    `${storagePublicUrl}/${storageBucket}/${coverObjectKey}`
+  )
+  check(
+    "public listing storage image",
+    coverStorage.ok,
+    `status=${coverStorage.status}`
+  )
   pass("public listing selected", `listing=${listingId}`)
 
   const listing = await api("GET", `/listings/${listingId}`)
   check("public listing detail", listing.id === listingId)
+  await webListingImages()
 
   const registration = await api("POST", "/auth/register", {
     displayName: "Smoke E2E",
@@ -367,6 +393,12 @@ async function api(method, path, body, bearerToken) {
 }
 
 async function rawJson(url, init) {
+  const text = await rawText(url, init)
+
+  return text ? JSON.parse(text) : null
+}
+
+async function rawText(url, init) {
   const response = await fetch(url, init)
   const text = await response.text()
 
@@ -376,7 +408,7 @@ async function rawJson(url, init) {
     )
   }
 
-  return text ? JSON.parse(text) : null
+  return text
 }
 
 async function webPage(path, sessionToken, label) {
@@ -388,6 +420,17 @@ async function webPage(path, sessionToken, label) {
   })
 
   check(label, response.status === 200, `status=${response.status}`)
+}
+
+async function webListingImages() {
+  const html = await rawText(`${webBaseUrl}/listings`)
+  const storagePrefix = `${storagePublicUrl}/${storageBucket}/`
+
+  check(
+    "web listing storage images",
+    html.includes(storagePrefix) && !html.includes("/_next/image?url="),
+    `storage=${storagePrefix}`
+  )
 }
 
 async function resolveSmokeMunicipality() {

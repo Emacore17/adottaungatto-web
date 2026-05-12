@@ -1,7 +1,7 @@
-import Image from "next/image"
 import Link from "next/link"
 import { HeartIcon, MapPinIcon } from "lucide-react"
 
+import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingSummary } from "@/lib/api/types"
 import { routes } from "@/lib/routes"
@@ -42,7 +42,7 @@ function ListingCard({ listing }: ListingCardProps) {
           className="relative aspect-[4/3] bg-muted sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72"
         >
           {coverUrl ? (
-            <Image
+            <StorageImage
               src={coverUrl}
               alt={listing.title}
               fill

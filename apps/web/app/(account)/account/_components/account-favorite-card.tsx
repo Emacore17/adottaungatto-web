@@ -1,8 +1,8 @@
-import Image from "next/image"
 import Link from "next/link"
 import { ImageIcon, MapPinIcon, Trash2Icon } from "lucide-react"
 
 import { removeFavoriteAction } from "@/app/(account)/account/actions"
+import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { FavoriteListingItem } from "@/lib/api/account"
 import { routes } from "@/lib/routes"
@@ -29,7 +29,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
       <CardContent className="grid gap-4 p-4 sm:grid-cols-[8rem_minmax(0,1fr)]">
         <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted sm:aspect-square">
           {coverUrl ? (
-            <Image
+            <StorageImage
               src={coverUrl}
               alt={listing.title}
               fill

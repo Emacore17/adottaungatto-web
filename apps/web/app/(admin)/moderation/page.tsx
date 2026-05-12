@@ -1,4 +1,3 @@
-import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import {
@@ -12,6 +11,7 @@ import {
 } from "lucide-react"
 
 import { decideModerationCaseAction } from "@/app/(admin)/moderation/actions"
+import { StorageImage } from "@/components/shared/storage-image"
 import { currentSession } from "@/lib/api/auth"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import {
@@ -291,7 +291,7 @@ function ModerationItemCard({
       <CardContent className="grid gap-4 p-4 md:grid-cols-[8rem_minmax(0,1fr)]">
         <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted md:aspect-square">
           {coverUrl ? (
-            <Image
+            <StorageImage
               src={coverUrl}
               alt={item.listing.title}
               fill
@@ -309,7 +309,9 @@ function ModerationItemCard({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="grid min-w-0 gap-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">{item.listing.moderationStatus}</Badge>
+                <Badge variant="secondary">
+                  {item.listing.moderationStatus}
+                </Badge>
                 {reportCount !== null ? (
                   <Badge variant="outline">{reportCount} report</Badge>
                 ) : null}
@@ -540,7 +542,9 @@ function formatDecisionAction(value: string | null) {
 }
 
 function formatLocation(
-  location: ModerationQueueItem["location"] | ReportedListingQueueItem["location"]
+  location:
+    | ModerationQueueItem["location"]
+    | ReportedListingQueueItem["location"]
 ) {
   if (!location) {
     return "Non indicato"

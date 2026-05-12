@@ -19,8 +19,9 @@ In locale sono disponibili:
 - test unitari e service-level su API e worker;
 - smoke E2E locale `pnpm smoke:e2e`.
 
-Esiste quindi un percorso demo unico, ma non e' ancora completo come demo
-prodotto: mancano immagini realistiche o fixture visuali migliori.
+Esiste quindi un percorso demo unico. Le immagini demo realistiche sono usate
+quando esiste la cartella locale `immagini-gattini/`; senza quella cartella il
+worker genera placeholder deterministici.
 
 ## Obiettivo locale
 
@@ -44,8 +45,8 @@ Questi file o contenuti vanno completati in task dedicati:
   esplicita;
 - `packages/db/src/seed-demo.ts`: fixture demo realistiche e stati annunci;
 - `scripts/local/smoke-api.ps1`: chiamate smoke contro API locale;
-- `apps/worker/src/demo/upload-demo-assets.ts`: immagini demo realistiche e
-  checksum;
+- `apps/worker/src/demo/upload-demo-assets.ts`: sorgenti immagini demo locali,
+  fallback placeholder e futuro checksum;
 - `docs/api-smoke-tests.md`: sequenza manuale minima per verificare i flussi;
 - `docs/test-data.md`: utenti, ruoli e annunci demo standard.
 
@@ -63,6 +64,8 @@ Vedere [test-data.md](test-data.md) per il contratto completo. In sintesi:
 
 - Email: Mailpit resta il mock locale del provider transazionale.
 - Storage: MinIO resta il mock S3-compatible.
+- Immagini gattini: la cartella locale `immagini-gattini/` e' ignorata da Git e
+  puo essere sostituita tramite `DEMO_CAT_IMAGES_DIR`.
 - OAuth Google: usare un provider mock o bypass solo in ambiente `local` e
   `test`, mai in produzione.
 - Moderazione automatica immagini/testo: usare adapter mock finche non viene
