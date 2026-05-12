@@ -30,12 +30,12 @@ function SiteLogoLink({
         src="/logo.svg"
         alt=""
         aria-hidden="true"
-        width={2172}
-        height={724}
+        width={1971}
+        height={323}
         preload
         unoptimized
         className={cn(
-          "h-9 w-auto max-w-[12rem] shrink-0 object-contain sm:h-10",
+          "h-auto w-52 max-w-full shrink-0 object-contain sm:w-60",
           logoClassName
         )}
       />

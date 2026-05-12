@@ -25,7 +25,7 @@ function AdminShell({ children }: AdminShellProps) {
             <div className="flex min-w-0 items-center gap-3">
               <SiteLogoLink
                 className="shrink-0"
-                logoClassName="h-8 max-w-[10.5rem]"
+                logoClassName="w-48 max-w-[48vw]"
               />
               <Separator
                 orientation="vertical"

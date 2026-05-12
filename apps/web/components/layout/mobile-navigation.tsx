@@ -197,7 +197,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 py-1">
             <SiteLogoLink
               onClick={closeMenu}
-              logoClassName="h-9 max-w-[12rem] sm:h-10"
+              logoClassName="w-56 max-w-[70vw] sm:w-64"
             />
 
             <Button
