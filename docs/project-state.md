@@ -21,6 +21,11 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
+- Readiness API aggregata su database/Redis e metriche HTTP locali in
+  `/health/ready` e `/health/metrics`.
+- Interceptor API globale per `x-request-id`, `x-trace-id`, log JSON
+  request-level senza payload e metriche in memoria su richieste, errori,
+  status code e durate per route.
 - Auth API con registrazione, login, logout, sessione corrente, verifica email,
   recupero password e cambio password autenticato.
 - Rate limit Redis fixed-window iniziale sui flussi auth sensibili,
@@ -98,7 +103,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `immagini-gattini/` esiste, `worker demo:assets` usa quelle foto come
   sorgente; altrimenti genera placeholder deterministici.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
-  auth, creazione annuncio, upload immagine, processing worker, invio a
+  readiness/metriche API, header di correlazione, ricerca pubblica, auth,
+  creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
   stato UI a cuore, update profilo/preferenze, like, contatto proprietario con
   consenso telefono, inbox contatti ricevuti dal proprietario, notifiche,
@@ -120,7 +126,8 @@ produzione. Mancano almeno:
 - hardening HTTP, tuning dei rate limit per ambiente e protezioni anti-abuso
   estese;
 - cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
-- logging strutturato, trace id, metriche, alert e audit centralizzato;
+- integrazione osservabilita production-grade con OpenTelemetry/Dynatrace o
+  equivalente, alert e audit centralizzato;
 - pipeline CI/CD e ambienti separati;
 - backup/restore verificati e strategia rollback migrazioni;
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e

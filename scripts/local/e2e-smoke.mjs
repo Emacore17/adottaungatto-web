@@ -49,8 +49,28 @@ let listingId = null
 let submittedListingId = null
 
 try {
-  const health = await api("GET", "/health")
+  const healthResponse = await apiResponse("GET", "/health", undefined)
+  const health = healthResponse.data
+
   check("api health", health.status === "ok")
+  check(
+    "api request correlation headers",
+    Boolean(healthResponse.headers.get("x-request-id")) &&
+      Boolean(healthResponse.headers.get("x-trace-id"))
+  )
+
+  const readiness = await api("GET", "/health/ready")
+  check(
+    "api readiness",
+    readiness.status === "ready" && Array.isArray(readiness.checks)
+  )
+
+  const metrics = await api("GET", "/health/metrics")
+  check(
+    "api observability metrics",
+    metrics.http?.requestsTotal >= 1 &&
+      Number.isInteger(metrics.http?.inFlightRequests)
+  )
 
   const listings = await api("GET", "/listings?page=1&pageSize=1")
   check(
@@ -1054,6 +1074,7 @@ async function apiResponse(method, path, body, bearerToken) {
 
   return {
     data: text ? JSON.parse(text) : null,
+    headers: response.headers,
     ok: response.ok,
     status: response.status,
     text,

@@ -145,8 +145,11 @@ Stato aggiornato al completamento dello scaffolding iniziale:
    endpoint admin/moderazione; restano cookie/CSRF, gestione sessioni
    production-grade, lock progressivo account, tuning per ambiente e ulteriori
    flussi pubblici sensibili.
-9. Dettagliare area admin/moderazione sicura.
-10. Fatto: dettagliare test data e script bootstrap locale in
+9. Avviato: aggiungere osservabilita API locale con request/trace id, log JSON,
+   readiness aggregata e metriche HTTP; restano exporter OpenTelemetry,
+   dashboard e alert reali.
+10. Dettagliare area admin/moderazione sicura.
+11. Fatto: dettagliare test data e script bootstrap locale in
     `docs/test-data.md` e `docs/local-testing-and-mocks.md`.
 
 ## Task da non fare ancora

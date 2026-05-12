@@ -160,6 +160,21 @@ Moderazione backend avviata, area admin non completa. Prima della produzione:
 - protezione contro enumeration di risorse interne;
 - log e alert sulle azioni ad alto rischio.
 
+## Osservabilita attuale
+
+La base locale include:
+
+- interceptor API globale con `x-request-id` e `x-trace-id`;
+- log JSON per richiesta senza body, header auth o payload upload;
+- contatori HTTP in memoria per richieste, errori, status code e durate per
+  route;
+- `GET /health/ready` per readiness aggregata database/Redis;
+- `GET /health/metrics` per snapshot locale verificata dallo smoke.
+
+Prima della produzione restano necessari esportazione OpenTelemetry,
+dashboard/alert reali, log redaction verificata in ambiente, retention e
+correlazione con audit amministrativo.
+
 ## Decisione operativa
 
 Rilasciare in produzione solo dopo una milestone dedicata di hardening. Prima

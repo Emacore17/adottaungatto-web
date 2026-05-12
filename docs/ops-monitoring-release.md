@@ -59,13 +59,23 @@ Segnali minimi:
 
 Target:
 
-- JSON logs in produzione;
-- `requestId` e `traceId` su ogni richiesta;
+- JSON logs in produzione; la base API locale produce gia log JSON per
+  richiesta HTTP;
+- `requestId` e `traceId` su ogni richiesta; la base API locale propaga gia
+  `x-request-id` e `x-trace-id`;
 - redazione di token, password, email quando non necessarie, header auth e dati
   personali sensibili;
 - livelli `debug`, `info`, `warn`, `error`;
 - nessun log di payload upload o contenuti privati;
 - retention differenziata per audit e log tecnici.
+
+Stato locale:
+
+- `GET /health/ready` espone readiness aggregata database/Redis.
+- `GET /health/metrics` espone metriche HTTP in memoria per richieste, errori,
+  status code e durate per route.
+- `pnpm smoke:e2e` verifica header di correlazione, readiness e metriche.
+- Restano da collegare exporter OpenTelemetry, dashboard e alert reali.
 
 ## Alert
 

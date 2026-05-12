@@ -10,6 +10,7 @@ import { LikesModule } from "./likes/likes.module.js"
 import { ListingsModule } from "./listings/listings.module.js"
 import { ModerationModule } from "./moderation/moderation.module.js"
 import { NotificationsModule } from "./notifications/notifications.module.js"
+import { ObservabilityModule } from "./observability/observability.module.js"
 import { PlacesModule } from "./places/places.module.js"
 import { RedisModule } from "./redis/redis.module.js"
 import { ReportsModule } from "./reports/reports.module.js"
@@ -18,6 +19,7 @@ import { UsersModule } from "./users/users.module.js"
 @Module({
   imports: [
     ConfigModule,
+    ObservabilityModule,
     DatabaseModule,
     RedisModule,
     HealthModule,

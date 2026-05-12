@@ -287,7 +287,9 @@ Task:
 - Fatto parziale: aggiungere rate limit Redis agli endpoint upload immagini
   bozza e agli endpoint admin/moderazione principali;
 - completare rate limit per gli altri flussi pubblici sensibili;
-- aggiungere logging strutturato, trace id, metriche e alert;
+- Fatto parziale: aggiungere logging strutturato, trace id e metriche HTTP
+  locali;
+- completare alert e integrazione OpenTelemetry/Dynatrace o equivalente;
 - misurare ricerca e pagina lista su fixture realistiche;
 - definire CI/CD, backup/restore e rollback;
 - completare privacy, cookie, retention dati e hardening upload.
@@ -306,6 +308,14 @@ Avanzamento 12 maggio 2026:
   operatore e caso.
 - Fatto: test controller API verificano l'applicazione dei limiti su upload e
   moderazione.
+- Fatto: interceptor API globale con `x-request-id`, `x-trace-id`, log JSON per
+  richiesta e metriche in memoria per richieste, errori, status code e durate.
+- Fatto: `GET /health/ready` verifica database e Redis come readiness
+  aggregata.
+- Fatto: `GET /health/metrics` espone una snapshot locale delle metriche HTTP
+  per smoke e debugging.
+- Fatto: `pnpm smoke:e2e` verifica header di correlazione, readiness e metriche
+  API.
 
 Done:
 
@@ -313,6 +323,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone G dalla strumentazione operativa minima: logging
-strutturato, trace id, metriche/alert e tuning configurabile dei rate limit per
-ambiente.
+Proseguire con Milestone G completando alert e integrazione OpenTelemetry o
+equivalente, poi tuning configurabile dei rate limit per ambiente e primi load
+test API su ricerca/lista.

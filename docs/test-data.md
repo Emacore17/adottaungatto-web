@@ -83,6 +83,8 @@ La demo include:
 `pnpm smoke:e2e` deve verificare:
 
 - health API, database e Redis;
+- readiness API, metriche HTTP locali e header di correlazione; Fatto tramite
+  `/health/ready`, `/health/metrics`, `x-request-id` e `x-trace-id`.
 - lista pubblica con immagini; Fatto via cover API, oggetto storage e HTML con
   URL storage diretto.
 - dettaglio annuncio;

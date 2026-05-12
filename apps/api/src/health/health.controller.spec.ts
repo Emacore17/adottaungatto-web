@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import { vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
+import { ObservabilityService } from "../observability/observability.service.js"
 import type { RedisService } from "../redis/redis.service.js"
 
 import { HealthController } from "./health.controller.js"
@@ -14,11 +15,13 @@ describe("HealthController", () => {
   const redisService = {
     ping: vi.fn(),
   } as unknown as RedisService
+  const observabilityService = new ObservabilityService()
 
   it("returns api health status", () => {
     const response = new HealthController(
       databaseService,
-      redisService
+      redisService,
+      observabilityService
     ).getHealth()
 
     expect(response.service).toBe("api")
@@ -28,7 +31,11 @@ describe("HealthController", () => {
 
   it("returns database health status", async () => {
     databaseService.ping = vi.fn().mockResolvedValue(undefined)
-    const controller = new HealthController(databaseService, redisService)
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
 
     const response = await controller.getDatabaseHealth()
 
@@ -39,7 +46,11 @@ describe("HealthController", () => {
 
   it("returns redis health status", async () => {
     redisService.ping = vi.fn().mockResolvedValue(undefined)
-    const controller = new HealthController(databaseService, redisService)
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
 
     const response = await controller.getRedisHealth()
 
@@ -50,10 +61,43 @@ describe("HealthController", () => {
 
   it("throws service unavailable when a dependency check fails", async () => {
     databaseService.ping = vi.fn().mockRejectedValue(new Error("db down"))
-    const controller = new HealthController(databaseService, redisService)
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
 
     await expect(controller.getDatabaseHealth()).rejects.toBeInstanceOf(
       ServiceUnavailableException
     )
+  })
+
+  it("returns readiness when dependencies are available", async () => {
+    databaseService.ping = vi.fn().mockResolvedValue(undefined)
+    redisService.ping = vi.fn().mockResolvedValue(undefined)
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
+
+    const response = await controller.getReadiness()
+
+    expect(response.service).toBe("api")
+    expect(response.status).toBe("ready")
+    expect(response.checks).toHaveLength(2)
+  })
+
+  it("returns observability metrics", () => {
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
+
+    const response = controller.getMetrics()
+
+    expect(response.service).toBe("api")
+    expect(response.http.requestsTotal).toBeGreaterThanOrEqual(0)
   })
 })
