@@ -76,8 +76,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Route group admin iniziale con layout interno dedicato e pagina
   `/moderation` server-rendered, `noindex`, login obbligatorio, lettura delle
   code API `pending_review` e segnalazioni, e azioni base
-  approva/rifiuta/sospendi con motivo obbligatorio; le autorizzazioni di ruolo
-  restano applicate dalle API.
+  approva/rifiuta/sospendi con motivo obbligatorio; la pagina include un
+  filtro operativo `queue=all|pending|reported`, mentre le autorizzazioni di
+  ruolo restano applicate dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -176,7 +177,7 @@ operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
 impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
 annuncio e pagina `/moderation` dentro layout interno separato, collegata alle
-code API con decisioni base motivate. L'area account supporta
+code API con filtro code e decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,

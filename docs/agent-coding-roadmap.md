@@ -255,10 +255,12 @@ Avanzamento 12 maggio 2026:
   rapidi verso sito pubblico e account.
 - Fatto: la pagina `/moderation` e' presentata come dashboard moderazione
   server-rendered, protetta da login, `noindex` e collegata alle code API.
+- Fatto: la dashboard moderazione espone un filtro operativo server-rendered
+  per vedere tutte le code, solo `pending_review` o solo segnalazioni.
 - Fatto: lo smoke E2E verifica login admin, coda `pending_review` e presenza
-  dello shell admin separato.
-- Da fare: aggiungere dettaglio caso, filtri operativi, template motivazioni e
-  audit consultabile da UI.
+  dello shell admin separato, piu il filtro segnalazioni.
+- Da fare: aggiungere dettaglio caso, template motivazioni e audit consultabile
+  da UI.
 
 Done:
 
@@ -283,5 +285,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone F migliorando code, dettaglio operativo, template di
+Proseguire con Milestone F aggiungendo dettaglio operativo caso, template di
 motivazione, audit consultabile e test di accesso negato da UI.

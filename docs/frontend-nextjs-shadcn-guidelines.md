@@ -20,7 +20,7 @@ scheda dettaglio con carosello immagini, layout pubblici/auth/account e shell
 admin dedicato, client API, SEO base, sitemap, robots, JSON-LD, dashboard
 account operativa con riepilogo, azioni rapide, bozze/preferiti/notifiche,
 inbox contatti ricevuti, form contatto proprietario e pagina `/moderation` con
-decisioni base motivate sono presenti.
+filtro code e decisioni base motivate sono presenti.
 Il client API restituisce messaggi di errore gia' normalizzati per la UI. Le
 notifiche in-app hanno un provider real-time globale via SSE same-origin, badge
 account live e avviso visuale su nuova notifica.

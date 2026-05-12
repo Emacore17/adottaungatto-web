@@ -51,6 +51,9 @@ Un annuncio e' pubblico solo se:
   La pagina legge questa coda tramite bearer token. Se l'API restituisce
   `403`, mostra uno stato di accesso non consentito. Ogni item include un form
   decisione con motivo rapido o nota obbligatoria.
+- La pagina supporta il filtro query `queue=all|pending|reported`, usato solo
+  per scegliere quali sezioni operative mostrare. Le API restano la fonte per
+  autorizzazioni, paginazione e dati.
 
 ## Coda segnalazioni
 

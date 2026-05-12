@@ -511,6 +511,17 @@ try {
       moderationHtml.includes("Dashboard moderazione") &&
       moderationHtml.includes("Accesso protetto")
   )
+  const reportedModerationHtml = await webText(
+    "/moderation?queue=reported",
+    adminToken,
+    "web moderation reported filter"
+  )
+  check(
+    "web moderation reported filter content",
+    reportedModerationHtml.includes("Filtro code moderazione") &&
+      reportedModerationHtml.includes("Annunci segnalati") &&
+      !reportedModerationHtml.includes("Annunci in attesa")
+  )
 
   const submittedDraft = await api(
     "POST",

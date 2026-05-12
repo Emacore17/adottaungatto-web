@@ -64,7 +64,15 @@ type QueueResult<T> =
       status: number | null
     }
 
+type ModerationQueueFilter = "all" | "pending" | "reported"
+
 const queuePageSize = 8
+
+const moderationQueueFilters = [
+  { label: "Tutte le code", value: "all" },
+  { label: "In revisione", value: "pending" },
+  { label: "Segnalati", value: "reported" },
+] as const
 
 const reasonSelectClassName =
   "h-10 w-full rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
@@ -95,6 +103,7 @@ export default async function ModerationPage({
   const params = await searchParams
   const pendingPage = readPageParam(params.pendingPage)
   const reportedPage = readPageParam(params.reportedPage)
+  const queueFilter = readQueueFilter(params.queue)
   const decision = readSingleParam(params.decision)
   const decisionError = readSingleParam(params.decisionError)
 
@@ -152,23 +161,29 @@ export default async function ModerationPage({
         />
       </div>
 
-      <QueueSection
-        title="Annunci in attesa"
-        description="Annunci inviati a moderazione prima della pubblicazione."
-        emptyTitle="Nessun annuncio in attesa"
-        emptyDescription="La coda pending_review e' vuota."
-        result={pendingQueue}
-        renderItem={(item) => <ModerationItemCard item={item} />}
-      />
+      <QueueFilterNav activeFilter={queueFilter} />
 
-      <QueueSection
-        title="Annunci segnalati"
-        description="Casi aperti dopo report su annunci pubblicati o sospetti."
-        emptyTitle="Nessuna segnalazione aperta"
-        emptyDescription="La coda delle segnalazioni e' vuota."
-        result={reportedQueue}
-        renderItem={(item) => <ModerationItemCard item={item} />}
-      />
+      {queueFilter !== "reported" ? (
+        <QueueSection
+          title="Annunci in attesa"
+          description="Annunci inviati a moderazione prima della pubblicazione."
+          emptyTitle="Nessun annuncio in attesa"
+          emptyDescription="La coda pending_review e' vuota."
+          result={pendingQueue}
+          renderItem={(item) => <ModerationItemCard item={item} />}
+        />
+      ) : null}
+
+      {queueFilter !== "pending" ? (
+        <QueueSection
+          title="Annunci segnalati"
+          description="Casi aperti dopo report su annunci pubblicati o sospetti."
+          emptyTitle="Nessuna segnalazione aperta"
+          emptyDescription="La coda delle segnalazioni e' vuota."
+          result={reportedQueue}
+          renderItem={(item) => <ModerationItemCard item={item} />}
+        />
+      ) : null}
     </main>
   )
 }
@@ -208,6 +223,36 @@ function QueueSummaryCard({
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function QueueFilterNav({
+  activeFilter,
+}: {
+  activeFilter: ModerationQueueFilter
+}) {
+  return (
+    <nav aria-label="Filtro code moderazione" className="flex flex-wrap gap-2">
+      {moderationQueueFilters.map((filter) => {
+        const isActive = filter.value === activeFilter
+
+        return (
+          <Button
+            key={filter.value}
+            asChild
+            variant={isActive ? "default" : "outline"}
+            size="sm"
+          >
+            <Link
+              href={moderationQueueHref(filter.value)}
+              aria-current={isActive ? "page" : undefined}
+            >
+              {filter.label}
+            </Link>
+          </Button>
+        )
+      })}
+    </nav>
   )
 }
 
@@ -523,6 +568,28 @@ function readPageParam(value: string | string[] | undefined) {
 
 function readSingleParam(value: string | string[] | undefined) {
   return typeof value === "string" ? value : null
+}
+
+function readQueueFilter(value: string | string[] | undefined) {
+  const raw = readSingleParam(value)
+
+  if (raw === "pending" || raw === "reported") {
+    return raw
+  }
+
+  return "all"
+}
+
+function moderationQueueHref(filter: ModerationQueueFilter) {
+  if (filter === "all") {
+    return routes.moderation
+  }
+
+  const params = new URLSearchParams({
+    queue: filter,
+  })
+
+  return `${routes.moderation}?${params.toString()}`
 }
 
 function formatDecisionAction(value: string | null) {
