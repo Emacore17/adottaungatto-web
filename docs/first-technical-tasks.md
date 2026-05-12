@@ -122,7 +122,12 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     scheda.
 66. Fatto: rendere `/listings` una lista a card orizzontali con slot
     sponsorizzato.
-67. Estendere area admin/moderazione separata e protetta.
+67. Fatto: aggiungere carosello immagini nel dettaglio annuncio pubblico.
+68. Fatto: estendere smoke upload annuncio con piu immagini reali da
+    `immagini-gattini/` quando disponibili.
+69. Implementare notifiche real-time applicative per tutte le funzionalita che
+    generano eventi utente.
+70. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione
 

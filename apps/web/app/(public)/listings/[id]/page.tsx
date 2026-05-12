@@ -10,9 +10,13 @@ import {
   ListingFavoriteCard,
   type FavoriteStatus,
 } from "@/app/(public)/listings/[id]/_components/listing-favorite-card"
+import {
+  ListingImageCarousel,
+  type ListingCarouselImage,
+} from "@/app/(public)/listings/[id]/_components/listing-image-carousel"
 import { JsonLd } from "@/components/shared/json-ld"
-import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
+import type { PublicListingDetail, PublicListingImage } from "@/lib/api/types"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
@@ -87,10 +91,7 @@ export default async function ListingDetailPage({
     currentUserProfile?.ok === true &&
     Boolean(currentUserProfile.data.phoneE164)
 
-  const coverUrl = getPublicObjectUrl(
-    listing.data.images.cover?.objectKeyLarge ??
-      listing.data.images.cover?.objectKeyThumb
-  )
+  const carouselImages = createCarouselImages(listing.data)
   const locationLabel = listing.data.location
     ? `${listing.data.location.municipality.name}, ${listing.data.location.province.name}`
     : "Italia"
@@ -100,22 +101,10 @@ export default async function ListingDetailPage({
       <JsonLd data={createListingJsonLd(listing.data)} />
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8">
         <article className="flex min-w-0 flex-col gap-6">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-muted">
-            {coverUrl ? (
-              <StorageImage
-                src={coverUrl}
-                alt={listing.data.title}
-                fill
-                priority
-                className="object-cover"
-                sizes="(min-width: 1024px) 768px, 100vw"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                Foto in preparazione
-              </div>
-            )}
-          </div>
+          <ListingImageCarousel
+            images={carouselImages}
+            title={listing.data.title}
+          />
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
@@ -195,6 +184,44 @@ export default async function ListingDetailPage({
       </main>
     </>
   )
+}
+
+function createCarouselImages(
+  listing: PublicListingDetail
+): ListingCarouselImage[] {
+  const detailImages =
+    listing.images.items.length > 0
+      ? listing.images.items
+      : listing.images.cover
+        ? [listing.images.cover]
+        : []
+
+  return detailImages
+    .map((image, index) => createCarouselImage(listing.title, image, index))
+    .filter((image): image is ListingCarouselImage => image !== null)
+}
+
+function createCarouselImage(
+  title: string,
+  image: PublicListingImage,
+  index: number
+): ListingCarouselImage | null {
+  const url = getPublicObjectUrl(image.objectKeyLarge ?? image.objectKeyThumb)
+  const thumbUrl = getPublicObjectUrl(
+    image.objectKeyThumb ?? image.objectKeyLarge
+  )
+
+  if (!url || !thumbUrl) {
+    return null
+  }
+
+  return {
+    alt: `${title} - foto ${index + 1}`,
+    id: image.id,
+    isCover: image.isCover,
+    thumbUrl,
+    url,
+  }
 }
 
 function readContactStatus(

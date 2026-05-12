@@ -104,6 +104,10 @@ La demo include:
 - inbox contatti ricevuti proprietario; Fatto via
   `GET /contacts/me/received`, pagina `/account/contacts`, telefono visibile
   solo dopo consenso e isolamento multi-utente.
+- upload immagini annuncio; Fatto con piu immagini reali da
+  `immagini-gattini/` quando disponibili, invece del placeholder generato.
+- dettaglio annuncio pubblicato; Fatto con verifica del carosello immagini e
+  conteggio foto dopo approvazione moderatore.
 - notifica generata; Fatto per decisione di moderazione approvata.
 - accesso negato tra utenti diversi; Fatto per bozza, immagini bozza,
   preferiti e notifiche. Da estendere ai contatti quando saranno esposti in

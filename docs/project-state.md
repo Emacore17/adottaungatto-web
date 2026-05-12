@@ -93,7 +93,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
   chiave della dashboard account, pagine account autenticate, piu login admin e
-  coda moderazione demo.
+  coda moderazione demo. Lo smoke carica piu immagini reali da
+  `immagini-gattini/` quando disponibili e verifica il carosello del dettaglio
+  annuncio pubblicato.
 
 ## Non pronto per produzione
 
@@ -108,9 +110,9 @@ produzione. Mancano almeno:
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
   refresh sul futuro update di annunci pubblicati;
 - amministrazione completa e UI interna protetta;
-- frontend applicativo oltre la consultazione pubblica: eventuali canali o
-  finestre orarie per il contatto proprietario e amministrazione interna piu
-  estesa;
+- frontend applicativo oltre la consultazione pubblica: notifiche real-time
+  applicative, eventuali canali o finestre orarie per il contatto proprietario
+  e amministrazione interna piu estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
@@ -156,7 +158,8 @@ hardening upload, backup, alert e audit amministrativo piu esteso.
 `apps/web` ha superato lo shell minimale: sono presenti configurazione env/site,
 route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
-annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
+annuncio con carosello immagini, proxy route per autocomplete/lista pubblica,
+sitemap, robots,
 JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
 account operativa con riepilogo, attivita prioritarie, profilo, azioni rapide,
 annunci in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
@@ -174,10 +177,11 @@ annuncio mostra un flusso guidato dati,
 foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
 pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
-smoke locale copre anche upload immagine, processing worker e invio a
-revisione. Restano incomplete eventuali preferenze contatto per canali o
-finestre orarie, altri dati sensibili oltre email/telefono e amministrazione
-interna piu estesa. I prossimi sviluppi
+smoke locale copre anche upload multiplo di immagini gattini locali, processing
+worker, invio a revisione e carosello immagini nel dettaglio pubblicato.
+Restano incomplete notifiche real-time applicative, eventuali preferenze
+contatto per canali o finestre orarie, altri dati sensibili oltre
+email/telefono e amministrazione interna piu estesa. I prossimi sviluppi
 frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima

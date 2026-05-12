@@ -160,8 +160,9 @@ E' presente anche una preferenza per-annuncio per
 abilitare/disabilitare il contatto proprietario. Le mutazioni account coprono
 rimozione preferiti, lettura notifiche, cancellazione bozze ed editor bozze con
 creazione/modifica/upload, galleria immagini con stato, eliminazione,
-riordino/copertina e invio. Restano da completare eventuali canali aggiuntivi
-o finestre orarie per il contatto, se previsti dal prodotto.
+riordino/copertina, invio e carosello immagini nel dettaglio pubblico. Restano
+da completare notifiche real-time applicative, eventuali canali aggiuntivi o
+finestre orarie per il contatto, se previsti dal prodotto.
 
 ## Milestone 8 - Hardening e deploy
 

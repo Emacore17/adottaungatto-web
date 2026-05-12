@@ -1,3 +1,6 @@
+import { readFile, readdir } from "node:fs/promises"
+import path from "node:path"
+
 const apiBaseUrl = readUrl(process.env.API_URL, "http://localhost:4000")
 const webBaseUrl = readUrl(process.env.WEB_URL, "http://localhost:3000")
 const mailpitBaseUrl = readUrl(process.env.MAILPIT_URL, "http://localhost:8025")
@@ -180,49 +183,30 @@ try {
   )
   check("draft update", updatedDraft.title.startsWith("Smoke draft aggiornato"))
 
-  const imageBuffer = createSmokeImageBuffer()
-  const upload = await api(
-    "POST",
-    `/listings/me/drafts/${draftId}/images/upload-url`,
-    {
-      isCover: true,
-      mimeType: "image/png",
-      sizeBytes: imageBuffer.byteLength,
-    },
-    token
-  )
-  check(
-    "draft image upload url",
-    upload.upload?.method === "PUT" && typeof upload.image?.id === "string"
+  const smokeImages = await loadSmokeImageFixtures(2)
+  pass(
+    "draft image fixtures",
+    smokeImages.map((image) => image.fileName).join(", ")
   )
 
-  const storageUpload = await fetch(upload.upload.url, {
-    body: imageBuffer,
-    headers: upload.upload.headers,
-    method: upload.upload.method,
-  })
-  check(
-    "draft image storage upload",
-    storageUpload.ok,
-    `status=${storageUpload.status}`
-  )
-
-  const confirmation = await api(
-    "POST",
-    `/listings/me/drafts/${draftId}/images/${upload.image.id}/confirm`,
-    undefined,
-    token
-  )
-  check(
-    "draft image confirm",
-    confirmation.confirmed === true &&
-      confirmation.image.status === "processing"
-  )
+  for (const [index, smokeImage] of smokeImages.entries()) {
+    const upload = await uploadDraftSmokeImage(
+      draftId,
+      smokeImage,
+      index === 0,
+      token
+    )
+    check(
+      `draft image ${index + 1} upload url`,
+      upload.upload?.method === "PUT" && typeof upload.image?.id === "string"
+    )
+  }
 
   const readyImages = await waitForDraftImagesReady(draftId, token)
   check(
     "draft image processing",
-    readyImages.meta.readyCount >= 1 && readyImages.meta.pendingCount === 0
+    readyImages.meta.readyCount >= smokeImages.length &&
+      readyImages.meta.pendingCount === 0
   )
 
   await expectApiStatus(
@@ -248,7 +232,7 @@ try {
     {
       isCover: true,
       mimeType: "image/png",
-      sizeBytes: imageBuffer.byteLength,
+      sizeBytes: smokeImages[0].buffer.byteLength,
     },
     otherToken,
     [404]
@@ -555,7 +539,18 @@ try {
   const publishedListing = await api("GET", `/listings/${submittedListingId}`)
   check(
     "demo moderation published detail",
-    publishedListing.id === submittedListingId
+    publishedListing.id === submittedListingId &&
+      publishedListing.images.items.length >= smokeImages.length
+  )
+  const publishedListingHtml = await rawText(
+    `${webBaseUrl}/listings/${submittedListingId}`
+  )
+  check(
+    "web listing detail carousel",
+    publishedListingHtml.includes("data-listing-carousel") &&
+      publishedListingHtml.includes(
+        `data-carousel-count="${smokeImages.length}"`
+      )
   )
 
   const ownerNotifications = await api(
@@ -766,6 +761,121 @@ async function createSmokeContactRequest(requesterToken, excludedOwnerIds) {
   throw new Error("FAIL contact owner no contactable demo listing available")
 }
 
+async function uploadDraftSmokeImage(
+  draftId,
+  smokeImage,
+  isCover,
+  bearerToken
+) {
+  const upload = await api(
+    "POST",
+    `/listings/me/drafts/${draftId}/images/upload-url`,
+    {
+      isCover,
+      mimeType: smokeImage.mimeType,
+      sizeBytes: smokeImage.buffer.byteLength,
+    },
+    bearerToken
+  )
+
+  const storageUpload = await fetch(upload.upload.url, {
+    body: smokeImage.buffer,
+    headers: upload.upload.headers,
+    method: upload.upload.method,
+  })
+  check(
+    `draft image storage upload ${smokeImage.fileName}`,
+    storageUpload.ok,
+    `status=${storageUpload.status}`
+  )
+
+  const confirmation = await api(
+    "POST",
+    `/listings/me/drafts/${draftId}/images/${upload.image.id}/confirm`,
+    undefined,
+    bearerToken
+  )
+  check(
+    `draft image confirm ${smokeImage.fileName}`,
+    confirmation.confirmed === true &&
+      confirmation.image.status === "processing"
+  )
+
+  return upload
+}
+
+async function loadSmokeImageFixtures(count) {
+  const fixtures = await loadCatImageFixtures(count)
+
+  if (fixtures.length >= count) {
+    return fixtures
+  }
+
+  return [
+    ...fixtures,
+    ...Array.from({ length: count - fixtures.length }, (_, index) => ({
+      buffer: createFallbackSmokeImageBuffer(),
+      fileName: `fallback-${index + 1}.png`,
+      mimeType: "image/png",
+    })),
+  ]
+}
+
+async function loadCatImageFixtures(count) {
+  const imagesDir = path.join(process.cwd(), "immagini-gattini")
+
+  try {
+    const entries = await readdir(imagesDir, { withFileTypes: true })
+    const candidates = entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .filter((fileName) => supportedSmokeImageMimeType(fileName) !== null)
+      .sort((left, right) => left.localeCompare(right, "it"))
+    const fixtures = []
+
+    for (const fileName of candidates) {
+      const buffer = await readFile(path.join(imagesDir, fileName))
+      const mimeType = supportedSmokeImageMimeType(fileName)
+
+      if (!mimeType || buffer.byteLength > 10 * 1024 * 1024) {
+        continue
+      }
+
+      fixtures.push({
+        buffer,
+        fileName,
+        mimeType,
+      })
+
+      if (fixtures.length >= count) {
+        return fixtures
+      }
+    }
+  } catch {
+    return []
+  }
+
+  return []
+}
+
+function supportedSmokeImageMimeType(fileName) {
+  const extension = path.extname(fileName).toLowerCase()
+
+  if (extension === ".jpg" || extension === ".jpeg") {
+    return "image/jpeg"
+  }
+
+  if (extension === ".png") {
+    return "image/png"
+  }
+
+  if (extension === ".webp") {
+    return "image/webp"
+  }
+
+  return null
+}
+
 async function apiResponse(method, path, body, bearerToken) {
   const headers = {
     Accept: "application/json",
@@ -938,7 +1048,7 @@ async function findPendingReviewCase(listingId, bearerToken) {
   throw new Error(`FAIL demo moderation submitted case listing=${listingId}`)
 }
 
-function createSmokeImageBuffer() {
+function createFallbackSmokeImageBuffer() {
   return Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAGElEQVR4nGNkYPjPgASYGFABqXwMDAwA6uoCPWkU8lAAAAAASUVORK5CYII=",
     "base64"

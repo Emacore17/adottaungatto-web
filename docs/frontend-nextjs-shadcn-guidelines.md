@@ -16,10 +16,11 @@ Stack locale verificato:
 - app frontend in `apps/web`.
 
 La UI pubblica iniziale e' avviata: homepage di ricerca, lista annunci,
-scheda dettaglio, layout pubblici/auth/account/admin, client API, SEO base,
-sitemap, robots, JSON-LD, dashboard account operativa con riepilogo, azioni
-rapide, bozze/preferiti/notifiche, inbox contatti ricevuti, form contatto
-proprietario e pagina `/moderation` con decisioni base motivate sono presenti.
+scheda dettaglio con carosello immagini, layout pubblici/auth/account/admin,
+client API, SEO base, sitemap, robots, JSON-LD, dashboard account operativa con
+riepilogo, azioni rapide, bozze/preferiti/notifiche, inbox contatti ricevuti,
+form contatto proprietario e pagina `/moderation` con decisioni base motivate
+sono presenti.
 Il client API restituisce messaggi di errore gia' normalizzati per la UI.
 La priorita ora e' consolidare i flussi operativi autenticati senza rompere la
 separazione Server/Client Components.
@@ -319,8 +320,11 @@ server-only.
     immagine e invio a moderazione.
 14. Fatto: aggiungere galleria/stato immagini bozza con eliminazione e
     riordino.
-15. Aggiungere test leggeri per helper, view model e route critiche.
-16. Solo dopo, introdurre animazioni e componenti avanzati.
+15. Fatto: aggiungere carosello immagini nel dettaglio annuncio pubblico.
+16. Aggiungere notifiche real-time applicative con componente client foglia e
+    fallback server-rendered.
+17. Aggiungere test leggeri per helper, view model e route critiche.
+18. Solo dopo, introdurre animazioni e componenti avanzati.
 
 ## Checklist per ogni task frontend
 

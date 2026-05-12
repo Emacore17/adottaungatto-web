@@ -47,11 +47,29 @@ Le notifiche da segnalazione includono anche `reportId` e
   e di marcare tutte le notifiche non lette tramite gli endpoint `POST`
   esistenti.
 
+## Requisito real-time
+
+Le notifiche dell'intero applicativo devono essere real-time: ogni funzionalita
+che crea un evento utente rilevante deve pubblicare una notifica visibile senza
+refresh manuale. Il fallback polling o server-rendered serve solo per
+resilienza, recupero dopo disconnessione e primo caricamento, non come
+meccanismo principale.
+
+Target tecnico da implementare nel prossimo round:
+
+- canale autenticato real-time, preferibilmente SSE per semplicita locale e
+  compatibilita con Next server-rendered;
+- evento iniziale con conteggio non lette e successivi eventi `created`,
+  `read`, `read_all`;
+- store UI condiviso per badge, dashboard e inbox notifiche;
+- riconnessione con recupero dal `lastEventId` o fallback a
+  `GET /notifications`;
+- copertura smoke su nuova notifica ricevuta senza refresh della pagina.
+
 ## Prossimo target
 
 - Aggiungere notifica per annuncio inviato a revisione.
 - Aggiungere notifica o stato UI dopo approvazione pubblicazione annuncio.
-- Definire real-time o near-real-time: WebSocket/SSE oppure polling leggero con
-  fallback server-rendered.
+- Implementare canale real-time applicativo per tutte le notifiche.
 - Mantenere la inbox come sorgente affidabile anche se il canale real-time non
   e' disponibile.

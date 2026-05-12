@@ -24,6 +24,8 @@ e ottenere una demo navigabile con:
 - dashboard account ordinata con impostazioni profilo modificabili;
 - autorizzazione corretta: ogni utente vede e modifica solo i propri dati;
 - pagina `/listings` a card orizzontali, una per riga, con slot sponsorizzato;
+- dettaglio annuncio con carosello immagini sfogliabile;
+- notifiche real-time applicative, con fallback solo di resilienza;
 - moderazione/admin protetta, separata e utilizzabile in locale;
 - smoke test che copre i flussi principali senza interventi manuali.
 
@@ -33,7 +35,7 @@ e la pagina impostazioni profilo, la dashboard account operativa, la inbox
 contatti ricevuti lato proprietario e i messaggi di errore account leggibili
 sono funzionanti in locale. Il contatto proprietario supporta anche il consenso
 separato per condividere il telefono del richiedente. Il punto piu urgente ora
-e' progettare notifiche near-real-time o preferenze contatto piu avanzate.
+e' implementare notifiche real-time applicative.
 
 ## Regole per ogni round
 
@@ -82,6 +84,8 @@ Avanzamento 12 maggio 2026:
   `/listings`.
 - Fatto: lo smoke E2E approva un caso appena inviato a revisione, verifica il
   dettaglio pubblico e la notifica al proprietario.
+- Fatto: lo smoke E2E usa immagini reali da `immagini-gattini/` quando
+  disponibili e carica piu immagini per una bozza.
 - Da fare: se gli asset reali saranno versionati, aggiungere licenza e
   attribuzione documentata.
 
@@ -112,6 +116,8 @@ Avanzamento 12 maggio 2026:
   leggibili e una schermata di conferma dopo l'invio a revisione.
 - Fatto: `pnpm smoke:e2e` copre creazione annuncio completa, upload immagine
   presigned, processing worker, invio a revisione e pagina di conferma.
+- Fatto: `pnpm smoke:e2e` copre upload multiplo immagini usando fixture
+  gattini locali quando disponibili.
 - Fatto: la UI mostra un flusso guidato dati, foto e revisione, con invio
   disabilitato finche' dati e foto non sono pronti.
 
@@ -173,6 +179,7 @@ Task:
   autenticato;
 - Fatto: prevedere slot visivo per annuncio sponsorizzato in alto, con label
   chiara;
+- Fatto: aggiungere carosello immagini sfogliabile nel dettaglio annuncio;
 - mantenere filtri, SEO e performance della pagina lista;
 - Fatto: aggiornare smoke per preferiti da lista con stato salvato/rimosso.
 
@@ -190,7 +197,8 @@ Task:
 - Fatto: aggiungere consenso esplicito per condividere telefono del
   richiedente;
 - Fatto: mantenere email proprietario nascosta nella UI pubblica;
-- progettare notifiche real-time o near-real-time con fallback polling;
+- implementare notifiche real-time applicative con fallback polling solo per
+  resilienza;
 - notificare proprietario su invio a revisione, approvazione e contatto;
 - Fatto: documentare limiti anti-abuso e preferenze contatto;
 - Fatto: inbox account per richieste ricevute con email richiedente visibile
@@ -248,5 +256,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone E progettando notifiche near-real-time con fallback
-polling, oppure preferenze contatto piu avanzate per canali e finestre orarie.
+Proseguire con Milestone E implementando notifiche real-time applicative via
+canale autenticato, con fallback polling solo per resilienza.
