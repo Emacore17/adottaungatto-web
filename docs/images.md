@@ -104,9 +104,9 @@ Produzione futura:
 - La UI iniziale ora espone "Inserisci annuncio" e stati immagine piu'
   leggibili, ma serve ancora un wizard unico o guidato per ridurre i passaggi.
 - Se l'immagine resta in `uploaded` o `processing`, l'invio a revisione fallisce
-  con stato non pronto; la UI indica l'azione richiesta, ma lo smoke deve
-  verificare il comportamento end-to-end.
-- Lo smoke locale deve coprire almeno un upload immagine e un invio a revisione
+  con stato non pronto; la UI indica l'azione richiesta e lo smoke locale copre
+  il comportamento end-to-end.
+- `pnpm smoke:e2e` copre upload immagine, processing worker e invio a revisione
   riuscito.
 - La demo deve avere immagini pronte per tutti gli annunci pubblici e in
   revisione, come definito in `test-data.md`.

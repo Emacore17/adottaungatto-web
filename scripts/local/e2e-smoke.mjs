@@ -7,6 +7,7 @@ const email = `e2e.${Date.now()}@demo.adottaungatto.local`
 
 let token = null
 let draftId = null
+let deleteDraftId = null
 let listingId = null
 
 try {
@@ -36,14 +37,20 @@ try {
   const session = await api("GET", "/auth/me", undefined, token)
   check("auth me", session.user.email === email)
 
+  const municipality = await resolveSmokeMunicipality()
+  pass("place autocomplete", `municipality=${municipality.label}`)
+
   const draft = await api(
     "POST",
     "/listings/me/drafts",
     {
-      description: "Draft creato dallo smoke test end to end.",
+      contactRequestsEnabled: true,
+      description:
+        "Annuncio completo creato dallo smoke test end to end con immagine.",
       isFree: true,
+      municipalityId: municipality.id,
       sex: "unknown",
-      title: "Smoke draft",
+      title: `Smoke draft ${Date.now()}`,
     },
     token
   )
@@ -64,10 +71,54 @@ try {
   const updatedDraft = await api(
     "PATCH",
     `/listings/me/drafts/${draftId}`,
-    { title: "Smoke draft aggiornato" },
+    { title: `Smoke draft aggiornato ${Date.now()}` },
     token
   )
-  check("draft update", updatedDraft.title === "Smoke draft aggiornato")
+  check("draft update", updatedDraft.title.startsWith("Smoke draft aggiornato"))
+
+  const imageBuffer = createSmokeImageBuffer()
+  const upload = await api(
+    "POST",
+    `/listings/me/drafts/${draftId}/images/upload-url`,
+    {
+      isCover: true,
+      mimeType: "image/png",
+      sizeBytes: imageBuffer.byteLength,
+    },
+    token
+  )
+  check(
+    "draft image upload url",
+    upload.upload?.method === "PUT" && typeof upload.image?.id === "string"
+  )
+
+  const storageUpload = await fetch(upload.upload.url, {
+    body: imageBuffer,
+    headers: upload.upload.headers,
+    method: upload.upload.method,
+  })
+  check(
+    "draft image storage upload",
+    storageUpload.ok,
+    `status=${storageUpload.status}`
+  )
+
+  const confirmation = await api(
+    "POST",
+    `/listings/me/drafts/${draftId}/images/${upload.image.id}/confirm`,
+    undefined,
+    token
+  )
+  check(
+    "draft image confirm",
+    confirmation.confirmed === true && confirmation.image.status === "processing"
+  )
+
+  const readyImages = await waitForDraftImagesReady(draftId, token)
+  check(
+    "draft image processing",
+    readyImages.meta.readyCount >= 1 && readyImages.meta.pendingCount === 0
+  )
 
   const favorite = await api(
     "POST",
@@ -150,13 +201,49 @@ try {
     "web account draft edit"
   )
 
-  const deletedDraft = await api(
-    "DELETE",
-    `/listings/me/drafts/${draftId}`,
+  const submittedDraft = await api(
+    "POST",
+    `/listings/me/drafts/${draftId}/submit-review`,
     undefined,
     token
   )
+  check(
+    "draft submit review",
+    submittedDraft.submitted === true &&
+      submittedDraft.listing.moderationStatus === "pending_review"
+  )
   draftId = null
+
+  await webPage(
+    "/account/listings/submitted",
+    token,
+    "web account listing submitted"
+  )
+
+  const deleteDraft = await api(
+    "POST",
+    "/listings/me/drafts",
+    {
+      description: "Draft temporaneo creato per verificare la cancellazione.",
+      isFree: true,
+      sex: "unknown",
+      title: `Smoke delete ${Date.now()}`,
+    },
+    token
+  )
+  deleteDraftId = deleteDraft.id
+  check(
+    "draft delete create",
+    typeof deleteDraftId === "string" && deleteDraftId.length > 0
+  )
+
+  const deletedDraft = await api(
+    "DELETE",
+    `/listings/me/drafts/${deleteDraftId}`,
+    undefined,
+    token
+  )
+  deleteDraftId = null
   check("draft delete", deletedDraft.deleted === true)
 
   console.log(`E2E_SMOKE_OK email=${email} listing=${listingId}`)
@@ -167,6 +254,19 @@ try {
       pass("cleanup draft", `draft=${draftId}`)
     } catch (error) {
       console.error(`WARN cleanup draft failed: ${error.message}`)
+    }
+  }
+  if (token && deleteDraftId) {
+    try {
+      await api(
+        "DELETE",
+        `/listings/me/drafts/${deleteDraftId}`,
+        undefined,
+        token
+      )
+      pass("cleanup delete draft", `draft=${deleteDraftId}`)
+    } catch (error) {
+      console.error(`WARN cleanup delete draft failed: ${error.message}`)
     }
   }
 }
@@ -213,6 +313,68 @@ async function webPage(path, sessionToken, label) {
   })
 
   check(label, response.status === 200, `status=${response.status}`)
+}
+
+async function resolveSmokeMunicipality() {
+  const places = await api(
+    "GET",
+    "/places/autocomplete?q=Roma&type=municipality&limit=1"
+  )
+  const municipality = places.items?.find((item) => item.type === "municipality")
+
+  check(
+    "place autocomplete result",
+    Boolean(municipality?.id),
+    `items=${places.items?.length ?? 0}`
+  )
+
+  return municipality
+}
+
+async function waitForDraftImagesReady(id, bearerToken) {
+  const timeoutMs = Number(process.env.SMOKE_IMAGE_TIMEOUT_MS ?? 30_000)
+  const startedAt = Date.now()
+  let images = null
+
+  while (Date.now() - startedAt <= timeoutMs) {
+    images = await api(
+      "GET",
+      `/listings/me/drafts/${id}/images`,
+      undefined,
+      bearerToken
+    )
+
+    if (images.meta.rejectedCount > 0) {
+      throw new Error(
+        `FAIL draft image processing rejected=${images.meta.rejectedCount}`
+      )
+    }
+
+    if (images.meta.readyCount > 0 && images.meta.pendingCount === 0) {
+      return images
+    }
+
+    await sleep(1_000)
+  }
+
+  throw new Error(
+    `FAIL draft image processing timeout ready=${
+      images?.meta.readyCount ?? 0
+    } pending=${images?.meta.pendingCount ?? 0}. Is the worker running?`
+  )
+}
+
+function createSmokeImageBuffer() {
+  return Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAGElEQVR4nGNkYPjPgASYGFABqXwMDAwA6uoCPWkU8lAAAAAASUVORK5CYII=",
+    "base64"
+  )
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms)
+  })
 }
 
 function check(label, condition, detail = "") {

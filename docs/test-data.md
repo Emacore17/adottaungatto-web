@@ -23,7 +23,8 @@ Gap attuali:
   e bozza incompleta;
 - non tutti gli annunci demo hanno immagini;
 - le immagini demo sono placeholder generati, non foto realistiche di gatti;
-- lo smoke non copre upload immagine reale e invio a revisione riuscito;
+- lo smoke copre upload immagine sintetica, processing worker e invio a
+  revisione riuscito, ma non usa ancora immagini demo realistiche;
 - non esiste un annuncio sponsorizzato mock visibile in lista.
 
 ## Account target
@@ -75,9 +76,9 @@ La demo deve includere almeno:
 - dettaglio annuncio;
 - registrazione e login;
 - creazione annuncio completa;
-- upload immagine;
-- processing immagine o fixture immagine pronta;
-- invio a revisione riuscito;
+- upload immagine; Fatto con immagine PNG sintetica deterministica.
+- processing immagine o fixture immagine pronta; Fatto tramite worker locale.
+- invio a revisione riuscito; Fatto.
 - approvazione moderatore;
 - annuncio pubblicato visibile;
 - preferito toggle;

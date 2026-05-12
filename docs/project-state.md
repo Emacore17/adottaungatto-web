@@ -72,8 +72,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `pnpm demo:reset`: avvia servizi, applica migrazioni, crea dati demo e carica
   asset MinIO placeholder.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
-  auth, bozze, preferiti, like, contatto proprietario, notifiche e pagine
-  account autenticate.
+  auth, creazione annuncio, upload immagine, processing worker, invio a
+  revisione, preferiti, like, contatto proprietario, notifiche e pagine account
+  autenticate.
 
 ## Non pronto per produzione
 
@@ -95,7 +96,7 @@ produzione. Mancano almeno:
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo senza ruoli admin/moderatore
   completi, stati annuncio multipli, immagini realistiche per tutti i casi e
-  smoke del flusso inserimento annuncio con upload + invio a revisione.
+  wizard guidato per il flusso inserimento annuncio.
 
 ## Stato ricerca
 
@@ -143,10 +144,10 @@ rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,
 riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
-schermata di conferma. Restano incompleti wizard unico, smoke upload +
-revisione, eventuali preferenze contatto per canali o finestre orarie e
-amministrazione interna piu estesa. I prossimi sviluppi frontend devono
-continuare a seguire
+schermata di conferma. Lo smoke locale copre anche upload immagine, processing
+worker e invio a revisione. Restano incompleti wizard unico, eventuali
+preferenze contatto per canali o finestre orarie e amministrazione interna piu
+estesa. I prossimi sviluppi frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
 della UI avanzata e uso della CLI shadcn da `apps/web`.
@@ -160,8 +161,8 @@ le immagini in `processing` durante l'avvio applicativo, quindi il flusso locale
 standard non richiede piu' la CLI manuale. Non copre ancora il traguardo demo
 definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano utenti
 moderatore/admin, annunci in moderazione o stati negativi, immagini realistiche
-complete, annuncio sponsorizzato mock e smoke del flusso completo di creazione
-annuncio con upload immagine e conferma revisione.
+complete, annuncio sponsorizzato mock e wizard guidato per l'inserimento
+annuncio.
 
 ## Regole per prossimi interventi
 

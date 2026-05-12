@@ -82,8 +82,10 @@ Avanzamento 12 maggio 2026:
   `processing` all'avvio e poi a intervalli regolari.
 - Fatto: la UI account espone "Inserisci annuncio", stati immagine piu'
   leggibili e una schermata di conferma dopo l'invio a revisione.
-- Da fare: trasformare il flusso in wizard unico o guidato, aggiungere smoke
-  E2E con upload immagine reale e verificare il giro completo su demo locale.
+- Fatto: `pnpm smoke:e2e` copre creazione annuncio completa, upload immagine
+  presigned, processing worker, invio a revisione e pagina di conferma.
+- Da fare: trasformare il flusso in wizard unico o guidato e verificare il giro
+  anche con fixture demo realistiche.
 
 Done:
 
@@ -178,6 +180,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire Milestone B con smoke E2E upload + invio a revisione, poi chiudere
-il wizard guidato. Subito dopo passare a Milestone A per rendere la demo locale
-piu' ricca con ruoli moderatore/admin, stati multipli e immagini realistiche.
+Chiudere Milestone B con un wizard guidato o una schermata unica dati + foto.
+Subito dopo passare a Milestone A per rendere la demo locale piu' ricca con
+ruoli moderatore/admin, stati multipli e immagini realistiche.
