@@ -52,7 +52,8 @@ pnpm media:process
 ```
 
 Per dettagli su mock, fixture e script locali mancanti vedere
-[local-testing-and-mocks.md](local-testing-and-mocks.md).
+[local-testing-and-mocks.md](local-testing-and-mocks.md). Per il contratto demo
+target vedere [test-data.md](test-data.md).
 
 ## Demo end-to-end
 
@@ -64,6 +65,9 @@ Per dettagli su mock, fixture e script locali mancanti vedere
 4. inserisce seed base e fixture demo;
 5. carica immagini placeholder nel bucket MinIO locale;
 6. avvia `pnpm dev`.
+
+Il comando e' utile gia oggi, ma non rappresenta ancora il traguardo demo
+finale definito in [agent-coding-roadmap.md](agent-coding-roadmap.md).
 
 `pnpm demo:setup` esegue solo la preparazione senza avviare i processi di
 sviluppo. `pnpm demo:reset` esegue `docker compose down -v --remove-orphans`:

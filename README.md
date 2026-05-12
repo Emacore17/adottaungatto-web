@@ -17,6 +17,9 @@ gatti e gattini.
 ## Documentazione operativa
 
 - [docs/project-state.md](docs/project-state.md): stato reale e gap principali.
+- [docs/agent-coding-roadmap.md](docs/agent-coding-roadmap.md): milestone
+  operative per agenti di coding AI e traguardo locale finale.
+- [docs/test-data.md](docs/test-data.md): contratto dati demo e fixture locali.
 - [docs/production-readiness.md](docs/production-readiness.md): cosa manca per
   la produzione.
 - [docs/search-full-text-ranking.md](docs/search-full-text-ranking.md):
@@ -140,52 +143,17 @@ pnpm search:benchmark -- --size=10000
 
 ## Stato
 
-La base della milestone 1 e' pronta: monorepo, API minima, worker minimo,
-pacchetti condivisi, Docker locale, schema Drizzle iniziale, migrazione
-verificata su PostgreSQL/PostGIS e seed iniziale per ruoli e razze.
+Il progetto ha una base applicativa funzionante: monorepo pnpm, API NestJS,
+worker, Next.js/shadcn, database PostGIS, auth, bozze annuncio, immagini,
+moderazione iniziale, ricerca pubblica, preferiti, like, contatti, notifiche e
+demo locale.
 
-La milestone 2 e' in corso: il worker esegue un dry-run reale sul permalink
-Istat dei comuni italiani, puo' scrivere run e dati normalizzati nelle tabelle
-di staging geografico e puo' promuovere lo staging nelle tabelle geografiche
-definitive in modo idempotente. Importa inoltre geometrie e centroidi dai
-confini amministrativi Istat 2026. Lo schema include anche immagini annuncio,
-casi di moderazione, azioni di moderazione, segnalazioni, ruoli utente e
-sessioni. L'API espone un primo modulo auth con registrazione, login, verifica
-email via Mailpit, recupero password con token monouso, sessione corrente,
-logout, cambio password autenticato con rotazione sessione, profilo utente
-autenticato, update profilo con policy per `profile_type` e CRUD autenticato
-delle bozze annuncio dell'utente con invio a moderazione e apertura caso
-iniziale. Le bozze supportano upload session presigned verso MinIO locale per
-immagini JPEG, PNG e WebP, conferma upload e processamento worker delle
-varianti `large` e `thumb` in WebP. La moderazione dispone di una prima coda
-autenticata per ruoli `moderator` e `admin`, con coda di revisione annunci,
-coda segnalazioni e decisioni tracciate per approvazione, rifiuto e
-sospensione. Gli utenti autenticati possono segnalare annunci pubblicati; la
-segnalazione apre o riusa un caso di moderazione e viene collegata ad audit
-log. Le decisioni di moderazione inviano email al proprietario dell'annuncio e,
-quando presenti, agli utenti che hanno segnalato l'annuncio.
-Le stesse decisioni creano anche notifiche in-app per proprietari e reporter,
-con inbox autenticata, conteggio non lette e marcatura lettura.
-Gli utenti autenticati possono salvare annunci pubblicati nei preferiti,
-listarli e rimuoverli in modo idempotente.
-Gli annunci pubblicati espongono anche un conteggio pubblico dei like; gli
-utenti autenticati possono aggiungere o rimuovere il proprio like in modo
-idempotente.
-L'API espone una prima lista pubblica paginata degli annunci approvati e una
-scheda pubblica per UUID, con ricerca `q` full-text e filtri per luogo, razza,
-sesso, fascia eta, gratuitita, dati sanitari e presenza immagini.
-La ricerca usa PostgreSQL con `listing_search_documents` quando il documento
-indicizzato e' disponibile e mantiene un fallback inline per gli annunci non
-ancora reindicizzati. Il ranking pubblico `postgres-v1` supporta sort
-`relevance`, `recent` e `distance`, con distanza opzionale da `lat`/`lng`,
-freschezza, qualita, trust ed engagement iniziale. Se la prima pagina
-full-text non restituisce risultati, l'API usa un fallback trigram tracciato in
-`meta.expansion` senza rimuovere i filtri espliciti. Il documento viene
-aggiornato dopo moderazione, processing immagini e like/unlike. Il worker
-include anche un benchmark locale per generare dataset sintetici di ricerca e
-salvare EXPLAIN JSON delle query principali in `benchmark-results/search`.
+Non e' ancora completo come prodotto locale. I prossimi sviluppi seguono
+`docs/agent-coding-roadmap.md`: completare dati demo, flusso "Inserisci
+annuncio" con immagini e revisione, dashboard account, preferiti con cuore
+toggle, lista annunci orizzontale con sponsorizzato mock e admin/moderazione
+separati.
 
-Le funzionalita applicative complete non sono ancora implementate.
-Gli utenti possono inoltre gestire preferenze email per notifiche non
-essenziali di moderazione e segnalazioni; le email di sicurezza account restano
-sempre attive.
+Il traguardo locale e': `pnpm dev:demo` + `pnpm smoke:e2e` devono produrre un
+giro completo navigabile e verificabile con utenti, annunci, immagini,
+moderazione e notifiche.

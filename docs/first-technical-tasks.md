@@ -104,6 +104,15 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     proprietario quando saranno previsti dal prodotto.
 58. Fatto: aggiungere rate limit Redis iniziale sui flussi auth sensibili:
     registrazione, login, verifica email, recupero password e cambio password.
+59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
+60. Completare fixture demo con ruoli moderator/admin e stati annuncio multipli.
+61. Correggere il flusso inserimento annuncio: dati, immagini, invio a
+    revisione e schermata di conferma senza errore generico.
+62. Aggiungere smoke E2E per upload immagine e invio a revisione riuscito.
+63. Riorganizzare dashboard account e aggiungere impostazioni profilo utente.
+64. Trasformare preferiti in cuore toggle con animazione su lista e scheda.
+65. Rendere `/listings` una lista a card orizzontali con slot sponsorizzato.
+66. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione
 
@@ -118,7 +127,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
    e aggiungere il primo rate limit auth; restano cookie/CSRF, gestione
    sessioni production-grade, lock progressivo account e copertura upload/admin.
 9. Dettagliare area admin/moderazione sicura.
-10. Dettagliare test data e script bootstrap locale.
+10. Fatto: dettagliare test data e script bootstrap locale in
+    `docs/test-data.md` e `docs/local-testing-and-mocks.md`.
 
 ## Task da non fare ancora
 
@@ -133,8 +143,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 ## Prompt operativo consigliato
 
 ```text
-Procedi con la milestone 1: inizializza il monorepo Next.js/shadcn come da MASTER.md,
-aggiungi lo scheletro dell'app API NestJS, configura pnpm workspace, script base,
-lint, typecheck e collegamento ai servizi Docker. Se un comando e' interattivo,
-fermati e chiedimi conferma prima di eseguirlo.
+Procedi con la prossima milestone di docs/agent-coding-roadmap.md. Leggi
+docs/project-state.md, docs/agent-coding-roadmap.md e il documento dell'area
+toccata. Mantieni il diff piccolo, aggiorna documentazione e stato reale,
+esegui le verifiche richieste e committa a fine round con messaggio breve.
 ```

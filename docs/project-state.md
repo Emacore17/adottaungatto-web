@@ -66,6 +66,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   per query principali.
 - Benchmark locali ricerca eseguiti su 10k e 100k annunci sintetici, con piani
   EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
+- Percorso demo locale con `pnpm demo:setup`, `pnpm dev:demo` e
+  `pnpm demo:reset`: avvia servizi, applica migrazioni, crea dati demo e carica
+  asset MinIO placeholder.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, bozze, preferiti, like, contatto proprietario, notifiche e pagine
   account autenticate.
@@ -88,6 +91,9 @@ produzione. Mancano almeno:
   estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
+- giro locale prodotto non ancora completo: demo senza ruoli admin/moderatore
+  completi, stati annuncio multipli, immagini realistiche per tutti i casi e
+  flusso inserimento annuncio con upload + invio a revisione senza attriti.
 
 ## Stato ricerca
 
@@ -140,6 +146,16 @@ frontend devono continuare a seguire
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
 della UI avanzata e uso della CLI shadcn da `apps/web`.
 
+## Stato demo locale
+
+`pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Oggi
+prepara servizi Docker, migrazioni, seed base, 3 utenti demo, 8 annunci
+pubblicati e 5 asset immagine placeholder. Non copre ancora il traguardo demo
+definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano utenti
+moderatore/admin, annunci in moderazione o stati negativi, immagini realistiche
+complete, annuncio sponsorizzato mock e smoke del flusso completo di creazione
+annuncio con upload immagine e conferma revisione.
+
 ## Regole per prossimi interventi
 
 - Non introdurre nuove funzionalita senza aggiornare roadmap e documento di
@@ -152,3 +168,4 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 - Prima di chiudere un task eseguire almeno `pnpm typecheck`, `pnpm test`,
   `pnpm lint` e `git diff --check` quando sono stati toccati codice o schema;
   se i servizi locali sono avviati, eseguire anche `pnpm smoke:e2e`.
+- A fine round committare le modifiche con un messaggio breve.

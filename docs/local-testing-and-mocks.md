@@ -9,13 +9,20 @@ In locale sono disponibili:
 
 - `pnpm docker:up` per PostgreSQL/PostGIS, Redis, MinIO e Mailpit;
 - `pnpm db:migrate` e `pnpm db:seed`;
+- `pnpm demo:setup` per avviare infrastruttura, migrare, fare seed demo e
+  caricare asset MinIO;
+- `pnpm dev:demo` per preparare la demo e avviare `pnpm dev`;
+- `pnpm demo:reset` per eliminare volumi Docker locali e ripartire;
 - `pnpm geo:import`, `pnpm geo:promote`, `pnpm geo:boundaries`;
 - `pnpm media:process` per processare immagini in coda;
 - `pnpm dev`, `pnpm typecheck`, `pnpm test`, `pnpm lint`;
-- test unitari e service-level su API e worker.
+- test unitari e service-level su API e worker;
+- smoke E2E locale `pnpm smoke:e2e`.
 
-Non esiste ancora un comando unico che prepara un ambiente locale completo con
-dati demo e asset realistici.
+Esiste quindi un percorso demo unico, ma non e' ancora completo come demo
+prodotto: mancano fixture realistiche per moderazione/admin, immagini complete
+per tutti gli annunci e un test del flusso upload immagine + invio a revisione
+riuscito.
 
 ## Obiettivo locale
 
@@ -30,31 +37,29 @@ Un nuovo sviluppatore o agente deve poter arrivare a una demo locale con:
 7. Mailpit e MinIO verificabili;
 8. comandi di reset chiari e non ambigui.
 
-## File e script da aggiungere in seguito
+## File e script da completare
 
-Questi file non sono ancora implementati. Vanno creati in task dedicati:
+Questi file o contenuti vanno completati in task dedicati:
 
 - `scripts/local/bootstrap.ps1`: setup locale idempotente;
 - `scripts/local/reset-data.ps1`: reset dati applicativi, con conferma
   esplicita;
-- `scripts/local/seed-demo.ts`: fixture demo realistiche;
+- `packages/db/src/seed-demo.ts`: fixture demo realistiche e stati annunci;
 - `scripts/local/smoke-api.ps1`: chiamate smoke contro API locale;
-- `scripts/local/create-demo-images.ts`: immagini demo e checksum;
+- `apps/worker/src/demo/upload-demo-assets.ts`: immagini demo realistiche e
+  checksum;
 - `docs/api-smoke-tests.md`: sequenza manuale minima per verificare i flussi;
 - `docs/test-data.md`: utenti, ruoli e annunci demo standard.
 
-## Fixture consigliate
+## Fixture target
 
-- Utente privato verificato.
-- Utente professionale o associazione.
-- Moderatore.
-- Admin.
-- Annuncio bozza incompleto.
-- Annuncio pronto per moderazione.
-- Annuncio pubblicato con immagini.
-- Annuncio rifiutato.
-- Annuncio sospeso da segnalazione.
-- Annuncio scaduto, per verificare esclusione pubblica.
+Vedere [test-data.md](test-data.md) per il contratto completo. In sintesi:
+
+- utente privato, proprietario/rifugio, associazione, moderatore e admin;
+- annunci pubblicati, in revisione, bozza incompleta, bozza completa,
+  rifiutati, sospesi e scaduti;
+- immagini pronte per tutti gli annunci pubblici e in revisione;
+- annuncio sponsorizzato mock per testare la UI lista.
 
 ## Mock esterni
 

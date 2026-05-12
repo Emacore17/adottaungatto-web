@@ -55,13 +55,15 @@ Mancano:
 
 ## Frontend e SEO
 
-Lo scaffolding Next.js esiste, ma prima di costruire viste pubbliche reali
-servono:
+Lo scaffolding Next.js e le prime viste pubbliche/account/admin esistono. Prima
+di produzione servono:
 
-- configurazione centrale per env, site metadata, routes, API client e SEO;
-- route groups per pubblico, auth, account e admin;
+- flusso inserimento annuncio completo e verificato con immagini;
+- dashboard account e impostazioni profilo ordinate;
+- preferiti con interazione rapida coerente tra lista e scheda;
+- area admin/moderazione separata e protetta;
 - pagine pubbliche Server Component con metadata, canonical, Open Graph e
-  JSON-LD;
+  JSON-LD mantenute coerenti;
 - `robots.ts` e `sitemap.ts` coerenti con ambienti e annunci pubblicati;
 - gestione sessione browser con cookie sicuri e CSRF se si useranno mutazioni
   cookie-based;

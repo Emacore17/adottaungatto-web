@@ -42,3 +42,12 @@ Ogni item include `favoritedAt` e un riepilogo annuncio con:
   `GET /favorites/listings`.
 - `/account` e `/account/favorites` permettono di rimuovere un preferito tramite
   server action collegata a `DELETE /favorites/listings/:listingId`.
+
+## Prossimo target UX
+
+- La lista `/listings` e la scheda annuncio devono mostrare un cuore cliccabile.
+- Click su cuore vuoto salva il preferito con animazione leggera.
+- Click su cuore pieno rimuove il preferito.
+- Se l'utente non e' autenticato, il click porta al login con ritorno alla
+  pagina corrente.
+- Lo stato deve restare coerente tra lista, scheda e account.

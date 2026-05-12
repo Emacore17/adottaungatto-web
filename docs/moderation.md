@@ -158,6 +158,8 @@ segnalazioni utente al target e, quando disponibile, al caso di moderazione.
 
 ## Evoluzione
 
+- Area admin separata e protetta, con navigazione distinta dall'area pubblica.
+- Dashboard moderatore con filtri, dettaglio annuncio, immagini e storico.
 - Scoring rischio.
 - Coda prioritaria per annunci con molte segnalazioni.
 - Revisione immagini automatica.

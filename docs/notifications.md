@@ -46,3 +46,12 @@ Le notifiche da segnalazione includono anche `reportId` e
 - `/account/notifications` permette di marcare una singola notifica come letta
   e di marcare tutte le notifiche non lette tramite gli endpoint `POST`
   esistenti.
+
+## Prossimo target
+
+- Aggiungere notifica per annuncio inviato a revisione.
+- Aggiungere notifica o stato UI dopo approvazione pubblicazione annuncio.
+- Definire real-time o near-real-time: WebSocket/SSE oppure polling leggero con
+  fallback server-rendered.
+- Mantenere la inbox come sorgente affidabile anche se il canale real-time non
+  e' disponibile.

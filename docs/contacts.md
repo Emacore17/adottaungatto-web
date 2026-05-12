@@ -53,4 +53,6 @@ Payload:
 ## Limiti noti
 
 - Mancano preferenze proprietario per canali aggiuntivi e finestre orarie.
+- Manca il consenso granulare per condividere telefono o altri dati di contatto
+  sensibili del richiedente.
 - Non esiste ancora una messaggistica interna: la risposta avviene via email.

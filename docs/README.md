@@ -12,6 +12,7 @@ adottaungatto.it.
 - [modules.md](modules.md): moduli principali del sistema.
 - [data-model.md](data-model.md): modello dati iniziale.
 - [project-state.md](project-state.md): stato reale del repository e gap principali.
+- [agent-coding-roadmap.md](agent-coding-roadmap.md): roadmap operativa ottimizzata per agenti di coding AI.
 - [frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md): linee guida operative per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
 - [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
 - [search-full-text-ranking.md](search-full-text-ranking.md): specifica operativa per ranking, indici e benchmark ricerca.
@@ -21,6 +22,7 @@ adottaungatto.it.
 - [production-readiness.md](production-readiness.md): checklist per arrivare a produzione.
 - [ops-monitoring-release.md](ops-monitoring-release.md): ambienti, osservabilita, Dynatrace e CI/CD.
 - [local-testing-and-mocks.md](local-testing-and-mocks.md): mock, fixture e prova locale.
+- [test-data.md](test-data.md): contratto dei dati demo e fixture locali.
 - [sponsored-listings-business.md](sponsored-listings-business.md): strategia per annunci sponsorizzati.
 - [agent-documentation-plan.md](agent-documentation-plan.md): piano documentale ottimizzato per agenti AI.
 - [contacts.md](contacts.md): contatto proprietario privacy-first.
@@ -40,3 +42,5 @@ adottaungatto.it.
   di sviluppare o testare in locale.
 - La documentazione deve descrivere lo stato reale del repository, non uno stato
   desiderato non ancora implementato.
+- Ogni round di lavoro deve chiudersi con commit breve dopo le verifiche
+  adeguate al tipo di modifica.

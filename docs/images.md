@@ -96,3 +96,15 @@ Produzione futura:
 - Upload limitati per utente e annuncio.
 - Nessun eseguibile servito come immagine.
 - Content-Type impostato dal worker dopo validazione.
+
+## Gap locale attuale
+
+- Il flusso utente espone ancora "bozza" e separa troppo creazione dati,
+  upload immagini e invio a revisione.
+- Se l'immagine resta in `uploaded` o `processing`, l'invio a revisione fallisce
+  con stato non pronto; la UI deve guidare l'utente e indicare l'azione
+  richiesta.
+- Lo smoke locale deve coprire almeno un upload immagine e un invio a revisione
+  riuscito.
+- La demo deve avere immagini pronte per tutti gli annunci pubblici e in
+  revisione, come definito in `test-data.md`.

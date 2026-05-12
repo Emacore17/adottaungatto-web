@@ -14,27 +14,27 @@ esplicitamente, script/documenti di supporto.
 
 1. `docs/README.md`
 2. `docs/project-state.md`
-3. Il documento dell'area toccata.
-4. `docs/first-technical-tasks.md` solo se si aggiorna la roadmap operativa.
+3. `docs/agent-coding-roadmap.md`
+4. Il documento dell'area toccata.
+5. `docs/first-technical-tasks.md` solo se si aggiorna la roadmap operativa.
 
 Per task frontend Next.js/shadcn leggere invece:
 
 1. `docs/project-state.md`
-2. `docs/frontend-nextjs-shadcn-guidelines.md`
-3. Il documento di dominio toccato, per esempio ricerca, auth o immagini.
+2. `docs/agent-coding-roadmap.md`
+3. `docs/frontend-nextjs-shadcn-guidelines.md`
+4. Il documento di dominio toccato, per esempio ricerca, auth o immagini.
 
 Non caricare tutta `docs/` per task frontend locali.
 
 ## Ordine consigliato dei prossimi step
 
-1. Consolidare documenti di produzione:
-   - `docs/production-readiness.md`
-   - `docs/ops-monitoring-release.md`
-2. Scrivere documentazione locale e fixture:
-   - `docs/local-testing-and-mocks.md`
-   - futuro `docs/test-data.md`
-   - futuro `docs/api-smoke-tests.md`
-3. Specificare hardening:
+1. Seguire `docs/agent-coding-roadmap.md` come sequenza primaria.
+2. Per il giro locale iniziare da Milestone A o B:
+   - `docs/test-data.md`;
+   - `docs/local-testing-and-mocks.md`;
+   - flusso annunci in `docs/moderation.md` e `docs/images.md`.
+3. Specificare hardening quando una milestone tocca sicurezza:
    - auth/sessioni;
    - rate limit;
    - upload;
@@ -76,6 +76,15 @@ Non caricare tutta `docs/` per task frontend locali.
    - profili professionali;
    - reportistica.
 
+## Chiusura round
+
+Ogni round deve:
+
+1. aggiornare stato e documenti toccati;
+2. eseguire verifiche proporzionate al diff;
+3. controllare `git status --short`;
+4. fare commit con messaggio breve.
+
 ## Template per ogni documento nuovo
 
 ```md
@@ -111,6 +120,7 @@ Non caricare tutta `docs/` per task frontend locali.
 
 ```text
 Lavora solo sulla documentazione. Leggi docs/README.md,
-docs/project-state.md e il documento dell'area richiesta. Aggiorna lo stato
-reale, crea checklist operative e non modificare codice applicativo.
+docs/project-state.md, docs/agent-coding-roadmap.md e il documento dell'area
+richiesta. Aggiorna lo stato reale, crea checklist operative, non modificare
+codice applicativo e committa a fine round.
 ```

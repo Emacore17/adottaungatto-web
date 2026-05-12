@@ -1,5 +1,10 @@
 # Roadmap a milestone
 
+La roadmap storica sotto resta valida per il quadro tecnico generale. Per i
+prossimi sviluppi agentici usare anche
+[agent-coding-roadmap.md](agent-coding-roadmap.md), che ordina i task per
+arrivare al giro locale prodotto completo.
+
 ## Milestone 0 - Fondamenta documentali - completata
 
 Obiettivo: chiarire architettura, stack, moduli, dati e sviluppo locale.
@@ -175,3 +180,24 @@ Stato: avviata a livello implementativo con un primo rate limit Redis per i
 flussi auth sensibili. Sono presenti checklist e piano operativo in
 `production-readiness.md` e `ops-monitoring-release.md`; il progetto non e'
 ancora rilasciabile in produzione.
+
+## Milestone 9 - Giro locale prodotto - pianificata
+
+Obiettivo: avere una demo locale completa e verificabile da agente AI.
+
+Deliverable:
+
+- dati demo realistici e documentati;
+- utenti demo privato, proprietario, moderatore e admin;
+- annunci in stati pubblicato, bozza, pending review, rifiutato, sospeso,
+  scaduto e sponsorizzato mock;
+- immagini pronte per annunci pubblici e in revisione;
+- flusso inserimento annuncio con immagini e conferma revisione;
+- preferiti con cuore toggle;
+- dashboard account e impostazioni profilo ordinate;
+- lista annunci a card orizzontali con slot sponsorizzato;
+- admin/moderazione protetta e separata;
+- smoke locale aggiornato.
+
+Stato: pianificata. La sequenza operativa e' in
+`agent-coding-roadmap.md`; i dati demo target sono in `test-data.md`.
