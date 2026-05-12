@@ -14,6 +14,8 @@ const demoUserIds = [
   "11111111-1111-4111-8111-111111111111",
   "11111111-1111-4111-8111-111111111112",
   "11111111-1111-4111-8111-111111111113",
+  "11111111-1111-4111-8111-111111111114",
+  "11111111-1111-4111-8111-111111111115",
 ] as const
 
 const demoListingIds = [
@@ -25,6 +27,13 @@ const demoListingIds = [
   "44444444-4444-4444-8444-444444444406",
   "44444444-4444-4444-8444-444444444407",
   "44444444-4444-4444-8444-444444444408",
+  "44444444-4444-4444-8444-444444444409",
+  "44444444-4444-4444-8444-444444444410",
+  "44444444-4444-4444-8444-444444444411",
+  "44444444-4444-4444-8444-444444444412",
+  "44444444-4444-4444-8444-444444444413",
+  "44444444-4444-4444-8444-444444444414",
+  "44444444-4444-4444-8444-444444444415",
 ] as const
 
 const demoRegionIds = [
@@ -100,6 +109,9 @@ export async function seedDemoDatabase(
       await executeSqlBlock(transaction, seedUsersSql, [passwordHash])
       await executeSqlBlock(transaction, seedListingsSql)
       await executeSqlBlock(transaction, seedListingImagesSql)
+      await executeSqlBlock(transaction, seedModerationCasesSql)
+      await executeSqlBlock(transaction, seedModerationActionsSql)
+      await executeSqlBlock(transaction, seedReportsSql)
       await executeSqlBlock(transaction, seedListingLikesSql)
       await executeSqlBlock(transaction, seedSearchDocumentsSql)
     })
@@ -111,6 +123,25 @@ export async function seedDemoDatabase(
 }
 
 const clearDemoSql = `
+  delete from reports
+  where target_id in (${quotedList(demoListingIds)})
+    or reporter_user_id in (${quotedList(demoUserIds)});
+
+  delete from moderation_actions
+  where case_id in (
+    select id
+    from moderation_cases
+    where listing_id in (${quotedList(demoListingIds)})
+      or opened_by_user_id in (${quotedList(demoUserIds)})
+      or assigned_to_user_id in (${quotedList(demoUserIds)})
+  )
+    or actor_user_id in (${quotedList(demoUserIds)});
+
+  delete from moderation_cases
+  where listing_id in (${quotedList(demoListingIds)})
+    or opened_by_user_id in (${quotedList(demoUserIds)})
+    or assigned_to_user_id in (${quotedList(demoUserIds)});
+
   delete from listing_likes
   where listing_id in (${quotedList(demoListingIds)})
     or user_id in (${quotedList(demoUserIds)});
@@ -132,6 +163,9 @@ const clearDemoSql = `
   where user_id in (${quotedList(demoUserIds)});
 
   delete from user_notification_preferences
+  where user_id in (${quotedList(demoUserIds)});
+
+  delete from notifications
   where user_id in (${quotedList(demoUserIds)});
 
   delete from sessions
@@ -199,14 +233,18 @@ const seedUsersSql = `
   values
     ('11111111-1111-4111-8111-111111111111', 'rifugio.torino@demo.adottaungatto.local', 'rifugio.torino@demo.adottaungatto.local', $1, now(), 'Rifugio Torino Demo', 'shelter', 'active'),
     ('11111111-1111-4111-8111-111111111112', 'volontari.italia@demo.adottaungatto.local', 'volontari.italia@demo.adottaungatto.local', $1, now(), 'Volontari Italia Demo', 'association', 'active'),
-    ('11111111-1111-4111-8111-111111111113', 'marta.demo@demo.adottaungatto.local', 'marta.demo@demo.adottaungatto.local', $1, now(), 'Marta Demo', 'private', 'active');
+    ('11111111-1111-4111-8111-111111111113', 'marta.demo@demo.adottaungatto.local', 'marta.demo@demo.adottaungatto.local', $1, now(), 'Marta Demo', 'private', 'active'),
+    ('11111111-1111-4111-8111-111111111114', 'moderatore@demo.adottaungatto.local', 'moderatore@demo.adottaungatto.local', $1, now(), 'Moderatore Demo', 'professional', 'active'),
+    ('11111111-1111-4111-8111-111111111115', 'admin@demo.adottaungatto.local', 'admin@demo.adottaungatto.local', $1, now(), 'Admin Demo', 'professional', 'active');
 
   insert into user_roles (user_id, role_id)
   select demo_users.id, roles.id
   from (values
     ('11111111-1111-4111-8111-111111111111'::uuid, 'professional_user'),
     ('11111111-1111-4111-8111-111111111112'::uuid, 'professional_user'),
-    ('11111111-1111-4111-8111-111111111113'::uuid, 'registered_user')
+    ('11111111-1111-4111-8111-111111111113'::uuid, 'registered_user'),
+    ('11111111-1111-4111-8111-111111111114'::uuid, 'moderator'),
+    ('11111111-1111-4111-8111-111111111115'::uuid, 'admin')
   ) demo_users(id, role_code)
   join roles on roles.code = demo_users.role_code
   on conflict do nothing;
@@ -252,7 +290,14 @@ const seedListingsSql = `
     ('44444444-4444-4444-8444-444444444405', '11111111-1111-4111-8111-111111111112', 'Nina, gattina europea a Firenze', 'nina-europea-firenze', 'Nina e una gattina europea vivace e affettuosa. Si affida dopo colloquio conoscitivo e messa in sicurezza degli spazi.', (select id from cat_breeds where slug = 'europeo'), 'female', 3, 4, '55555555-5555-4555-8555-555555555504', '33333333-3333-4333-8333-333333333304', '22222222-2222-4222-8222-222222222204', ST_SetSRID(ST_MakePoint(11.2558, 43.7696), 4326), null, true, false, false, true, false, 'approved', 'published', now() - interval '1 day', now() + interval '60 days'),
     ('44444444-4444-4444-8444-444444444406', '11111111-1111-4111-8111-111111111111', 'Artu, siberiano tranquillo a Cuneo', 'artu-siberiano-cuneo', 'Artu e un siberiano adulto, equilibrato e indipendente. Valutiamo adozione in appartamento con balconi protetti.', (select id from cat_breeds where slug = 'siberiano'), 'male', 48, 60, '55555555-5555-4555-8555-555555555506', '33333333-3333-4333-8333-333333333306', '22222222-2222-4222-8222-222222222201', ST_SetSRID(ST_MakePoint(7.5512, 44.3845), 4326), 5000, false, true, true, true, true, 'approved', 'published', now() - interval '14 days', now() + interval '60 days'),
     ('44444444-4444-4444-8444-444444444407', '11111111-1111-4111-8111-111111111112', 'Sole, cucciola rossa a Torino', 'sole-cucciola-rossa-torino', 'Sole e una cucciola rossa trovata in stallo. E giocosa, mangia autonomamente e cerca una famiglia con tempo da dedicarle.', (select id from cat_breeds where slug = 'europeo'), 'female', 2, 3, '55555555-5555-4555-8555-555555555501', '33333333-3333-4333-8333-333333333301', '22222222-2222-4222-8222-222222222201', ST_SetSRID(ST_MakePoint(7.6869, 45.0703), 4326), null, true, false, false, true, false, 'approved', 'published', now() - interval '6 hours', now() + interval '60 days'),
-    ('44444444-4444-4444-8444-444444444408', '11111111-1111-4111-8111-111111111111', 'Oliva, certosina riservata a Roma', 'oliva-certosina-roma', 'Oliva e una gatta certosina riservata ma dolce. Cerca una casa senza cani e con persone pazienti nei primi giorni.', (select id from cat_breeds where slug = 'certosino'), 'female', 36, 42, '55555555-5555-4555-8555-555555555502', '33333333-3333-4333-8333-333333333302', '22222222-2222-4222-8222-222222222202', ST_SetSRID(ST_MakePoint(12.4964, 41.9028), 4326), null, true, true, true, true, true, 'approved', 'published', now() - interval '18 days', now() + interval '60 days');
+    ('44444444-4444-4444-8444-444444444408', '11111111-1111-4111-8111-111111111111', 'Oliva, certosina riservata a Roma', 'oliva-certosina-roma', 'Oliva e una gatta certosina riservata ma dolce. Cerca una casa senza cani e con persone pazienti nei primi giorni.', (select id from cat_breeds where slug = 'certosino'), 'female', 36, 42, '55555555-5555-4555-8555-555555555502', '33333333-3333-4333-8333-333333333302', '22222222-2222-4222-8222-222222222202', ST_SetSRID(ST_MakePoint(12.4964, 41.9028), 4326), null, true, true, true, true, true, 'approved', 'published', now() - interval '18 days', now() + interval '60 days'),
+    ('44444444-4444-4444-8444-444444444409', '11111111-1111-4111-8111-111111111111', 'Leo, bengala in revisione a Milano', 'leo-bengala-milano', 'Leo e un bengala energico e curioso. Il rifugio sta verificando gli spazi adatti prima della pubblicazione definitiva.', (select id from cat_breeds where slug = 'bengala'), 'male', 16, 20, '55555555-5555-4555-8555-555555555503', '33333333-3333-4333-8333-333333333303', '22222222-2222-4222-8222-222222222203', ST_SetSRID(ST_MakePoint(9.19, 45.4642), 4326), null, true, true, false, true, true, 'pending_review', 'draft', null, now() + interval '60 days'),
+    ('44444444-4444-4444-8444-444444444410', '11111111-1111-4111-8111-111111111112', 'Zara, ragdoll in revisione a Firenze', 'zara-ragdoll-firenze', 'Zara e una ragdoll giovane e mansueta. La scheda e completa e attende la revisione del team interno.', (select id from cat_breeds where slug = 'ragdoll'), 'female', 10, 14, '55555555-5555-4555-8555-555555555504', '33333333-3333-4333-8333-333333333304', '22222222-2222-4222-8222-222222222204', ST_SetSRID(ST_MakePoint(11.2558, 43.7696), 4326), null, true, true, true, true, true, 'pending_review', 'draft', null, now() + interval '60 days'),
+    ('44444444-4444-4444-8444-444444444411', '11111111-1111-4111-8111-111111111113', 'Bozza incompleta senza comune', 'bozza-incompleta-senza-comune', 'Annuncio demo incompleto utile per testare il flusso guidato e i blocchi prima della revisione.', null, 'unknown', null, null, null, null, null, null, null, true, null, null, null, null, 'draft', 'draft', null, null),
+    ('44444444-4444-4444-8444-444444444412', '11111111-1111-4111-8111-111111111113', 'Timo, europeo pronto come bozza a Bologna', 'timo-europeo-bologna', 'Timo e una bozza completa con foto pronta. Serve per verificare che il proprietario possa inviare senza errori.', (select id from cat_breeds where slug = 'europeo'), 'male', 8, 10, '55555555-5555-4555-8555-555555555505', '33333333-3333-4333-8333-333333333305', '22222222-2222-4222-8222-222222222205', ST_SetSRID(ST_MakePoint(11.3426, 44.4949), 4326), null, true, true, false, true, false, 'draft', 'draft', null, null),
+    ('44444444-4444-4444-8444-444444444413', '11111111-1111-4111-8111-111111111111', 'Brina, annuncio rifiutato demo', 'brina-annuncio-rifiutato-demo', 'Brina rappresenta un caso rifiutato per informazioni insufficienti e foto da correggere nella demo locale.', (select id from cat_breeds where slug = 'europeo'), 'female', 30, 36, '55555555-5555-4555-8555-555555555501', '33333333-3333-4333-8333-333333333301', '22222222-2222-4222-8222-222222222201', ST_SetSRID(ST_MakePoint(7.6869, 45.0703), 4326), null, true, null, null, true, null, 'rejected', 'draft', null, null),
+    ('44444444-4444-4444-8444-444444444414', '11111111-1111-4111-8111-111111111112', 'Rocco, annuncio sospeso demo', 'rocco-annuncio-sospeso-demo', 'Rocco rappresenta un annuncio sospeso dopo segnalazione, utile per testare audit e moderazione interna.', (select id from cat_breeds where slug = 'maine-coon'), 'male', 40, 48, '55555555-5555-4555-8555-555555555502', '33333333-3333-4333-8333-333333333302', '22222222-2222-4222-8222-222222222202', ST_SetSRID(ST_MakePoint(12.4964, 41.9028), 4326), null, true, true, true, true, true, 'suspended', 'draft', now() - interval '20 days', now() + interval '40 days'),
+    ('44444444-4444-4444-8444-444444444415', '11111111-1111-4111-8111-111111111111', 'Menta, annuncio scaduto demo', 'menta-annuncio-scaduto-demo', 'Menta e un annuncio scaduto non visibile pubblicamente, usato per verificare filtri e stati della demo.', (select id from cat_breeds where slug = 'british-shorthair'), 'female', 24, 30, '55555555-5555-4555-8555-555555555506', '33333333-3333-4333-8333-333333333306', '22222222-2222-4222-8222-222222222201', ST_SetSRID(ST_MakePoint(7.5512, 44.3845), 4326), null, true, true, true, true, true, 'approved', 'expired', now() - interval '90 days', now() - interval '1 day');
 `
 
 const seedListingImagesSql = `
@@ -276,7 +321,73 @@ const seedListingImagesSql = `
     ('66666666-6666-4666-8666-666666666602', '44444444-4444-4444-8444-444444444402', 'demo/listings/miro.png', 'demo/listings/miro-large.png', 'demo/listings/miro-thumb.png', 'image/png', 1200, 900, 2048, 'demo-miro', 10, true, 'ready'),
     ('66666666-6666-4666-8666-666666666603', '44444444-4444-4444-8444-444444444403', 'demo/listings/nebbia.png', 'demo/listings/nebbia-large.png', 'demo/listings/nebbia-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nebbia', 10, true, 'ready'),
     ('66666666-6666-4666-8666-666666666604', '44444444-4444-4444-8444-444444444404', 'demo/listings/pepe.png', 'demo/listings/pepe-large.png', 'demo/listings/pepe-thumb.png', 'image/png', 1200, 900, 2048, 'demo-pepe', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666605', '44444444-4444-4444-8444-444444444405', 'demo/listings/nina.png', 'demo/listings/nina-large.png', 'demo/listings/nina-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nina', 10, true, 'ready');
+    ('66666666-6666-4666-8666-666666666605', '44444444-4444-4444-8444-444444444405', 'demo/listings/nina.png', 'demo/listings/nina-large.png', 'demo/listings/nina-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nina', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666606', '44444444-4444-4444-8444-444444444406', 'demo/listings/artu.png', 'demo/listings/artu-large.png', 'demo/listings/artu-thumb.png', 'image/png', 1200, 900, 2048, 'demo-artu', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666607', '44444444-4444-4444-8444-444444444407', 'demo/listings/sole.png', 'demo/listings/sole-large.png', 'demo/listings/sole-thumb.png', 'image/png', 1200, 900, 2048, 'demo-sole', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666608', '44444444-4444-4444-8444-444444444408', 'demo/listings/oliva.png', 'demo/listings/oliva-large.png', 'demo/listings/oliva-thumb.png', 'image/png', 1200, 900, 2048, 'demo-oliva', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666609', '44444444-4444-4444-8444-444444444409', 'demo/listings/leo.png', 'demo/listings/leo-large.png', 'demo/listings/leo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-leo', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666610', '44444444-4444-4444-8444-444444444410', 'demo/listings/zara.png', 'demo/listings/zara-large.png', 'demo/listings/zara-thumb.png', 'image/png', 1200, 900, 2048, 'demo-zara', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666611', '44444444-4444-4444-8444-444444444412', 'demo/listings/timo.png', 'demo/listings/timo-large.png', 'demo/listings/timo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-timo', 10, true, 'ready');
+`
+
+const seedModerationCasesSql = `
+  insert into moderation_cases (
+    id,
+    listing_id,
+    opened_by_user_id,
+    assigned_to_user_id,
+    status,
+    reason_code,
+    notes,
+    closed_at,
+    created_at,
+    updated_at
+  )
+  values
+    ('77777777-7777-4777-8777-777777777701', '44444444-4444-4444-8444-444444444409', '11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111114', 'open', 'listing_submission', 'Scheda demo completa in attesa di revisione.', null, now() - interval '2 hours', now() - interval '2 hours'),
+    ('77777777-7777-4777-8777-777777777702', '44444444-4444-4444-8444-444444444410', '11111111-1111-4111-8111-111111111112', null, 'open', 'listing_submission', 'Secondo annuncio demo in coda moderazione.', null, now() - interval '90 minutes', now() - interval '90 minutes'),
+    ('77777777-7777-4777-8777-777777777703', '44444444-4444-4444-8444-444444444413', '11111111-1111-4111-8111-111111111111', '11111111-1111-4111-8111-111111111114', 'rejected', 'incomplete_listing', 'Caso demo rifiutato per mostrare storico e feedback proprietario.', now() - interval '3 days', now() - interval '4 days', now() - interval '3 days'),
+    ('77777777-7777-4777-8777-777777777704', '44444444-4444-4444-8444-444444444414', '11111111-1111-4111-8111-111111111112', '11111111-1111-4111-8111-111111111115', 'suspended', 'linked_report', 'Caso demo sospeso dopo segnalazione collegata.', now() - interval '1 day', now() - interval '2 days', now() - interval '1 day');
+`
+
+const seedModerationActionsSql = `
+  insert into moderation_actions (
+    id,
+    case_id,
+    actor_user_id,
+    action,
+    reason_code,
+    reason_text,
+    from_status,
+    to_status,
+    metadata,
+    created_at
+  )
+  values
+    ('88888888-8888-4888-8888-888888888801', '77777777-7777-4777-8777-777777777701', '11111111-1111-4111-8111-111111111111', 'opened', 'listing_submission', 'Invio annuncio demo Leo alla revisione.', 'draft', 'pending_review', '{"source":"demo-seed"}'::jsonb, now() - interval '2 hours'),
+    ('88888888-8888-4888-8888-888888888802', '77777777-7777-4777-8777-777777777702', '11111111-1111-4111-8111-111111111112', 'opened', 'listing_submission', 'Invio annuncio demo Zara alla revisione.', 'draft', 'pending_review', '{"source":"demo-seed"}'::jsonb, now() - interval '90 minutes'),
+    ('88888888-8888-4888-8888-888888888803', '77777777-7777-4777-8777-777777777703', '11111111-1111-4111-8111-111111111111', 'opened', 'listing_submission', 'Invio annuncio demo Brina alla revisione.', 'draft', 'pending_review', '{"source":"demo-seed"}'::jsonb, now() - interval '4 days'),
+    ('88888888-8888-4888-8888-888888888804', '77777777-7777-4777-8777-777777777703', '11111111-1111-4111-8111-111111111114', 'rejected', 'incomplete_listing', 'Informazioni insufficienti e materiale fotografico da correggere.', 'pending_review', 'rejected', '{"source":"demo-seed"}'::jsonb, now() - interval '3 days'),
+    ('88888888-8888-4888-8888-888888888805', '77777777-7777-4777-8777-777777777704', '11111111-1111-4111-8111-111111111113', 'reported', 'unsafe_contact', 'Segnalazione demo su richiesta contatto non verificata.', 'approved', 'approved', '{"source":"demo-seed"}'::jsonb, now() - interval '2 days'),
+    ('88888888-8888-4888-8888-888888888806', '77777777-7777-4777-8777-777777777704', '11111111-1111-4111-8111-111111111115', 'suspended', 'unsafe_contact', 'Annuncio sospeso in attesa di controllo interno.', 'approved', 'suspended', '{"source":"demo-seed"}'::jsonb, now() - interval '1 day');
+`
+
+const seedReportsSql = `
+  insert into reports (
+    id,
+    reporter_user_id,
+    moderation_case_id,
+    target_type,
+    target_id,
+    reason_code,
+    description,
+    status,
+    resolved_at,
+    created_at,
+    updated_at
+  )
+  values
+    ('99999999-9999-4999-8999-999999999901', '11111111-1111-4111-8111-111111111113', '77777777-7777-4777-8777-777777777704', 'listing', '44444444-4444-4444-8444-444444444414', 'unsafe_contact', 'Segnalazione demo: richiesta di contatto sensibile prima della revisione.', 'resolved', now() - interval '1 day', now() - interval '2 days', now() - interval '1 day');
 `
 
 const seedListingLikesSql = `
@@ -357,6 +468,9 @@ const seedSearchDocumentsSql = `
     group by listing_id
   ) like_counts on like_counts.listing_id = listing.id
   where listing.id in (${quotedList(demoListingIds)})
+    and listing.moderation_status = 'approved'
+    and listing.lifecycle_status = 'published'
+    and listing.published_at is not null
   on conflict (listing_id) do update
   set
     title = excluded.title,
@@ -489,6 +603,8 @@ if (isCliEntrypoint()) {
               "rifugio.torino@demo.adottaungatto.local",
               "volontari.italia@demo.adottaungatto.local",
               "marta.demo@demo.adottaungatto.local",
+              "moderatore@demo.adottaungatto.local",
+              "admin@demo.adottaungatto.local",
             ],
           },
           null,

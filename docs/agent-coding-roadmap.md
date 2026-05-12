@@ -27,9 +27,10 @@ e ottenere una demo navigabile con:
 - moderazione/admin protetta, separata e utilizzabile in locale;
 - smoke test che copre i flussi principali senza interventi manuali.
 
-Stato attuale: il backend e la base frontend esistono, ma il giro locale non e'
-ancora completo per demo prodotto. Il punto piu urgente e' rendere solido il
-flusso annuncio con immagini e revisione.
+Stato attuale: il backend, la base frontend e il giro inserimento annuncio sono
+funzionanti in locale. Il punto piu urgente e' completare la demo locale con
+immagini realistiche, sponsorizzato mock e verifica moderatore fino alla
+pubblicazione.
 
 ## Regole per ogni round
 
@@ -49,13 +50,28 @@ Obiettivo: rendere `pnpm dev:demo` una demo completa per sviluppo e test.
 
 Task:
 
-- aggiornare `seed-demo` con account demo `private`, `owner`, `moderator`,
-  `admin`;
-- aggiungere annunci demo in tutti gli stati rilevanti;
-- caricare immagini demo per tutti gli annunci pubblici e in revisione;
+- Fatto: aggiornare `seed-demo` con account demo `private`, `owner`,
+  `moderator`, `admin`;
+- Fatto: aggiungere annunci demo in tutti gli stati rilevanti;
+- Fatto: caricare immagini demo per tutti gli annunci pubblici e in revisione;
 - aggiungere almeno uno slot sponsorizzato mock o dati preparatori;
-- aggiornare `pnpm smoke:e2e` per verificare dati demo, immagini e ruoli;
-- documentare credenziali e casi in `docs/test-data.md`.
+- Avviato: aggiornare `pnpm smoke:e2e` per verificare dati demo, immagini e
+  ruoli; oggi controlla login admin e coda `pending_review`, resta approvare un
+  caso fino alla pubblicazione;
+- Fatto: documentare credenziali e casi in `docs/test-data.md`.
+
+Avanzamento 12 maggio 2026:
+
+- Fatto: seed demo con 5 account verificati e ruoli privato, proprietario,
+  moderatore e admin.
+- Fatto: 15 annunci/casi demo con pubblicati, in revisione, bozza incompleta,
+  bozza completa, rifiutato, sospeso da segnalazione e scaduto.
+- Fatto: asset placeholder deterministici per 11 annunci, inclusi tutti i
+  pubblici e quelli in revisione.
+- Fatto: lo smoke E2E verifica login admin e presenza della coda
+  `pending_review`.
+- Da fare: immagini realistiche o fixture visuali migliori, sponsorizzato mock
+  e smoke con decisione moderatore fino a pubblicazione visibile.
 
 Done:
 
@@ -183,6 +199,6 @@ Done:
 
 ## Prossimo round consigliato
 
-Passare a Milestone A per rendere la demo locale piu' ricca con ruoli
-moderatore/admin, stati multipli, immagini realistiche e almeno un annuncio
-sponsorizzato mock.
+Proseguire Milestone A con annuncio sponsorizzato mock, immagini realistiche o
+fixture visuali migliori e smoke che approva un caso demo fino alla
+pubblicazione visibile.

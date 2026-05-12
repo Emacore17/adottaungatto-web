@@ -105,7 +105,9 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 58. Fatto: aggiungere rate limit Redis iniziale sui flussi auth sensibili:
     registrazione, login, verifica email, recupero password e cambio password.
 59. Fatto: definire roadmap operativa agentica e contratto dati demo locali.
-60. Completare fixture demo con ruoli moderator/admin e stati annuncio multipli.
+60. Avviato: completare fixture demo con ruoli moderator/admin, stati annuncio
+    multipli, asset placeholder e smoke admin; restano immagini realistiche,
+    sponsorizzato mock e approvazione demo fino a pubblicazione.
 61. Fatto: correggere il flusso inserimento annuncio con processing automatico
     immagini nel worker dev, copy UI "Inserisci annuncio", stati immagine
     chiari, schermata di conferma, guida passaggi e smoke E2E completo.

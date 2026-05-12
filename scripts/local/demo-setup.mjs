@@ -34,6 +34,8 @@ export async function setupDemo() {
   console.log("- rifugio.torino@demo.adottaungatto.local")
   console.log("- volontari.italia@demo.adottaungatto.local")
   console.log("- marta.demo@demo.adottaungatto.local")
+  console.log("- moderatore@demo.adottaungatto.local")
+  console.log("- admin@demo.adottaungatto.local")
 }
 
 if (

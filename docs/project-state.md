@@ -70,11 +70,11 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
 - Percorso demo locale con `pnpm demo:setup`, `pnpm dev:demo` e
   `pnpm demo:reset`: avvia servizi, applica migrazioni, crea dati demo e carica
-  asset MinIO placeholder.
+  asset MinIO placeholder per account, annunci e code demo.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
   revisione, preferiti, like, contatto proprietario, notifiche e pagine account
-  autenticate.
+  autenticate, piu login admin e coda moderazione demo.
 
 ## Non pronto per produzione
 
@@ -94,8 +94,8 @@ produzione. Mancano almeno:
   estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
-- giro locale prodotto non ancora completo: demo senza ruoli admin/moderatore
-  completi, stati annuncio multipli, immagini realistiche per tutti i casi e
+- giro locale prodotto non ancora completo: demo con ruoli admin/moderatore e
+  stati annuncio multipli avviati, ma ancora senza immagini realistiche e
   annuncio sponsorizzato mock.
 
 ## Stato ricerca
@@ -157,13 +157,16 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 ## Stato demo locale
 
 `pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Oggi
-prepara servizi Docker, migrazioni, seed base, 3 utenti demo, 8 annunci
-pubblicati e 5 asset immagine placeholder. Il worker processa automaticamente
-le immagini in `processing` durante l'avvio applicativo, quindi il flusso locale
-standard non richiede piu' la CLI manuale. Non copre ancora il traguardo demo
-definito in [agent-coding-roadmap.md](agent-coding-roadmap.md): mancano utenti
-moderatore/admin, annunci in moderazione o stati negativi, immagini realistiche
-complete e annuncio sponsorizzato mock.
+prepara servizi Docker, migrazioni, seed base, 5 utenti demo, 15 annunci/casi
+demo e 11 asset immagine placeholder. Gli account includono utente privato,
+rifugio, associazione, moderatore e admin. Gli annunci coprono pubblicati,
+`pending_review`, bozze, rifiutato, sospeso da segnalazione e scaduto. Il worker
+processa automaticamente le immagini in `processing` durante l'avvio
+applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
+Non copre ancora il traguardo demo definito in
+[agent-coding-roadmap.md](agent-coding-roadmap.md): mancano immagini
+realistiche complete, almeno un annuncio sponsorizzato mock e approvazione
+moderatore nello smoke fino a pubblicazione.
 
 ## Regole per prossimi interventi
 

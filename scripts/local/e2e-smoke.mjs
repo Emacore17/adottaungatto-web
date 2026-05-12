@@ -111,7 +111,8 @@ try {
   )
   check(
     "draft image confirm",
-    confirmation.confirmed === true && confirmation.image.status === "processing"
+    confirmation.confirmed === true &&
+      confirmation.image.status === "processing"
   )
 
   const readyImages = await waitForDraftImagesReady(draftId, token)
@@ -190,6 +191,28 @@ try {
   const readAll = await api("POST", "/notifications/read-all", {}, token)
   check("notifications read all", readAll.updatedCount >= 0)
 
+  const adminLogin = await api("POST", "/auth/login", {
+    email: "admin@demo.adottaungatto.local",
+    password: "demo-password-123",
+  })
+  const adminToken = adminLogin.session.token
+  check(
+    "demo admin login",
+    adminLogin.user.email === "admin@demo.adottaungatto.local" &&
+      typeof adminToken === "string"
+  )
+
+  const pendingReview = await api(
+    "GET",
+    "/moderation/listings/pending-review?page=1&pageSize=10",
+    undefined,
+    adminToken
+  )
+  check(
+    "demo moderation pending queue",
+    Array.isArray(pendingReview.items) && pendingReview.items.length >= 2
+  )
+
   await webPage("/account", token, "web account authenticated")
   await webPage("/account/favorites", token, "web account favorites")
   await webPage("/account/notifications", token, "web account notifications")
@@ -200,6 +223,7 @@ try {
     token,
     "web account draft edit"
   )
+  await webPage("/moderation", adminToken, "web moderation admin")
 
   const submittedDraft = await api(
     "POST",
@@ -320,7 +344,9 @@ async function resolveSmokeMunicipality() {
     "GET",
     "/places/autocomplete?q=Roma&type=municipality&limit=1"
   )
-  const municipality = places.items?.find((item) => item.type === "municipality")
+  const municipality = places.items?.find(
+    (item) => item.type === "municipality"
+  )
 
   check(
     "place autocomplete result",

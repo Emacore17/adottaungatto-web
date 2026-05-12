@@ -37,6 +37,42 @@ const demoAssets = [
     key: "demo/listings/nina",
     label: "Nina",
   },
+  {
+    accent: "#5f6f51",
+    background: "#edf2e8",
+    key: "demo/listings/artu",
+    label: "Artu",
+  },
+  {
+    accent: "#b26a2e",
+    background: "#f7eadc",
+    key: "demo/listings/sole",
+    label: "Sole",
+  },
+  {
+    accent: "#4f6d68",
+    background: "#e6efed",
+    key: "demo/listings/oliva",
+    label: "Oliva",
+  },
+  {
+    accent: "#8b6f38",
+    background: "#f3edda",
+    key: "demo/listings/leo",
+    label: "Leo",
+  },
+  {
+    accent: "#7c5f93",
+    background: "#eee7f4",
+    key: "demo/listings/zara",
+    label: "Zara",
+  },
+  {
+    accent: "#55779d",
+    background: "#e6eef7",
+    key: "demo/listings/timo",
+    label: "Timo",
+  },
 ] as const
 
 type DemoAssetSummary = {
