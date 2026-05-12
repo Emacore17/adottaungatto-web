@@ -102,6 +102,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     contatto proprietario.
 57. Aggiungere eventuali canali aggiuntivi o finestre orarie per il contatto
     proprietario quando saranno previsti dal prodotto.
+58. Fatto: aggiungere rate limit Redis iniziale sui flussi auth sensibili:
+    registrazione, login, verifica email, recupero password e cambio password.
 
 ## Task documentali e pre-produzione
 
@@ -112,7 +114,9 @@ Stato aggiornato al completamento dello scaffolding iniziale:
 5. Fatto: aggiungere piano locale per mock, fixture e smoke test.
 6. Fatto: aggiungere piano osservabilita, ambienti, release e CI/CD.
 7. Fatto: dettagliare specifica tecnica della ricerca full-text e ranking.
-8. Dettagliare hardening auth/sessioni/rate limit.
+8. Avviato: dettagliare hardening auth/sessioni/rate limit in `docs/authz.md`
+   e aggiungere il primo rate limit auth; restano cookie/CSRF, gestione
+   sessioni production-grade, lock progressivo account e copertura upload/admin.
 9. Dettagliare area admin/moderazione sicura.
 10. Dettagliare test data e script bootstrap locale.
 

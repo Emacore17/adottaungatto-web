@@ -19,9 +19,7 @@ export class RedisService implements OnApplicationShutdown {
   }
 
   async ping() {
-    if (!this.client.isOpen) {
-      await this.client.connect()
-    }
+    await this.connect()
 
     const response = await this.client.ping()
 
@@ -30,9 +28,37 @@ export class RedisService implements OnApplicationShutdown {
     }
   }
 
+  async incrementFixedWindow(key: string, windowSeconds: number) {
+    await this.connect()
+
+    const count = await this.client.incr(key)
+
+    if (count === 1) {
+      await this.client.expire(key, windowSeconds)
+    }
+
+    let ttlSeconds = await this.client.ttl(key)
+
+    if (ttlSeconds < 0) {
+      await this.client.expire(key, windowSeconds)
+      ttlSeconds = windowSeconds
+    }
+
+    return {
+      count,
+      ttlSeconds,
+    }
+  }
+
   async onApplicationShutdown() {
     if (this.client.isOpen) {
       await this.client.quit()
+    }
+  }
+
+  private async connect() {
+    if (!this.client.isOpen) {
+      await this.client.connect()
     }
   }
 }

@@ -171,6 +171,7 @@ Deliverable:
 - pipeline CI/CD;
 - deploy cloud documentato.
 
-Stato: non avviata a livello implementativo. Sono presenti checklist e piano
-operativo in `production-readiness.md` e `ops-monitoring-release.md`; il
-progetto non e' ancora rilasciabile in produzione.
+Stato: avviata a livello implementativo con un primo rate limit Redis per i
+flussi auth sensibili. Sono presenti checklist e piano operativo in
+`production-readiness.md` e `ops-monitoring-release.md`; il progetto non e'
+ancora rilasciabile in produzione.

@@ -1,6 +1,6 @@
 # Stato attuale del progetto
 
-Aggiornato al 9 maggio 2026.
+Aggiornato al 12 maggio 2026.
 
 Questo documento e' il riepilogo breve da leggere prima di avviare nuovi
 sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
@@ -22,6 +22,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - API health, health database e health Redis.
 - Auth API con registrazione, login, logout, sessione corrente, verifica email,
   recupero password e cambio password autenticato.
+- Rate limit Redis fixed-window iniziale sui flussi auth sensibili:
+  registrazione, login, verifica email, recupero password e cambio password,
+  con chiavi identificative hashate e risposta `429` con `retryAfterSeconds`.
 - Profilo utente autenticato con update e preferenze email non essenziali.
 - CRUD bozze annuncio, invio a moderazione e upload immagini presigned.
 - Worker iniziale per processamento immagini e varianti WebP.
@@ -113,10 +116,10 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 - controllo ruoli su moderazione;
 - token monouso hashati per email verification e reset password.
 
-Prima della produzione servono rate limit oltre al primo limite sui contatti,
-policy sessioni, cookie sicuri se usati dal browser, log redatti, segreti
-gestiti da provider, hardening upload, backup, alert e audit amministrativo
-piu esteso.
+Prima della produzione servono tuning dei rate limit per ambiente, supporto
+proxy fidato per l'IP client, copertura upload/admin, policy sessioni, cookie
+sicuri se usati dal browser, log redatti, segreti gestiti da provider,
+hardening upload, backup, alert e audit amministrativo piu esteso.
 
 ## Stato frontend
 

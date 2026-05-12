@@ -28,7 +28,9 @@ ownership. Mancano per produzione:
 - CSRF per richieste state-changing basate su cookie;
 - rotazione e scadenza sessioni configurabili per ambiente;
 - revoke globale e gestione dispositivi/sessioni utente;
-- rate limit login, registrazione, verifica email, reset password e upload;
+- rate limit iniziale presente su registrazione, login, verifica email, reset
+  password e cambio password; da rendere configurabile per ambiente, validare
+  dietro proxy fidato e completare con upload, admin e lock progressivo account;
 - protezione brute force e lock progressivo account;
 - OAuth Google completo, se confermato;
 - MFA almeno per admin e moderatori;
