@@ -18,6 +18,10 @@ non critici. Le preferenze email non disattivano le notifiche in-app.
 
 ## Eventi iniziali
 
+- `listing_review_submission`: conferma che un annuncio del proprietario e'
+  stato inviato in revisione.
+- `listing_contact_request`: nuova richiesta di contatto ricevuta dal
+  proprietario di un annuncio.
 - `listing_moderation_decision`: esito moderazione annuncio per il
   proprietario.
 - `listing_report_decision`: aggiornamento su una segnalazione risolta o
@@ -37,6 +41,14 @@ I payload sono JSON e includono almeno:
 
 Le notifiche da segnalazione includono anche `reportId` e
 `reportResolutionStatus`.
+
+Le notifiche di invio a revisione includono `listingId`, `listingSlug`,
+`listingTitle` e `moderationStatus = pending_review`.
+
+Le notifiche di contatto proprietario includono `contactRequestId`,
+`listingId`, `listingTitle`, `requesterUserId`, `requesterDisplayName`,
+`emailShared`, `phoneShared` e `status = sent`; email e telefono del
+richiedente restano accessibili dalla inbox contatti, rispettando i consensi.
 
 ## Frontend attuale
 
@@ -73,6 +85,8 @@ Implementato per il giro locale:
   `GET /notifications`;
 - copertura smoke su nuova notifica ricevuta senza refresh della pagina durante
   approvazione moderatore.
+- copertura smoke su notifica di invio a revisione e notifica real-time di
+  nuova richiesta di contatto proprietario.
 
 Nota produzione: il fan-out real-time ora e' in memoria nel processo API, quindi
 va bene per demo locale e singola istanza. Prima di scalare su piu istanze va
@@ -80,8 +94,7 @@ sostituito o affiancato con Redis Pub/Sub, stream Redis o broker equivalente.
 
 ## Prossimo target
 
-- Aggiungere notifica per annuncio inviato a revisione.
-- Aggiungere notifiche in-app per contatto proprietario e altri eventi prodotto
-  che oggi inviano solo email o cambiano stato UI.
+- Estendere notifiche in-app ad altri eventi prodotto che oggi inviano solo
+  email o cambiano stato UI.
 - Mantenere la inbox come sorgente affidabile anche se il canale real-time non
   e' disponibile.

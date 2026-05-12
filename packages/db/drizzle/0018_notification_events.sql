@@ -1,0 +1,2 @@
+ALTER TYPE "public"."notification_type" ADD VALUE 'listing_review_submission' BEFORE 'listing_report_decision';--> statement-breakpoint
+ALTER TYPE "public"."notification_type" ADD VALUE 'listing_contact_request' BEFORE 'listing_report_decision';

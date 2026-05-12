@@ -240,6 +240,84 @@ describe("NotificationsService", () => {
       reasonText: null,
     })
   })
+
+  it("creates listing review submission notifications", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          id: "notification-id",
+          type: "listing_review_submission",
+          payload: {
+            listingId: "listing-id",
+          },
+          read_at: null,
+          created_at: "2026-05-01T10:00:00.000Z",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+
+    await service.createListingReviewSubmissionNotification("user-id", {
+      listingId: "listing-id",
+      listingSlug: "gattino-a-roma",
+      listingTitle: "Gattino a Roma",
+      moderationStatus: "pending_review",
+    })
+
+    const [, type, payload] =
+      vi.mocked(databaseService.queryRows).mock.calls[0]?.[1] ?? []
+
+    expect(type).toBe("listing_review_submission")
+    expect(JSON.parse(String(payload))).toEqual({
+      listingId: "listing-id",
+      listingSlug: "gattino-a-roma",
+      listingTitle: "Gattino a Roma",
+      moderationStatus: "pending_review",
+    })
+  })
+
+  it("creates listing contact request notifications", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          id: "notification-id",
+          type: "listing_contact_request",
+          payload: {
+            contactRequestId: "request-id",
+          },
+          read_at: null,
+          created_at: "2026-05-01T10:00:00.000Z",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+
+    await service.createListingContactRequestNotification("owner-id", {
+      contactRequestId: "request-id",
+      emailShared: true,
+      listingId: "listing-id",
+      listingTitle: "Micia cerca casa",
+      phoneShared: false,
+      requesterDisplayName: "Requester",
+      requesterUserId: "requester-id",
+      status: "sent",
+    })
+
+    const [, type, payload] =
+      vi.mocked(databaseService.queryRows).mock.calls[0]?.[1] ?? []
+
+    expect(type).toBe("listing_contact_request")
+    expect(JSON.parse(String(payload))).toEqual({
+      contactRequestId: "request-id",
+      emailShared: true,
+      listingId: "listing-id",
+      listingTitle: "Micia cerca casa",
+      phoneShared: false,
+      requesterDisplayName: "Requester",
+      requesterUserId: "requester-id",
+      status: "sent",
+    })
+  })
 })
 
 function nextTick() {

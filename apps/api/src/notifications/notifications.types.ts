@@ -1,5 +1,7 @@
 export type NotificationType =
   | "listing_moderation_decision"
+  | "listing_review_submission"
+  | "listing_contact_request"
   | "listing_report_decision"
 
 export type Notification = {
@@ -73,3 +75,21 @@ export type ListingReportDecisionNotificationPayload =
     reportId: string
     reportResolutionStatus: "resolved" | "dismissed"
   }
+
+export type ListingReviewSubmissionNotificationPayload = {
+  listingId: string
+  listingSlug: string
+  listingTitle: string
+  moderationStatus: "pending_review"
+}
+
+export type ListingContactRequestNotificationPayload = {
+  contactRequestId: string
+  emailShared: boolean
+  listingId: string
+  listingTitle: string
+  phoneShared: boolean
+  requesterDisplayName: string
+  requesterUserId: string
+  status: "sent"
+}

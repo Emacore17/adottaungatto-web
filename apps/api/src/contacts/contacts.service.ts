@@ -6,6 +6,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  Optional,
 } from "@nestjs/common"
 import type {
   ListingContactCreateInput,
@@ -15,6 +16,7 @@ import type {
 import type { AuthUser } from "../auth/auth.types.js"
 import { DatabaseService } from "../database/database.service.js"
 import { MailService } from "../mail/mail.service.js"
+import { NotificationsService } from "../notifications/notifications.service.js"
 import type {
   ListingContactRequest,
   ListingContactRequestResponse,
@@ -229,7 +231,10 @@ export class ContactsService {
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
     @Inject(MailService)
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
+    @Optional()
+    @Inject(NotificationsService)
+    private readonly notificationsService?: NotificationsService
   ) {}
 
   async contactListingOwner(
@@ -303,6 +308,20 @@ export class ContactsService {
         "Unable to finalize contact request."
       )
     }
+
+    await this.notificationsService?.createListingContactRequestNotification(
+      listing.owner_user_id,
+      {
+        contactRequestId: sentRequest.id,
+        emailShared: sentRequest.email_shared,
+        listingId: listing.id,
+        listingTitle: listing.title,
+        phoneShared: sentRequest.phone_shared,
+        requesterDisplayName: requester.displayName,
+        requesterUserId: requester.id,
+        status: sentRequest.status,
+      }
+    )
 
     return {
       sent: true,

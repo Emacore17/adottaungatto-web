@@ -24,6 +24,7 @@ function AccountNotificationCard({
   returnPath,
 }: AccountNotificationCardProps) {
   const title = getNotificationTitle(notification)
+  const action = getNotificationAction(notification)
   const listingId = readPayloadString(notification.payload, "listingId")
   const listingTitle = readPayloadString(notification.payload, "listingTitle")
   const reason = readPayloadString(notification.payload, "reasonText")
@@ -46,12 +47,14 @@ function AccountNotificationCard({
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {reason ? (
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {reason}
-          </p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{reason}</p>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          {listingId ? (
+          {action ? (
+            <Button asChild variant="outline" size="sm">
+              <Link href={action.href}>{action.label}</Link>
+            </Button>
+          ) : listingId ? (
             <Button asChild variant="outline" size="sm">
               <Link href={routes.listing(listingId)}>Apri annuncio</Link>
             </Button>
@@ -83,7 +86,49 @@ function getNotificationTitle(notification: Notification) {
     return `Segnalazione ${formatDecision(decision)}`
   }
 
+  if (notification.type === "listing_review_submission") {
+    return "Annuncio inviato in revisione"
+  }
+
+  if (notification.type === "listing_contact_request") {
+    const requester = readPayloadString(
+      notification.payload,
+      "requesterDisplayName"
+    )
+
+    return requester
+      ? `Nuova richiesta da ${requester}`
+      : "Nuova richiesta di contatto"
+  }
+
   return `Annuncio ${formatDecision(decision)}`
+}
+
+function getNotificationAction(notification: Notification) {
+  const listingId = readPayloadString(notification.payload, "listingId")
+
+  if (notification.type === "listing_contact_request") {
+    return {
+      href: routes.accountContacts,
+      label: "Apri contatti",
+    }
+  }
+
+  if (notification.type === "listing_review_submission") {
+    return {
+      href: routes.accountListingSubmitted,
+      label: "Vedi stato",
+    }
+  }
+
+  if (listingId) {
+    return {
+      href: routes.listing(listingId),
+      label: "Apri annuncio",
+    }
+  }
+
+  return null
 }
 
 function readPayloadString(payload: Record<string, unknown>, key: string) {

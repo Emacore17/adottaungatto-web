@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common"
 import { listingImageMaxSizeBytes } from "@workspace/validation"
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "@workspace/validation"
 
 import { DatabaseService } from "../database/database.service.js"
+import { NotificationsService } from "../notifications/notifications.service.js"
 import { ObjectStorageService } from "../storage/object-storage.service.js"
 import type {
   ListingDraft,
@@ -1242,7 +1244,10 @@ export class ListingsService {
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
     @Inject(ObjectStorageService)
-    private readonly objectStorageService: ObjectStorageService
+    private readonly objectStorageService: ObjectStorageService,
+    @Optional()
+    @Inject(NotificationsService)
+    private readonly notificationsService?: NotificationsService
   ) {}
 
   async listPublic(
@@ -1550,6 +1555,16 @@ export class ListingsService {
     if (!submitted) {
       throw new BadRequestException("Could not submit listing draft.")
     }
+
+    await this.notificationsService?.createListingReviewSubmissionNotification(
+      userId,
+      {
+        listingId: submitted.id,
+        listingSlug: submitted.slug,
+        listingTitle: submitted.title,
+        moderationStatus: "pending_review",
+      }
+    )
 
     return {
       submitted: true,

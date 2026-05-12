@@ -268,7 +268,12 @@ Centro notifiche in-app:
 - lo stream real-time usa lo stesso guard bearer e pubblica solo eventi
   dell'utente autenticato;
 - le notifiche iniziali sono generate dagli esiti di moderazione annuncio e
-  dagli aggiornamenti sulle segnalazioni.
+  dagli aggiornamenti sulle segnalazioni;
+- l'invio a revisione genera una notifica `listing_review_submission` per il
+  proprietario;
+- una richiesta di contatto consegnata genera una notifica
+  `listing_contact_request` per il proprietario, senza includere email o
+  telefono nel payload.
 
 Contatto proprietario privacy-first:
 
@@ -287,6 +292,7 @@ Contatto proprietario privacy-first:
 - la lista ricevuti espone il telefono del richiedente solo quando
   `phone_shared` e' true;
 - ogni richiesta viene tracciata in `listing_contact_requests`.
+- ogni richiesta consegnata crea una notifica in-app per il proprietario.
 
 Verifica email:
 

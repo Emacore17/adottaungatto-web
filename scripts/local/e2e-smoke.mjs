@@ -388,10 +388,12 @@ try {
     Boolean(ownerAccount),
     `owner=${contactCase.listing.owner.id}`
   )
-  const ownerLogin = await api("POST", "/auth/login", {
-    email: ownerAccount.email,
-    password: ownerAccount.password,
-  })
+  const ownerLogin =
+    contactCase.ownerLogin ??
+    (await api("POST", "/auth/login", {
+      email: ownerAccount.email,
+      password: ownerAccount.password,
+    }))
   const ownerToken = ownerLogin.session.token
   check(
     "contact owner login",
@@ -513,6 +515,21 @@ try {
   )
   submittedListingId = submittedDraft.listing.id
   draftId = null
+  const submissionNotifications = await api(
+    "GET",
+    "/notifications?page=1&pageSize=10",
+    undefined,
+    token
+  )
+  check(
+    "draft submit review notification",
+    submissionNotifications.items.some(
+      (item) =>
+        item.type === "listing_review_submission" &&
+        item.payload?.listingId === submittedListingId &&
+        item.payload?.moderationStatus === "pending_review"
+    )
+  )
 
   const submittedCase = await findPendingReviewCase(
     submittedListingId,
@@ -747,26 +764,65 @@ async function createSmokeContactRequest(requesterToken, excludedOwnerIds) {
   )
 
   for (const candidate of candidates) {
-    const response = await apiResponse(
-      "POST",
-      `/contacts/listings/${candidate.id}`,
-      {
-        message:
-          "Ciao, vorrei ricevere informazioni per uno smoke test end to end.",
-        shareEmail: true,
-        sharePhone: true,
-      },
-      requesterToken
+    const ownerAccount = demoOwnerAccounts.get(candidate.owner.id)
+    const ownerLogin = await api("POST", "/auth/login", {
+      email: ownerAccount.email,
+      password: ownerAccount.password,
+    })
+    const notificationStream = await openWebNotificationStream(
+      ownerLogin.session.token
     )
+    const realtimeNotificationPromise = readWebNotificationEvent(
+      notificationStream,
+      (event) =>
+        event.type === "created" &&
+        event.data?.notification?.type === "listing_contact_request" &&
+        event.data?.notification?.payload?.listingId === candidate.id
+    )
+    let response = null
+
+    try {
+      response = await apiResponse(
+        "POST",
+        `/contacts/listings/${candidate.id}`,
+        {
+          message:
+            "Ciao, vorrei ricevere informazioni per uno smoke test end to end.",
+          shareEmail: true,
+          sharePhone: true,
+        },
+        requesterToken
+      )
+    } catch (error) {
+      notificationStream.close()
+      realtimeNotificationPromise.catch(() => undefined)
+
+      throw error
+    }
 
     if (response.ok) {
+      const realtimeNotification = await realtimeNotificationPromise.finally(
+        () => {
+          notificationStream.close()
+        }
+      )
+
+      check(
+        "contact owner realtime notification",
+        realtimeNotification.data?.notification?.payload?.contactRequestId ===
+          response.data.request.id
+      )
       pass("contact listing selected", `listing=${candidate.id}`)
 
       return {
         contact: response.data,
         listing: candidate,
+        ownerLogin,
       }
     }
+
+    notificationStream.close()
+    realtimeNotificationPromise.catch(() => undefined)
 
     if (
       response.status === 400 ||

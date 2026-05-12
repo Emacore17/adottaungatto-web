@@ -163,10 +163,9 @@ rimozione preferiti, lettura notifiche, cancellazione bozze ed editor bozze con
 creazione/modifica/upload, galleria immagini con stato, eliminazione,
 riordino/copertina, invio e carosello immagini nel dettaglio pubblico. Restano
 presenti il canale notifiche real-time SSE, il provider frontend globale, il
-badge account live e lo smoke su notifica ricevuta senza refresh. Restano da
-estendere le notifiche in-app real-time agli eventi prodotto non ancora
-notificati, eventuali canali aggiuntivi o finestre orarie per il contatto, se
-previsti dal prodotto.
+badge account live e lo smoke su notifiche ricevute senza refresh. Invio a
+revisione e contatto proprietario generano notifiche in-app. Restano eventuali
+canali aggiuntivi o finestre orarie per il contatto, se previsti dal prodotto.
 
 ## Milestone 8 - Hardening e deploy
 

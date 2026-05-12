@@ -9,8 +9,10 @@ import { Observable } from "rxjs"
 
 import { DatabaseService } from "../database/database.service.js"
 import type {
+  ListingContactRequestNotificationPayload,
   ListingModerationDecisionNotificationPayload,
   ListingReportDecisionNotificationPayload,
+  ListingReviewSubmissionNotificationPayload,
   Notification,
   NotificationListResponse,
   NotificationMarkAllReadResponse,
@@ -245,6 +247,20 @@ export class NotificationsService {
     return result
   }
 
+  async createListingReviewSubmissionNotification(
+    userId: string,
+    payload: ListingReviewSubmissionNotificationPayload
+  ): Promise<Notification> {
+    return this.create(userId, "listing_review_submission", payload)
+  }
+
+  async createListingContactRequestNotification(
+    userId: string,
+    payload: ListingContactRequestNotificationPayload
+  ): Promise<Notification> {
+    return this.create(userId, "listing_contact_request", payload)
+  }
+
   async createListingModerationDecisionNotification(
     userId: string,
     payload: ListingModerationDecisionNotificationPayload
@@ -263,8 +279,10 @@ export class NotificationsService {
     userId: string,
     type: NotificationType,
     payload:
+      | ListingContactRequestNotificationPayload
       | ListingModerationDecisionNotificationPayload
       | ListingReportDecisionNotificationPayload
+      | ListingReviewSubmissionNotificationPayload
   ): Promise<Notification> {
     const [row] = await this.databaseService.queryRows<NotificationRow>(
       createNotificationSql,

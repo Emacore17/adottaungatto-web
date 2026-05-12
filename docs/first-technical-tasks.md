@@ -127,8 +127,8 @@ Stato aggiornato al completamento dello scaffolding iniziale:
     `immagini-gattini/` quando disponibili.
 69. Fatto: implementare canale notifiche real-time applicative per tutti i
     record `notifications` creati o aggiornati.
-70. Estendere notifiche in-app real-time a invio a revisione, contatto
-    proprietario e altri eventi prodotto che oggi non creano ancora notifiche.
+70. Fatto: estendere notifiche in-app real-time a invio a revisione e contatto
+    proprietario.
 71. Estendere area admin/moderazione separata e protetta.
 
 ## Task documentali e pre-produzione

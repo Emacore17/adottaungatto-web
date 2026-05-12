@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
 import type { MailService } from "../mail/mail.service.js"
+import type { NotificationsService } from "../notifications/notifications.service.js"
 import { ContactsService } from "./contacts.service.js"
 
 describe("ContactsService", () => {
@@ -116,7 +117,16 @@ describe("ContactsService", () => {
     const mailService = {
       sendListingContactRequest: vi.fn().mockResolvedValue(undefined),
     } as unknown as MailService
-    const service = new ContactsService(databaseService, mailService)
+    const notificationsService = {
+      createListingContactRequestNotification: vi.fn().mockResolvedValue({
+        id: "notification-id",
+      }),
+    } as unknown as NotificationsService
+    const service = new ContactsService(
+      databaseService,
+      mailService,
+      notificationsService
+    )
 
     await expect(
       service.contactListingOwner(
@@ -175,6 +185,18 @@ describe("ContactsService", () => {
       "Ciao, vorrei avere informazioni sulla gatta.",
       false,
     ])
+    expect(
+      notificationsService.createListingContactRequestNotification
+    ).toHaveBeenCalledWith("owner-id", {
+      contactRequestId: "request-id",
+      emailShared: true,
+      listingId: "listing-id",
+      listingTitle: "Micia cerca casa",
+      phoneShared: false,
+      requesterDisplayName: "Requester",
+      requesterUserId: "requester-id",
+      status: "sent",
+    })
   })
 
   it("stores and sends requester phone only after explicit consent", async () => {

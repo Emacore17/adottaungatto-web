@@ -35,8 +35,10 @@ e la pagina impostazioni profilo, la dashboard account operativa, la inbox
 contatti ricevuti lato proprietario e i messaggi di errore account leggibili
 sono funzionanti in locale. Il contatto proprietario supporta anche il consenso
 separato per condividere il telefono del richiedente. Le notifiche in-app hanno
-un canale real-time SSE locale con badge live e smoke dedicato. Il punto piu
-urgente ora e' estendere gli eventi prodotto che generano notifiche in-app.
+un canale real-time SSE locale con badge live e smoke dedicato. Invio a
+revisione, contatto proprietario e decisione di moderazione generano gia'
+notifiche in-app. Il punto piu urgente ora e' estendere la moderazione/admin
+separata.
 
 ## Regole per ogni round
 
@@ -200,7 +202,7 @@ Task:
 - Fatto: mantenere email proprietario nascosta nella UI pubblica;
 - Fatto: implementare notifiche real-time applicative con fallback server/API
   solo per resilienza locale;
-- notificare proprietario su invio a revisione e contatto;
+- Fatto: notificare proprietario su invio a revisione e contatto;
 - Fatto: notificare proprietario su approvazione, con consegna real-time;
 - Fatto: documentare limiti anti-abuso e preferenze contatto;
 - Fatto: inbox account per richieste ricevute con email richiedente visibile
@@ -224,6 +226,10 @@ Avanzamento 12 maggio 2026:
   rinfresca le viste account su eventi `created`, `read` e `read_all`.
 - Fatto: lo smoke E2E apre lo stream notifiche e verifica l'evento real-time
   durante approvazione moderatore.
+- Fatto: l'invio a revisione crea `listing_review_submission` per il
+  proprietario.
+- Fatto: una richiesta di contatto riuscita crea `listing_contact_request` per
+  il proprietario e viene verificata via stream nello smoke.
 
 Done:
 
@@ -265,6 +271,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone E aggiungendo notifiche in-app real-time per invio a
-revisione, contatto proprietario e altri eventi prodotto che oggi non creano
-ancora record `notifications`.
+Proseguire con Milestone F separando meglio area admin/moderazione e
+migliorando code, dettaglio operativo e protezioni di accesso.

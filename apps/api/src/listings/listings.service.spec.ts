@@ -2,6 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
+import type { NotificationsService } from "../notifications/notifications.service.js"
 import type { ObjectStorageService } from "../storage/object-storage.service.js"
 import { createListingSlug, ListingsService } from "./listings.service.js"
 
@@ -568,7 +569,16 @@ describe("ListingsService", () => {
           },
         ]),
     } as unknown as DatabaseService
-    const { service } = createService(databaseService)
+    const notificationsService = {
+      createListingReviewSubmissionNotification: vi.fn().mockResolvedValue({
+        id: "notification-id",
+      }),
+    } as unknown as NotificationsService
+    const { service } = createService(
+      databaseService,
+      undefined,
+      notificationsService
+    )
 
     await expect(
       service.submitDraftForReview("user-id", "listing-id")
@@ -598,6 +608,14 @@ describe("ListingsService", () => {
       "listing-id",
       "user-id",
     ])
+    expect(
+      notificationsService.createListingReviewSubmissionNotification
+    ).toHaveBeenCalledWith("user-id", {
+      listingId: "listing-id",
+      listingSlug: "gattino-a-roma",
+      listingTitle: "Gattino a Roma",
+      moderationStatus: "pending_review",
+    })
   })
 
   it("rejects incomplete drafts before review submission", async () => {
@@ -1060,11 +1078,16 @@ describe("ListingsService", () => {
 
 function createService(
   databaseService: DatabaseService,
-  objectStorageService = createObjectStorageService()
+  objectStorageService = createObjectStorageService(),
+  notificationsService?: NotificationsService
 ) {
   return {
     objectStorageService,
-    service: new ListingsService(databaseService, objectStorageService),
+    service: new ListingsService(
+      databaseService,
+      objectStorageService,
+      notificationsService
+    ),
   }
 }
 

@@ -195,6 +195,8 @@ export type FavoriteMutationResponse = {
 
 export type NotificationType =
   | "listing_moderation_decision"
+  | "listing_review_submission"
+  | "listing_contact_request"
   | "listing_report_decision"
 
 export type Notification = {
@@ -385,12 +387,15 @@ export function addAccountFavorite(
   bearerToken: string,
   listingId: string
 ): Promise<ApiResult<FavoriteMutationResponse>> {
-  return apiFetch<FavoriteMutationResponse>(`/favorites/listings/${listingId}`, {
-    bearerToken,
-    body: {},
-    cache: "no-store",
-    method: "POST",
-  })
+  return apiFetch<FavoriteMutationResponse>(
+    `/favorites/listings/${listingId}`,
+    {
+      bearerToken,
+      body: {},
+      cache: "no-store",
+      method: "POST",
+    }
+  )
 }
 
 export function removeAccountFavorite(

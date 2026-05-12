@@ -17,7 +17,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0017_pink_pyro.sql`.
+- Migrazioni Drizzle fino a `0018_notification_events.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -37,7 +37,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Canale notifiche real-time locale via SSE autenticato:
   `GET /notifications/stream` sul backend, proxy Next same-origin
   `/api/notifications/stream`, provider globale frontend, badge live account e
-  avviso visuale su nuova notifica.
+  avviso visuale su nuova notifica. Gli eventi coperti includono invio a
+  revisione, contatto proprietario, decisione moderazione e aggiornamento
+  segnalazione.
 - Preferiti e like per annunci pubblicati; la lista `/listings` e la scheda
   annuncio espongono un cuore toggle per salvare/rimuovere preferiti, con
   redirect al login se l'utente non e' autenticato.
@@ -99,7 +101,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   chiave della dashboard account, pagine account autenticate, piu login admin e
   coda moderazione demo. Lo smoke carica piu immagini reali da
   `immagini-gattini/` quando disponibili, verifica il carosello del dettaglio
-  annuncio pubblicato e controlla la ricezione real-time della notifica di
+  annuncio pubblicato, controlla la notifica di invio a revisione e controlla
+  la ricezione real-time delle notifiche di contatto proprietario e
   approvazione moderatore senza refresh manuale.
 
 ## Non pronto per produzione
@@ -115,10 +118,10 @@ produzione. Mancano almeno:
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
   refresh sul futuro update di annunci pubblicati;
 - amministrazione completa e UI interna protetta;
-- frontend applicativo oltre la consultazione pubblica: estensione delle
-  notifiche in-app real-time a tutti gli eventi prodotto rilevanti, eventuali
-  canali o finestre orarie per il contatto proprietario e amministrazione
-  interna piu estesa;
+- frontend applicativo oltre la consultazione pubblica: eventuale estensione
+  delle notifiche in-app real-time ad altri eventi prodotto, eventuali canali o
+  finestre orarie per il contatto proprietario e amministrazione interna piu
+  estesa;
 - suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
 - policy GDPR/privacy/cookie e retention dati.
 - giro locale prodotto non ancora completo: demo con ruoli admin/moderatore,
@@ -185,12 +188,11 @@ foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
 pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload multiplo di immagini gattini locali, processing
-worker, invio a revisione, carosello immagini nel dettaglio pubblicato e
-notifica real-time su approvazione moderatore. Restano da estendere le
-notifiche in-app real-time agli eventi prodotto che oggi non creano ancora
-record `notifications`, eventuali preferenze contatto per canali o finestre
-orarie, altri dati sensibili oltre email/telefono e amministrazione interna piu
-estesa. I prossimi sviluppi
+worker, invio a revisione, carosello immagini nel dettaglio pubblicato,
+notifica di invio a revisione e notifiche real-time su contatto proprietario e
+approvazione moderatore. Restano eventuali preferenze contatto per canali o
+finestre orarie, altri dati sensibili oltre email/telefono e amministrazione
+interna piu estesa. I prossimi sviluppi
 frontend devono continuare a seguire
 `docs/frontend-nextjs-shadcn-guidelines.md`: route server by default, componenti
 client solo come foglie interattive, configurazioni centralizzate, SEO prima
@@ -210,9 +212,9 @@ cadono sui placeholder deterministici quando la cartella non esiste. La UI
 renderizza le immagini storage senza passare dall'optimizer Next, per evitare il
 blocco di `localhost:9000`/MinIO. La lista `/listings` usa card orizzontali, una
 per riga, e mostra in cima un annuncio sponsorizzato mock con label dichiarata.
-Lo smoke verifica anche URL storage diretti, approva un annuncio appena inviato
-a revisione e controlla che sia pubblicato e notificato al proprietario anche
-tramite stream real-time.
+Lo smoke verifica anche URL storage diretti, invia un annuncio a revisione,
+controlla la notifica di stato, approva il caso e controlla che sia pubblicato
+e notificato al proprietario anche tramite stream real-time.
 
 ## Regole per prossimi interventi
 

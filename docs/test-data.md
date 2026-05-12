@@ -101,7 +101,8 @@ La demo include:
   `/listings` e scheda annuncio.
 - contatto proprietario; Fatto con scelta di un annuncio demo contattabile,
   consenso email/telefono e fallback quando il cooldown locale blocca un
-  annuncio gia contattato.
+  annuncio gia contattato; lo smoke apre anche lo stream del proprietario e
+  verifica la notifica real-time `listing_contact_request`.
 - inbox contatti ricevuti proprietario; Fatto via
   `GET /contacts/me/received`, pagina `/account/contacts`, telefono visibile
   solo dopo consenso e isolamento multi-utente.
@@ -110,9 +111,12 @@ La demo include:
 - dettaglio annuncio pubblicato; Fatto con verifica del carosello immagini e
   conteggio foto dopo approvazione moderatore.
 - notifica generata; Fatto per decisione di moderazione approvata.
+- notifica invio a revisione; Fatto con verifica di
+  `listing_review_submission` dopo `submit-review`.
 - notifica real-time; Fatto aprendo lo stream web
   `/api/notifications/stream` prima dell'approvazione moderatore e verificando
-  l'evento `created` senza refresh.
+  gli eventi `created` senza refresh per contatto proprietario e approvazione
+  moderatore.
 - accesso negato tra utenti diversi; Fatto per bozza, immagini bozza,
   preferiti e notifiche. Da estendere ai contatti quando saranno esposti in
   una vista proprietario/admin.

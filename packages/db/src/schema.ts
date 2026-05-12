@@ -129,6 +129,8 @@ export const reportStatus = pgEnum("report_status", [
 
 export const notificationType = pgEnum("notification_type", [
   "listing_moderation_decision",
+  "listing_review_submission",
+  "listing_contact_request",
   "listing_report_decision",
 ])
 

@@ -17,6 +17,8 @@ import { Button } from "@workspace/ui/components/button"
 
 type NotificationType =
   | "listing_moderation_decision"
+  | "listing_review_submission"
+  | "listing_contact_request"
   | "listing_report_decision"
 
 type Notification = {
@@ -245,7 +247,34 @@ function formatNotificationMessage(notification: Notification) {
     return "La tua segnalazione e' stata aggiornata."
   }
 
+  if (notification.type === "listing_review_submission") {
+    return formatReviewSubmission(notification.payload)
+  }
+
+  if (notification.type === "listing_contact_request") {
+    return formatContactRequest(notification.payload)
+  }
+
   return "Ci sono aggiornamenti sul tuo account."
+}
+
+function formatReviewSubmission(payload: Record<string, unknown>) {
+  const title = readString(payload.listingTitle)
+
+  return title
+    ? `Il tuo annuncio e' in revisione: ${title}`
+    : "Il tuo annuncio e' in revisione."
+}
+
+function formatContactRequest(payload: Record<string, unknown>) {
+  const requester = readString(payload.requesterDisplayName)
+  const title = readString(payload.listingTitle)
+
+  if (requester && title) {
+    return `${requester} ha richiesto un contatto per ${title}.`
+  }
+
+  return "Hai ricevuto una nuova richiesta di contatto."
 }
 
 function formatModerationDecision(payload: Record<string, unknown>) {
