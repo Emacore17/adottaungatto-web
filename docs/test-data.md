@@ -92,7 +92,8 @@ La demo include:
 - approvazione moderatore; Fatto con approvazione admin del caso creato dallo
   smoke.
 - annuncio pubblicato visibile; Fatto via dettaglio pubblico dopo approvazione.
-- preferito toggle;
+- preferito toggle; Fatto via add/remove API e verifica stato cuore UI su
+  `/listings` e scheda annuncio.
 - contatto proprietario;
 - notifica generata; Fatto per decisione di moderazione approvata.
 - accesso negato tra utenti diversi.

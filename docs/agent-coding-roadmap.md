@@ -28,9 +28,9 @@ e ottenere una demo navigabile con:
 - smoke test che copre i flussi principali senza interventi manuali.
 
 Stato attuale: il backend, la base frontend, il giro inserimento annuncio, il
-mock sponsorizzato in lista e le immagini demo locali sono funzionanti in
-locale. Il punto piu urgente passa a preferiti/dash account, mantenendo prima
-la verifica `pnpm smoke:e2e`.
+mock sponsorizzato in lista, le immagini demo locali e il cuore preferiti toggle
+sono funzionanti in locale. Il punto piu urgente passa alla dashboard account e
+alle impostazioni profilo, mantenendo prima la verifica `pnpm smoke:e2e`.
 
 ## Regole per ogni round
 
@@ -145,11 +145,12 @@ Obiettivo: migliorare scoperta annunci e interazioni rapide.
 Task:
 
 - Fatto: rendere `/listings` una lista a card orizzontali, un annuncio per riga;
-- aggiungere cuore toggle per preferito con animazione e stato autenticato;
+- Fatto: aggiungere cuore toggle per preferito con animazione e stato
+  autenticato;
 - Fatto: prevedere slot visivo per annuncio sponsorizzato in alto, con label
   chiara;
 - mantenere filtri, SEO e performance della pagina lista;
-- aggiornare test e fixture per preferiti da lista e scheda.
+- Fatto: aggiornare smoke per preferiti da lista con stato salvato/rimosso.
 
 Done:
 
@@ -209,5 +210,5 @@ Done:
 
 ## Prossimo round consigliato
 
-Proseguire con Milestone D per cuore preferito toggle da lista/scheda, oppure
-Milestone C per riordinare dashboard account e impostazioni profilo.
+Proseguire con Milestone C per riordinare dashboard account e impostazioni
+profilo.

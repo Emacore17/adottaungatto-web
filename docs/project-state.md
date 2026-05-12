@@ -32,7 +32,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Moderazione annunci e segnalazioni con code, decisioni e audit su
   `moderation_actions`.
 - Email applicative via Mailpit locale e notifiche in-app.
-- Preferiti e like per annunci pubblicati.
+- Preferiti e like per annunci pubblicati; la lista `/listings` e la scheda
+  annuncio espongono un cuore toggle per salvare/rimuovere preferiti, con
+  redirect al login se l'utente non e' autenticato.
 - Contatto proprietario privacy-first con richiesta autenticata, inoltro email
   backend, tracciamento `listing_contact_requests`, rate limit dedicato e
   preferenza per-annuncio per abilitare/disabilitare il contatto.
@@ -78,9 +80,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   sorgente; altrimenti genera placeholder deterministici.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   auth, creazione annuncio, upload immagine, processing worker, invio a
-  revisione, approvazione admin fino a pubblicazione visibile, preferiti, like,
-  contatto proprietario, notifiche e pagine account autenticate, piu login admin
-  e coda moderazione demo.
+  revisione, approvazione admin fino a pubblicazione visibile, preferiti con
+  stato UI a cuore, like, contatto proprietario, notifiche e pagine account
+  autenticate, piu login admin e coda moderazione demo.
 
 ## Non pronto per produzione
 
@@ -143,9 +145,9 @@ hardening upload, backup, alert e audit amministrativo piu esteso.
 route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account/admin, homepage pubblica, lista annunci, scheda
 annuncio, proxy route per autocomplete/lista pubblica, sitemap, robots,
-JSON-LD iniziali, dashboard account con lettura annunci in lavorazione,
-preferiti e notifiche, form contatto proprietario sulla scheda annuncio e
-pagina `/moderation`
+JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, dashboard
+account con lettura annunci in lavorazione, preferiti e notifiche, form
+contatto proprietario sulla scheda annuncio e pagina `/moderation`
 collegata alle code API con decisioni base motivate. L'area account supporta
 rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
 lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,

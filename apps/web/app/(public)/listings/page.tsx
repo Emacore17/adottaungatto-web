@@ -9,6 +9,9 @@ import {
   listPublicListings,
   parseListingSearchParams,
 } from "@/lib/api/listings"
+import { listFavoriteListingIds } from "@/lib/api/favorites"
+import { getSessionToken } from "@/lib/auth/session"
+import { routes } from "@/lib/routes"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { Badge } from "@workspace/ui/components/badge"
 import {
@@ -44,9 +47,10 @@ export default async function ListingsPage({
 }: ListingsPageProps) {
   const params = await searchParams
   const parsed = parseListingSearchParams(params)
-  const [listings, breedsResult] = await Promise.all([
+  const [listings, breedsResult, sessionToken] = await Promise.all([
     listPublicListings(parsed.query),
     listPublicCatBreeds(),
+    getSessionToken(),
   ])
   const items = listings.ok ? listings.data.items : []
   const meta = listings.ok ? listings.data.meta : null
@@ -56,6 +60,17 @@ export default async function ListingsPage({
   const rawPlaceType =
     typeof params.placeType === "string" ? params.placeType : null
   const placeType = isSearchPlaceType(rawPlaceType) ? rawPlaceType : null
+  const nextPath = routes.listings({
+    ...parsed.query,
+    placeLabel: placeLabel ?? undefined,
+    placeType: placeType ?? undefined,
+  })
+  const favoriteListingIds = sessionToken
+    ? await listFavoriteListingIds(
+        sessionToken,
+        items.map((item) => item.id)
+      )
+    : new Set<string>()
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:px-8">
@@ -94,7 +109,13 @@ export default async function ListingsPage({
       {items.length > 0 ? (
         <section className="flex flex-col gap-4">
           {items.map((listing) => (
-            <ListingCard key={listing.id} listing={listing} />
+            <ListingCard
+              key={listing.id}
+              isAuthenticated={Boolean(sessionToken)}
+              isFavorite={favoriteListingIds.has(listing.id)}
+              listing={listing}
+              nextPath={nextPath}
+            />
           ))}
         </section>
       ) : (

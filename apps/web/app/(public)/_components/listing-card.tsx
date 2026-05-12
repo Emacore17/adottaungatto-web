@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { HeartIcon, MapPinIcon } from "lucide-react"
 
+import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
 import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingSummary } from "@/lib/api/types"
@@ -19,10 +20,18 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 
 type ListingCardProps = {
+  isAuthenticated: boolean
+  isFavorite: boolean
   listing: PublicListingSummary
+  nextPath: string
 }
 
-function ListingCard({ listing }: ListingCardProps) {
+function ListingCard({
+  isAuthenticated,
+  isFavorite,
+  listing,
+  nextPath,
+}: ListingCardProps) {
   const coverUrl = getPublicObjectUrl(
     listing.images.cover?.objectKeyLarge ?? listing.images.cover?.objectKeyThumb
   )
@@ -37,24 +46,30 @@ function ListingCard({ listing }: ListingCardProps) {
       className={cn("gap-0 py-0", isSponsored ? "ring-primary/40" : undefined)}
     >
       <div className="flex flex-col sm:flex-row">
-        <Link
-          href={routes.listing(listing.id)}
-          className="relative aspect-[4/3] bg-muted sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72"
-        >
-          {coverUrl ? (
-            <StorageImage
-              src={coverUrl}
-              alt={listing.title}
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              Foto in preparazione
-            </div>
-          )}
-        </Link>
+        <div className="relative aspect-[4/3] bg-muted sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72">
+          <Link href={routes.listing(listing.id)} className="block size-full">
+            {coverUrl ? (
+              <StorageImage
+                src={coverUrl}
+                alt={listing.title}
+                fill
+                className="object-cover"
+                sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                Foto in preparazione
+              </div>
+            )}
+          </Link>
+          <ListingFavoriteToggle
+            className="absolute top-3 right-3"
+            isAuthenticated={isAuthenticated}
+            isFavorite={isFavorite}
+            listingId={listing.id}
+            nextPath={nextPath}
+          />
+        </div>
         <div className="flex min-w-0 flex-1 flex-col gap-4 py-4">
           <CardHeader>
             <CardTitle>

@@ -13,6 +13,7 @@ import {
 import { JsonLd } from "@/components/shared/json-ld"
 import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
+import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
 import { getSessionToken } from "@/lib/auth/session"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
@@ -74,6 +75,10 @@ export default async function ListingDetailPage({
   if (!listing.ok) {
     notFound()
   }
+
+  const favoriteListingIds = sessionToken
+    ? await listFavoriteListingIds(sessionToken, [listing.data.id])
+    : new Set<string>()
 
   const coverUrl = getPublicObjectUrl(
     listing.data.images.cover?.objectKeyLarge ??
@@ -175,6 +180,7 @@ export default async function ListingDetailPage({
           <ListingFavoriteCard
             favoriteStatus={readFavoriteStatus(query.favorite)}
             isAuthenticated={Boolean(sessionToken)}
+            isFavorite={favoriteListingIds.has(listing.data.id)}
             listingId={listing.data.id}
           />
         </aside>
@@ -205,7 +211,12 @@ function readFavoriteStatus(
 ): FavoriteStatus {
   const raw = Array.isArray(value) ? value[0] : value
 
-  if (raw === "error" || raw === "saved" || raw === "unavailable") {
+  if (
+    raw === "error" ||
+    raw === "removed" ||
+    raw === "saved" ||
+    raw === "unavailable"
+  ) {
     return raw
   }
 

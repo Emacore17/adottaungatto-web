@@ -160,6 +160,24 @@ try {
     token
   )
   check("favorite add", favorite.favorited === true)
+  const favoriteListHtml = await webText(
+    "/listings",
+    token,
+    "web listing favorite saved"
+  )
+  check(
+    "web listing favorite saved state",
+    hasFavoriteToggleState(favoriteListHtml, listingId, "saved")
+  )
+  const favoriteDetailHtml = await webText(
+    `/listings/${listingId}`,
+    token,
+    "web listing detail favorite saved"
+  )
+  check(
+    "web listing detail favorite saved state",
+    hasFavoriteToggleState(favoriteDetailHtml, listingId, "saved")
+  )
 
   const favorites = await api(
     "GET",
@@ -179,6 +197,24 @@ try {
     token
   )
   check("favorite delete", removedFavorite.deleted === true)
+  const favoriteRemovedHtml = await webText(
+    "/listings",
+    token,
+    "web listing favorite removed"
+  )
+  check(
+    "web listing favorite removed state",
+    hasFavoriteToggleState(favoriteRemovedHtml, listingId, "idle")
+  )
+  const favoriteDetailRemovedHtml = await webText(
+    `/listings/${listingId}`,
+    token,
+    "web listing detail favorite removed"
+  )
+  check(
+    "web listing detail favorite removed state",
+    hasFavoriteToggleState(favoriteDetailRemovedHtml, listingId, "idle")
+  )
 
   const like = await api("POST", `/likes/listings/${listingId}`, {}, token)
   check("like add", like.liked === true)
@@ -412,6 +448,10 @@ async function rawText(url, init) {
 }
 
 async function webPage(path, sessionToken, label) {
+  await webText(path, sessionToken, label)
+}
+
+async function webText(path, sessionToken, label) {
   const response = await fetch(`${webBaseUrl}${path}`, {
     headers: {
       Cookie: `aug_session=${sessionToken}`,
@@ -420,6 +460,8 @@ async function webPage(path, sessionToken, label) {
   })
 
   check(label, response.status === 200, `status=${response.status}`)
+
+  return response.text()
 }
 
 async function webListingImages() {
@@ -532,6 +574,21 @@ function check(label, condition, detail = "") {
 
 function pass(label, detail = "") {
   console.log(`PASS ${label}${detail ? ` ${detail}` : ""}`)
+}
+
+function hasFavoriteToggleState(html, listingId, state) {
+  const listingIndex = html.indexOf(`data-listing-id="${listingId}"`)
+
+  if (listingIndex < 0) {
+    return false
+  }
+
+  const stateIndex = html.lastIndexOf(
+    `data-favorite-state="${state}"`,
+    listingIndex
+  )
+
+  return stateIndex >= 0 && listingIndex - stateIndex < 200
 }
 
 function readUrl(value, fallback) {
