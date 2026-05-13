@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
+import { createPortal } from "react-dom"
 import { Loader2Icon, MapPinIcon, XIcon } from "lucide-react"
 
 import { formatPlaceType } from "@/app/(public)/_components/listing-search-options"
@@ -20,6 +21,12 @@ type PlaceAutocompletePayload = {
 }
 
 type AutocompleteStatus = "idle" | "loading" | "ready" | "error"
+type ListboxPosition = {
+  left: number
+  maxHeight: number
+  top: number
+  width: number
+}
 
 function formatSelectedPlace(place: PlaceAutocompleteItem) {
   return `${place.label}, ${formatPlaceType(place.type)}`
@@ -36,6 +43,7 @@ function PlaceAutocompleteInput({
   const listboxId = useId()
   const statusId = useId()
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const listboxRef = useRef<HTMLDivElement | null>(null)
   const [query, setQuery] = useState(
     selectedPlace ? formatSelectedPlace(selectedPlace) : ""
   )
@@ -43,7 +51,10 @@ function PlaceAutocompleteInput({
   const [open, setOpen] = useState(false)
   const [status, setStatus] = useState<AutocompleteStatus>("idle")
   const [activeIndex, setActiveIndex] = useState(-1)
+  const [listboxPosition, setListboxPosition] =
+    useState<ListboxPosition | null>(null)
   const loading = status === "loading"
+  const showListbox = open && query.trim().length >= 2 && !selectedPlace
 
   useEffect(() => {
     setQuery(selectedPlace ? formatSelectedPlace(selectedPlace) : "")
@@ -57,7 +68,11 @@ function PlaceAutocompleteInput({
     function handlePointerDown(event: MouseEvent) {
       const target = event.target
 
-      if (target instanceof Node && rootRef.current?.contains(target)) {
+      if (
+        target instanceof Node &&
+        (rootRef.current?.contains(target) ||
+          listboxRef.current?.contains(target))
+      ) {
         return
       }
 
@@ -71,6 +86,38 @@ function PlaceAutocompleteInput({
       document.removeEventListener("mousedown", handlePointerDown)
     }
   }, [open])
+
+  useEffect(() => {
+    if (!showListbox) {
+      setListboxPosition(null)
+      return
+    }
+
+    function updateListboxPosition() {
+      const rect = rootRef.current?.getBoundingClientRect()
+
+      if (!rect) {
+        setListboxPosition(null)
+        return
+      }
+
+      setListboxPosition({
+        left: rect.left,
+        maxHeight: Math.max(160, window.innerHeight - rect.bottom - 16),
+        top: rect.bottom + 8,
+        width: rect.width,
+      })
+    }
+
+    updateListboxPosition()
+    window.addEventListener("resize", updateListboxPosition)
+    window.addEventListener("scroll", updateListboxPosition, true)
+
+    return () => {
+      window.removeEventListener("resize", updateListboxPosition)
+      window.removeEventListener("scroll", updateListboxPosition, true)
+    }
+  }, [showListbox])
 
   useEffect(() => {
     const normalizedQuery = query.trim()
@@ -246,64 +293,77 @@ function PlaceAutocompleteInput({
         ) : null}
       </label>
 
-      {open && query.trim().length >= 2 && !selectedPlace ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          className="absolute right-0 left-0 z-40 mt-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-46px_color-mix(in_oklab,var(--color-brand-teal-ink)_56%,transparent)]"
-        >
-          {loading ? (
+      {showListbox && listboxPosition
+        ? createPortal(
             <div
-              className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground"
-              aria-live="polite"
+              id={listboxId}
+              ref={listboxRef}
+              role="listbox"
+              style={{
+                left: listboxPosition.left,
+                maxHeight: listboxPosition.maxHeight,
+                top: listboxPosition.top,
+                width: listboxPosition.width,
+              }}
+              className="fixed z-50 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-46px_color-mix(in_oklab,var(--color-brand-teal-ink)_56%,transparent)]"
             >
-              <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />
-              Caricamento luoghi...
-            </div>
-          ) : null}
+              {loading ? (
+                <div
+                  className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground"
+                  aria-live="polite"
+                >
+                  <Loader2Icon
+                    aria-hidden="true"
+                    className="size-4 animate-spin"
+                  />
+                  Caricamento luoghi...
+                </div>
+              ) : null}
 
-          {status === "error" ? (
-            <p className="px-3 py-2.5 text-sm text-destructive">
-              Non riesco a caricare i luoghi. Riprova.
-            </p>
-          ) : null}
+              {status === "error" ? (
+                <p className="px-3 py-2.5 text-sm text-destructive">
+                  Non riesco a caricare i luoghi. Riprova.
+                </p>
+              ) : null}
 
-          {status === "ready" && suggestions.length === 0 ? (
-            <p className="px-3 py-2.5 text-sm text-muted-foreground">
-              Nessun luogo trovato
-            </p>
-          ) : null}
+              {status === "ready" && suggestions.length === 0 ? (
+                <p className="px-3 py-2.5 text-sm text-muted-foreground">
+                  Nessun luogo trovato
+                </p>
+              ) : null}
 
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={`${suggestion.type}-${suggestion.id}`}
-              type="button"
-              role="option"
-              aria-selected={index === activeIndex}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => handleSelect(suggestion)}
-              className={cn(
-                "flex w-full items-start justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
-                index === activeIndex
-                  ? "bg-muted text-foreground"
-                  : "hover:bg-muted/70"
-              )}
-            >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold">
-                  {suggestion.label}
-                  <span className="font-medium text-muted-foreground">
-                    {`, ${formatPlaceType(suggestion.type)}`}
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={`${suggestion.type}-${suggestion.id}`}
+                  type="button"
+                  role="option"
+                  aria-selected={index === activeIndex}
+                  onMouseEnter={() => setActiveIndex(index)}
+                  onClick={() => handleSelect(suggestion)}
+                  className={cn(
+                    "flex w-full items-start justify-between gap-3 rounded-md px-3 py-2.5 text-left transition-colors",
+                    index === activeIndex
+                      ? "bg-muted text-foreground"
+                      : "hover:bg-muted/70"
+                  )}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">
+                      {suggestion.label}
+                      <span className="font-medium text-muted-foreground">
+                        {`, ${formatPlaceType(suggestion.type)}`}
+                      </span>
+                    </span>
+                    <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+                      {suggestion.subtitle}
+                    </span>
                   </span>
-                </span>
-                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                  {suggestion.subtitle}
-                </span>
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
+                </button>
+              ))}
+            </div>,
+            document.body
+          )
+        : null}
     </div>
   )
 }
