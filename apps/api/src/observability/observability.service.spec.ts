@@ -66,4 +66,89 @@ describe("ObservabilityService", () => {
 
     logSpy.mockRestore()
   })
+
+  it("does not alert before the minimum request count", () => {
+    const service = new ObservabilityService({
+      OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: 0.01,
+      OBSERVABILITY_ALERT_MIN_REQUESTS: 5,
+      OBSERVABILITY_ALERT_P95_MS_THRESHOLD: 10,
+    })
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
+
+    service.startHttpRequest()
+    service.finishHttpRequest({
+      durationMs: 250,
+      method: "GET",
+      requestId: "request-id",
+      route: "/listings",
+      statusCode: 503,
+      traceId: "trace-id",
+    })
+
+    expect(service.alerts()).toMatchObject({
+      status: "ok",
+      alerts: [],
+    })
+
+    logSpy.mockRestore()
+  })
+
+  it("alerts on high error rates and route p95 duration", () => {
+    const service = new ObservabilityService({
+      OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: 0.25,
+      OBSERVABILITY_ALERT_MIN_REQUESTS: 2,
+      OBSERVABILITY_ALERT_P95_MS_THRESHOLD: 50,
+    })
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
+
+    service.startHttpRequest()
+    service.finishHttpRequest({
+      durationMs: 25,
+      method: "GET",
+      requestId: "request-id",
+      route: "/listings",
+      statusCode: 200,
+      traceId: "trace-id",
+    })
+    service.startHttpRequest()
+    service.finishHttpRequest({
+      durationMs: 75,
+      method: "GET",
+      requestId: "request-id-2",
+      route: "/listings",
+      statusCode: 503,
+      traceId: "trace-id-2",
+    })
+
+    const alerts = service.alerts()
+
+    expect(alerts.status).toBe("alerting")
+    expect(alerts.alerts.map((alert) => alert.id)).toEqual([
+      "api_http_error_rate_high",
+      "api_route_error_rate_high",
+      "api_route_p95_duration_high",
+    ])
+
+    logSpy.mockRestore()
+  })
+
+  it("alerts on high in-flight request count", () => {
+    const service = new ObservabilityService({
+      OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD: 1,
+    })
+
+    service.startHttpRequest()
+    service.startHttpRequest()
+
+    const alerts = service.alerts()
+
+    expect(alerts.status).toBe("alerting")
+    expect(alerts.alerts).toContainEqual(
+      expect.objectContaining({
+        id: "api_http_in_flight_high",
+        observedValue: 2,
+        threshold: 1,
+      })
+    )
+  })
 })

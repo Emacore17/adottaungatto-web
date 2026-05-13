@@ -74,8 +74,12 @@ Stato locale:
 - `GET /health/ready` espone readiness aggregata database/Redis.
 - `GET /health/metrics` espone metriche HTTP in memoria per richieste, errori,
   status code e durate per route.
-- `pnpm smoke:e2e` verifica header di correlazione, readiness e metriche.
-- Restano da collegare exporter OpenTelemetry, dashboard e alert reali.
+- `GET /health/alerts` valuta alert locali su error rate, richieste in flight
+  e p95 per route con soglie configurabili via env.
+- `pnpm smoke:e2e` verifica header di correlazione, readiness, metriche e
+  alert locali.
+- Restano da collegare exporter OpenTelemetry, dashboard e alert gestiti dal
+  provider operativo.
 
 ## Rate Limit Per Ambiente
 
@@ -88,6 +92,20 @@ La base API usa Redis fixed-window e accetta tuning operativo tramite:
 I valori di default in `.env.example` mantengono il comportamento locale
 attuale. In staging/produzione i valori vanno calibrati su traffico reale,
 proxy fidato e alert anti-abuso.
+
+## Alert Locali
+
+La base API espone `GET /health/alerts` per verifiche locali e smoke. Le soglie
+sono:
+
+- `OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD`;
+- `OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD`;
+- `OBSERVABILITY_ALERT_MIN_REQUESTS`;
+- `OBSERVABILITY_ALERT_P95_MS_THRESHOLD`.
+
+Queste soglie sono un ponte verso dashboard e alert provider-managed: in
+staging/produzione gli stessi segnali vanno esportati tramite OpenTelemetry o
+strumentazione equivalente.
 
 ## Alert
 

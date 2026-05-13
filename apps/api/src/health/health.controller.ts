@@ -83,6 +83,11 @@ export class HealthController {
     return this.observabilityService.snapshot()
   }
 
+  @Get("alerts")
+  getAlerts() {
+    return this.observabilityService.alerts()
+  }
+
   private async getDependencyHealth(
     service: "database" | "redis",
     check: () => Promise<void>

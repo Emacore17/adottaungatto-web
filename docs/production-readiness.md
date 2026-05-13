@@ -13,6 +13,7 @@ Prima della produzione devono essere verdi:
 - health check e readiness check separati;
 - log strutturati e trace id propagati;
 - rate limit sui flussi sensibili;
+- alert locali esposti e soglie documentate;
 - segreti gestiti fuori dal repository;
 - scansione dipendenze e immagini container;
 - smoke test post-deploy;
@@ -171,10 +172,12 @@ La base locale include:
   route;
 - `GET /health/ready` per readiness aggregata database/Redis;
 - `GET /health/metrics` per snapshot locale verificata dallo smoke.
+- `GET /health/alerts` per valutazione locale di error rate, richieste in
+  flight e p95 per route con soglie configurabili.
 
 Prima della produzione restano necessari esportazione OpenTelemetry,
-dashboard/alert reali, log redaction verificata in ambiente, retention e
-correlazione con audit amministrativo.
+dashboard/alert gestiti dal provider operativo, log redaction verificata in
+ambiente, retention e correlazione con audit amministrativo.
 
 ## Decisione operativa
 

@@ -39,6 +39,25 @@ const apiEnvSchema = z.object({
   MAIL_FROM: z.string().email().default("no-reply@adottaungatto.local"),
   MAIL_HOST: z.string().default("localhost"),
   MAIL_PORT: z.coerce.number().int().positive().default(1025),
+  OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: z.coerce
+    .number()
+    .positive()
+    .default(0.05),
+  OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(50),
+  OBSERVABILITY_ALERT_MIN_REQUESTS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(20),
+  OBSERVABILITY_ALERT_P95_MS_THRESHOLD: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(1000),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
   RATE_LIMIT_ENABLED: booleanEnv(true),
   RATE_LIMIT_LIMIT_MULTIPLIER: z.coerce.number().positive().default(1),

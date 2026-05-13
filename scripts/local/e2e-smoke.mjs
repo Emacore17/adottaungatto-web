@@ -72,6 +72,14 @@ try {
       Number.isInteger(metrics.http?.inFlightRequests)
   )
 
+  const alerts = await api("GET", "/health/alerts")
+  check(
+    "api observability alerts",
+    ["ok", "alerting"].includes(alerts.status) &&
+      Array.isArray(alerts.alerts) &&
+      Number.isFinite(alerts.thresholds?.p95DurationMsThreshold)
+  )
+
   const listings = await api("GET", "/listings?page=1&pageSize=1")
   check(
     "public listing list",

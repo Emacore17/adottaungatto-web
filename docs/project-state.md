@@ -21,11 +21,16 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
-- Readiness API aggregata su database/Redis e metriche HTTP locali in
-  `/health/ready` e `/health/metrics`.
+- Readiness API aggregata su database/Redis, metriche HTTP locali e alert
+  locali in `/health/ready`, `/health/metrics` e `/health/alerts`.
 - Interceptor API globale per `x-request-id`, `x-trace-id`, log JSON
   request-level senza payload e metriche in memoria su richieste, errori,
   status code e durate per route.
+- Valutazione alert locale sulle metriche HTTP API con soglie configurabili via
+  `OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD`,
+  `OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD`,
+  `OBSERVABILITY_ALERT_MIN_REQUESTS` e
+  `OBSERVABILITY_ALERT_P95_MS_THRESHOLD`.
 - Auth API con registrazione, login, logout, sessione corrente, verifica email,
   recupero password e cambio password autenticato.
 - Rate limit Redis fixed-window iniziale sui flussi auth sensibili,
@@ -105,7 +110,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `immagini-gattini/` esiste, `worker demo:assets` usa quelle foto come
   sorgente; altrimenti genera placeholder deterministici.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
-  readiness/metriche API, header di correlazione, ricerca pubblica, auth,
+  readiness/metriche/alert API, header di correlazione, ricerca pubblica, auth,
   creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
   stato UI a cuore, update profilo/preferenze, like, contatto proprietario con
@@ -129,7 +134,7 @@ produzione. Mancano almeno:
   protezioni anti-abuso estese;
 - cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
 - integrazione osservabilita production-grade con OpenTelemetry/Dynatrace o
-  equivalente, alert e audit centralizzato;
+  equivalente, alert gestiti dal provider e audit centralizzato;
 - pipeline CI/CD e ambienti separati;
 - backup/restore verificati e strategia rollback migrazioni;
 - espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
@@ -176,8 +181,8 @@ Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 Prima della produzione servono supporto proxy fidato per l'IP client,
 calibrazione dei rate limit su traffico reale, lock progressivo account, policy
 sessioni, cookie sicuri se usati dal browser, log redatti, segreti gestiti da
-provider, hardening upload oltre i limiti iniziali, backup, alert e audit
-amministrativo piu esteso.
+provider, hardening upload oltre i limiti iniziali, backup, collegamento degli
+alert locali a un provider operativo e audit amministrativo piu esteso.
 
 ## Stato frontend
 

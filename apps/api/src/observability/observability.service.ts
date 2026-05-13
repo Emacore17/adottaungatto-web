@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto"
 
-import { Injectable } from "@nestjs/common"
+import { Inject, Injectable, Optional } from "@nestjs/common"
+
+import { API_ENV } from "../config/config.module.js"
+import type { ApiEnv } from "../config/env.js"
 
 type HeaderValue = string | string[] | undefined
 
@@ -18,6 +21,31 @@ export type HttpRequestMetricsInput = {
   traceId: string
 }
 
+type ObservabilityAlertEnv = Pick<
+  ApiEnv,
+  | "OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD"
+  | "OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD"
+  | "OBSERVABILITY_ALERT_MIN_REQUESTS"
+  | "OBSERVABILITY_ALERT_P95_MS_THRESHOLD"
+>
+
+export type ObservabilityAlertConfig = {
+  errorRateThreshold: number
+  inFlightRequestsThreshold: number
+  minRequests: number
+  p95DurationMsThreshold: number
+}
+
+export type ObservabilityAlert = {
+  id: string
+  labels?: Record<string, string>
+  message: string
+  observedValue: number
+  severity: "warning"
+  threshold: number
+  unit: "milliseconds" | "requests" | "ratio"
+}
+
 type RouteMetrics = {
   durationSamplesMs: number[]
   errorsTotal: number
@@ -31,12 +59,21 @@ const maxRouteSamples = 200
 
 @Injectable()
 export class ObservabilityService {
+  private readonly alertConfig: ObservabilityAlertConfig
   private readonly startedAt = new Date()
   private readonly routes = new Map<string, RouteMetrics>()
   private errorsTotal = 0
   private inFlightRequests = 0
   private requestsTotal = 0
   private readonly statusCodeCounts: Record<string, number> = {}
+
+  constructor(
+    @Optional()
+    @Inject(API_ENV)
+    env?: Partial<ObservabilityAlertEnv>
+  ) {
+    this.alertConfig = resolveAlertConfig(env)
+  }
 
   resolveCorrelation(headers: Record<string, HeaderValue> = {}) {
     const requestId = readHeader(headers["x-request-id"]) ?? randomUUID()
@@ -113,6 +150,83 @@ export class ObservabilityService {
     }
   }
 
+  alerts() {
+    const metrics = this.snapshot()
+    const alerts: ObservabilityAlert[] = []
+    const { http } = metrics
+
+    if (
+      http.requestsTotal >= this.alertConfig.minRequests &&
+      http.errorRate > this.alertConfig.errorRateThreshold
+    ) {
+      alerts.push({
+        id: "api_http_error_rate_high",
+        message: "API HTTP error rate is above threshold.",
+        observedValue: http.errorRate,
+        severity: "warning",
+        threshold: this.alertConfig.errorRateThreshold,
+        unit: "ratio",
+      })
+    }
+
+    if (http.inFlightRequests > this.alertConfig.inFlightRequestsThreshold) {
+      alerts.push({
+        id: "api_http_in_flight_high",
+        message: "API in-flight request count is above threshold.",
+        observedValue: http.inFlightRequests,
+        severity: "warning",
+        threshold: this.alertConfig.inFlightRequestsThreshold,
+        unit: "requests",
+      })
+    }
+
+    for (const route of http.routes) {
+      if (route.requestsTotal < this.alertConfig.minRequests) {
+        continue
+      }
+
+      const routeErrorRate = roundRatio(route.errorsTotal / route.requestsTotal)
+
+      if (routeErrorRate > this.alertConfig.errorRateThreshold) {
+        alerts.push({
+          id: "api_route_error_rate_high",
+          labels: {
+            method: route.method,
+            route: route.route,
+          },
+          message: "API route error rate is above threshold.",
+          observedValue: routeErrorRate,
+          severity: "warning",
+          threshold: this.alertConfig.errorRateThreshold,
+          unit: "ratio",
+        })
+      }
+
+      if (route.durationMs.p95 > this.alertConfig.p95DurationMsThreshold) {
+        alerts.push({
+          id: "api_route_p95_duration_high",
+          labels: {
+            method: route.method,
+            route: route.route,
+          },
+          message: "API route p95 duration is above threshold.",
+          observedValue: route.durationMs.p95,
+          severity: "warning",
+          threshold: this.alertConfig.p95DurationMsThreshold,
+          unit: "milliseconds",
+        })
+      }
+    }
+
+    return {
+      service: "api",
+      status: alerts.length > 0 ? "alerting" : "ok",
+      evaluatedAt: new Date().toISOString(),
+      thresholds: this.alertConfig,
+      alerts,
+    }
+  }
+
   private logHttpRequest(input: HttpRequestMetricsInput) {
     const level = input.statusCode >= 500 ? "error" : "info"
 
@@ -129,6 +243,20 @@ export class ObservabilityService {
         durationMs: input.durationMs,
       })
     )
+  }
+}
+
+function resolveAlertConfig(
+  env: Partial<ObservabilityAlertEnv> | undefined
+): ObservabilityAlertConfig {
+  return {
+    errorRateThreshold:
+      env?.OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD ?? 0.05,
+    inFlightRequestsThreshold:
+      env?.OBSERVABILITY_ALERT_IN_FLIGHT_THRESHOLD ?? 50,
+    minRequests: env?.OBSERVABILITY_ALERT_MIN_REQUESTS ?? 20,
+    p95DurationMsThreshold:
+      env?.OBSERVABILITY_ALERT_P95_MS_THRESHOLD ?? 1000,
   }
 }
 

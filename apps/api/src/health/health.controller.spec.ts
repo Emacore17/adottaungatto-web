@@ -100,4 +100,18 @@ describe("HealthController", () => {
     expect(response.service).toBe("api")
     expect(response.http.requestsTotal).toBeGreaterThanOrEqual(0)
   })
+
+  it("returns observability alerts", () => {
+    const controller = new HealthController(
+      databaseService,
+      redisService,
+      observabilityService
+    )
+
+    const response = controller.getAlerts()
+
+    expect(response.service).toBe("api")
+    expect(response.status).toBe("ok")
+    expect(response.alerts).toEqual([])
+  })
 })
