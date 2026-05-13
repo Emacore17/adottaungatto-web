@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { HeartIcon } from "lucide-react"
 
 import { routes } from "@/lib/routes"
@@ -27,6 +26,15 @@ type FavoriteStateResponse = {
   favorited: boolean
 }
 
+type FavoriteState = {
+  favoriteCount: number
+  favorited: boolean
+  listingId: string
+}
+
+const favoriteStateEventName = "adottaungatto:listing-favorite"
+const favoriteStateCache = new Map<string, FavoriteState>()
+
 function ListingFavoriteToggle({
   className,
   emphasis = "default",
@@ -38,7 +46,6 @@ function ListingFavoriteToggle({
   showLabel = false,
   syncOnMount = false,
 }: ListingFavoriteToggleProps) {
-  const router = useRouter()
   const [count, setCount] = useState(initialFavoriteCount)
   const [favorite, setFavorite] = useState(isFavorite)
   const [hasError, setHasError] = useState(false)
@@ -47,10 +54,41 @@ function ListingFavoriteToggle({
   const isProminent = emphasis === "prominent"
 
   useEffect(() => {
-    setCount(initialFavoriteCount)
-    setFavorite(isFavorite)
+    const cachedState = favoriteStateCache.get(listingId)
+
+    if (cachedState) {
+      setCount(cachedState.favoriteCount)
+      setFavorite(cachedState.favorited)
+    } else {
+      setCount(initialFavoriteCount)
+      setFavorite(isFavorite)
+    }
+
     setHasError(false)
-  }, [initialFavoriteCount, isFavorite])
+  }, [initialFavoriteCount, isFavorite, listingId])
+
+  useEffect(() => {
+    function updateFromFavoriteEvent(event: Event) {
+      const state = (event as CustomEvent<FavoriteState>).detail
+
+      if (state?.listingId !== listingId) {
+        return
+      }
+
+      setCount(state.favoriteCount)
+      setFavorite(state.favorited)
+      setHasError(false)
+    }
+
+    window.addEventListener(favoriteStateEventName, updateFromFavoriteEvent)
+
+    return () => {
+      window.removeEventListener(
+        favoriteStateEventName,
+        updateFromFavoriteEvent
+      )
+    }
+  }, [listingId])
 
   useEffect(() => {
     if (!isAuthenticated || !syncOnMount) {
@@ -64,6 +102,7 @@ function ListingFavoriteToggle({
       try {
         const response = await fetch(`/api/favorites/listings/${listingId}`, {
           cache: "no-store",
+          credentials: "same-origin",
         })
 
         if (!response.ok) {
@@ -76,10 +115,14 @@ function ListingFavoriteToggle({
           return
         }
 
-        setFavorite(data.favorited)
-        if (typeof data.favoriteCount === "number") {
-          setCount(data.favoriteCount)
-        }
+        publishFavoriteState({
+          favoriteCount:
+            typeof data.favoriteCount === "number"
+              ? data.favoriteCount
+              : initialFavoriteCount,
+          favorited: data.favorited,
+          listingId,
+        })
         setHasError(false)
       } catch {
         // The server-rendered state remains usable if this client sync fails.
@@ -91,7 +134,7 @@ function ListingFavoriteToggle({
     return () => {
       cancelled = true
     }
-  }, [isAuthenticated, listingId, syncOnMount])
+  }, [initialFavoriteCount, isAuthenticated, listingId, syncOnMount])
 
   if (!isAuthenticated) {
     const label = showLabel ? "Accedi per salvare" : "Accedi per salvare"
@@ -140,14 +183,19 @@ function ListingFavoriteToggle({
     const nextCount = Math.max(0, count + (nextFavorite ? 1 : -1))
     const previousFavorite = favorite
     const previousCount = count
+    const optimisticState = {
+      favoriteCount: nextCount,
+      favorited: nextFavorite,
+      listingId,
+    }
 
     setIsPending(true)
-    setFavorite(nextFavorite)
-    setCount(nextCount)
+    publishFavoriteState(optimisticState)
     setHasError(false)
 
     try {
       const response = await fetch(`/api/favorites/listings/${listingId}`, {
+        credentials: "same-origin",
         method: nextFavorite ? "POST" : "DELETE",
       })
 
@@ -156,29 +204,27 @@ function ListingFavoriteToggle({
       }
 
       const data = (await response.json()) as FavoriteStateResponse
+      const serverState = {
+        favoriteCount:
+          typeof data.favoriteCount === "number"
+            ? data.favoriteCount
+            : nextCount,
+        favorited: data.favorited,
+        listingId,
+      }
 
-      setFavorite(data.favorited)
-      setCount((currentCount) => {
-        if (typeof data.favoriteCount === "number") {
-          return data.favoriteCount
-        }
-
-        if (data.favorited === nextFavorite) {
-          return currentCount
-        }
-
-        return Math.max(0, currentCount + (data.favorited ? 1 : -1))
-      })
+      publishFavoriteState(serverState)
       if (data.favorited) {
         toast.success("Aggiunto ai preferiti")
       } else {
         toast.error("Rimosso dai preferiti")
       }
-
-      router.refresh()
     } catch {
-      setFavorite(previousFavorite)
-      setCount(previousCount)
+      publishFavoriteState({
+        favoriteCount: previousCount,
+        favorited: previousFavorite,
+        listingId,
+      })
       setHasError(true)
       toast.error("Non e' stato possibile aggiornare i preferiti.")
     } finally {
@@ -217,6 +263,13 @@ function ListingFavoriteToggle({
       <span className="tabular-nums">{count}</span>
       {showLabel ? <span>{visibleLabel}</span> : null}
     </Button>
+  )
+}
+
+function publishFavoriteState(state: FavoriteState) {
+  favoriteStateCache.set(state.listingId, state)
+  window.dispatchEvent(
+    new CustomEvent(favoriteStateEventName, { detail: state })
   )
 }
 

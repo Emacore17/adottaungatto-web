@@ -70,7 +70,7 @@ function ListingCard({
             title={listing.title}
           />
           <ListingFavoriteToggle
-            className="absolute top-3 right-3"
+            className="absolute top-3 right-3 z-10"
             initialFavoriteCount={listing.stats.favoriteCount}
             isAuthenticated={isAuthenticated}
             isFavorite={isFavorite}
