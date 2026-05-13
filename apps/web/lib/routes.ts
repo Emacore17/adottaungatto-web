@@ -61,4 +61,5 @@ export const routes = {
   accountNotifications: "/account/notifications",
   accountSettings: "/account/settings",
   moderation: "/moderation",
+  moderationQueue: "/moderation/queue",
 }

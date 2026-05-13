@@ -20,9 +20,9 @@ Esistono:
 - upload asset demo su MinIO per 11 annunci, usando `immagini-gattini/` se
   presente e fallback placeholder se assente;
 - smoke E2E locale `pnpm smoke:e2e` con login admin, controllo coda
-  `pending_review`, filtro segnalazioni, dettaglio operativo caso, template
-  motivazioni, audit caso, accesso negato per utente non moderatore e verifica
-  dello shell interno di moderazione. Se il login admin demo e' limitato da
+  `pending_review`, dashboard moderazione, coda rapida tabellare, filtro
+  segnalazioni, accesso negato per utente non moderatore e verifica dello shell
+  interno di moderazione. Se il login admin demo e' limitato da
   rate limit locale dopo run ravvicinati, lo smoke usa il moderatore demo come
   fallback equivalente per la coda interna.
 
@@ -99,12 +99,10 @@ La demo include:
 - processing immagine o fixture immagine pronta; Fatto tramite worker locale.
 - invio a revisione riuscito; Fatto.
 - login admin e coda `pending_review`; Fatto con verifica dello shell interno
-  `/moderation`.
+  `/moderation` e della coda rapida `/moderation/queue`.
 - filtro code moderazione; Fatto verificando `/moderation?queue=reported`.
-- dettaglio operativo moderazione; Fatto verificando la presenza dei dati caso
-  nella dashboard admin.
-- audit caso moderazione; Fatto verificando la sezione `Audit caso` e le azioni
-  recenti nelle code admin.
+- coda rapida moderazione; Fatto verificando vista tabellare, selezione e
+  azioni batch renderizzate.
 - accesso negato moderazione; Fatto verificando la UI per utente non
   moderatore.
 - annuncio sponsorizzato mock in cima alla lista pubblica; Fatto.

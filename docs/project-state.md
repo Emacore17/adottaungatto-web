@@ -91,14 +91,14 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   presigned, galleria immagini con stato, eliminazione, riordino/copertina,
   guida passaggi dati / foto / revisione, invio a revisione e conferma
   post-invio.
-- Route group admin iniziale con layout interno dedicato e pagina
-  `/moderation` server-rendered, `noindex`, login obbligatorio, lettura delle
-  code API `pending_review` e segnalazioni, e azioni base
-  approva/rifiuta/sospendi con motivo obbligatorio; la pagina include un
-  filtro operativo `queue=all|pending|reported`, dettaglio operativo caso,
-  audit caso alimentato da `moderation_actions`, template motivazioni orientati
-  all'azione e stato accesso negato per utenti senza ruolo interno, mentre le
-  autorizzazioni di ruolo restano applicate dalle API.
+- Route group admin con layout dashboard dedicato, sidebar desktop, navigazione
+  mobile interna e pagina `/moderation` server-rendered, `noindex`, login
+  obbligatorio, KPI sintetici e preview compatte delle code API
+  `pending_review` e segnalazioni. La gestione operativa vive in
+  `/moderation/queue`, vista tabellare con selezione multipla,
+  approva/rifiuta/sospendi batch, azioni rapide per riga e anteprima cover
+  per controllo contenuti; le autorizzazioni di ruolo restano applicate dalle
+  API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -123,8 +123,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
   chiave della dashboard account, pagine account autenticate, piu login admin,
-  coda moderazione demo, filtro code, dettaglio operativo, audit caso e accesso
-  negato alla moderazione per utente non abilitato. Lo smoke carica piu
+  coda moderazione demo, dashboard admin, coda rapida tabellare, filtro code e
+  accesso negato alla moderazione per utente non abilitato. Lo smoke carica piu
   immagini reali da `immagini-gattini/` quando disponibili, verifica il
   carosello e i thumbnail del dettaglio annuncio pubblicato, controlla la
   notifica di invio a revisione e controlla la ricezione real-time delle
@@ -209,10 +209,10 @@ operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
 impostazioni profilo/preferenze email, form contatto proprietario sulla scheda
 annuncio e pagina `/moderation` dentro layout interno separato, collegata alle
-code API con filtro code, dettaglio operativo caso, audit caso, template
-motivazioni e decisioni base motivate. L'area account supporta
-rimozione preferiti, marcatura notifiche lette, cancellazione annunci in
-lavorazione ed editor con creazione tramite "Inserisci annuncio", modifica,
+code API con KPI, preview compatte e coda rapida `/moderation/queue` per
+decisioni tabellari singole o batch motivate. L'area account supporta rimozione
+preferiti, marcatura notifiche lette, cancellazione annunci in lavorazione ed
+editor con creazione tramite "Inserisci annuncio", modifica,
 upload immagine, galleria immagini con stato chiaro, eliminazione,
 riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
 schermata di conferma. Il form contatto pubblico permette il consenso separato

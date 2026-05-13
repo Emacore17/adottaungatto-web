@@ -257,25 +257,27 @@ Task:
 
 Avanzamento 12 maggio 2026:
 
-- Fatto: il route group `(admin)` usa un layout interno dedicato, senza
-  header/footer pubblici, con navigazione distinta, badge area interna e link
+- Fatto: il route group `(admin)` usa un layout dashboard dedicato, senza
+  header/footer pubblici, con sidebar desktop, navigazione mobile interna e link
   rapidi verso sito pubblico e account.
 - Fatto: la pagina `/moderation` e' presentata come dashboard moderazione
-  server-rendered, protetta da login, `noindex` e collegata alle code API.
+  server-rendered, protetta da login, `noindex`, con KPI e preview compatte
+  collegate alle code API.
 - Fatto: la dashboard moderazione espone un filtro operativo server-rendered
   per vedere tutte le code, solo `pending_review` o solo segnalazioni.
-- Fatto: ogni card moderazione mostra un dettaglio operativo del caso con ID,
-  ownership, stato ciclo, motivo apertura e riferimenti segnalazione quando
-  presenti.
-- Fatto: i motivi rapidi sono presentati come template orientati all'azione
-  prevista: approva, rifiuta o sospendi.
-- Fatto: le code API includono le ultime azioni `moderation_actions` e la UI
-  mostra un audit caso consultabile per ogni item.
+- Fatto: `/moderation/queue` offre una vista tabellare rapida con selezione
+  multipla, decisioni batch approva/rifiuta/sospendi, azioni rapide per riga e
+  anteprima cover per controllo contenuti.
+- Fatto: i motivi rapidi batch usano default per azione e supportano nota
+  opzionale o motivo `other` con nota obbligatoria.
+- Fatto: le code API continuano a includere audit `moderation_actions`; la UI
+  dashboard mostra il dato operativo essenziale e lascia l'operativita alla
+  coda rapida.
 - Fatto: MFA per ruoli interni e' tracciata come backlog hardening produzione
   in `docs/production-readiness.md`.
-- Fatto: lo smoke E2E verifica login admin, coda `pending_review` e presenza
-  dello shell admin separato, filtro segnalazioni, dettaglio operativo,
-  template motivazione, audit caso e accesso negato per utente non moderatore.
+- Fatto: lo smoke E2E verifica login admin, coda `pending_review`, shell admin
+  separato, dashboard moderazione, coda rapida tabellare, filtro segnalazioni e
+  accesso negato per utente non moderatore.
 
 Stato: Milestone F completata per il giro locale prodotto. Restano hardening
 MFA, gestione ruoli e audit non modificabile per produzione.

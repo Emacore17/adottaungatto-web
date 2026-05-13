@@ -609,12 +609,21 @@ try {
     "web moderation admin shell",
     moderationHtml.includes("Area interna") &&
       moderationHtml.includes("Dashboard moderazione") &&
-      moderationHtml.includes("Accesso protetto") &&
-      moderationHtml.includes("Dettaglio operativo caso") &&
-      moderationHtml.includes("Audit caso") &&
-      moderationHtml.includes("Azione ") &&
-      moderationHtml.includes("opened") &&
-      moderationHtml.includes("Approva: conforme alle policy")
+      moderationHtml.includes("Coda rapida") &&
+      moderationHtml.includes("Controllo code") &&
+      moderationHtml.includes("Apri coda rapida")
+  )
+  const moderationQueueHtml = await webText(
+    "/moderation/queue?queue=pending",
+    adminToken,
+    "web moderation quick queue"
+  )
+  check(
+    "web moderation quick queue content",
+    moderationQueueHtml.includes("Revisione operativa") &&
+      moderationQueueHtml.includes("Vista tabellare") &&
+      moderationQueueHtml.includes("Seleziona casi dalla tabella") &&
+      moderationQueueHtml.includes("Azioni")
   )
   const deniedModerationHtml = await webText(
     "/moderation",

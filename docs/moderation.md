@@ -47,23 +47,23 @@ Un annuncio e' pubblico solo se:
 - Ordina dai casi piu' vecchi ai piu' recenti.
 - Include dati annuncio, proprietario, luogo, conteggio immagini pronte e
   copertina pronta quando disponibile.
-- Il frontend espone una prima pagina `/moderation` server-rendered, `noindex`
-  e protetta da login, dentro un layout interno separato dal sito pubblico.
-  La pagina legge questa coda tramite bearer token. Se l'API restituisce
-  `403`, mostra uno stato di accesso non consentito. Ogni item include un form
-  decisione con motivo rapido o nota obbligatoria.
+- Il frontend espone `/moderation` server-rendered, `noindex` e protetta da
+  login, dentro un layout interno separato dal sito pubblico. La pagina legge
+  questa coda tramite bearer token. Se l'API restituisce `403`, mostra uno
+  stato di accesso non consentito. La dashboard mostra KPI e preview compatte
+  delle code.
+- La gestione operativa veloce vive in `/moderation/queue`: vista tabellare,
+  selezione multipla, decisioni batch `approve`, `reject`, `suspend`, azioni
+  rapide per singola riga e anteprima cover per valutare i contenuti visuali.
 - La pagina supporta il filtro query `queue=all|pending|reported`, usato solo
   per scegliere quali sezioni operative mostrare. Le API restano la fonte per
   autorizzazioni, paginazione e dati.
-- Ogni card mostra un dettaglio operativo del caso con ID caso, ID annuncio,
-  stato ciclo, motivo apertura, assegnazione, ownership e riferimenti di
-  segnalazione quando il caso nasce da report utente.
-- Ogni item di coda include le ultime azioni `moderation_actions` del caso e
-  la UI le espone come audit consultabile con azione, operatore, motivo, cambio
-  stato e data.
-- I motivi rapidi della decisione sono esposti come template orientati
-  all'azione: approvazione conforme, rifiuto per policy, rifiuto per dati
-  insufficienti, sospensione per rischio e altro con nota obbligatoria.
+- Ogni item di coda include dati operativi essenziali: annuncio, proprietario,
+  luogo, immagini pronte, data apertura e conteggio segnalazioni dove presente.
+  Le ultime azioni `moderation_actions` restano disponibili dalla risposta API.
+- I motivi rapidi batch usano un default in base all'azione: approvazione
+  conforme, rifiuto per policy o sospensione per rischio. Il moderatore puo
+  cambiare motivo e aggiungere una nota; `other` richiede nota obbligatoria.
 - Se un utente autenticato non ha ruolo `moderator` o `admin`, il frontend
   mostra uno stato di accesso non consentito; il blocco resta applicato dalle
   API con risposta `403`.
