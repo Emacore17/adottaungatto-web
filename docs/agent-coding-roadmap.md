@@ -77,10 +77,10 @@ Avanzamento 12 maggio 2026:
   in revisione.
 - Fatto: `worker demo:assets` usa le foto locali in `immagini-gattini/` quando
   presenti e cade su placeholder generati quando non ci sono.
-- Fatto: la UI usa immagini storage non ottimizzate da Next per evitare il
-  blocco locale di MinIO su `localhost:9000`.
+- Fatto: la UI usa un proxy Next same-origin `/api/storage/...` per le immagini
+  storage, senza optimizer Next, cosi' evita link client a `localhost:9000`.
 - Fatto: lo smoke E2E verifica che la lista pubblica abbia cover, che l'oggetto
-  storage risponda e che l'HTML usi URL storage diretti.
+  storage risponda, che il proxy web risponda e che l'HTML usi URL proxy.
 - Fatto: lo smoke E2E verifica login admin e presenza della coda
   `pending_review`.
 - Fatto: promozione mock attiva su un annuncio pubblicato e visibile in cima a

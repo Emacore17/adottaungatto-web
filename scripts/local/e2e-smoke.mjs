@@ -122,6 +122,15 @@ try {
     coverStorage.ok,
     `status=${coverStorage.status}`
   )
+  const proxiedCoverStorage = await fetch(
+    `${webBaseUrl}/api/storage/${encodeStorageObjectKey(coverObjectKey)}`
+  )
+  check(
+    "web proxied listing storage image",
+    proxiedCoverStorage.ok &&
+      proxiedCoverStorage.headers.get("content-type")?.startsWith("image/"),
+    `status=${proxiedCoverStorage.status}`
+  )
   pass("public listing selected", `listing=${listingId}`)
 
   const listing = await api("GET", `/listings/${listingId}`)
@@ -406,6 +415,19 @@ try {
     }
   )
   check("web favorite api add", webFavorite.favorited === true)
+  const webFavoriteState = await rawJson(
+    `${webBaseUrl}/api/favorites/listings/${listingId}`,
+    {
+      headers: {
+        Cookie: `aug_session=${token}`,
+      },
+    }
+  )
+  check(
+    "web favorite api state saved",
+    webFavoriteState.favorited === true &&
+      Number.isInteger(webFavoriteState.favoriteCount)
+  )
   const webFavoriteSavedHtml = await webText(
     "/listings",
     token,
@@ -425,6 +447,19 @@ try {
     }
   )
   check("web favorite api delete", webFavoriteRemoved.favorited === false)
+  const webFavoriteRemovedState = await rawJson(
+    `${webBaseUrl}/api/favorites/listings/${listingId}`,
+    {
+      headers: {
+        Cookie: `aug_session=${token}`,
+      },
+    }
+  )
+  check(
+    "web favorite api state removed",
+    webFavoriteRemovedState.favorited === false &&
+      Number.isInteger(webFavoriteRemovedState.favoriteCount)
+  )
   const webFavoriteApiRemovedHtml = await webText(
     "/listings",
     token,
@@ -1334,12 +1369,13 @@ function parseSseEvent(rawEvent) {
 
 async function webListingImages() {
   const html = await rawText(`${webBaseUrl}/listings`)
-  const storagePrefix = `${storagePublicUrl}/${storageBucket}/`
 
   check(
     "web listing storage images",
-    html.includes(storagePrefix) && !html.includes("/_next/image?url="),
-    `storage=${storagePrefix}`
+    html.includes("/api/storage/") &&
+      !html.includes(`${storagePublicUrl}/${storageBucket}/`) &&
+      !html.includes("/_next/image?url="),
+    "storage proxy present"
   )
   check(
     "web listing image previews",
@@ -1347,6 +1383,10 @@ async function webListingImages() {
       html.includes("data-preview-count"),
     "preview markup present"
   )
+}
+
+function encodeStorageObjectKey(objectKey) {
+  return objectKey.split("/").map(encodeURIComponent).join("/")
 }
 
 async function resolveSmokeMunicipality() {

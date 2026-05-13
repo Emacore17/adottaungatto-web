@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { HeartIcon } from "lucide-react"
 
 import { routes } from "@/lib/routes"
@@ -17,7 +18,13 @@ type ListingFavoriteToggleProps = {
   listingId: string
   nextPath: string
   showLabel?: boolean
+  syncOnMount?: boolean
   className?: string
+}
+
+type FavoriteStateResponse = {
+  favoriteCount?: number
+  favorited: boolean
 }
 
 function ListingFavoriteToggle({
@@ -29,11 +36,14 @@ function ListingFavoriteToggle({
   listingId,
   nextPath,
   showLabel = false,
+  syncOnMount = false,
 }: ListingFavoriteToggleProps) {
+  const router = useRouter()
   const [count, setCount] = useState(initialFavoriteCount)
   const [favorite, setFavorite] = useState(isFavorite)
   const [hasError, setHasError] = useState(false)
   const [isPending, setIsPending] = useState(false)
+  const syncGenerationRef = useRef(0)
   const isProminent = emphasis === "prominent"
 
   useEffect(() => {
@@ -41,6 +51,47 @@ function ListingFavoriteToggle({
     setFavorite(isFavorite)
     setHasError(false)
   }, [initialFavoriteCount, isFavorite])
+
+  useEffect(() => {
+    if (!isAuthenticated || !syncOnMount) {
+      return
+    }
+
+    let cancelled = false
+    const syncGeneration = ++syncGenerationRef.current
+
+    async function syncFavoriteState() {
+      try {
+        const response = await fetch(`/api/favorites/listings/${listingId}`, {
+          cache: "no-store",
+        })
+
+        if (!response.ok) {
+          return
+        }
+
+        const data = (await response.json()) as FavoriteStateResponse
+
+        if (cancelled || syncGenerationRef.current !== syncGeneration) {
+          return
+        }
+
+        setFavorite(data.favorited)
+        if (typeof data.favoriteCount === "number") {
+          setCount(data.favoriteCount)
+        }
+        setHasError(false)
+      } catch {
+        // The server-rendered state remains usable if this client sync fails.
+      }
+    }
+
+    void syncFavoriteState()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, listingId, syncOnMount])
 
   if (!isAuthenticated) {
     const label = showLabel ? "Accedi per salvare" : "Accedi per salvare"
@@ -83,6 +134,8 @@ function ListingFavoriteToggle({
       return
     }
 
+    syncGenerationRef.current += 1
+
     const nextFavorite = !favorite
     const nextCount = Math.max(0, count + (nextFavorite ? 1 : -1))
     const previousFavorite = favorite
@@ -102,10 +155,14 @@ function ListingFavoriteToggle({
         throw new Error("Favorite request failed.")
       }
 
-      const data = (await response.json()) as { favorited: boolean }
+      const data = (await response.json()) as FavoriteStateResponse
 
       setFavorite(data.favorited)
       setCount((currentCount) => {
+        if (typeof data.favoriteCount === "number") {
+          return data.favoriteCount
+        }
+
         if (data.favorited === nextFavorite) {
           return currentCount
         }
@@ -115,8 +172,10 @@ function ListingFavoriteToggle({
       if (data.favorited) {
         toast.success("Aggiunto ai preferiti")
       } else {
-        toast.info("Rimosso dai preferiti")
+        toast.error("Rimosso dai preferiti")
       }
+
+      router.refresh()
     } catch {
       setFavorite(previousFavorite)
       setCount(previousCount)

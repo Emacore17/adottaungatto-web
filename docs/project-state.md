@@ -249,11 +249,12 @@ processa automaticamente le immagini in `processing` durante l'avvio
 applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
 Gli asset demo usano le foto locali in `immagini-gattini/` quando presenti e
 cadono sui placeholder deterministici quando la cartella non esiste. La UI
-renderizza le immagini storage senza passare dall'optimizer Next, per evitare il
-blocco di `localhost:9000`/MinIO. La lista `/listings` usa card orizzontali, una
-per riga, con foto `cover`, preview multi-foto in hover e annuncio sponsorizzato
-mock piu evidente con label dichiarata.
-Lo smoke verifica anche URL storage diretti, invia un annuncio a revisione,
+renderizza le immagini storage tramite proxy Next same-origin `/api/storage/...`
+senza passare dall'optimizer, cosi' funzionano anche da telefono su server
+locale remoto. La lista `/listings` usa card orizzontali, una per riga, con foto
+`cover`, preview multi-foto in hover e annuncio sponsorizzato mock piu evidente
+con label dichiarata.
+Lo smoke verifica anche URL storage diretti e proxy web, invia un annuncio a revisione,
 controlla la notifica di stato, approva il caso e controlla che sia pubblicato
 e notificato al proprietario anche tramite stream real-time.
 

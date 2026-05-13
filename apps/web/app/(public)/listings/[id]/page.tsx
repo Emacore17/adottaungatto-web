@@ -170,6 +170,7 @@ export default async function ListingDetailPage({
                 isFavorite={favoriteListingIds.has(listing.data.id)}
                 listingId={listing.data.id}
                 nextPath={nextPath}
+                syncOnMount
               />
             </div>
 

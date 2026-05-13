@@ -1,9 +1,11 @@
-import { webEnv } from "@/lib/config/env"
-
 export function getPublicObjectUrl(objectKey: string | null | undefined) {
-  if (!objectKey || !webEnv.storageBucket) {
+  if (!objectKey) {
     return null
   }
 
-  return `${webEnv.storagePublicUrl}/${webEnv.storageBucket}/${objectKey.replace(/^\/+/, "")}`
+  return `/api/storage/${objectKey
+    .replace(/^\/+/, "")
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`
 }

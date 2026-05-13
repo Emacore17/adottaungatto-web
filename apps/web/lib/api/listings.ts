@@ -12,6 +12,10 @@ import type {
 
 type SearchParamValue = string | string[] | undefined
 type SearchParamsInput = Record<string, SearchParamValue>
+type PublicListingFetchOptions = {
+  cache?: RequestCache
+  revalidate?: number
+}
 
 const listingSearchParamKeys = new Set([
   "page",
@@ -93,12 +97,20 @@ export function listPublicListings(
 }
 
 export function getPublicListing(
-  id: string
+  id: string,
+  options: PublicListingFetchOptions = {}
 ): Promise<ApiResult<PublicListingDetail>> {
-  return apiFetch<PublicListingDetail>(`/listings/${id}`, {
-    revalidate: 60,
-    tags: [`public-listing:${id}`],
-  })
+  return apiFetch<PublicListingDetail>(
+    `/listings/${id}`,
+    options.cache
+      ? {
+          cache: options.cache,
+        }
+      : {
+          revalidate: options.revalidate ?? 60,
+          tags: [`public-listing:${id}`],
+        }
+  )
 }
 
 export function listPublicCatBreeds(): Promise<ApiResult<PublicCatBreed[]>> {
