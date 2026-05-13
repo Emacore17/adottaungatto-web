@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useId, useRef, useState } from "react"
-import { MapPinIcon, XIcon } from "lucide-react"
+import { Loader2Icon, MapPinIcon, XIcon } from "lucide-react"
 
 import { formatPlaceType } from "@/app/(public)/_components/listing-search-options"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
@@ -19,6 +19,8 @@ type PlaceAutocompletePayload = {
   items: PlaceAutocompleteItem[]
 }
 
+type AutocompleteStatus = "idle" | "loading" | "ready" | "error"
+
 function formatSelectedPlace(place: PlaceAutocompleteItem) {
   return `${place.label}, ${formatPlaceType(place.type)}`
 }
@@ -32,14 +34,16 @@ function PlaceAutocompleteInput({
 }: PlaceAutocompleteInputProps) {
   const inputId = useId()
   const listboxId = useId()
+  const statusId = useId()
   const rootRef = useRef<HTMLDivElement | null>(null)
   const [query, setQuery] = useState(
     selectedPlace ? formatSelectedPlace(selectedPlace) : ""
   )
   const [suggestions, setSuggestions] = useState<PlaceAutocompleteItem[]>([])
   const [open, setOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<AutocompleteStatus>("idle")
   const [activeIndex, setActiveIndex] = useState(-1)
+  const loading = status === "loading"
 
   useEffect(() => {
     setQuery(selectedPlace ? formatSelectedPlace(selectedPlace) : "")
@@ -73,14 +77,17 @@ function PlaceAutocompleteInput({
 
     if (!open || selectedPlace || normalizedQuery.length < 2) {
       setSuggestions([])
-      setLoading(false)
+      setStatus("idle")
+      setActiveIndex(-1)
       return
     }
 
     const controller = new AbortController()
-    const timeoutId = window.setTimeout(async () => {
-      setLoading(true)
+    setSuggestions([])
+    setStatus("loading")
+    setActiveIndex(-1)
 
+    const timeoutId = window.setTimeout(async () => {
       try {
         const params = new URLSearchParams({
           q: normalizedQuery,
@@ -106,14 +113,12 @@ function PlaceAutocompleteInput({
         const payload = (await response.json()) as PlaceAutocompletePayload
         setSuggestions(payload.items)
         setActiveIndex(payload.items.length > 0 ? 0 : -1)
+        setStatus("ready")
       } catch {
         if (!controller.signal.aborted) {
           setSuggestions([])
           setActiveIndex(-1)
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false)
+          setStatus("error")
         }
       }
     }, 220)
@@ -130,6 +135,7 @@ function PlaceAutocompleteInput({
     setSuggestions([])
     setOpen(false)
     setActiveIndex(-1)
+    setStatus("idle")
   }
 
   function clearSelection() {
@@ -138,6 +144,7 @@ function PlaceAutocompleteInput({
     setSuggestions([])
     setOpen(false)
     setActiveIndex(-1)
+    setStatus("idle")
   }
 
   return (
@@ -145,7 +152,8 @@ function PlaceAutocompleteInput({
       <label
         className={cn(
           "flex h-14 items-center gap-3 rounded-lg border border-brand-coral/20 bg-card/88 px-3 shadow-xs transition-[border-color,box-shadow,background-color]",
-          "focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]"
+          "focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]",
+          loading && "border-brand-teal/40 bg-card"
         )}
         htmlFor={inputId}
       >
@@ -163,7 +171,9 @@ function PlaceAutocompleteInput({
             role="combobox"
             aria-autocomplete="list"
             aria-controls={listboxId}
+            aria-describedby={loading ? statusId : undefined}
             aria-expanded={open}
+            aria-busy={loading}
             onChange={(event) => {
               if (selectedPlace) {
                 onSelect(null)
@@ -210,6 +220,20 @@ function PlaceAutocompleteInput({
           />
         </span>
 
+        {loading && !selectedPlace ? (
+          <span
+            id={statusId}
+            className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground"
+            aria-live="polite"
+          >
+            <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />
+            <span className="sr-only">Caricamento luoghi</span>
+            <span aria-hidden="true" className="hidden sm:inline">
+              Carico
+            </span>
+          </span>
+        ) : null}
+
         {selectedPlace ? (
           <button
             type="button"
@@ -222,19 +246,29 @@ function PlaceAutocompleteInput({
         ) : null}
       </label>
 
-      {open && (query.trim().length >= 2 || loading) && !selectedPlace ? (
+      {open && query.trim().length >= 2 && !selectedPlace ? (
         <div
           id={listboxId}
           role="listbox"
           className="absolute right-0 left-0 z-40 mt-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-46px_color-mix(in_oklab,var(--color-brand-teal-ink)_56%,transparent)]"
         >
           {loading ? (
-            <p className="px-3 py-2.5 text-sm text-muted-foreground">
-              Ricerca...
+            <div
+              className="flex items-center gap-2 px-3 py-2.5 text-sm text-muted-foreground"
+              aria-live="polite"
+            >
+              <Loader2Icon aria-hidden="true" className="size-4 animate-spin" />
+              Caricamento luoghi...
+            </div>
+          ) : null}
+
+          {status === "error" ? (
+            <p className="px-3 py-2.5 text-sm text-destructive">
+              Non riesco a caricare i luoghi. Riprova.
             </p>
           ) : null}
 
-          {!loading && suggestions.length === 0 ? (
+          {status === "ready" && suggestions.length === 0 ? (
             <p className="px-3 py-2.5 text-sm text-muted-foreground">
               Nessun luogo trovato
             </p>
