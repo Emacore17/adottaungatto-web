@@ -37,6 +37,42 @@ describe("LikesService", () => {
     )
   })
 
+  it("returns the current user like state for a published listing", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          listing_id: "listing-id",
+          like_count: "7",
+          liked: true,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.userLikeState("user-id", "listing-id")
+    ).resolves.toEqual({
+      listingId: "listing-id",
+      likeCount: 7,
+      liked: true,
+    })
+    expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
+      "user-id",
+      "listing-id",
+    ])
+  })
+
+  it("returns not found for non-public user like state targets", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.userLikeState("user-id", "listing-id")
+    ).rejects.toBeInstanceOf(NotFoundException)
+  })
+
   it("likes a public listing", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([

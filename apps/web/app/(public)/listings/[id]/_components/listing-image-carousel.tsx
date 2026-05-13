@@ -50,14 +50,14 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
       data-listing-carousel
       data-carousel-count={images.length}
     >
-      <div className="relative aspect-[16/10] overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-[16/10] overflow-hidden rounded-lg border border-border/80 bg-muted p-2">
         <StorageImage
           key={currentImage.id}
           src={currentImage.url}
           alt={currentImage.alt}
           fill
           priority={safeIndex === 0}
-          className="object-cover"
+          className="object-contain p-2"
           sizes="(min-width: 1024px) 768px, 100vw"
         />
 

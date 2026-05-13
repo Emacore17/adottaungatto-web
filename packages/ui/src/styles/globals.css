@@ -394,7 +394,25 @@
   }
 }
 
+@keyframes listing-like-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.08);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
 @layer utilities {
+  .listing-like-pop {
+    animation: listing-like-pop 280ms ease-out;
+  }
+
   .home-float-slow {
     animation: home-float 11s ease-in-out infinite;
   }
@@ -411,6 +429,10 @@
     .home-float-slow,
     .home-float-medium,
     .home-float-reverse {
+      animation: none;
+    }
+
+    .listing-like-pop {
       animation: none;
     }
   }

@@ -200,6 +200,7 @@ export type PublicListingSummary = {
   images: {
     readyCount: number
     cover: PublicListingImage | null
+    preview: PublicListingImage[]
   }
 }
 

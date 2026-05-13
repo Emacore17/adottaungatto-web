@@ -81,6 +81,7 @@ export type PublicListingSummary = {
   images: {
     readyCount: number
     cover: PublicListingImage | null
+    preview: PublicListingImage[]
   }
 }
 
@@ -108,4 +109,14 @@ export type PublicListingListResponse = {
     rankingVersion: "postgres-v1"
     expansion: PublicListingExpansion | null
   }
+}
+
+export type ListingLikeStateResponse = {
+  liked: boolean
+  likeCount: number
+  listingId: string
+}
+
+export type ListingLikeMutationResponse = ListingLikeStateResponse & {
+  changed: boolean
 }

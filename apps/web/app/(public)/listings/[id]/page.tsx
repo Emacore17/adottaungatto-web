@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
-import { CalendarIcon, HeartIcon, MapPinIcon } from "lucide-react"
+import { CalendarIcon, MapPinIcon } from "lucide-react"
 
 import {
   ListingContactCard,
@@ -14,13 +14,16 @@ import {
   ListingImageCarousel,
   type ListingCarouselImage,
 } from "@/app/(public)/listings/[id]/_components/listing-image-carousel"
+import { ListingLikeToggle } from "@/app/(public)/listings/[id]/_components/listing-like-toggle"
 import { JsonLd } from "@/components/shared/json-ld"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingDetail, PublicListingImage } from "@/lib/api/types"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
+import { getListingLikeState } from "@/lib/api/likes"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
+import { routes } from "@/lib/routes"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { Badge } from "@workspace/ui/components/badge"
@@ -82,12 +85,29 @@ export default async function ListingDetailPage({
     notFound()
   }
 
-  const [favoriteListingIds, currentUserProfile] = sessionToken
-    ? await Promise.all([
-        listFavoriteListingIds(sessionToken, [listing.data.id]),
-        getCurrentUserProfile(sessionToken),
-      ])
-    : [new Set<string>(), null]
+  let favoriteListingIds = new Set<string>()
+  let currentUserProfile: Awaited<
+    ReturnType<typeof getCurrentUserProfile>
+  > | null = null
+  let listingLikeCount = listing.data.stats.likeCount
+  let isListingLiked = false
+
+  if (sessionToken) {
+    const [favoriteIds, profile, likeState] = await Promise.all([
+      listFavoriteListingIds(sessionToken, [listing.data.id]),
+      getCurrentUserProfile(sessionToken),
+      getListingLikeState(sessionToken, listing.data.id),
+    ])
+
+    favoriteListingIds = favoriteIds
+    currentUserProfile = profile
+
+    if (likeState.ok) {
+      listingLikeCount = likeState.data.likeCount
+      isListingLiked = likeState.data.liked
+    }
+  }
+
   const hasShareablePhone =
     currentUserProfile?.ok === true &&
     Boolean(currentUserProfile.data.phoneE164)
@@ -133,15 +153,18 @@ export default async function ListingDetailPage({
               <h1 className="text-3xl font-medium text-balance">
                 {listing.data.title}
               </h1>
-              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <MapPinIcon data-icon="inline-start" aria-hidden="true" />
                   {locationLabel}
                 </span>
-                <span className="flex items-center gap-1">
-                  <HeartIcon data-icon="inline-start" aria-hidden="true" />
-                  {listing.data.stats.likeCount}
-                </span>
+                <ListingLikeToggle
+                  initialCount={listingLikeCount}
+                  initialLiked={isListingLiked}
+                  isAuthenticated={Boolean(sessionToken)}
+                  listingId={listing.data.id}
+                  nextPath={routes.listing(listing.data.id)}
+                />
                 {listing.data.publishedAt ? (
                   <span className="flex items-center gap-1">
                     <CalendarIcon data-icon="inline-start" aria-hidden="true" />

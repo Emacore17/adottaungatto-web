@@ -250,6 +250,8 @@ Policy iniziale per like:
 - il conteggio like e' pubblico solo per annunci pubblicati:
   `moderation_status = approved`, `lifecycle_status = published`,
   `deleted_at is null` e non scaduti;
+- la lettura dello stato del proprio like su un annuncio richiede bearer token
+  valido e restituisce solo `liked` e conteggio aggregato;
 - aggiunta e rimozione del proprio like richiedono bearer token valido;
 - l'aggiunta e' consentita solo su annunci pubblici;
 - ogni utente puo avere un solo like per annuncio;

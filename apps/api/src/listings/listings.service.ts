@@ -112,6 +112,7 @@ type PublicListingRow = Omit<
   cover_blur_hash: string | null
   cover_sort_order: number | null
   cover_is_cover: boolean | null
+  preview_images: unknown
   is_sponsored: boolean
   sponsorship_label: string | null
   sponsorship_placement: string | null
@@ -287,6 +288,7 @@ const publicListingSelectFields = `
   cover_images.blur_hash as cover_blur_hash,
   cover_images.sort_order as cover_sort_order,
   cover_images.is_cover as cover_is_cover,
+  coalesce(preview_images.preview_images, '[]'::jsonb) as preview_images,
   (active_promotions.listing_id is not null)::boolean as is_sponsored,
   active_promotions.label as sponsorship_label,
   active_promotions.placement as sponsorship_placement
@@ -335,6 +337,42 @@ const publicListingJoins = `
       and is_cover = true
     order by listing_id, sort_order, created_at
   ) cover_images on cover_images.listing_id = listing.id
+  left join lateral (
+    select coalesce(
+      jsonb_agg(
+        jsonb_build_object(
+          'id', preview.id::text,
+          'object_key_large', preview.object_key_large,
+          'object_key_thumb', preview.object_key_thumb,
+          'width', preview.width,
+          'height', preview.height,
+          'blur_hash', preview.blur_hash,
+          'sort_order', preview.sort_order,
+          'is_cover', preview.is_cover
+        )
+        order by preview.is_cover desc, preview.sort_order asc, preview.created_at asc, preview.id asc
+      ),
+      '[]'::jsonb
+    ) as preview_images
+    from (
+      select
+        id,
+        object_key_large,
+        object_key_thumb,
+        width,
+        height,
+        blur_hash,
+        sort_order,
+        is_cover,
+        created_at
+      from listing_images
+      where listing_id = listing.id
+        and status = 'ready'
+        and deleted_at is null
+      order by is_cover desc, sort_order asc, created_at asc, id asc
+      limit 4
+    ) preview
+  ) preview_images on true
   left join (
     select
       listing_id,
@@ -1959,7 +1997,61 @@ function mapPublicListingImages(
           isCover: row.cover_is_cover ?? true,
         }
       : null,
+    preview: mapPublicListingPreviewImages(row.preview_images),
   }
+}
+
+function mapPublicListingPreviewImages(value: unknown): PublicListingImage[] {
+  const items = Array.isArray(value) ? value : []
+
+  return items
+    .map((item) =>
+      isPublicListingImagePayload(item)
+        ? {
+            id: String(item.id),
+            objectKeyLarge: readNullableString(item.object_key_large),
+            objectKeyThumb: readNullableString(item.object_key_thumb),
+            width: readNullableNumber(item.width),
+            height: readNullableNumber(item.height),
+            blurHash: readNullableString(item.blur_hash),
+            sortOrder: readNumber(item.sort_order),
+            isCover: Boolean(item.is_cover),
+          }
+        : null
+    )
+    .filter((item): item is PublicListingImage => item !== null)
+}
+
+function isPublicListingImagePayload(
+  value: unknown
+): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function readNullableString(value: unknown) {
+  return typeof value === "string" ? value : null
+}
+
+function readNullableNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value
+  }
+
+  return null
+}
+
+function readNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value)
+
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
+  return 0
 }
 
 function mapListingLocation(

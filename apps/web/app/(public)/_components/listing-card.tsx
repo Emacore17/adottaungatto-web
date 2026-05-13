@@ -1,10 +1,13 @@
 import Link from "next/link"
-import { HeartIcon, MapPinIcon } from "lucide-react"
+import { MapPinIcon, ThumbsUpIcon } from "lucide-react"
 
+import {
+  ListingImagePreview,
+  type ListingPreviewImage,
+} from "@/app/(public)/_components/listing-image-preview"
 import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
-import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
-import type { PublicListingSummary } from "@/lib/api/types"
+import type { PublicListingImage, PublicListingSummary } from "@/lib/api/types"
 import { routes } from "@/lib/routes"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -32,9 +35,7 @@ function ListingCard({
   listing,
   nextPath,
 }: ListingCardProps) {
-  const coverUrl = getPublicObjectUrl(
-    listing.images.cover?.objectKeyLarge ?? listing.images.cover?.objectKeyThumb
-  )
+  const previewImages = createPreviewImages(listing)
   const locationLabel = listing.location
     ? `${listing.location.municipality.name}, ${listing.location.province.name}`
     : "Italia"
@@ -44,27 +45,31 @@ function ListingCard({
     <Card
       size="sm"
       className={cn(
-        "gap-0 py-0 hover:ring-brand-teal/35",
-        isSponsored ? "ring-brand-amber/50" : undefined
+        "gap-0 py-0 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:ring-brand-teal/35",
+        isSponsored
+          ? "bg-brand-amber-soft/25 ring-brand-amber/70 shadow-md shadow-brand-amber/10"
+          : undefined
       )}
     >
-      <div className="flex flex-col sm:flex-row">
-        <div className="relative aspect-[4/3] bg-secondary sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72">
-          <Link href={routes.listing(listing.id)} className="block size-full">
-            {coverUrl ? (
-              <StorageImage
-                src={coverUrl}
-                alt={listing.title}
-                fill
-                className="object-cover"
-                sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center px-4 text-center text-sm text-muted-foreground">
-                Foto in preparazione
-              </div>
-            )}
-          </Link>
+      <div className="flex flex-col p-2 sm:grid sm:grid-cols-[minmax(13rem,18rem)_minmax(0,1fr)] sm:gap-1">
+        {isSponsored ? (
+          <div className="mb-2 h-1.5 rounded-full bg-brand-amber sm:col-span-2" />
+        ) : null}
+
+        <div
+          className={cn(
+            "relative aspect-[4/3] overflow-hidden rounded-lg border p-1.5 sm:aspect-auto sm:min-h-60",
+            isSponsored
+              ? "border-brand-amber/45 bg-brand-amber-soft/70"
+              : "border-border/80 bg-secondary"
+          )}
+        >
+          <ListingImagePreview
+            href={routes.listing(listing.id)}
+            images={previewImages}
+            title={listing.title}
+            className="shadow-inner"
+          />
           <ListingFavoriteToggle
             className="absolute top-3 right-3"
             isAuthenticated={isAuthenticated}
@@ -73,7 +78,8 @@ function ListingCard({
             nextPath={nextPath}
           />
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-4 py-4">
+
+        <div className="flex min-w-0 flex-1 flex-col gap-4 px-2 py-4 sm:px-4">
           <CardHeader>
             <CardTitle>
               <Link
@@ -89,7 +95,7 @@ function ListingCard({
             </CardDescription>
             <CardAction className="flex flex-col items-end gap-2">
               {isSponsored ? (
-                <Badge className="bg-brand-amber-soft text-brand-teal-ink">
+                <Badge className="bg-brand-amber text-brand-teal-ink">
                   {listing.sponsorship.label ?? "Sponsorizzato"}
                 </Badge>
               ) : null}
@@ -112,8 +118,8 @@ function ListingCard({
           </CardContent>
           <CardFooter className="mt-auto justify-between gap-3">
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <HeartIcon data-icon="inline-start" aria-hidden="true" />
-              {listing.stats.likeCount}
+              <ThumbsUpIcon data-icon="inline-start" aria-hidden="true" />
+              {formatLikeLabel(listing.stats.likeCount)}
             </span>
             <Button
               asChild
@@ -128,6 +134,43 @@ function ListingCard({
       </div>
     </Card>
   )
+}
+
+function createPreviewImages(
+  listing: PublicListingSummary
+): ListingPreviewImage[] {
+  const images =
+    listing.images.preview.length > 0
+      ? listing.images.preview
+      : listing.images.cover
+        ? [listing.images.cover]
+        : []
+
+  return images
+    .map((image, index) => createPreviewImage(listing.title, image, index))
+    .filter((image): image is ListingPreviewImage => image !== null)
+}
+
+function createPreviewImage(
+  title: string,
+  image: PublicListingImage,
+  index: number
+): ListingPreviewImage | null {
+  const url = getPublicObjectUrl(image.objectKeyLarge ?? image.objectKeyThumb)
+
+  if (!url) {
+    return null
+  }
+
+  return {
+    alt: `${title} - foto ${index + 1}`,
+    id: image.id,
+    url,
+  }
+}
+
+function formatLikeLabel(count: number) {
+  return count === 1 ? "1 mi piace" : `${count} mi piace`
 }
 
 export { ListingCard }

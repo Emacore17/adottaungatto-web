@@ -94,10 +94,19 @@ try {
   const coverObjectKey =
     listings.items[0]?.images?.cover?.objectKeyLarge ??
     listings.items[0]?.images?.cover?.objectKeyThumb
+  const previewImages = listings.items[0]?.images?.preview ?? []
 
   check(
     "public listing cover image",
     typeof coverObjectKey === "string" && coverObjectKey.length > 0
+  )
+  check(
+    "public listing preview images",
+    Array.isArray(previewImages) &&
+      previewImages.length > 0 &&
+      previewImages.length <= 4 &&
+      previewImages[0]?.id === listings.items[0]?.images?.cover?.id,
+    `preview=${previewImages.length}`
   )
 
   const coverStorage = await fetch(
@@ -385,6 +394,15 @@ try {
 
   const like = await api("POST", `/likes/listings/${listingId}`, {}, token)
   check("like add", like.liked === true)
+  const likedDetailHtml = await webText(
+    `/listings/${listingId}`,
+    token,
+    "web listing detail like saved"
+  )
+  check(
+    "web listing detail like saved state",
+    hasLikeToggleState(likedDetailHtml, "liked")
+  )
 
   const likeCount = await api("GET", `/likes/listings/${listingId}`)
   check("like count", likeCount.likeCount >= 1)
@@ -396,6 +414,15 @@ try {
     token
   )
   check("like delete", removedLike.liked === false)
+  const likeRemovedDetailHtml = await webText(
+    `/listings/${listingId}`,
+    token,
+    "web listing detail like removed"
+  )
+  check(
+    "web listing detail like removed state",
+    hasLikeToggleState(likeRemovedDetailHtml, "idle")
+  )
 
   const contactCase = await createSmokeContactRequest(token, [
     session.user.id,
@@ -657,6 +684,12 @@ try {
       publishedListingHtml.includes(
         `data-carousel-count="${smokeImages.length}"`
       )
+  )
+  check(
+    "web listing detail carousel thumbnails",
+    countOccurrences(publishedListingHtml, "data-carousel-thumb") >=
+      smokeImages.length,
+    `thumbs=${countOccurrences(publishedListingHtml, "data-carousel-thumb")}`
   )
 
   const ownerNotifications = await api(
@@ -1292,6 +1325,12 @@ async function webListingImages() {
     html.includes(storagePrefix) && !html.includes("/_next/image?url="),
     `storage=${storagePrefix}`
   )
+  check(
+    "web listing image previews",
+    html.includes("data-listing-image-preview") &&
+      html.includes("data-preview-count"),
+    "preview markup present"
+  )
 }
 
 async function resolveSmokeMunicipality() {
@@ -1408,6 +1447,17 @@ function hasFavoriteToggleState(html, listingId, state) {
   )
 
   return stateIndex >= 0 && listingIndex - stateIndex < 200
+}
+
+function hasLikeToggleState(html, state) {
+  return (
+    html.includes("data-like-toggle") &&
+    html.includes(`data-like-state="${state}"`)
+  )
+}
+
+function countOccurrences(value, pattern) {
+  return value.split(pattern).length - 1
 }
 
 function readUrl(value, fallback) {

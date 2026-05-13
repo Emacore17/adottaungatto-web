@@ -56,7 +56,9 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   segnalazione.
 - Preferiti e like per annunci pubblicati; la lista `/listings` e la scheda
   annuncio espongono un cuore toggle per salvare/rimuovere preferiti, con
-  redirect al login se l'utente non e' autenticato.
+  redirect al login se l'utente non e' autenticato. La scheda annuncio espone
+  anche lo stato personale del like autenticato con icona separata dal cuore
+  preferiti e animazione ottimistica.
 - Contatto proprietario privacy-first con richiesta autenticata, inoltro email
   backend, tracciamento `listing_contact_requests`, rate limit dedicato e
   preferenza per-annuncio per abilitare/disabilitare il contatto, consensi
@@ -65,7 +67,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
 - Endpoint pubblici `GET /listings` e `GET /listings/:id` con filtri
   principali, ricerca full-text con `q` e documento denormalizzato
   `listing_search_documents` usato quando disponibile, piu promozione mock
-  dichiarata per lo slot alto della lista.
+  dichiarata per lo slot alto della lista. La lista include anteprime immagini
+  pronte per card multi-foto senza caricare l'intera galleria del dettaglio.
 - Endpoint pubblico `GET /listings/breeds` per alimentare i filtri razza del
   frontend.
 - Ranking pubblico `postgres-v1` con sort `relevance`, `recent`, `distance`,
@@ -113,17 +116,19 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   readiness/metriche/alert API, header di correlazione, ricerca pubblica, auth,
   creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
-  stato UI a cuore, update profilo/preferenze, like, contatto proprietario con
-  consenso telefono, inbox contatti ricevuti dal proprietario, notifiche,
+  stato UI a cuore, update profilo/preferenze, like con stato UI nella scheda
+  annuncio, contatto proprietario con consenso telefono, inbox contatti
+  ricevuti dal proprietario, notifiche,
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
   chiave della dashboard account, pagine account autenticate, piu login admin,
   coda moderazione demo, filtro code, dettaglio operativo, audit caso e accesso
   negato alla moderazione per utente non abilitato. Lo smoke carica piu
   immagini reali da `immagini-gattini/` quando disponibili, verifica il
-  carosello del dettaglio annuncio pubblicato, controlla la notifica di invio a
-  revisione e controlla la ricezione real-time delle notifiche di contatto
-  proprietario e approvazione moderatore senza refresh manuale.
+  carosello e i thumbnail del dettaglio annuncio pubblicato, controlla la
+  notifica di invio a revisione e controlla la ricezione real-time delle
+  notifiche di contatto proprietario e approvazione moderatore senza refresh
+  manuale.
 
 ## Non pronto per produzione
 
@@ -191,7 +196,10 @@ route builder, helper SEO, client API, gestione sessione cookie lato server,
 layout pubblici/auth/account e shell admin dedicato, homepage pubblica, lista
 annunci, scheda annuncio con carosello immagini, proxy route per
 autocomplete/lista pubblica, sitemap, robots,
-JSON-LD iniziali, cuore preferiti toggle su lista e scheda annuncio, provider
+JSON-LD iniziali, card lista con frame foto non tagliato, preview hover
+multi-foto e sponsorizzati evidenziati, cuore preferiti toggle su lista e
+scheda annuncio, pulsante like con icona pollice e animazione nella scheda,
+provider
 globale per notifiche real-time con badge live sull'account, dashboard account
 operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
@@ -211,9 +219,9 @@ foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
 pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload multiplo di immagini gattini locali, processing
-worker, invio a revisione, carosello immagini nel dettaglio pubblicato,
-notifica di invio a revisione e notifiche real-time su contatto proprietario e
-approvazione moderatore. Il rollout visuale brand basato sul logo
+worker, invio a revisione, carosello immagini nel dettaglio pubblicato, stato
+like UI, notifica di invio a revisione e notifiche real-time su contatto
+proprietario e approvazione moderatore. Il rollout visuale brand basato sul logo
 `adottaungattoit-logo.svg` e' stato esteso a token globali, primitive UI,
 navbar/footer, home, lista e dettaglio annunci, auth, account, moderazione e
 Open Graph image; Inter resta il font principale e i colori raw residui sono
@@ -238,7 +246,8 @@ Gli asset demo usano le foto locali in `immagini-gattini/` quando presenti e
 cadono sui placeholder deterministici quando la cartella non esiste. La UI
 renderizza le immagini storage senza passare dall'optimizer Next, per evitare il
 blocco di `localhost:9000`/MinIO. La lista `/listings` usa card orizzontali, una
-per riga, e mostra in cima un annuncio sponsorizzato mock con label dichiarata.
+per riga, con foto incorniciate, preview multi-foto in hover e annuncio
+sponsorizzato mock piu evidente con label dichiarata.
 Lo smoke verifica anche URL storage diretti, invia un annuncio a revisione,
 controlla la notifica di stato, approva il caso e controlla che sia pubblicato
 e notificato al proprietario anche tramite stream real-time.

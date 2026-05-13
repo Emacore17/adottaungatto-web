@@ -23,6 +23,38 @@ describe("LikesController", () => {
     )
   })
 
+  it("validates listing ids before returning user like state", async () => {
+    const likesService = {
+      userLikeState: vi.fn().mockResolvedValue({ liked: true, likeCount: 4 }),
+    } as unknown as LikesService
+    const controller = new LikesController(likesService)
+
+    await expect(
+      controller.userListingLikeState(createAuth(), {
+        listingId: "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+      })
+    ).resolves.toEqual({ liked: true, likeCount: 4 })
+
+    expect(likesService.userLikeState).toHaveBeenCalledWith(
+      "user-id",
+      "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
+    )
+  })
+
+  it("rejects invalid listing ids before user like state", async () => {
+    const likesService = {
+      userLikeState: vi.fn(),
+    } as unknown as LikesService
+    const controller = new LikesController(likesService)
+
+    await expect(
+      controller.userListingLikeState(createAuth(), {
+        listingId: "invalid",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(likesService.userLikeState).not.toHaveBeenCalled()
+  })
+
   it("rejects invalid listing ids before public counts", async () => {
     const likesService = {
       publicLikeCount: vi.fn(),

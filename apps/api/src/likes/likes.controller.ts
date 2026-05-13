@@ -23,6 +23,21 @@ export class LikesController {
     private readonly likesService: LikesService
   ) {}
 
+  @UseGuards(BearerAuthGuard)
+  @Get("listings/:listingId/me")
+  async userListingLikeState(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>
+  ) {
+    try {
+      const { listingId } = likeListingIdParamSchema.parse(params)
+
+      return this.likesService.userLikeState(auth.user.id, listingId)
+    } catch (error) {
+      throwValidationError(error, "Invalid like listing id.")
+    }
+  }
+
   @Get("listings/:listingId")
   async listingLikeCount(@Param() params: Record<string, unknown>) {
     try {

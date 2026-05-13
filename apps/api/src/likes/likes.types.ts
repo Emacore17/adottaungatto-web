@@ -7,3 +7,7 @@ export type ListingLikeMutationResponse = ListingLikeCountResponse & {
   liked: boolean
   changed: boolean
 }
+
+export type ListingLikeStateResponse = ListingLikeCountResponse & {
+  liked: boolean
+}

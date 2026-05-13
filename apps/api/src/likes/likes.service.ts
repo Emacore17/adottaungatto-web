@@ -5,6 +5,7 @@ import { ListingSearchDocumentsService } from "../listing-search-documents/listi
 import type {
   ListingLikeCountResponse,
   ListingLikeMutationResponse,
+  ListingLikeStateResponse,
 } from "./likes.types.js"
 
 type LikeCountRow = {
@@ -14,6 +15,10 @@ type LikeCountRow = {
 
 type LikeMutationRow = LikeCountRow & {
   changed: boolean
+}
+
+type LikeStateRow = LikeCountRow & {
+  liked: boolean
 }
 
 const publicListingWhereSql = `
@@ -32,6 +37,25 @@ const publicLikeCountSql = `
   join users owner on owner.id = listing.owner_user_id
   left join listing_likes listing_like on listing_like.listing_id = listing.id
   where listing.id = $1::uuid
+    and ${publicListingWhereSql}
+  group by listing.id
+  limit 1
+`
+
+const userLikeStateSql = `
+  select
+    listing.id::text as listing_id,
+    count(listing_like.user_id)::int as like_count,
+    exists (
+      select 1
+      from listing_likes current_user_like
+      where current_user_like.listing_id = listing.id
+        and current_user_like.user_id = $1::uuid
+    ) as liked
+  from listings listing
+  join users owner on owner.id = listing.owner_user_id
+  left join listing_likes listing_like on listing_like.listing_id = listing.id
+  where listing.id = $2::uuid
     and ${publicListingWhereSql}
   group by listing.id
   limit 1
@@ -105,6 +129,25 @@ export class LikesService {
     }
 
     return mapLikeCountRow(row)
+  }
+
+  async userLikeState(
+    userId: string,
+    listingId: string
+  ): Promise<ListingLikeStateResponse> {
+    const [row] = await this.databaseService.queryRows<LikeStateRow>(
+      userLikeStateSql,
+      [userId, listingId]
+    )
+
+    if (!row) {
+      throw new NotFoundException("Public listing not found.")
+    }
+
+    return {
+      ...mapLikeCountRow(row),
+      liked: row.liked,
+    }
   }
 
   async likeListing(
