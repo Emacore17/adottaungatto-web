@@ -37,18 +37,20 @@ Ogni item include `favoritedAt` e un riepilogo annuncio con:
 
 - `/account` mostra un riepilogo dei preferiti recenti per utenti autenticati.
 - `/listings` mostra un cuore cliccabile su ogni card: click su cuore vuoto
-  salva, click su cuore pieno rimuove. Se l'utente non e' autenticato, porta al
-  login con ritorno alla lista.
-- `/listings/:id` mostra lo stesso cuore toggle nella scheda annuncio.
+  salva, click su cuore pieno rimuove tramite endpoint same-origin senza
+  redirect della pagina. Se l'utente non e' autenticato, porta al login con
+  ritorno alla lista.
+- `/listings/:id` mostra lo stesso cuore toggle nella scheda annuncio, separato
+  dal pulsante "mi piace" dentro il pannello azioni.
 - `/account/favorites` mostra la lista paginata dei preferiti collegata a
   `GET /favorites/listings`.
 - `/account` e `/account/favorites` permettono di rimuovere un preferito tramite
   server action collegata a `DELETE /favorites/listings/:listingId`.
 - `pnpm smoke:e2e` verifica che lista e scheda annuncio mostrino stato cuore
-  salvato dopo aggiunta e stato vuoto dopo rimozione.
+  salvato dopo aggiunta, stato vuoto dopo rimozione e funzionamento
+  dell'endpoint same-origin usato dal toggle client.
 
 ## Prossimo target UX
 
-- Migliorare feedback non bloccante dopo errori API o sessione scaduta.
-- Estendere la copertura smoke al click server action da browser quando verra'
+- Estendere la copertura smoke al click reale da browser quando verra'
   introdotto Playwright.

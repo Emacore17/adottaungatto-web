@@ -391,6 +391,44 @@ try {
     "web listing detail favorite removed state",
     hasFavoriteToggleState(favoriteDetailRemovedHtml, listingId, "idle")
   )
+  const webFavorite = await rawJson(
+    `${webBaseUrl}/api/favorites/listings/${listingId}`,
+    {
+      headers: {
+        Cookie: `aug_session=${token}`,
+      },
+      method: "POST",
+    }
+  )
+  check("web favorite api add", webFavorite.favorited === true)
+  const webFavoriteSavedHtml = await webText(
+    "/listings",
+    token,
+    "web listing favorite api saved"
+  )
+  check(
+    "web listing favorite api saved state",
+    hasFavoriteToggleState(webFavoriteSavedHtml, listingId, "saved")
+  )
+  const webFavoriteRemoved = await rawJson(
+    `${webBaseUrl}/api/favorites/listings/${listingId}`,
+    {
+      headers: {
+        Cookie: `aug_session=${token}`,
+      },
+      method: "DELETE",
+    }
+  )
+  check("web favorite api delete", webFavoriteRemoved.favorited === false)
+  const webFavoriteApiRemovedHtml = await webText(
+    "/listings",
+    token,
+    "web listing favorite api removed"
+  )
+  check(
+    "web listing favorite api removed state",
+    hasFavoriteToggleState(webFavoriteApiRemovedHtml, listingId, "idle")
+  )
 
   const like = await api("POST", `/likes/listings/${listingId}`, {}, token)
   check("like add", like.liked === true)
@@ -684,6 +722,11 @@ try {
       publishedListingHtml.includes(
         `data-carousel-count="${smokeImages.length}"`
       )
+  )
+  check(
+    "web listing detail image lightbox trigger",
+    publishedListingHtml.includes("data-carousel-image-trigger") &&
+      publishedListingHtml.includes('aria-haspopup="dialog"')
   )
   check(
     "web listing detail carousel thumbnails",

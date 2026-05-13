@@ -178,18 +178,20 @@ Obiettivo: migliorare scoperta annunci e interazioni rapide.
 Task:
 
 - Fatto: rendere `/listings` una lista a card orizzontali, un annuncio per riga;
-- Fatto: rifinire le card lista con foto in frame non tagliato, preview
-  multi-foto in hover e sponsorizzati piu riconoscibili;
-- Fatto: aggiungere cuore toggle per preferito con animazione e stato
-  autenticato;
+- Fatto: rifinire le card lista con foto `cover`, preview multi-foto in hover e
+  sponsorizzati piu riconoscibili;
+- Fatto: aggiungere cuore toggle per preferito con stato autenticato e mutazione
+  client senza redirect;
 - Fatto: separare visivamente il conteggio like dal cuore preferiti con icona
-  pollice e pulsante like animato nella scheda annuncio;
+  pollice e pannello azioni dedicato nella scheda annuncio;
 - Fatto: prevedere slot visivo per annuncio sponsorizzato in alto, con label
   chiara;
-- Fatto: aggiungere carosello immagini sfogliabile nel dettaglio annuncio;
+- Fatto: aggiungere carosello immagini sfogliabile nel dettaglio annuncio e
+  fullscreen foto via lightbox;
 - mantenere filtri, SEO e performance della pagina lista;
 - Fatto: aggiornare smoke per preferiti da lista con stato salvato/rimosso,
-  stato like UI e carosello dettaglio con piu immagini.
+  endpoint preferiti same-origin, stato like UI e carosello dettaglio con piu
+  immagini.
 
 Done:
 

@@ -58,7 +58,7 @@ function ListingCard({
 
         <div
           className={cn(
-            "relative aspect-[4/3] overflow-hidden rounded-lg border p-1.5 sm:aspect-auto sm:min-h-60",
+            "relative aspect-[4/3] overflow-hidden rounded-lg border sm:aspect-auto sm:min-h-60",
             isSponsored
               ? "border-brand-amber/45 bg-brand-amber-soft/70"
               : "border-border/80 bg-secondary"
@@ -68,7 +68,6 @@ function ListingCard({
             href={routes.listing(listing.id)}
             images={previewImages}
             title={listing.title}
-            className="shadow-inner"
           />
           <ListingFavoriteToggle
             className="absolute top-3 right-3"

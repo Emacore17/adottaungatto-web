@@ -25,7 +25,6 @@ function ListingLikeToggle({
 }: ListingLikeToggleProps) {
   const [count, setCount] = useState(initialCount)
   const [liked, setLiked] = useState(initialLiked)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [isPending, setIsPending] = useState(false)
 
   useEffect(() => {
@@ -62,8 +61,6 @@ function ListingLikeToggle({
     setIsPending(true)
     setLiked(nextLiked)
     setCount(nextCount)
-    setIsAnimating(false)
-    window.requestAnimationFrame(() => setIsAnimating(true))
 
     try {
       const response = await fetch(`/api/likes/listings/${listingId}`, {
@@ -86,9 +83,10 @@ function ListingLikeToggle({
       setCount(count)
     } finally {
       setIsPending(false)
-      window.setTimeout(() => setIsAnimating(false), 320)
     }
   }
+
+  const label = liked ? "Ti piace" : "Mi piace"
 
   return (
     <Button
@@ -103,18 +101,17 @@ function ListingLikeToggle({
       data-like-count={count}
       onClick={toggleLike}
       className={cn(
-        "min-w-0 transition-[background-color,border-color,color,transform]",
+        "min-w-0 transition-[background-color,border-color,color]",
         liked &&
-          "border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink hover:bg-brand-teal-soft/80",
-        isAnimating && "listing-like-pop"
+          "border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink hover:bg-brand-teal-soft/80"
       )}
     >
       <ThumbsUpIcon
         data-icon="inline-start"
         aria-hidden="true"
-        className={cn("transition-transform", liked && "fill-current")}
+        className={cn("transition-colors", liked && "fill-current")}
       />
-      {formatLikeLabel(count)}
+      {label} ({count})
     </Button>
   )
 }

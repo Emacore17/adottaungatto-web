@@ -1,11 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useFormStatus } from "react-dom"
 import Link from "next/link"
 import { HeartIcon } from "lucide-react"
 
-import { toggleFavoriteAction } from "@/app/(public)/listings/actions"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@workspace/ui/lib/utils"
@@ -27,10 +25,13 @@ function ListingFavoriteToggle({
   nextPath,
   showLabel = false,
 }: ListingFavoriteToggleProps) {
-  const [visualFavorite, setVisualFavorite] = useState(isFavorite)
+  const [favorite, setFavorite] = useState(isFavorite)
+  const [hasError, setHasError] = useState(false)
+  const [isPending, setIsPending] = useState(false)
 
   useEffect(() => {
-    setVisualFavorite(isFavorite)
+    setFavorite(isFavorite)
+    setHasError(false)
   }, [isFavorite])
 
   if (!isAuthenticated) {
@@ -56,68 +57,69 @@ function ListingFavoriteToggle({
     )
   }
 
-  const favoriteAction = isFavorite ? "remove" : "add"
+  const label = favorite ? "Rimuovi dai preferiti" : "Salva nei preferiti"
+  const visibleLabel = favorite ? "Preferito" : "Salva preferito"
 
-  return (
-    <form
-      action={toggleFavoriteAction}
-      className={className}
-      data-favorite-toggle
-      data-favorite-state={isFavorite ? "saved" : "idle"}
-      data-listing-id={listingId}
-    >
-      <input type="hidden" name="listingId" value={listingId} />
-      <input type="hidden" name="favoriteAction" value={favoriteAction} />
-      <input type="hidden" name="nextPath" value={nextPath} />
-      <FavoriteToggleButton
-        showLabel={showLabel}
-        visualFavorite={visualFavorite}
-        onVisualFavoriteChange={setVisualFavorite}
-      />
-    </form>
-  )
-}
+  async function toggleFavorite() {
+    if (isPending) {
+      return
+    }
 
-function FavoriteToggleButton({
-  onVisualFavoriteChange,
-  showLabel,
-  visualFavorite,
-}: {
-  onVisualFavoriteChange: (value: boolean) => void
-  showLabel: boolean
-  visualFavorite: boolean
-}) {
-  const { pending } = useFormStatus()
-  const label = visualFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti"
+    const nextFavorite = !favorite
+    const previousFavorite = favorite
+
+    setIsPending(true)
+    setFavorite(nextFavorite)
+    setHasError(false)
+
+    try {
+      const response = await fetch(`/api/favorites/listings/${listingId}`, {
+        method: nextFavorite ? "POST" : "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Favorite request failed.")
+      }
+
+      const data = (await response.json()) as { favorited: boolean }
+
+      setFavorite(data.favorited)
+    } catch {
+      setFavorite(previousFavorite)
+      setHasError(true)
+    } finally {
+      setIsPending(false)
+    }
+  }
 
   return (
     <Button
-      type="submit"
-      variant={visualFavorite ? "secondary" : "outline"}
+      type="button"
+      variant={favorite ? "secondary" : "outline"}
       size={showLabel ? "default" : "icon-sm"}
       aria-label={label}
-      aria-pressed={visualFavorite}
-      title={label}
-      disabled={pending}
-      onClick={() => {
-        onVisualFavoriteChange(!visualFavorite)
-      }}
+      aria-pressed={favorite}
+      title={hasError ? "Non aggiornato. Riprova." : label}
+      disabled={isPending}
+      data-favorite-toggle
+      data-favorite-state={favorite ? "saved" : "idle"}
+      data-listing-id={listingId}
+      onClick={toggleFavorite}
       className={cn(
-        "transition-transform active:scale-95",
+        className,
+        "transition-[background-color,border-color,color]",
         !showLabel && "shadow-sm",
-        visualFavorite &&
+        favorite &&
           "border-brand-coral/30 bg-brand-coral-soft text-brand-coral-strong hover:bg-brand-coral-soft/80",
-        !visualFavorite && "bg-background/90"
+        !favorite && "bg-background/90",
+        hasError && "border-destructive/40 text-destructive"
       )}
     >
       <HeartIcon
         data-icon={showLabel ? "inline-start" : undefined}
-        className={cn(
-          "transition-[fill,transform] duration-200",
-          visualFavorite && "fill-current"
-        )}
+        className={cn("transition-colors", favorite && "fill-current")}
       />
-      {showLabel ? label : null}
+      {showLabel ? visibleLabel : null}
     </Button>
   )
 }

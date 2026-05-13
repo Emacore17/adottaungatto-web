@@ -69,10 +69,8 @@ function ListingImagePreview({
             alt={index === 0 ? image.alt : ""}
             fill
             className={cn(
-              "object-contain p-2 transition-[opacity,transform] duration-700 ease-out",
-              index === currentIndex
-                ? "scale-100 opacity-100"
-                : "scale-[1.015] opacity-0"
+              "object-cover transition-opacity duration-500 ease-out",
+              index === currentIndex ? "opacity-100" : "opacity-0"
             )}
             sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
           />

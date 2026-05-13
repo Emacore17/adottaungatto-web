@@ -30,9 +30,9 @@ esporre l'elenco degli utenti che hanno lasciato il like.
 ## UI
 
 La scheda annuncio usa un pulsante "mi piace" con icona pollice, separato dal
-cuore dei preferiti, e aggiorna ottimisticamente conteggio e stato con una breve
-animazione quando l'utente mette o toglie il like. La lista pubblica mostra il
-conteggio aggregato con la stessa icona non interattiva.
+cuore dei preferiti, e aggiorna ottimisticamente conteggio e stato senza
+redirect o animazioni di scala. La lista pubblica mostra il conteggio aggregato
+con la stessa icona non interattiva.
 
 ## Risposta mutazioni
 

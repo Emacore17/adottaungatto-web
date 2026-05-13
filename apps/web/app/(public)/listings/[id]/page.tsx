@@ -14,7 +14,6 @@ import {
   ListingImageCarousel,
   type ListingCarouselImage,
 } from "@/app/(public)/listings/[id]/_components/listing-image-carousel"
-import { ListingLikeToggle } from "@/app/(public)/listings/[id]/_components/listing-like-toggle"
 import { JsonLd } from "@/components/shared/json-ld"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingDetail, PublicListingImage } from "@/lib/api/types"
@@ -23,7 +22,6 @@ import { getListingLikeState } from "@/lib/api/likes"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
-import { routes } from "@/lib/routes"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { Badge } from "@workspace/ui/components/badge"
@@ -158,13 +156,6 @@ export default async function ListingDetailPage({
                   <MapPinIcon data-icon="inline-start" aria-hidden="true" />
                   {locationLabel}
                 </span>
-                <ListingLikeToggle
-                  initialCount={listingLikeCount}
-                  initialLiked={isListingLiked}
-                  isAuthenticated={Boolean(sessionToken)}
-                  listingId={listing.data.id}
-                  nextPath={routes.listing(listing.data.id)}
-                />
                 {listing.data.publishedAt ? (
                   <span className="flex items-center gap-1">
                     <CalendarIcon data-icon="inline-start" aria-hidden="true" />
@@ -212,6 +203,8 @@ export default async function ListingDetailPage({
           />
           <ListingFavoriteCard
             favoriteStatus={readFavoriteStatus(query.favorite)}
+            initialLikeCount={listingLikeCount}
+            initialLiked={isListingLiked}
             isAuthenticated={Boolean(sessionToken)}
             isFavorite={favoriteListingIds.has(listing.data.id)}
             listingId={listing.data.id}
