@@ -42,11 +42,13 @@ function ListingContactCard({
   const messageInvalid = contactStatus === "invalid"
 
   return (
-    <Card id="contact-owner">
+    <Card id="contact-owner" className="ring-brand-teal/15">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle>Contatta il proprietario</CardTitle>
-          <Badge variant="secondary">Privacy</Badge>
+          <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+            Privacy
+          </Badge>
         </div>
         <CardDescription>
           Il messaggio viene inoltrato via email senza mostrare l&apos;indirizzo
@@ -56,7 +58,7 @@ function ListingContactCard({
       <CardContent className="flex flex-col gap-4">
         <ContactFeedback status={contactStatus} />
         {!isEnabled ? (
-          <p className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+          <p className="rounded-md border border-brand-amber/30 bg-brand-amber-soft px-3 py-2 text-sm text-brand-teal-ink">
             Il proprietario non riceve richieste per questo annuncio.
           </p>
         ) : isAuthenticated ? (
@@ -166,7 +168,7 @@ function ContactFeedback({ status }: { status: ContactStatus }) {
           : "Non e' stato possibile inviare la richiesta. Riprova piu tardi."
 
   return (
-    <p className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+    <p className="rounded-md border border-brand-teal/20 bg-brand-teal-soft px-3 py-2 text-sm text-brand-teal-ink">
       {message}
     </p>
   )

@@ -43,10 +43,13 @@ function ListingCard({
   return (
     <Card
       size="sm"
-      className={cn("gap-0 py-0", isSponsored ? "ring-primary/40" : undefined)}
+      className={cn(
+        "gap-0 py-0 hover:ring-brand-teal/35",
+        isSponsored ? "ring-brand-amber/50" : undefined
+      )}
     >
       <div className="flex flex-col sm:flex-row">
-        <div className="relative aspect-[4/3] bg-muted sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72">
+        <div className="relative aspect-[4/3] bg-secondary sm:aspect-auto sm:min-h-56 sm:w-64 sm:shrink-0 md:w-72">
           <Link href={routes.listing(listing.id)} className="block size-full">
             {coverUrl ? (
               <StorageImage
@@ -75,7 +78,7 @@ function ListingCard({
             <CardTitle>
               <Link
                 href={routes.listing(listing.id)}
-                className="hover:underline"
+                className="transition-colors hover:text-brand-teal-strong"
               >
                 {listing.title}
               </Link>
@@ -86,9 +89,18 @@ function ListingCard({
             </CardDescription>
             <CardAction className="flex flex-col items-end gap-2">
               {isSponsored ? (
-                <Badge>{listing.sponsorship.label ?? "Sponsorizzato"}</Badge>
+                <Badge className="bg-brand-amber-soft text-brand-teal-ink">
+                  {listing.sponsorship.label ?? "Sponsorizzato"}
+                </Badge>
               ) : null}
-              <Badge variant={listing.isFree ? "secondary" : "outline"}>
+              <Badge
+                variant="outline"
+                className={cn(
+                  listing.isFree
+                    ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                    : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                )}
+              >
                 {listing.isFree ? "Adozione" : "Contributo"}
               </Badge>
             </CardAction>
@@ -103,7 +115,12 @@ function ListingCard({
               <HeartIcon data-icon="inline-start" aria-hidden="true" />
               {listing.stats.likeCount}
             </span>
-            <Button asChild variant="outline" size="sm">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+            >
               <Link href={routes.listing(listing.id)}>Apri scheda</Link>
             </Button>
           </CardFooter>

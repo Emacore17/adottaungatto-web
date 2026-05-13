@@ -9,56 +9,74 @@ export const contentType = "image/png"
 
 export default function OpenGraphImage() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        alignItems: "center",
+        background: "#fffbf5",
+        color: "#2a2421",
+        display: "flex",
+        height: "100%",
+        justifyContent: "center",
+        padding: "72px",
+        width: "100%",
+      }}
+    >
       <div
         style={{
-          alignItems: "center",
-          background: "#fbfbfb",
-          color: "#20191f",
           display: "flex",
-          height: "100%",
-          justifyContent: "center",
-          padding: "72px",
-          width: "100%",
+          flexDirection: "column",
+          gap: "24px",
+          maxWidth: "820px",
         }}
       >
         <div
           style={{
             display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-            maxWidth: "820px",
+            gap: "14px",
+            height: "10px",
+            width: "360px",
           }}
         >
-          <div
-            style={{
-              fontSize: "34px",
-              fontWeight: 600,
-            }}
-          >
-            adottaungatto.it
-          </div>
-          <div
-            style={{
-              fontSize: "76px",
-              fontWeight: 600,
-              lineHeight: 1,
-            }}
-          >
-            Gatti in adozione
-          </div>
-          <div
-            style={{
-              color: "#6f6670",
-              fontSize: "30px",
-              lineHeight: 1.35,
-            }}
-          >
-            Annunci verificati, ricerca locale e schede essenziali.
-          </div>
+          {["#ee5659", "#f7a010", "#00a9aa", "#89ad35"].map((color) => (
+            <div
+              key={color}
+              style={{
+                background: color,
+                borderRadius: "999px",
+                flex: 1,
+              }}
+            />
+          ))}
+        </div>
+        <div
+          style={{
+            color: "#006f72",
+            fontSize: "34px",
+            fontWeight: 600,
+          }}
+        >
+          adottaungatto.it
+        </div>
+        <div
+          style={{
+            fontSize: "76px",
+            fontWeight: 600,
+            lineHeight: 1,
+          }}
+        >
+          Gatti in adozione
+        </div>
+        <div
+          style={{
+            color: "#70635c",
+            fontSize: "30px",
+            lineHeight: 1.35,
+          }}
+        >
+          Annunci verificati, ricerca locale e schede essenziali.
         </div>
       </div>
-    ),
+    </div>,
     size
   )
 }

@@ -27,11 +27,11 @@ function SiteLogoLink({
     >
       <span className="sr-only">adottaungatto.it</span>
       <Image
-        src="/logo.svg"
+        src="/adottaungattoit-logo.svg"
         alt=""
         aria-hidden="true"
-        width={1971}
-        height={323}
+        width={1960}
+        height={426}
         preload
         unoptimized
         className={cn(

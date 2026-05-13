@@ -24,11 +24,13 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
     : "Luogo non indicato"
 
   return (
-    <Card>
+    <Card className="ring-brand-amber/20 hover:ring-brand-amber/40">
       <CardContent className="flex flex-col gap-4 p-4">
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary">In lavorazione</Badge>
+            <Badge className="bg-brand-amber-soft text-brand-teal-ink">
+              In lavorazione
+            </Badge>
             <Badge variant="outline">{draft.sex}</Badge>
             {draft.breed ? (
               <Badge variant="outline">{draft.breed.name}</Badge>

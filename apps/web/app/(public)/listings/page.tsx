@@ -76,7 +76,10 @@ export default async function ListingsPage({
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:px-8">
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-3">
-          <Badge variant="secondary" className="w-fit">
+          <Badge
+            variant="outline"
+            className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+          >
             Annunci
           </Badge>
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
@@ -89,7 +92,12 @@ export default async function ListingsPage({
               </p>
             </div>
             {meta?.expansion ? (
-              <Badge variant="outline">Risultati simili</Badge>
+              <Badge
+                variant="outline"
+                className="border-brand-amber/30 bg-brand-amber-soft text-brand-teal-ink"
+              >
+                Risultati simili
+              </Badge>
             ) : null}
           </div>
         </div>

@@ -24,9 +24,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const hasError = typeof params.error === "string"
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md ring-brand-teal/20">
       <CardHeader>
-        <CardTitle>Accedi</CardTitle>
+        <CardTitle className="text-2xl">Accedi</CardTitle>
         <CardDescription>Entra nel tuo account.</CardDescription>
       </CardHeader>
       <form action={loginAction}>
@@ -64,7 +64,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3">
           <Button type="submit">Accedi</Button>
-          <Button asChild variant="ghost">
+          <Button asChild variant="secondary">
             <Link href={routes.register}>Crea account</Link>
           </Button>
         </CardFooter>

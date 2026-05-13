@@ -16,6 +16,7 @@ import type {
   PublicListingSummary,
 } from "@/lib/api/types"
 import { routes } from "@/lib/routes"
+import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
 type NearbyStatus =
@@ -61,7 +62,7 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
   return (
     <Link
       href={routes.listing(listing.id)}
-      className="group overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow] hover:border-primary/25 hover:shadow-md"
+      className="group overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
     >
       <div className="relative aspect-[4/3] bg-muted">
         {coverUrl ? (
@@ -78,10 +79,13 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
           </div>
         )}
       </div>
-      <div className="grid gap-2 p-3">
+      <div className="grid gap-2 p-3.5">
         <h3 className="line-clamp-1 text-sm font-semibold">{listing.title}</h3>
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
-          <MapPinIcon aria-hidden="true" className="size-3.5 shrink-0" />
+          <MapPinIcon
+            aria-hidden="true"
+            className="size-3.5 shrink-0 text-brand-coral-strong"
+          />
           <span className="truncate">{locationLabel}</span>
         </p>
       </div>
@@ -97,7 +101,7 @@ function NearbyState({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg border bg-card px-4 py-5 text-card-foreground shadow-sm">
+    <div className="rounded-lg border bg-card/88 px-4 py-5 text-card-foreground shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">{children}</p>
         {action}
@@ -231,68 +235,83 @@ function NearbyListingsSection() {
   return (
     <section
       id="annunci-vicino-a-te"
-      className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 lg:px-8"
+      className="border-t border-brand-teal/10 bg-[linear-gradient(180deg,var(--color-brand-cream)_0%,color-mix(in_oklab,var(--color-brand-teal-soft)_64%,var(--color-brand-cream))_100%)]"
     >
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-        <h2 className="text-2xl font-semibold tracking-normal">
-          Annunci vicino a te
-        </h2>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={requestPosition}
-            disabled={isBusy}
-          >
-            {status === "ready" ? (
-              <RefreshCcwIcon aria-hidden="true" />
-            ) : (
-              <LocateFixedIcon aria-hidden="true" />
-            )}
-            {isBusy
-              ? "Carico"
-              : status === "ready"
-                ? "Aggiorna"
-                : "Usa posizione"}
-          </Button>
-          <Button asChild variant="ghost" size="sm">
-            <Link href={allNearbyHref}>Vedi tutti</Link>
-          </Button>
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2">
+            <Badge
+              variant="secondary"
+              className="w-fit border border-brand-olive/25 bg-brand-olive-soft text-brand-teal-ink"
+            >
+              Esplora
+            </Badge>
+            <h2 className="font-heading text-2xl font-semibold tracking-normal">
+              Annunci vicino a te
+            </h2>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={requestPosition}
+              disabled={isBusy}
+            >
+              {status === "ready" ? (
+                <RefreshCcwIcon aria-hidden="true" data-icon="inline-start" />
+              ) : (
+                <LocateFixedIcon aria-hidden="true" data-icon="inline-start" />
+              )}
+              {isBusy
+                ? "Carico"
+                : status === "ready"
+                  ? "Aggiorna"
+                  : "Usa posizione"}
+            </Button>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-brand-coral-strong hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+            >
+              <Link href={allNearbyHref}>Vedi tutti</Link>
+            </Button>
+          </div>
         </div>
+
+        {status === "ready" && listings.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {listings.map((listing) => (
+              <NearbyListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        ) : null}
+
+        {status === "ready" && listings.length === 0 ? (
+          <NearbyState action={null}>
+            Nessun annuncio vicino alla tua zona.
+          </NearbyState>
+        ) : null}
+
+        {status === "idle" ? (
+          <NearbyState>
+            Attiva la posizione per mostrare qui gli annunci piu vicini.
+          </NearbyState>
+        ) : null}
+
+        {isBusy ? (
+          <NearbyState>Sto preparando gli annunci vicini.</NearbyState>
+        ) : null}
+
+        {status === "denied" ? (
+          <NearbyState>Posizione non disponibile nel browser.</NearbyState>
+        ) : null}
+
+        {status === "error" ? (
+          <NearbyState>Non riesco a caricare gli annunci vicini.</NearbyState>
+        ) : null}
       </div>
-
-      {status === "ready" && listings.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {listings.map((listing) => (
-            <NearbyListingCard key={listing.id} listing={listing} />
-          ))}
-        </div>
-      ) : null}
-
-      {status === "ready" && listings.length === 0 ? (
-        <NearbyState action={null}>
-          Nessun annuncio vicino alla tua zona.
-        </NearbyState>
-      ) : null}
-
-      {status === "idle" ? (
-        <NearbyState>
-          Attiva la posizione per mostrare qui gli annunci piu vicini.
-        </NearbyState>
-      ) : null}
-
-      {isBusy ? (
-        <NearbyState>Sto preparando gli annunci vicini.</NearbyState>
-      ) : null}
-
-      {status === "denied" ? (
-        <NearbyState>Posizione non disponibile nel browser.</NearbyState>
-      ) : null}
-
-      {status === "error" ? (
-        <NearbyState>Non riesco a caricare gli annunci vicini.</NearbyState>
-      ) : null}
     </section>
   )
 }

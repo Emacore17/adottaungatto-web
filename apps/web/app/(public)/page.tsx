@@ -8,6 +8,7 @@ import {
   createWebsiteJsonLd,
 } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
+import { Badge } from "@workspace/ui/components/badge"
 
 export const dynamic = "force-dynamic"
 
@@ -24,18 +25,25 @@ export default async function HomePage() {
     <>
       <JsonLd data={createOrganizationJsonLd()} />
       <JsonLd data={createWebsiteJsonLd()} />
-      <main className="flex flex-1 flex-col">
-        <section className="home-hero-surface relative flex min-h-[78svh] items-center border-b">
+      <main className="brand-light-surface flex flex-1 flex-col bg-brand-cream text-brand-ink">
+        <section className="home-hero-surface relative flex min-h-[82svh] items-center overflow-hidden border-b border-border/70">
           <HomeHeroBackground />
-          <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-7 px-4 pb-10 pt-32 text-center sm:px-6 sm:pt-36 lg:px-8">
-            <div className="grid max-w-4xl gap-3">
-              <h1 className="text-4xl leading-[1.14] font-semibold tracking-normal text-balance sm:text-5xl sm:leading-[1.1] lg:text-6xl">
-                Trova il{" "}
-                <span className="home-hero-title-accent">gatto</span> giusto da{" "}
+          <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-7 px-4 pt-32 pb-12 text-center sm:px-6 sm:pt-36 lg:px-8">
+            <div className="grid max-w-4xl justify-items-center gap-4">
+              <Badge
+                variant="secondary"
+                className="border border-brand-amber/25 bg-brand-amber-soft text-brand-teal-ink"
+              >
+                Annunci verificati in tutta Italia
+              </Badge>
+              <h1 className="font-heading text-4xl leading-[1.12] font-semibold tracking-normal text-balance sm:text-5xl sm:leading-[1.08] lg:text-6xl">
+                Trova il <span className="home-hero-title-accent">gatto</span>{" "}
+                giusto da{" "}
                 <span className="home-hero-title-accent-alt">adottare</span>
               </h1>
               <p className="mx-auto max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg">
-                Cerca per parola chiave, luogo e filtri essenziali.
+                Cerca annunci reali per luogo, razza e caratteristiche, con
+                filtri essenziali e schede facili da confrontare.
               </p>
             </div>
 

@@ -30,10 +30,17 @@ function AccountNotificationCard({
   const reason = readPayloadString(notification.payload, "reasonText")
 
   return (
-    <Card>
+    <Card className={notification.readAt ? undefined : "ring-brand-teal/25"}>
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={notification.readAt ? "outline" : "default"}>
+          <Badge
+            variant={notification.readAt ? "outline" : "default"}
+            className={
+              notification.readAt
+                ? undefined
+                : "bg-brand-teal-soft text-brand-teal-ink"
+            }
+          >
             {notification.readAt ? "Letta" : "Non letta"}
           </Badge>
           <span className="text-xs text-muted-foreground">

@@ -32,6 +32,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { Separator } from "@workspace/ui/components/separator"
+import { cn } from "@workspace/ui/lib/utils"
 
 type ListingDetailPageProps = {
   params: Promise<{
@@ -108,11 +109,23 @@ export default async function ListingDetailPage({
 
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">
+              <Badge
+                variant="outline"
+                className={cn(
+                  listing.data.isFree
+                    ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                    : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                )}
+              >
                 {listing.data.isFree ? "Adozione" : "Contributo"}
               </Badge>
               {listing.data.breed ? (
-                <Badge variant="outline">{listing.data.breed.name}</Badge>
+                <Badge
+                  variant="outline"
+                  className="border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+                >
+                  {listing.data.breed.name}
+                </Badge>
               ) : null}
             </div>
 
@@ -149,7 +162,7 @@ export default async function ListingDetailPage({
         </article>
 
         <aside className="flex flex-col gap-4">
-          <Card>
+          <Card className="ring-brand-teal/15">
             <CardHeader>
               <CardTitle>Proprietario</CardTitle>
               <CardDescription>

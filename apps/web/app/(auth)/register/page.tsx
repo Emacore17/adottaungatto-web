@@ -25,9 +25,9 @@ export default async function RegisterPage({
   const hasError = typeof params.error === "string"
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md ring-brand-teal/20">
       <CardHeader>
-        <CardTitle>Crea account</CardTitle>
+        <CardTitle className="text-2xl">Crea account</CardTitle>
         <CardDescription>Apri il tuo profilo personale.</CardDescription>
       </CardHeader>
       <form action={registerAction}>
@@ -78,7 +78,7 @@ export default async function RegisterPage({
         </CardContent>
         <CardFooter className="flex-col items-stretch gap-3">
           <Button type="submit">Crea account</Button>
-          <Button asChild variant="ghost">
+          <Button asChild variant="secondary">
             <Link href={routes.login()}>Ho gia un account</Link>
           </Button>
         </CardFooter>

@@ -14,6 +14,7 @@ adottaungatto.it.
 - [project-state.md](project-state.md): stato reale del repository e gap principali.
 - [agent-coding-roadmap.md](agent-coding-roadmap.md): roadmap operativa ottimizzata per agenti di coding AI.
 - [frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md): linee guida operative per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
+- [frontend-brand-redesign.md](frontend-brand-redesign.md): stato e specifica operativa del redesign visuale basato sul nuovo logo.
 - [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
 - [search-full-text-ranking.md](search-full-text-ranking.md): specifica operativa per ranking, indici e benchmark ricerca.
 - [search-benchmark-results.md](search-benchmark-results.md): risultati locali dei benchmark ricerca.

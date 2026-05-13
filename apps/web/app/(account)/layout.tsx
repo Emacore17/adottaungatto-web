@@ -16,7 +16,7 @@ export default function AccountLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="flex min-h-svh flex-col pt-24 sm:pt-28">
+    <div className="flex min-h-svh flex-col bg-background pt-24 text-foreground sm:pt-28">
       <SiteHeader />
       {children}
       <SiteFooter />

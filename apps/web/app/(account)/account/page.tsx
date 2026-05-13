@@ -39,6 +39,7 @@ import {
   EmptyTitle,
 } from "@workspace/ui/components/empty"
 import { Separator } from "@workspace/ui/components/separator"
+import { cn } from "@workspace/ui/lib/utils"
 
 export default async function AccountPage() {
   const { session, token } = await requireAccountSession()
@@ -58,7 +59,10 @@ export default async function AccountPage() {
       <header className="flex flex-col gap-5">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
           <div className="flex flex-col gap-3">
-            <Badge variant="secondary" className="w-fit">
+            <Badge
+              variant="outline"
+              className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+            >
               Area personale
             </Badge>
             <div className="grid gap-2">
@@ -93,6 +97,7 @@ export default async function AccountPage() {
             description={formatProfileType(session.user.profileType)}
             icon={UserIcon}
             href={routes.accountSettings}
+            tone="teal"
           />
           <DashboardMetricCard
             title="Annunci"
@@ -100,6 +105,7 @@ export default async function AccountPage() {
             description="In lavorazione"
             icon={FileTextIcon}
             href={routes.accountDrafts}
+            tone="amber"
           />
           <DashboardMetricCard
             title="Preferiti"
@@ -107,6 +113,7 @@ export default async function AccountPage() {
             description="Annunci salvati"
             icon={HeartIcon}
             href={routes.accountFavorites}
+            tone="coral"
           />
           <DashboardMetricCard
             title="Notifiche"
@@ -114,6 +121,7 @@ export default async function AccountPage() {
             description="Da leggere"
             icon={BellIcon}
             href={routes.accountNotifications}
+            tone="olive"
           />
         </div>
       </header>
@@ -227,25 +235,38 @@ function DashboardMetricCard({
   icon,
   href,
   title,
+  tone,
   value,
 }: {
   description: string
   href: string
   icon: LucideIcon
   title: string
+  tone: "amber" | "coral" | "olive" | "teal"
   value: string
 }) {
   const Icon = icon
+  const toneClassName = {
+    amber: "bg-brand-amber-soft text-brand-teal-ink",
+    coral: "bg-brand-coral-soft text-brand-coral-strong",
+    olive: "bg-brand-olive-soft text-brand-teal-ink",
+    teal: "bg-brand-teal-soft text-brand-teal-ink",
+  }[tone]
 
   return (
-    <Card size="sm">
+    <Card size="sm" className="hover:ring-brand-teal/30">
       <CardHeader>
         <div className="grid gap-1">
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
         <CardAction>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <div
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-md",
+              toneClassName
+            )}
+          >
             <Icon aria-hidden="true" />
           </div>
         </CardAction>
@@ -274,7 +295,7 @@ function OperationalFocus({
     unreadNotifications !== null && unreadNotifications > 0
 
   return (
-    <Card>
+    <Card className="ring-brand-teal/15">
       <CardHeader>
         <CardTitle>Attivita operative</CardTitle>
         <CardDescription>Le priorita correnti del tuo account.</CardDescription>
@@ -362,7 +383,12 @@ function PriorityRow({
           <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
-      <Button asChild variant="outline" size="sm">
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+      >
         <Link href={href}>{actionLabel}</Link>
       </Button>
     </div>
@@ -386,7 +412,9 @@ function ProfileCard({
         <CardTitle>Profilo</CardTitle>
         <CardDescription>{displayName}</CardDescription>
         <CardAction>
-          <Badge variant="secondary">{formatUserStatus(status)}</Badge>
+          <Badge className="bg-brand-olive-soft text-brand-teal-ink">
+            {formatUserStatus(status)}
+          </Badge>
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-4 text-sm">
@@ -461,7 +489,12 @@ function SectionHeader({
         <h2 className="text-2xl font-semibold tracking-normal">{title}</h2>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <Button asChild variant="outline" size="sm">
+      <Button
+        asChild
+        variant="outline"
+        size="sm"
+        className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+      >
         <Link href={href}>Vedi tutto</Link>
       </Button>
     </div>

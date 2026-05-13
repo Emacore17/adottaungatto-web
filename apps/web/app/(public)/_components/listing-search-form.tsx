@@ -53,10 +53,10 @@ type SearchFilters = {
 } & Record<BooleanFilterKey, boolean>
 
 const controlClassName =
-  "h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
+  "h-11 w-full rounded-lg border border-border bg-card/90 px-3 text-sm text-brand-ink outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:bg-card focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
 
 const filterLabelClassName =
-  "text-xs font-semibold tracking-[0.08em] text-muted-foreground uppercase"
+  "text-xs font-semibold tracking-normal text-muted-foreground uppercase"
 
 function getPriceRangeOption(value: SearchFilters["priceRange"]) {
   return priceRangeOptions.find((option) => option.value === value) ?? null
@@ -568,7 +568,7 @@ function ListingSearchForm({
         </div>
       ) : null}
 
-      <fieldset className="rounded-md border border-border bg-background/70 px-3 pt-2 pb-3">
+      <fieldset className="rounded-lg border border-brand-olive/20 bg-brand-olive-soft/64 px-3 pt-2 pb-3">
         <legend className={cn(filterLabelClassName, "px-1")}>
           Cure e caratteristiche
         </legend>
@@ -580,7 +580,7 @@ function ListingSearchForm({
                 "flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1.5 text-sm font-semibold transition-[border-color,background-color,color,box-shadow] focus-within:border-ring focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_20%,transparent)]",
                 filters[option.key]
                   ? "border-primary bg-primary text-primary-foreground shadow-[0_10px_24px_-18px_color-mix(in_oklab,var(--color-primary)_72%,transparent)]"
-                  : "border-border bg-background/70 text-muted-foreground hover:border-primary/30 hover:bg-muted/70 hover:text-foreground"
+                  : "border-border bg-card/82 text-muted-foreground hover:border-primary/30 hover:bg-brand-teal-soft hover:text-brand-teal-ink"
               )}
             >
               <input
@@ -610,78 +610,86 @@ function ListingSearchForm({
         />
       ))}
 
-      <div className="rounded-lg border border-border/80 bg-background/88 p-2 shadow-[0_26px_80px_-48px_rgba(20,14,20,0.58)] backdrop-blur-2xl">
-        <div className="grid gap-2 lg:grid-cols-[minmax(0,1.08fr)_minmax(16rem,0.92fr)_auto]">
-          <label className="flex h-14 items-center gap-3 rounded-lg border border-border bg-background/92 px-3 transition-[border-color,box-shadow,background-color] focus-within:border-ring focus-within:bg-background focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]">
-            <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
-            <span className="min-w-0 flex-1">
-              <input
-                name="q"
-                aria-label="Cerca annunci"
-                defaultValue={defaultValues.q ?? ""}
-                minLength={2}
-                maxLength={120}
-                placeholder="Nome, carattere o parola chiave"
-                autoComplete="off"
-                className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
-              />
-            </span>
-          </label>
+      <div className="relative overflow-hidden rounded-lg border border-brand-teal/20 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--color-brand-teal-soft)_82%,var(--color-brand-cream))_0%,color-mix(in_oklab,var(--color-brand-coral-soft)_58%,var(--color-brand-cream))_54%,color-mix(in_oklab,var(--color-brand-amber-soft)_78%,var(--color-brand-cream))_100%)] p-2.5 shadow-[0_30px_88px_-56px_color-mix(in_oklab,var(--color-brand-teal-ink)_62%,transparent)] backdrop-blur-2xl">
+        <div className="relative">
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.08fr)_minmax(16rem,0.92fr)_auto]">
+            <label className="flex h-14 items-center gap-3 rounded-lg border border-brand-teal/22 bg-card/88 px-3 shadow-xs transition-[border-color,box-shadow,background-color] focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong">
+                <SearchIcon className="size-4" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <input
+                  name="q"
+                  aria-label="Cerca annunci"
+                  defaultValue={defaultValues.q ?? ""}
+                  minLength={2}
+                  maxLength={120}
+                  placeholder="Nome, carattere o parola chiave"
+                  autoComplete="off"
+                  className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
+                />
+              </span>
+            </label>
 
-          <PlaceAutocompleteInput
-            selectedPlace={selectedPlace}
-            onSelect={handlePlaceSelect}
-          />
-
-          <div className="grid grid-cols-2 gap-2 lg:grid-cols-[auto_auto]">
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={() => setFiltersOpen((current) => !current)}
-              className="h-14 rounded-lg px-4"
-              aria-expanded={filtersOpen}
-            >
-              <SlidersHorizontalIcon
-                aria-hidden="true"
-                data-icon="inline-start"
-              />
-              Filtri
-              {activeFilterCount > 0 ? (
-                <span className="ml-1 rounded-full bg-primary px-1.5 py-0.5 text-[0.68rem] leading-none text-primary-foreground">
-                  {activeFilterCount}
-                </span>
-              ) : null}
-            </Button>
-
-            <Button type="submit" size="lg" className="h-14 rounded-lg px-5">
-              <SearchIcon aria-hidden="true" data-icon="inline-start" />
-              Cerca
-            </Button>
-          </div>
-        </div>
-
-        {position ? (
-          <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md bg-muted/70 px-3 py-2 text-xs text-muted-foreground">
-            <LocateFixedIcon
-              aria-hidden="true"
-              className="size-3.5 text-primary"
+            <PlaceAutocompleteInput
+              selectedPlace={selectedPlace}
+              onSelect={handlePlaceSelect}
             />
-            <span>La tua posizione, entro {filters.radiusKm} km</span>
-          </div>
-        ) : null}
 
-        <div
-          className={cn(
-            "hidden overflow-hidden transition-[grid-template-rows,opacity] duration-300 lg:grid",
-            filtersOpen
-              ? "grid-rows-[1fr] opacity-100"
-              : "grid-rows-[0fr] opacity-0"
-          )}
-        >
-          <div className="overflow-hidden">
-            <div className="mt-3 border-t border-border/80 pt-3">
-              {filterControls}
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-[auto_auto]">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setFiltersOpen((current) => !current)}
+                className="h-14 rounded-lg border-brand-amber/30 bg-brand-amber-soft/72 px-4 text-brand-teal-ink hover:bg-brand-amber-soft hover:text-brand-teal-ink"
+                aria-expanded={filtersOpen}
+              >
+                <SlidersHorizontalIcon
+                  aria-hidden="true"
+                  data-icon="inline-start"
+                />
+                Filtri
+                {activeFilterCount > 0 ? (
+                  <span className="ml-1 rounded-full bg-brand-coral-strong px-1.5 py-0.5 text-[0.68rem] leading-none text-brand-cream">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </Button>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="h-14 rounded-lg px-5 shadow-[0_18px_34px_-26px_color-mix(in_oklab,var(--color-primary)_82%,transparent)]"
+              >
+                <SearchIcon aria-hidden="true" data-icon="inline-start" />
+                Cerca
+              </Button>
+            </div>
+          </div>
+
+          {position ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-brand-teal/16 bg-brand-teal-soft px-3 py-2 text-xs text-brand-teal-ink">
+              <LocateFixedIcon
+                aria-hidden="true"
+                className="size-3.5 text-primary"
+              />
+              <span>La tua posizione, entro {filters.radiusKm} km</span>
+            </div>
+          ) : null}
+
+          <div
+            className={cn(
+              "hidden overflow-hidden transition-[grid-template-rows,opacity] duration-300 lg:grid",
+              filtersOpen
+                ? "grid-rows-[1fr] opacity-100"
+                : "grid-rows-[0fr] opacity-0"
+            )}
+          >
+            <div className="overflow-hidden">
+              <div className="mt-3 rounded-lg border border-brand-amber/20 bg-card/64 p-3">
+                {filterControls}
+              </div>
             </div>
           </div>
         </div>
@@ -694,7 +702,7 @@ function ListingSearchForm({
           aria-labelledby="listing-filters-title"
           className="fixed inset-0 z-[80] flex min-h-svh flex-col bg-background lg:hidden"
         >
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b bg-background/96 px-4 py-3">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b bg-card/96 px-4 py-3">
             <h2 id="listing-filters-title" className="font-semibold">
               Filtri
             </h2>
@@ -713,7 +721,7 @@ function ListingSearchForm({
             {filterControls}
           </div>
 
-          <div className="shrink-0 border-t bg-background/96 p-4">
+          <div className="shrink-0 border-t bg-card/96 p-4">
             <div className="grid grid-cols-2 gap-2">
               <Button
                 type="button"

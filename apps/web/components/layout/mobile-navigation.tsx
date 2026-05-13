@@ -170,7 +170,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
       aria-modal="true"
       aria-label="Navigazione principale"
       className={cn(
-        "fixed inset-0 z-[80] h-[100svh] overflow-hidden bg-foreground/14 transition-opacity duration-300 ease-out motion-reduce:transition-none",
+        "brand-light-surface fixed inset-0 z-[80] h-[100svh] overflow-hidden bg-brand-teal-ink/18 transition-opacity duration-300 ease-out motion-reduce:transition-none",
         contentVisible && !closing ? "opacity-100" : "opacity-0"
       )}
       onMouseDown={(event) => {
@@ -181,7 +181,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
     >
       <div
         className={cn(
-          "absolute rounded-full bg-background transition-transform duration-[520ms] ease-[cubic-bezier(0.2,0.9,0.22,1)] will-change-transform motion-reduce:transition-none",
+          "absolute rounded-full bg-brand-cream shadow-[0_0_0_1px_color-mix(in_oklab,var(--color-border)_80%,transparent)] transition-transform duration-[520ms] ease-[cubic-bezier(0.2,0.9,0.22,1)] will-change-transform motion-reduce:transition-none",
           contentVisible && !closing ? "scale-100" : "scale-[0.04]"
         )}
         style={{
@@ -193,7 +193,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
       />
 
       <div className="relative flex h-[100svh] min-h-0 flex-col overflow-hidden">
-        <div className="sticky top-0 z-10 shrink-0 bg-background/88 px-4 pt-4 backdrop-blur-xl sm:px-6">
+        <div className="sticky top-0 z-10 shrink-0 bg-brand-cream/94 px-4 pt-4 backdrop-blur-xl sm:px-6">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-4 py-1">
             <SiteLogoLink
               onClick={closeMenu}
@@ -207,7 +207,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
               size="icon"
               aria-label="Chiudi menu"
               onClick={closeMenu}
-              className="rounded-full border border-border bg-background/88 text-foreground shadow-sm hover:bg-muted hover:text-foreground"
+              className="rounded-full border border-border bg-brand-cream/90 text-brand-teal-ink shadow-sm hover:bg-brand-teal-soft hover:text-brand-teal-strong"
             >
               <XIcon aria-hidden="true" />
             </Button>
@@ -254,12 +254,12 @@ function MobileNavigation({ items }: MobileNavigationProps) {
                       aria-current={isCurrentPage ? "page" : undefined}
                       onClick={closeMenu}
                       className={cn(
-                        "group flex min-h-16 items-center gap-3 rounded-[1.35rem] border p-2.5 transition-[background-color,border-color,box-shadow,color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
+                        "group flex min-h-16 items-center gap-3 rounded-lg border p-2.5 transition-[background-color,border-color,box-shadow,color,transform] duration-200 focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:outline-none",
                         isActive
-                          ? "border-border bg-muted/70 text-foreground shadow-sm"
-                          : "border-transparent bg-transparent text-foreground hover:border-border/80 hover:bg-muted/55",
+                          ? "border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink shadow-sm"
+                          : "border-transparent bg-transparent text-foreground hover:border-border/80 hover:bg-muted/65",
                         isAccent &&
-                          "border-primary/15 bg-primary text-primary-foreground shadow-[0_20px_48px_-32px_color-mix(in_oklab,var(--color-primary)_82%,black)] hover:bg-primary/92 hover:text-primary-foreground",
+                          "border-primary/15 bg-primary text-primary-foreground shadow-[0_20px_48px_-32px_color-mix(in_oklab,var(--color-primary)_82%,transparent)] hover:bg-primary/92 hover:text-primary-foreground",
                         "active:scale-[0.99]"
                       )}
                     >
@@ -269,8 +269,8 @@ function MobileNavigation({ items }: MobileNavigationProps) {
                           isAccent
                             ? "bg-primary-foreground/14 text-primary-foreground"
                             : isActive
-                              ? "bg-background text-primary shadow-sm"
-                              : "bg-muted text-muted-foreground group-hover:text-foreground"
+                              ? "bg-brand-cream text-primary shadow-sm"
+                              : "bg-muted text-muted-foreground group-hover:text-brand-teal-ink"
                         )}
                       >
                         <Icon aria-hidden="true" className="size-5" />
@@ -325,7 +325,7 @@ function MobileNavigation({ items }: MobileNavigationProps) {
         aria-expanded={open}
         aria-controls="site-mobile-navigation"
         onClick={openMenu}
-        className="rounded-full border border-border/70 bg-background/70 text-foreground shadow-sm backdrop-blur-md hover:bg-muted/80 hover:text-foreground"
+        className="rounded-full border border-border/80 bg-brand-cream/86 text-brand-teal-ink shadow-sm backdrop-blur-md hover:bg-brand-teal-soft hover:text-brand-teal-strong"
       >
         <MenuIcon aria-hidden="true" />
       </Button>

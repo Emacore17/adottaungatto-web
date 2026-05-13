@@ -49,7 +49,10 @@ export default async function AccountSettingsPage({
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
         <div className="flex flex-col gap-3">
-          <Badge variant="secondary" className="w-fit">
+          <Badge
+            variant="outline"
+            className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+          >
             Impostazioni
           </Badge>
           <div className="grid gap-2">

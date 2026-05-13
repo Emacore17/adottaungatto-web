@@ -105,6 +105,8 @@ function FavoriteToggleButton({
       className={cn(
         "transition-transform active:scale-95",
         !showLabel && "shadow-sm",
+        visualFavorite &&
+          "border-brand-coral/30 bg-brand-coral-soft text-brand-coral-strong hover:bg-brand-coral-soft/80",
         !visualFavorite && "bg-background/90"
       )}
     >

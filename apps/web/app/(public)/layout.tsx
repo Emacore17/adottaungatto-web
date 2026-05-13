@@ -7,7 +7,7 @@ export default function PublicLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="flex min-h-svh flex-col">
+    <div className="flex min-h-svh flex-col bg-background text-foreground">
       <SiteHeader />
       {children}
       <SiteFooter />

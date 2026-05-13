@@ -144,12 +144,14 @@ function PlaceAutocompleteInput({
     <div className="relative min-w-0" ref={rootRef}>
       <label
         className={cn(
-          "flex h-14 items-center gap-3 rounded-lg border border-border bg-background/92 px-3 transition-[border-color,box-shadow,background-color]",
-          "focus-within:border-ring focus-within:bg-background focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]"
+          "flex h-14 items-center gap-3 rounded-lg border border-brand-coral/20 bg-card/88 px-3 shadow-xs transition-[border-color,box-shadow,background-color]",
+          "focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]"
         )}
         htmlFor={inputId}
       >
-        <MapPinIcon className="size-4 shrink-0 text-muted-foreground" />
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-coral-soft text-brand-coral-strong">
+          <MapPinIcon className="size-4" />
+        </span>
         <span className="min-w-0 flex-1">
           <input
             id={inputId}
@@ -224,7 +226,7 @@ function PlaceAutocompleteInput({
         <div
           id={listboxId}
           role="listbox"
-          className="absolute right-0 left-0 z-40 mt-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-42px_rgba(20,14,20,0.56)]"
+          className="absolute right-0 left-0 z-40 mt-2 max-h-72 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-46px_color-mix(in_oklab,var(--color-brand-teal-ink)_56%,transparent)]"
         >
           {loading ? (
             <p className="px-3 py-2.5 text-sm text-muted-foreground">

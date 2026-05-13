@@ -40,7 +40,7 @@ function DraftActionMessage({ searchParams }: DraftActionMessageProps) {
       className={
         error
           ? "rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-          : "rounded-md border border-emerald-300/50 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+          : "rounded-md border border-brand-olive/30 bg-brand-olive-soft px-4 py-3 text-sm text-brand-teal-ink"
       }
     >
       {error ?? success}

@@ -18,8 +18,8 @@ type AdminShellProps = {
 
 function AdminShell({ children }: AdminShellProps) {
   return (
-    <div className="flex min-h-svh flex-col bg-muted/30">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <div className="flex min-h-svh flex-col bg-secondary/45 text-foreground">
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-card/90 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-card/80">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-3">
@@ -33,8 +33,13 @@ function AdminShell({ children }: AdminShellProps) {
               />
               <div className="grid min-w-0 gap-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">Area interna</Badge>
-                  <Badge variant="outline">
+                  <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+                    Area interna
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                  >
                     <ShieldCheckIcon
                       aria-hidden="true"
                       data-icon="inline-start"

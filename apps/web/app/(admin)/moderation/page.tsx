@@ -76,7 +76,7 @@ const moderationQueueFilters = [
 ] as const
 
 const reasonSelectClassName =
-  "h-10 w-full rounded-md border border-input bg-background px-2.5 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+  "h-10 w-full rounded-md border border-input bg-card/80 px-2.5 text-sm text-foreground shadow-xs outline-none transition-[background-color,color,box-shadow] focus-visible:border-ring focus-visible:bg-card focus-visible:ring-3 focus-visible:ring-ring/50"
 
 const moderationReasonOptions = [
   { label: "Approva: conforme alle policy", value: "policy_ok" },
@@ -130,7 +130,10 @@ export default async function ModerationPage({
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-3">
-        <Badge variant="secondary" className="w-fit">
+        <Badge
+          variant="outline"
+          className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+        >
           Code operative
         </Badge>
         <div className="grid gap-2">
@@ -202,6 +205,10 @@ function QueueSummaryCard({
 }) {
   const Icon = icon === "pending" ? FileTextIcon : ShieldAlertIcon
   const count = result.ok ? result.data.meta.total : null
+  const iconClassName =
+    icon === "pending"
+      ? "bg-brand-amber-soft text-brand-teal-ink"
+      : "bg-brand-coral-soft text-brand-coral-strong"
 
   return (
     <Card>
@@ -210,7 +217,9 @@ function QueueSummaryCard({
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <div
+          className={`flex size-10 shrink-0 items-center justify-center rounded-md ${iconClassName}`}
+        >
           <Icon aria-hidden="true" className="size-5" />
         </div>
       </CardHeader>
@@ -355,11 +364,16 @@ function ModerationItemCard({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
             <div className="grid min-w-0 gap-1">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="secondary">
+                <Badge className="bg-brand-teal-soft text-brand-teal-ink">
                   {item.listing.moderationStatus}
                 </Badge>
                 {reportCount !== null ? (
-                  <Badge variant="outline">{reportCount} report</Badge>
+                  <Badge
+                    variant="outline"
+                    className="border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                  >
+                    {reportCount} report
+                  </Badge>
                 ) : null}
               </div>
               <h3 className="text-lg font-semibold tracking-normal">
@@ -391,20 +405,18 @@ function ModerationItemCard({
           <ModerationAuditTrail item={item} />
 
           {latestReport ? (
-            <div className="mt-4 rounded-md border bg-muted/40 p-3 text-sm">
+            <div className="mt-4 rounded-md border border-brand-coral/20 bg-brand-coral-soft p-3 text-sm text-brand-coral-strong">
               <div className="flex items-start gap-2">
                 <AlertTriangleIcon
                   aria-hidden="true"
-                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                  className="mt-0.5 size-4 shrink-0"
                 />
                 <div className="grid gap-1">
                   <p className="font-medium">
                     Ultima segnalazione: {latestReport.reasonCode}
                   </p>
                   {latestReport.description ? (
-                    <p className="line-clamp-2 text-muted-foreground">
-                      {latestReport.description}
-                    </p>
+                    <p className="line-clamp-2">{latestReport.description}</p>
                   ) : null}
                 </div>
               </div>
@@ -426,7 +438,7 @@ function ModerationAuditTrail({
   return (
     <section
       aria-label="Audit caso"
-      className="mt-4 rounded-md border bg-background/70 p-3"
+      className="mt-4 rounded-md border bg-card/80 p-3"
     >
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -453,7 +465,7 @@ function ModerationAuditTrail({
             >
               <div className="grid min-w-0 gap-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">
+                  <Badge className="bg-brand-amber-soft text-brand-teal-ink">
                     Azione {formatAuditAction(action.action)}
                   </Badge>
                   <span className="text-muted-foreground">
@@ -544,7 +556,7 @@ function OperationalCaseDetails({
   return (
     <section
       aria-label="Dettaglio operativo caso"
-      className="mt-4 rounded-md border bg-muted/30 p-3"
+      className="mt-4 rounded-md border border-brand-teal/15 bg-brand-teal-soft/70 p-3"
     >
       <div className="grid gap-1">
         <p className="text-sm font-medium">Dettaglio operativo caso</p>
@@ -579,7 +591,7 @@ function ModerationDecisionForm({ caseId }: { caseId: string }) {
   return (
     <form
       action={decideModerationCaseAction}
-      className="mt-4 rounded-md border bg-background/70 p-3"
+      className="mt-4 rounded-md border bg-card/80 p-3"
     >
       <input type="hidden" name="caseId" value={caseId} />
       <FieldGroup className="gap-3">
@@ -664,7 +676,7 @@ function DecisionFeedback({
 
   if (error) {
     return (
-      <Card className="border-destructive/35">
+      <Card className="ring-destructive/35">
         <CardHeader>
           <CardTitle>Decisione non salvata</CardTitle>
           <CardDescription>
@@ -677,7 +689,7 @@ function DecisionFeedback({
   }
 
   return (
-    <Card className="border-primary/25">
+    <Card className="ring-primary/25">
       <CardHeader>
         <CardTitle>Decisione salvata</CardTitle>
         <CardDescription>

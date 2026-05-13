@@ -1,6 +1,6 @@
 # Stato attuale del progetto
 
-Aggiornato al 12 maggio 2026.
+Aggiornato al 13 maggio 2026.
 
 Questo documento e' il riepilogo breve da leggere prima di avviare nuovi
 sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
@@ -208,7 +208,11 @@ messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload multiplo di immagini gattini locali, processing
 worker, invio a revisione, carosello immagini nel dettaglio pubblicato,
 notifica di invio a revisione e notifiche real-time su contatto proprietario e
-approvazione moderatore. Restano eventuali preferenze contatto per canali o
+approvazione moderatore. Il rollout visuale brand basato sul logo
+`adottaungattoit-logo.svg` e' stato esteso a token globali, primitive UI,
+navbar/footer, home, lista e dettaglio annunci, auth, account, moderazione e
+Open Graph image; Inter resta il font principale e i colori raw residui sono
+limitati a metadati/immagine OG. Restano eventuali preferenze contatto per canali o
 finestre orarie, altri dati sensibili oltre email/telefono e amministrazione
 interna piu estesa. I prossimi sviluppi
 frontend devono continuare a seguire

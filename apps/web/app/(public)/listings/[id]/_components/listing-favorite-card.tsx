@@ -26,7 +26,7 @@ function ListingFavoriteCard({
   const nextPath = `${routes.listing(listingId)}#save-favorite`
 
   return (
-    <Card id="save-favorite">
+    <Card id="save-favorite" className="ring-brand-coral/15">
       <CardHeader>
         <CardTitle>Preferiti</CardTitle>
         <CardDescription>
@@ -62,7 +62,7 @@ function FavoriteFeedback({ status }: { status: FavoriteStatus }) {
           : "Non e' stato possibile aggiornare il preferito. Riprova piu tardi."
 
   return (
-    <p className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+    <p className="rounded-md border border-brand-coral/20 bg-brand-coral-soft px-3 py-2 text-sm text-brand-coral-strong">
       {message}
     </p>
   )
