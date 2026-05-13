@@ -33,6 +33,8 @@ type ListingDetailPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
+type ListingTone = "amber" | "coral" | "olive" | "teal"
+
 export const dynamic = "force-dynamic"
 
 export async function generateMetadata({
@@ -110,55 +112,56 @@ export default async function ListingDetailPage({
           />
 
           <section className="flex flex-col gap-5">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex min-w-0 flex-col gap-4">
-                <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant="outline"
+                className={cn(
+                  listing.data.isFree
+                    ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                    : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                )}
+              >
+                {listing.data.isFree ? "Adozione" : "Contributo"}
+              </Badge>
+              {listing.data.breed ? (
+                <Badge
+                  variant="outline"
+                  className="border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+                >
+                  {listing.data.breed.name}
+                </Badge>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              <div className="flex min-w-0 flex-col gap-3">
+                <h1 className="text-3xl font-medium text-balance sm:text-4xl">
+                  {listing.data.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
                   <Badge
                     variant="outline"
-                    className={cn(
-                      listing.data.isFree
-                        ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
-                        : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
-                    )}
+                    className="h-auto border-brand-teal/20 bg-brand-teal-soft px-3 py-1 text-brand-teal-ink"
                   >
-                    {listing.data.isFree ? "Adozione" : "Contributo"}
+                    <MapPinIcon data-icon="inline-start" aria-hidden="true" />
+                    {locationLabel}
                   </Badge>
-                  {listing.data.breed ? (
+                  {listing.data.publishedAt ? (
                     <Badge
                       variant="outline"
-                      className="border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+                      className="h-auto border-brand-amber/25 bg-brand-amber-soft px-3 py-1 text-brand-teal-ink"
                     >
-                      {listing.data.breed.name}
+                      <CalendarIcon
+                        data-icon="inline-start"
+                        aria-hidden="true"
+                      />
+                      {new Intl.DateTimeFormat("it-IT", {
+                        dateStyle: "medium",
+                      }).format(new Date(listing.data.publishedAt))}
                     </Badge>
                   ) : null}
                 </div>
-
-                <div className="flex flex-col gap-3">
-                  <h1 className="text-3xl font-medium text-balance">
-                    {listing.data.title}
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <MapPinIcon data-icon="inline-start" aria-hidden="true" />
-                      {locationLabel}
-                    </span>
-                    {listing.data.publishedAt ? (
-                      <span className="flex items-center gap-1">
-                        <CalendarIcon
-                          data-icon="inline-start"
-                          aria-hidden="true"
-                        />
-                        {new Intl.DateTimeFormat("it-IT", {
-                          dateStyle: "medium",
-                        }).format(new Date(listing.data.publishedAt))}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-
-                <ListingOwnerSummary owner={listing.data.owner} />
               </div>
-
               <ListingFavoriteToggle
                 className="self-start"
                 emphasis="prominent"
@@ -169,6 +172,8 @@ export default async function ListingDetailPage({
                 nextPath={nextPath}
               />
             </div>
+
+            <ListingOwnerSummary owner={listing.data.owner} />
           </section>
 
           <Separator />
@@ -185,19 +190,20 @@ export default async function ListingDetailPage({
           <section className="grid gap-6 md:grid-cols-2">
             <div className="flex flex-col gap-3">
               <h2 className="text-lg font-medium">Informazioni</h2>
-              <dl className="grid gap-3 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
-                <ListingFact label="Eta" value={formatAgeRange(listing.data)} />
+              <dl className="grid gap-3 sm:grid-cols-3 md:grid-cols-1 xl:grid-cols-3">
+                <ListingFact
+                  label="Eta"
+                  tone="teal"
+                  value={formatAgeRange(listing.data)}
+                />
                 <ListingFact
                   label="Sesso"
+                  tone="coral"
                   value={formatSex(listing.data.sex)}
                 />
                 <ListingFact
-                  label="Luogo"
-                  value={locationLabel}
-                  className="sm:col-span-2 md:col-span-1 xl:col-span-2"
-                />
-                <ListingFact
                   label="Adozione"
+                  tone={listing.data.isFree ? "olive" : "amber"}
                   value={formatContribution(listing.data)}
                 />
               </dl>
@@ -208,18 +214,22 @@ export default async function ListingDetailPage({
               <div className="flex flex-wrap gap-2">
                 <HealthBadge
                   label="Vaccinato"
+                  tone="olive"
                   value={listing.data.isVaccinated}
                 />
                 <HealthBadge
                   label="Sterilizzato"
+                  tone="teal"
                   value={listing.data.isSterilized}
                 />
                 <HealthBadge
                   label="Sverminato"
+                  tone="amber"
                   value={listing.data.isDewormed}
                 />
                 <HealthBadge
                   label="Microchip"
+                  tone="coral"
                   value={listing.data.hasMicrochip}
                 />
               </div>
@@ -244,41 +254,47 @@ export default async function ListingDetailPage({
 function ListingFact({
   className,
   label,
+  tone,
   value,
 }: {
   className?: string
   label: string
+  tone: ListingTone
   value: string
 }) {
   return (
     <div
       className={cn(
-        "flex flex-col gap-1 rounded-md bg-muted/45 p-3",
+        "flex min-h-24 flex-col justify-between gap-3 rounded-lg border p-3",
+        getToneSurfaceClassName(tone),
         className
       )}
     >
-      <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
-      <dd className="text-sm text-foreground">{value}</dd>
+      <dt className="text-xs font-medium opacity-75">{label}</dt>
+      <dd className="text-sm font-medium">{value}</dd>
     </div>
   )
 }
 
 function HealthBadge({
   label,
+  tone,
   value,
 }: {
   label: string
+  tone: ListingTone
   value: boolean | null
 }) {
   return (
     <Badge
       variant="outline"
       className={cn(
-        value === true
-          ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
-          : value === false
-            ? "border-border bg-muted text-muted-foreground"
-            : "border-border text-muted-foreground"
+        "h-auto px-3 py-1.5",
+        value === true && getToneSurfaceClassName(tone),
+        value === false &&
+          "border-brand-coral/20 bg-brand-coral-soft text-brand-coral-strong",
+        value === null &&
+          "border-brand-amber/25 bg-brand-amber-soft text-brand-teal-ink"
       )}
     >
       {formatHealthLabel(label, value)}
@@ -292,19 +308,22 @@ function ListingOwnerSummary({
   owner: PublicListingDetail["owner"]
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-brand-teal/15 bg-card p-3 shadow-xs">
       <Avatar size="lg" className="bg-brand-teal-soft">
         <AvatarFallback className="bg-brand-teal-soft text-brand-teal-ink">
           {getOwnerInitials(owner.displayName)}
         </AvatarFallback>
       </Avatar>
-      <div className="min-w-0">
+      <div className="flex min-w-0 flex-col gap-1">
         <p className="truncate text-sm font-medium text-foreground">
           {owner.displayName}
         </p>
-        <p className="text-xs text-muted-foreground">
+        <Badge
+          variant="outline"
+          className="h-auto w-fit border-brand-teal/20 bg-brand-teal-soft px-2.5 py-0.5 text-brand-teal-ink"
+        >
           {formatOwnerProfileType(owner.profileType)}
-        </p>
+        </Badge>
       </div>
     </div>
   )
@@ -458,6 +477,19 @@ function formatHealthLabel(label: string, value: boolean | null) {
   }
 
   return `${label}: non indicato`
+}
+
+function getToneSurfaceClassName(tone: ListingTone) {
+  switch (tone) {
+    case "amber":
+      return "border-brand-amber/25 bg-brand-amber-soft text-brand-teal-ink"
+    case "coral":
+      return "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+    case "olive":
+      return "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+    case "teal":
+      return "border-brand-teal/20 bg-brand-teal-soft text-brand-teal-ink"
+  }
 }
 
 function getOwnerInitials(displayName: string) {

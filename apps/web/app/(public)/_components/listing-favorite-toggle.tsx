@@ -112,9 +112,11 @@ function ListingFavoriteToggle({
 
         return Math.max(0, currentCount + (data.favorited ? 1 : -1))
       })
-      toast.success(
-        data.favorited ? "Aggiunto ai preferiti" : "Rimosso dai preferiti"
-      )
+      if (data.favorited) {
+        toast.success("Aggiunto ai preferiti")
+      } else {
+        toast.info("Rimosso dai preferiti")
+      }
     } catch {
       setFavorite(previousFavorite)
       setCount(previousCount)

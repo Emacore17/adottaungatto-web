@@ -200,9 +200,10 @@ autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, card lista con foto `cover`, preview hover multi-foto e
 sponsorizzati evidenziati, cuore preferiti toggle client con conteggio su
 lista e scheda annuncio, pulsante preferito piu evidente nel dettaglio senza
-testo ridondante, proprietario in stile social con avatar/nome, sezioni
-separate per descrizione, informazioni e salute, fullscreen foto nel dettaglio,
-provider
+testo ridondante, toast differenziati tra aggiunta e rimozione preferito,
+proprietario in stile social con avatar/nome, header dettaglio piu gerarchico
+con luogo/data in badge, sezioni separate per descrizione, informazioni e salute
+con colori brand coerenti, fullscreen foto nel dettaglio, provider
 globale per notifiche real-time con badge live sull'account, dashboard account
 operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
