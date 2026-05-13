@@ -190,6 +190,7 @@ export type PublicListingSummary = {
     profileType: string
   }
   stats: {
+    favoriteCount: number
     likeCount: number
   }
   sponsorship: {

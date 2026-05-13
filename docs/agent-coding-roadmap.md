@@ -182,16 +182,16 @@ Task:
   sponsorizzati piu riconoscibili;
 - Fatto: aggiungere cuore toggle per preferito con stato autenticato e mutazione
   client senza redirect;
-- Fatto: separare visivamente il conteggio like dal cuore preferiti con icona
-  pollice e pannello azioni dedicato nella scheda annuncio;
+- Fatto: rimuovere il gesto like dalla UI pubblica e usare solo il cuore
+  preferiti con conteggio aggregato in lista e dettaglio;
 - Fatto: prevedere slot visivo per annuncio sponsorizzato in alto, con label
   chiara;
 - Fatto: aggiungere carosello immagini sfogliabile nel dettaglio annuncio e
   fullscreen foto via lightbox;
 - mantenere filtri, SEO e performance della pagina lista;
 - Fatto: aggiornare smoke per preferiti da lista con stato salvato/rimosso,
-  endpoint preferiti same-origin, stato like UI e carosello dettaglio con piu
-  immagini.
+  endpoint preferiti same-origin, conteggio preferiti pubblico e carosello
+  dettaglio con piu immagini.
 
 Done:
 

@@ -6,10 +6,7 @@ import {
   ListingContactCard,
   type ContactStatus,
 } from "@/app/(public)/listings/[id]/_components/listing-contact-card"
-import {
-  ListingFavoriteCard,
-  type FavoriteStatus,
-} from "@/app/(public)/listings/[id]/_components/listing-favorite-card"
+import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
 import {
   ListingImageCarousel,
   type ListingCarouselImage,
@@ -18,20 +15,14 @@ import { JsonLd } from "@/components/shared/json-ld"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingDetail, PublicListingImage } from "@/lib/api/types"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
-import { getListingLikeState } from "@/lib/api/likes"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
+import { routes } from "@/lib/routes"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
+import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
 import { Badge } from "@workspace/ui/components/badge"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 import { Separator } from "@workspace/ui/components/separator"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -87,23 +78,15 @@ export default async function ListingDetailPage({
   let currentUserProfile: Awaited<
     ReturnType<typeof getCurrentUserProfile>
   > | null = null
-  let listingLikeCount = listing.data.stats.likeCount
-  let isListingLiked = false
 
   if (sessionToken) {
-    const [favoriteIds, profile, likeState] = await Promise.all([
+    const [favoriteIds, profile] = await Promise.all([
       listFavoriteListingIds(sessionToken, [listing.data.id]),
       getCurrentUserProfile(sessionToken),
-      getListingLikeState(sessionToken, listing.data.id),
     ])
 
     favoriteListingIds = favoriteIds
     currentUserProfile = profile
-
-    if (likeState.ok) {
-      listingLikeCount = likeState.data.likeCount
-      isListingLiked = likeState.data.liked
-    }
   }
 
   const hasShareablePhone =
@@ -114,6 +97,7 @@ export default async function ListingDetailPage({
   const locationLabel = listing.data.location
     ? `${listing.data.location.municipality.name}, ${listing.data.location.province.name}`
     : "Italia"
+  const nextPath = routes.listing(listing.data.id)
 
   return (
     <>
@@ -167,6 +151,18 @@ export default async function ListingDetailPage({
               </div>
             </div>
 
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <ListingOwnerSummary owner={listing.data.owner} />
+              <ListingFavoriteToggle
+                initialFavoriteCount={listing.data.stats.favoriteCount}
+                isAuthenticated={Boolean(sessionToken)}
+                isFavorite={favoriteListingIds.has(listing.data.id)}
+                listingId={listing.data.id}
+                nextPath={nextPath}
+                showLabel
+              />
+            </div>
+
             <Separator />
 
             <div className="max-w-none text-base leading-8 text-foreground">
@@ -176,24 +172,6 @@ export default async function ListingDetailPage({
         </article>
 
         <aside className="flex flex-col gap-4">
-          <Card className="ring-brand-teal/15">
-            <CardHeader>
-              <CardTitle>Proprietario</CardTitle>
-              <CardDescription>
-                {listing.data.owner.displayName}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Profilo</span>
-                <span>{listing.data.owner.profileType}</span>
-              </div>
-              <div className="flex justify-between gap-3">
-                <span className="text-muted-foreground">Immagini</span>
-                <span>{listing.data.images.readyCount}</span>
-              </div>
-            </CardContent>
-          </Card>
           <ListingContactCard
             contactStatus={readContactStatus(query.contact)}
             hasShareablePhone={hasShareablePhone}
@@ -201,17 +179,33 @@ export default async function ListingDetailPage({
             isEnabled={listing.data.contactRequestsEnabled}
             listingId={listing.data.id}
           />
-          <ListingFavoriteCard
-            favoriteStatus={readFavoriteStatus(query.favorite)}
-            initialLikeCount={listingLikeCount}
-            initialLiked={isListingLiked}
-            isAuthenticated={Boolean(sessionToken)}
-            isFavorite={favoriteListingIds.has(listing.data.id)}
-            listingId={listing.data.id}
-          />
         </aside>
       </main>
     </>
+  )
+}
+
+function ListingOwnerSummary({
+  owner,
+}: {
+  owner: PublicListingDetail["owner"]
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <Avatar size="lg" className="bg-brand-teal-soft">
+        <AvatarFallback className="bg-brand-teal-soft text-brand-teal-ink">
+          {getOwnerInitials(owner.displayName)}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium text-foreground">
+          {owner.displayName}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatOwnerProfileType(owner.profileType)}
+        </p>
+      </div>
+    </div>
   )
 }
 
@@ -270,19 +264,31 @@ function readContactStatus(
   return null
 }
 
-function readFavoriteStatus(
-  value: string | string[] | undefined
-): FavoriteStatus {
-  const raw = Array.isArray(value) ? value[0] : value
-
-  if (
-    raw === "error" ||
-    raw === "removed" ||
-    raw === "saved" ||
-    raw === "unavailable"
-  ) {
-    return raw
+function formatOwnerProfileType(profileType: string) {
+  switch (profileType) {
+    case "association":
+      return "Associazione"
+    case "breeder":
+      return "Allevatore"
+    case "private":
+      return "Privato"
+    case "professional":
+      return "Professionista"
+    case "shelter":
+      return "Gattile"
+    default:
+      return "Profilo verificato"
   }
+}
 
-  return null
+function getOwnerInitials(displayName: string) {
+  const initials = displayName
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+
+  return initials || "AG"
 }

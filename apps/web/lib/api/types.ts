@@ -71,6 +71,7 @@ export type PublicListingSummary = {
     profileType: string
   }
   stats: {
+    favoriteCount: number
     likeCount: number
   }
   sponsorship: {
@@ -109,14 +110,4 @@ export type PublicListingListResponse = {
     rankingVersion: "postgres-v1"
     expansion: PublicListingExpansion | null
   }
-}
-
-export type ListingLikeStateResponse = {
-  liked: boolean
-  likeCount: number
-  listingId: string
-}
-
-export type ListingLikeMutationResponse = ListingLikeStateResponse & {
-  changed: boolean
 }

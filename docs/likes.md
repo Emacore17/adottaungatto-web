@@ -29,10 +29,10 @@ esporre l'elenco degli utenti che hanno lasciato il like.
 
 ## UI
 
-La scheda annuncio usa un pulsante "mi piace" con icona pollice, separato dal
-cuore dei preferiti, e aggiorna ottimisticamente conteggio e stato senza
-redirect o animazioni di scala. La lista pubblica mostra il conteggio aggregato
-con la stessa icona non interattiva.
+La UI pubblica non espone piu il gesto "mi piace". Lista e dettaglio usano solo
+il cuore preferiti con conteggio aggregato dei preferiti, per evitare conflitto
+tra due azioni simili. Gli endpoint like restano disponibili come segnale
+backend/ricerca finche' non verra' deciso se dismetterli del tutto.
 
 ## Risposta mutazioni
 

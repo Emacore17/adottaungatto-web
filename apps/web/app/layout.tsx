@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider"
 import { getSessionToken } from "@/lib/auth/session"
 import { siteConfig } from "@/lib/config/site"
 import { createPageMetadata } from "@/lib/seo/metadata"
+import { Toaster } from "@workspace/ui/components/sonner"
 import { cn } from "@workspace/ui/lib/utils"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
@@ -60,6 +61,7 @@ export default async function RootLayout({
           >
             {children}
           </RealtimeNotificationsProvider>
+          <Toaster closeButton position="bottom-right" richColors />
         </ThemeProvider>
       </body>
     </html>

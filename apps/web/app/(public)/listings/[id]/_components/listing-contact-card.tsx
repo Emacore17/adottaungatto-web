@@ -3,7 +3,6 @@ import { LogInIcon, MailIcon } from "lucide-react"
 
 import { contactListingOwnerAction } from "@/app/(public)/listings/[id]/actions"
 import { routes } from "@/lib/routes"
-import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -42,17 +41,14 @@ function ListingContactCard({
   const messageInvalid = contactStatus === "invalid"
 
   return (
-    <Card id="contact-owner" className="ring-brand-teal/15">
+    <Card
+      id="contact-owner"
+      className="border-brand-teal/20 ring-brand-teal/20"
+    >
       <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>Contatta il proprietario</CardTitle>
-          <Badge className="bg-brand-teal-soft text-brand-teal-ink">
-            Privacy
-          </Badge>
-        </div>
+        <CardTitle>Scrivi un messaggio</CardTitle>
         <CardDescription>
-          Il messaggio viene inoltrato via email senza mostrare l&apos;indirizzo
-          del proprietario.
+          Contatta chi ha pubblicato l&apos;annuncio.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -69,7 +65,9 @@ function ListingContactCard({
             <input type="hidden" name="listingId" value={listingId} />
             <FieldGroup>
               <Field data-invalid={messageInvalid ? true : undefined}>
-                <FieldLabel htmlFor="contact-message">Messaggio</FieldLabel>
+                <FieldLabel htmlFor="contact-message">
+                  Il tuo messaggio
+                </FieldLabel>
                 <Textarea
                   id="contact-message"
                   name="message"
@@ -77,12 +75,10 @@ function ListingContactCard({
                   maxLength={2000}
                   required
                   aria-invalid={messageInvalid}
-                  placeholder="Presentati e indica perche vuoi conoscere questo gatto."
+                  className="min-h-36"
+                  placeholder="Ciao, vorrei conoscere questo gattino."
                 />
-                <FieldDescription>
-                  Minimo 20 caratteri. Non inserire dati sensibili non
-                  necessari.
-                </FieldDescription>
+                <FieldDescription>Minimo 20 caratteri.</FieldDescription>
               </Field>
               <Field
                 orientation="horizontal"
@@ -100,8 +96,7 @@ function ListingContactCard({
                     Consento la risposta via email
                   </FieldLabel>
                   <FieldDescription>
-                    Il tuo indirizzo email sara usato come risposta al messaggio
-                    inviato al proprietario.
+                    Necessario per ricevere risposta.
                   </FieldDescription>
                 </FieldContent>
               </Field>
@@ -118,7 +113,7 @@ function ListingContactCard({
                   </FieldLabel>
                   <FieldDescription>
                     {hasShareablePhone ? (
-                      "Il tuo numero sara visibile solo al proprietario per questa richiesta."
+                      "Facoltativo."
                     ) : (
                       <>
                         Aggiungi un numero nelle{" "}
@@ -135,16 +130,16 @@ function ListingContactCard({
                 </FieldContent>
               </Field>
             </FieldGroup>
-            <Button type="submit" className="w-fit">
+            <Button type="submit" className="w-full">
               <MailIcon data-icon="inline-start" aria-hidden="true" />
-              Invia richiesta
+              Invia messaggio
             </Button>
           </form>
         ) : (
-          <Button asChild className="w-fit">
+          <Button asChild className="w-full">
             <Link href={routes.login(routes.listing(listingId))}>
               <LogInIcon data-icon="inline-start" aria-hidden="true" />
-              Accedi per contattare
+              Accedi per scrivere
             </Link>
           </Button>
         )}
@@ -160,7 +155,7 @@ function ContactFeedback({ status }: { status: ContactStatus }) {
 
   const message =
     status === "sent"
-      ? "Richiesta inviata. Il proprietario potra rispondere usando i contatti autorizzati."
+      ? "Messaggio inviato."
       : status === "invalid"
         ? "Controlla il messaggio e conferma il consenso email."
         : status === "unavailable"

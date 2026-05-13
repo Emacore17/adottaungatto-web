@@ -81,6 +81,7 @@ describe("ListingsService", () => {
             profileType: "private",
           },
           stats: {
+            favoriteCount: 3,
             likeCount: 4,
           },
           sponsorship: {
@@ -1201,6 +1202,7 @@ function createPublicListingRow() {
     owner_user_id: "owner-id",
     owner_display_name: "Owner",
     owner_profile_type: "private",
+    favorite_count: "3",
     like_count: "4",
     ready_image_count: "2",
     cover_image_id: "cover-image-id",

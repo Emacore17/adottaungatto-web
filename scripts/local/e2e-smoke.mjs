@@ -108,6 +108,11 @@ try {
       previewImages[0]?.id === listings.items[0]?.images?.cover?.id,
     `preview=${previewImages.length}`
   )
+  check(
+    "public listing favorite count",
+    Number.isInteger(listings.items[0]?.stats?.favoriteCount),
+    `count=${listings.items[0]?.stats?.favoriteCount ?? "missing"}`
+  )
 
   const coverStorage = await fetch(
     `${storagePublicUrl}/${storageBucket}/${coverObjectKey}`
@@ -428,38 +433,6 @@ try {
   check(
     "web listing favorite api removed state",
     hasFavoriteToggleState(webFavoriteApiRemovedHtml, listingId, "idle")
-  )
-
-  const like = await api("POST", `/likes/listings/${listingId}`, {}, token)
-  check("like add", like.liked === true)
-  const likedDetailHtml = await webText(
-    `/listings/${listingId}`,
-    token,
-    "web listing detail like saved"
-  )
-  check(
-    "web listing detail like saved state",
-    hasLikeToggleState(likedDetailHtml, "liked")
-  )
-
-  const likeCount = await api("GET", `/likes/listings/${listingId}`)
-  check("like count", likeCount.likeCount >= 1)
-
-  const removedLike = await api(
-    "DELETE",
-    `/likes/listings/${listingId}`,
-    undefined,
-    token
-  )
-  check("like delete", removedLike.liked === false)
-  const likeRemovedDetailHtml = await webText(
-    `/listings/${listingId}`,
-    token,
-    "web listing detail like removed"
-  )
-  check(
-    "web listing detail like removed state",
-    hasLikeToggleState(likeRemovedDetailHtml, "idle")
   )
 
   const contactCase = await createSmokeContactRequest(token, [
@@ -1490,13 +1463,6 @@ function hasFavoriteToggleState(html, listingId, state) {
   )
 
   return stateIndex >= 0 && listingIndex - stateIndex < 200
-}
-
-function hasLikeToggleState(html, state) {
-  return (
-    html.includes("data-like-toggle") &&
-    html.includes(`data-like-state="${state}"`)
-  )
 }
 
 function countOccurrences(value, pattern) {

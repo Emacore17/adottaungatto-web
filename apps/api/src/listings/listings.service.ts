@@ -100,6 +100,7 @@ type PublicListingRow = Omit<
   owner_user_id: string
   owner_display_name: string
   owner_profile_type: string
+  favorite_count: number | string
   published_at: Date | string | null
   expires_at: Date | string | null
   like_count: number | string
@@ -278,6 +279,7 @@ const publicListingSelectFields = `
   owner.id::text as owner_user_id,
   owner.display_name as owner_display_name,
   owner.profile_type::text as owner_profile_type,
+  coalesce(favorite_counts.favorite_count, 0)::int as favorite_count,
   coalesce(like_counts.like_count, 0)::int as like_count,
   coalesce(ready_images.ready_image_count, 0)::int as ready_image_count,
   cover_images.cover_image_id,
@@ -373,6 +375,13 @@ const publicListingJoins = `
       limit 4
     ) preview
   ) preview_images on true
+  left join (
+    select
+      listing_id,
+      count(*)::int as favorite_count
+    from listing_favorites
+    group by listing_id
+  ) favorite_counts on favorite_counts.listing_id = listing.id
   left join (
     select
       listing_id,
@@ -1912,6 +1921,7 @@ function mapPublicListingSummaryRow(
       profileType: row.owner_profile_type,
     },
     stats: {
+      favoriteCount: Number(row.favorite_count),
       likeCount: Number(row.like_count),
     },
     sponsorship: {

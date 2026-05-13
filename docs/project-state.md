@@ -54,12 +54,12 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   avviso visuale su nuova notifica. Gli eventi coperti includono invio a
   revisione, contatto proprietario, decisione moderazione e aggiornamento
   segnalazione.
-- Preferiti e like per annunci pubblicati; la lista `/listings` e la scheda
-  annuncio espongono un cuore toggle per salvare/rimuovere preferiti, con
-  redirect al login solo se l'utente non e' autenticato. Da autenticato il
-  toggle preferiti usa mutazioni client same-origin senza redirect della pagina.
-  La scheda annuncio espone anche lo stato personale del like autenticato con
-  icona separata dal cuore preferiti nel pannello azioni.
+- Preferiti per annunci pubblicati; la lista `/listings` e la scheda annuncio
+  espongono un cuore toggle per salvare/rimuovere preferiti con conteggio
+  aggregato, toast di conferma e redirect al login solo se l'utente non e'
+  autenticato. Da autenticato il toggle preferiti usa mutazioni client
+  same-origin senza redirect della pagina. La UI pubblica non espone piu il
+  gesto separato "mi piace".
 - Contatto proprietario privacy-first con richiesta autenticata, inoltro email
   backend, tracciamento `listing_contact_requests`, rate limit dedicato e
   preferenza per-annuncio per abilitare/disabilitare il contatto, consensi
@@ -117,8 +117,8 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   readiness/metriche/alert API, header di correlazione, ricerca pubblica, auth,
   creazione annuncio, upload immagine, processing worker, invio a
   revisione, approvazione admin fino a pubblicazione visibile, preferiti con
-  stato UI a cuore e endpoint same-origin, update profilo/preferenze, like con
-  stato UI nella scheda annuncio, contatto proprietario con consenso telefono,
+  stato UI a cuore e endpoint same-origin, update profilo/preferenze, contatto
+  proprietario con consenso telefono,
   inbox contatti ricevuti dal proprietario, notifiche,
   isolamento multi-utente su bozze, immagini, preferiti, notifiche e contatti
   ricevuti, contenuti
@@ -198,9 +198,9 @@ layout pubblici/auth/account e shell admin dedicato, homepage pubblica, lista
 annunci, scheda annuncio con carosello immagini, proxy route per
 autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, card lista con foto `cover`, preview hover multi-foto e
-sponsorizzati evidenziati, cuore preferiti toggle client su lista e scheda
-annuncio, pannello azioni con like a icona pollice e preferito separato,
-fullscreen foto nel dettaglio, provider
+sponsorizzati evidenziati, cuore preferiti toggle client con conteggio su
+lista e scheda annuncio, proprietario in stile social con avatar/nome nella
+scheda e fullscreen foto nel dettaglio, provider
 globale per notifiche real-time con badge live sull'account, dashboard account
 operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina
@@ -221,8 +221,8 @@ pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload multiplo di immagini gattini locali, processing
 worker, invio a revisione, carosello immagini e lightbox nel dettaglio
-pubblicato, stato like UI, preferiti client, notifica di invio a revisione e
-notifiche real-time su contatto proprietario e approvazione moderatore. Il
+pubblicato, preferiti client, notifica di invio a revisione e notifiche
+real-time su contatto proprietario e approvazione moderatore. Il
 rollout visuale brand basato sul logo
 `adottaungattoit-logo.svg` e' stato esteso a token globali, primitive UI,
 navbar/footer, home, lista e dettaglio annunci, auth, account, moderazione e

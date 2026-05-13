@@ -38,10 +38,11 @@ Ogni item include `favoritedAt` e un riepilogo annuncio con:
 - `/account` mostra un riepilogo dei preferiti recenti per utenti autenticati.
 - `/listings` mostra un cuore cliccabile su ogni card: click su cuore vuoto
   salva, click su cuore pieno rimuove tramite endpoint same-origin senza
-  redirect della pagina. Se l'utente non e' autenticato, porta al login con
-  ritorno alla lista.
-- `/listings/:id` mostra lo stesso cuore toggle nella scheda annuncio, separato
-  dal pulsante "mi piace" dentro il pannello azioni.
+  redirect della pagina. Il cuore mostra anche il conteggio aggregato dei
+  preferiti in stile social e usa un toast dopo la mutazione. Se l'utente non
+  e' autenticato, porta al login con ritorno alla lista.
+- `/listings/:id` mostra lo stesso cuore toggle vicino ai dati social
+  dell'annuncio, senza pannello azioni separato.
 - `/account/favorites` mostra la lista paginata dei preferiti collegata a
   `GET /favorites/listings`.
 - `/account` e `/account/favorites` permettono di rimuovere un preferito tramite

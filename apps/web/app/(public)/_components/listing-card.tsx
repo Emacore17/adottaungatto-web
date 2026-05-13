@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { MapPinIcon, ThumbsUpIcon } from "lucide-react"
+import { MapPinIcon } from "lucide-react"
 
 import {
   ListingImagePreview,
@@ -47,7 +47,7 @@ function ListingCard({
       className={cn(
         "gap-0 py-0 transition-[box-shadow,transform] hover:-translate-y-0.5 hover:ring-brand-teal/35",
         isSponsored
-          ? "bg-brand-amber-soft/25 ring-brand-amber/70 shadow-md shadow-brand-amber/10"
+          ? "bg-brand-amber-soft/25 shadow-md shadow-brand-amber/10 ring-brand-amber/70"
           : undefined
       )}
     >
@@ -71,6 +71,7 @@ function ListingCard({
           />
           <ListingFavoriteToggle
             className="absolute top-3 right-3"
+            initialFavoriteCount={listing.stats.favoriteCount}
             isAuthenticated={isAuthenticated}
             isFavorite={isFavorite}
             listingId={listing.id}
@@ -115,11 +116,7 @@ function ListingCard({
               {listing.description}
             </p>
           </CardContent>
-          <CardFooter className="mt-auto justify-between gap-3">
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
-              <ThumbsUpIcon data-icon="inline-start" aria-hidden="true" />
-              {formatLikeLabel(listing.stats.likeCount)}
-            </span>
+          <CardFooter className="mt-auto justify-end gap-3">
             <Button
               asChild
               variant="outline"
@@ -166,10 +163,6 @@ function createPreviewImage(
     id: image.id,
     url,
   }
-}
-
-function formatLikeLabel(count: number) {
-  return count === 1 ? "1 mi piace" : `${count} mi piace`
 }
 
 export { ListingCard }
