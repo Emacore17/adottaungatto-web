@@ -250,7 +250,6 @@ function ListingFavoriteToggle({
         "gap-1.5 text-muted-foreground transition-[background-color,border-color,color] hover:bg-muted hover:text-foreground",
         !showLabel && "bg-background/90 shadow-sm backdrop-blur",
         isProminent && "h-11 rounded-full px-4 text-base",
-        favorite && "text-foreground",
         hasError && "border-destructive/40 text-destructive",
         className
       )}
@@ -258,7 +257,10 @@ function ListingFavoriteToggle({
       <HeartIcon
         data-icon={showLabel ? "inline-start" : undefined}
         aria-hidden="true"
-        className={cn("transition-colors", favorite && "fill-current")}
+        className={cn(
+          "transition-colors",
+          favorite && "fill-destructive text-destructive"
+        )}
       />
       <span className="tabular-nums">{count}</span>
       {showLabel ? <span>{visibleLabel}</span> : null}
