@@ -199,8 +199,10 @@ annunci, scheda annuncio con carosello immagini, proxy route per
 autocomplete/lista pubblica, sitemap, robots,
 JSON-LD iniziali, card lista con foto `cover`, preview hover multi-foto e
 sponsorizzati evidenziati, cuore preferiti toggle client con conteggio su
-lista e scheda annuncio, proprietario in stile social con avatar/nome nella
-scheda e fullscreen foto nel dettaglio, provider
+lista e scheda annuncio, pulsante preferito piu evidente nel dettaglio senza
+testo ridondante, proprietario in stile social con avatar/nome, sezioni
+separate per descrizione, informazioni e salute, fullscreen foto nel dettaglio,
+provider
 globale per notifiche real-time con badge live sull'account, dashboard account
 operativa con riepilogo, attivita prioritarie, profilo, azioni rapide, annunci
 in lavorazione, contatti ricevuti, preferiti e notifiche, pagina

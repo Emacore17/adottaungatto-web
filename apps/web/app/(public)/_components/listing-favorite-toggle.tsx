@@ -10,6 +10,7 @@ import { toast } from "@workspace/ui/components/sonner"
 import { cn } from "@workspace/ui/lib/utils"
 
 type ListingFavoriteToggleProps = {
+  emphasis?: "default" | "prominent"
   initialFavoriteCount: number
   isAuthenticated: boolean
   isFavorite: boolean
@@ -21,6 +22,7 @@ type ListingFavoriteToggleProps = {
 
 function ListingFavoriteToggle({
   className,
+  emphasis = "default",
   initialFavoriteCount,
   isAuthenticated,
   isFavorite,
@@ -32,6 +34,7 @@ function ListingFavoriteToggle({
   const [favorite, setFavorite] = useState(isFavorite)
   const [hasError, setHasError] = useState(false)
   const [isPending, setIsPending] = useState(false)
+  const isProminent = emphasis === "prominent"
 
   useEffect(() => {
     setCount(initialFavoriteCount)
@@ -46,10 +49,11 @@ function ListingFavoriteToggle({
       <Button
         asChild
         variant="ghost"
-        size={showLabel ? "default" : "sm"}
+        size={isProminent || showLabel ? "default" : "sm"}
         className={cn(
           "gap-1.5 text-muted-foreground hover:bg-muted hover:text-foreground",
           !showLabel && "bg-background/90 shadow-sm backdrop-blur",
+          isProminent && "h-11 rounded-full px-4 text-base",
           className
         )}
         aria-label={label}
@@ -125,7 +129,7 @@ function ListingFavoriteToggle({
     <Button
       type="button"
       variant="ghost"
-      size={showLabel ? "default" : "sm"}
+      size={isProminent || showLabel ? "default" : "sm"}
       aria-label={label}
       aria-pressed={favorite}
       title={hasError ? "Non aggiornato. Riprova." : label}
@@ -138,6 +142,7 @@ function ListingFavoriteToggle({
       className={cn(
         "gap-1.5 text-muted-foreground transition-[background-color,border-color,color] hover:bg-muted hover:text-foreground",
         !showLabel && "bg-background/90 shadow-sm backdrop-blur",
+        isProminent && "h-11 rounded-full px-4 text-base",
         favorite && "text-foreground",
         hasError && "border-destructive/40 text-destructive",
         className
