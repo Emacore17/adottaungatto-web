@@ -59,10 +59,9 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Immagini</CardTitle>
+        <CardTitle>Foto</CardTitle>
         <CardDescription>
-          Carica foto JPG, PNG o WebP fino a 10 MB. Dopo il caricamento vengono
-          preparate automaticamente.
+          Carica fino a 10 foto. Scegli copertina e ordine.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -83,7 +82,7 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
 
         <form
           action={uploadDraftImageAction}
-          className="grid gap-5"
+          className="flex flex-col gap-5"
           encType="multipart/form-data"
         >
           <input name="draftId" type="hidden" value={draftId} />
@@ -91,7 +90,7 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
 
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="image">File</FieldLabel>
+              <FieldLabel htmlFor="image">Aggiungi foto</FieldLabel>
               <Input
                 id="image"
                 name="image"
@@ -99,13 +98,14 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
                 accept="image/jpeg,image/png,image/webp"
                 required
               />
+              <FieldDescription>JPG, PNG o WebP fino a 10 MB.</FieldDescription>
             </Field>
             <Field orientation="horizontal">
               <Checkbox id="isCover" name="isCover" value="true" />
               <FieldContent>
-                <FieldLabel htmlFor="isCover">Immagine principale</FieldLabel>
+                <FieldLabel htmlFor="isCover">Usa come copertina</FieldLabel>
                 <FieldDescription>
-                  Se non ci sono immagini, la prima foto diventa principale.
+                  Altrimenti resta la copertina attuale.
                 </FieldDescription>
               </FieldContent>
             </Field>
@@ -151,6 +151,12 @@ function DraftImageGallery({
     )
   }
 
+  const coverIndex = Math.max(
+    images.items.findIndex((image) => image.isCover),
+    0
+  )
+  const coverImage = images.items[coverIndex] ?? images.items[0]!
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
@@ -163,6 +169,8 @@ function DraftImageGallery({
         </span>
       </div>
 
+      <DraftCoverPreview image={coverImage} position={coverIndex + 1} />
+
       <div className="grid gap-3">
         {images.items.map((image, index) => (
           <DraftImageItem
@@ -173,6 +181,7 @@ function DraftImageGallery({
             image={image}
             imageIds={imageIds}
             nextPath={nextPath}
+            position={index + 1}
           />
         ))}
       </div>
@@ -187,6 +196,7 @@ function DraftImageItem({
   image,
   imageIds,
   nextPath,
+  position,
 }: {
   canMoveDown: boolean
   canMoveUp: boolean
@@ -194,6 +204,7 @@ function DraftImageItem({
   image: ListingImage
   imageIds: string[]
   nextPath: string
+  position: number
 }) {
   const previewUrl = getPublicObjectUrl(
     image.status === "ready"
@@ -222,6 +233,7 @@ function DraftImageItem({
 
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline">#{position}</Badge>
             <Badge variant={getStatusVariant(image.status)}>
               {imageStatusLabels[image.status]}
             </Badge>
@@ -283,6 +295,47 @@ function DraftImageItem({
             Elimina
           </Button>
         </form>
+      </div>
+    </div>
+  )
+}
+
+function DraftCoverPreview({
+  image,
+  position,
+}: {
+  image: ListingImage
+  position: number
+}) {
+  const previewUrl = getPublicObjectUrl(
+    image.status === "ready"
+      ? (image.objectKeyLarge ?? image.objectKeyThumb)
+      : null
+  )
+
+  return (
+    <div className="grid gap-2">
+      <div className="flex items-center justify-between gap-2 text-sm">
+        <span className="font-medium">Copertina</span>
+        <Badge variant="secondary">
+          <StarIcon aria-hidden="true" />
+          Foto #{position}
+        </Badge>
+      </div>
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg border bg-muted">
+        {previewUrl ? (
+          <StorageImage
+            src={previewUrl}
+            alt="Copertina annuncio"
+            fill
+            className="object-cover"
+            sizes="(min-width: 1024px) 340px, 100vw"
+          />
+        ) : (
+          <div className="flex size-full items-center justify-center text-muted-foreground">
+            <ImageIcon aria-hidden="true" />
+          </div>
+        )}
       </div>
     </div>
   )

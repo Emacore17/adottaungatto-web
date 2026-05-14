@@ -87,18 +87,19 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   notifiche `/account/notifications` collegate in lettura alle API autenticate,
   con mutazioni per aggiornare profilo/preferenze email, cancellare bozze,
   rimuovere preferiti e segnare notifiche come lette. Gli annunci in lavorazione
-  hanno anche pagine frontend per creazione, modifica, upload immagine
-  presigned, galleria immagini con stato, eliminazione, riordino/copertina,
-  guida passaggi dati / foto / revisione, invio a revisione e conferma
-  post-invio.
+  hanno anche pagine frontend per creazione, modifica, immagini iniziali con
+  anteprima copertina/ordine, upload immagine presigned, galleria immagini con
+  stato, eliminazione, riordino/copertina, invio a revisione e conferma
+  post-invio con link per rivedere l'annuncio.
 - Route group admin con layout dashboard dedicato, sidebar desktop, navigazione
   mobile interna e pagina `/moderation` server-rendered, `noindex`, login
   obbligatorio, KPI sintetici e preview compatte delle code API
   `pending_review` e segnalazioni. La gestione operativa vive in
   `/moderation/queue`, vista tabellare con selezione multipla,
-  approva/rifiuta/sospendi batch, azioni rapide per riga e anteprima cover
-  per controllo contenuti; le autorizzazioni di ruolo restano applicate dalle
-  API.
+  approva/rifiuta/sospendi batch, azioni rapide per riga, stati parlanti e
+  anteprima multi-foto per controllo contenuti; su mobile la coda usa card
+  operative con foto, dati essenziali e azioni rapide touch-friendly. Le
+  autorizzazioni di ruolo restano applicate dalle API.
 - Fallback trigram tracciato per la prima pagina di ricerche full-text senza
   risultati.
 - Refresh del documento ricerca dopo decisioni di moderazione, processing
@@ -163,15 +164,18 @@ query `q` full-text su PostgreSQL. Quando `q` e' presente usa
 `listing_search_documents.search_vector` se disponibile, cade sul vettore
 inline se l'annuncio non e' ancora indicizzato e ordina per rilevanza testuale
 con ranking `postgres-v1`. Se la prima pagina full-text e' vuota, esegue un
-fallback `pg_trgm` e lo dichiara in `meta.expansion`. Senza `q` ordina per
+fallback `pg_trgm` e lo dichiara in `meta.expansion`. Quando filtri o raggio
+geografico portano a zero risultati, la prima pagina propone comunque annunci
+alternativi tramite espansioni tracciate `expanded_radius` e
+`relaxed_filters`; la UI pubblica e la sezione home "Annunci vicino a te"
+mostrano un feedback esplicito prima dei suggerimenti. Senza `q` ordina per
 pubblicazione recente; con `lat`, `lng` e `sort=distance` filtra e ordina per
 distanza. I filtri pubblici includono luogo, razza, sesso, fascia eta,
 gratuita, fascia contributo, dati sanitari e presenza immagini. Il refresh e'
 collegato a moderazione, immagini e like; resta da agganciare al futuro update
 degli annunci pubblicati. Il CLI worker benchmark ha prodotto misure locali su
 10k e 100k annunci sintetici, entrambe sotto le soglie iniziali documentate.
-Mancano espansioni geografiche o filtri soft, benchmark limite 1M, fixture
-realistiche e test di carico API.
+Mancano benchmark limite 1M, fixture realistiche e test di carico API.
 
 ## Stato sicurezza
 
@@ -213,14 +217,14 @@ code API con KPI, preview compatte e coda rapida `/moderation/queue` per
 decisioni tabellari singole o batch motivate. L'area account supporta rimozione
 preferiti, marcatura notifiche lette, cancellazione annunci in lavorazione ed
 editor con creazione tramite "Inserisci annuncio", modifica,
-upload immagine, galleria immagini con stato chiaro, eliminazione,
-riordino/copertina, preferenza contatto per-annuncio, invio a revisione e
-schermata di conferma. Il form contatto pubblico permette il consenso separato
+immagini iniziali con anteprima copertina/ordine, upload immagine, galleria
+immagini con stato chiaro, eliminazione, riordino/copertina, preferenza
+contatto per-annuncio, invio a revisione e schermata di conferma. Il form
+contatto pubblico permette il consenso separato
 per condividere il telefono del richiedente quando presente nel profilo, e
 `/account/contacts` lo mostra solo al proprietario autorizzato. La schermata
-annuncio mostra un flusso guidato dati,
-foto e revisione e disabilita l'invio finche' i passaggi richiesti non sono
-pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
+annuncio mantiene messaggi brevi e disabilita l'invio finche' dati e foto
+richiesti non sono pronti. Il client API frontend converte errori HTTP, rate limit e timeout in
 messaggi italiani non tecnici da mostrare nelle schermate account e admin. Lo
 smoke locale copre anche upload multiplo di immagini gattini locali, processing
 worker, invio a revisione, carosello immagini e lightbox nel dettaglio

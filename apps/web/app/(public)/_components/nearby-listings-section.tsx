@@ -12,6 +12,7 @@ import {
 import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type {
+  PublicListingExpansion,
   PublicListingListResponse,
   PublicListingSummary,
 } from "@/lib/api/types"
@@ -115,6 +116,7 @@ function NearbyListingsSection() {
   const [status, setStatus] = useState<NearbyStatus>("checking")
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
   const [listings, setListings] = useState<PublicListingSummary[]>([])
+  const [fallbackMessage, setFallbackMessage] = useState<string | null>(null)
 
   useEffect(() => {
     return () => {
@@ -122,9 +124,45 @@ function NearbyListingsSection() {
     }
   }, [])
 
+  const fetchFallbackListings = useCallback(async (message: string) => {
+    setStatus("loading")
+
+    try {
+      const params = new URLSearchParams({
+        page: "1",
+        pageSize: String(nearbyListingsLimit),
+        sort: "recent",
+      })
+      const response = await fetch(`/api/listings?${params.toString()}`, {
+        cache: "no-store",
+      })
+
+      if (!response.ok) {
+        throw new Error("Fallback listings request failed.")
+      }
+
+      const payload = (await response.json()) as PublicListingListResponse
+
+      if (!mountedRef.current) {
+        return
+      }
+
+      setListings(payload.items)
+      setFallbackMessage(message)
+      setStatus("ready")
+    } catch {
+      if (mountedRef.current) {
+        setListings([])
+        setFallbackMessage(null)
+        setStatus("error")
+      }
+    }
+  }, [])
+
   const fetchNearbyListings = useCallback(
     async (nextCoordinates: Coordinates) => {
       setStatus("loading")
+      setFallbackMessage(null)
 
       try {
         const params = new URLSearchParams({
@@ -150,20 +188,28 @@ function NearbyListingsSection() {
         }
 
         setListings(payload.items)
+        setFallbackMessage(
+          payload.meta.expansion
+            ? formatNearbyExpansionMessage(payload.meta.expansion)
+            : null
+        )
         setStatus("ready")
       } catch {
         if (mountedRef.current) {
-          setListings([])
-          setStatus("error")
+          void fetchFallbackListings(
+            "Non riesco a caricare gli annunci vicini: ti mostro annunci recenti."
+          )
         }
       }
     },
-    []
+    [fetchFallbackListings]
   )
 
   const requestPosition = useCallback(() => {
     if (!navigator.geolocation) {
-      setStatus("error")
+      void fetchFallbackListings(
+        "Non posso leggere la posizione da questo browser: ti mostro annunci recenti."
+      )
       return
     }
 
@@ -180,7 +226,11 @@ function NearbyListingsSection() {
         void fetchNearbyListings(nextCoordinates)
       },
       (error) => {
-        setStatus(error.code === error.PERMISSION_DENIED ? "denied" : "error")
+        void fetchFallbackListings(
+          error.code === error.PERMISSION_DENIED
+            ? "Posizione non disponibile nel browser: ti mostro annunci recenti."
+            : "Non riesco a calcolare la posizione: ti mostro annunci recenti."
+        )
       },
       {
         enableHighAccuracy: false,
@@ -188,11 +238,13 @@ function NearbyListingsSection() {
         timeout: 8000,
       }
     )
-  }, [fetchNearbyListings])
+  }, [fetchFallbackListings, fetchNearbyListings])
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      setStatus("error")
+      void fetchFallbackListings(
+        "Non posso leggere la posizione da questo browser: ti mostro annunci recenti."
+      )
       return
     }
 
@@ -215,7 +267,14 @@ function NearbyListingsSection() {
           return
         }
 
-        setStatus(permissionStatus.state === "denied" ? "denied" : "idle")
+        if (permissionStatus.state === "denied") {
+          void fetchFallbackListings(
+            "Posizione non disponibile nel browser: ti mostro annunci recenti."
+          )
+          return
+        }
+
+        setStatus("idle")
       })
       .catch(() => {
         if (!cancelled && mountedRef.current) {
@@ -226,7 +285,7 @@ function NearbyListingsSection() {
     return () => {
       cancelled = true
     }
-  }, [requestPosition])
+  }, [fetchFallbackListings, requestPosition])
 
   const allNearbyHref = buildNearbyHref(coordinates)
   const isBusy =
@@ -281,16 +340,22 @@ function NearbyListingsSection() {
         </div>
 
         {status === "ready" && listings.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {listings.map((listing) => (
-              <NearbyListingCard key={listing.id} listing={listing} />
-            ))}
-          </div>
+          <>
+            {fallbackMessage ? (
+              <NearbyState>{fallbackMessage}</NearbyState>
+            ) : null}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {listings.map((listing) => (
+                <NearbyListingCard key={listing.id} listing={listing} />
+              ))}
+            </div>
+          </>
         ) : null}
 
         {status === "ready" && listings.length === 0 ? (
           <NearbyState action={null}>
-            Nessun annuncio vicino alla tua zona.
+            {fallbackMessage ??
+              "Non ho trovato annunci disponibili per questa richiesta."}
           </NearbyState>
         ) : null}
 
@@ -314,6 +379,20 @@ function NearbyListingsSection() {
       </div>
     </section>
   )
+}
+
+function formatNearbyExpansionMessage(expansion: PublicListingExpansion) {
+  if (expansion.type === "expanded_radius") {
+    return expansion.originalRadiusKm
+      ? `Non ci sono annunci entro ${expansion.originalRadiusKm} km: ti mostro quelli piu vicini disponibili.`
+      : "Non ci sono annunci nel raggio richiesto: ti mostro quelli piu vicini disponibili."
+  }
+
+  if (expansion.type === "relaxed_filters") {
+    return "Non ci sono annunci vicini con tutti i criteri richiesti: ti mostro alternative ordinate per distanza."
+  }
+
+  return `Non ho trovato corrispondenze esatte per "${expansion.originalQuery}", quindi ti mostro annunci simili.`
 }
 
 export { NearbyListingsSection }

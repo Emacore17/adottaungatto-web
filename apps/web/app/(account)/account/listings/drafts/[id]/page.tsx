@@ -8,7 +8,6 @@ import { DraftEditorForm } from "@/app/(account)/account/listings/drafts/_compon
 import { getDraftFlowState } from "@/app/(account)/account/listings/drafts/_components/draft-flow-state"
 import { DraftImagePanel } from "@/app/(account)/account/listings/drafts/_components/draft-image-panel"
 import { DraftSubmitPanel } from "@/app/(account)/account/listings/drafts/_components/draft-submit-panel"
-import { DraftWizardProgress } from "@/app/(account)/account/listings/drafts/_components/draft-wizard-progress"
 import { getAccountDraft, listAccountDraftImages } from "@/lib/api/account"
 import { listPublicCatBreeds } from "@/lib/api/listings"
 import { routes } from "@/lib/routes"
@@ -16,6 +15,7 @@ import { Button } from "@workspace/ui/components/button"
 import {
   Card,
   CardDescription,
+  CardContent,
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
@@ -61,20 +61,18 @@ export default async function EditDraftPage({
             {draft.data.title}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Completa dati e foto. Quando una foto risulta Pronta puoi inviare
-            l&apos;annuncio in revisione.
+            Modifica dati, foto e copertina.
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href={routes.accountDrafts}>
-            <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-            I miei annunci
+            <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />I miei
+            annunci
           </Link>
         </Button>
       </div>
 
       <DraftActionMessage searchParams={query} />
-      <DraftWizardProgress draft={draft.data} images={imageData} />
 
       {!breeds.ok ? (
         <div
@@ -99,15 +97,35 @@ export default async function EditDraftPage({
             images={imageData}
             nextPath={currentPath}
           />
-          <DraftSubmitPanel
-            draftId={draft.data.id}
-            isReady={flow.reviewReady}
-            nextPath={currentPath}
-            readinessMessage={flow.reviewMessage}
-          />
+          {draft.data.moderationStatus === "pending_review" ? (
+            <SubmittedReviewCard />
+          ) : (
+            <DraftSubmitPanel
+              draftId={draft.data.id}
+              isReady={flow.reviewReady}
+              nextPath={currentPath}
+              readinessMessage={flow.reviewMessage}
+            />
+          )}
         </aside>
       </div>
     </main>
+  )
+}
+
+function SubmittedReviewCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>In revisione</CardTitle>
+        <CardDescription>
+          Puoi ancora salvare modifiche. Ti avvisiamo quando viene approvato.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        Controlla anche la mail.
+      </CardContent>
+    </Card>
   )
 }
 
@@ -116,8 +134,8 @@ function DraftUnavailable({ message }: { message: string }) {
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
       <Button asChild variant="outline" className="w-fit">
         <Link href={routes.accountDrafts}>
-          <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-          I miei annunci
+          <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />I miei
+          annunci
         </Link>
       </Button>
       <Card>

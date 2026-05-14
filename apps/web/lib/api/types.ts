@@ -31,8 +31,7 @@ export type PublicListingSummary = {
     slug: string
   } | null
   sex: ListingSex
-  ageMonthsMin: number | null
-  ageMonthsMax: number | null
+  ageMonths: number | null
   location: {
     municipality: {
       id: string
@@ -92,11 +91,24 @@ export type PublicListingDetail = PublicListingSummary & {
   }
 }
 
-export type PublicListingExpansion = {
-  type: "trigram_text"
-  reason: "empty_full_text"
-  originalQuery: string
-}
+export type PublicListingExpansion =
+  | {
+      type: "trigram_text"
+      reason: "empty_full_text"
+      originalQuery: string
+    }
+  | {
+      type: "expanded_radius"
+      reason: "empty_radius"
+      originalQuery: string | null
+      originalRadiusKm: number | null
+    }
+  | {
+      type: "relaxed_filters"
+      reason: "empty_filtered"
+      originalQuery: string | null
+      originalRadiusKm: number | null
+    }
 
 export type PublicListingListResponse = {
   items: PublicListingSummary[]

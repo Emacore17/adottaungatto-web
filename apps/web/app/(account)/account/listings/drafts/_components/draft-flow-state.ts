@@ -1,7 +1,4 @@
-import type {
-  ListingDraft,
-  ListingImageListResponse,
-} from "@/lib/api/account"
+import type { ListingDraft, ListingImageListResponse } from "@/lib/api/account"
 
 type DraftFlowStepStatus = "complete" | "current" | "pending" | "blocked"
 
@@ -26,10 +23,10 @@ export function getDraftFlowState(
   const dataComplete = draft ? isDraftDataComplete(draft) : false
   const imageComplete = Boolean(
     draft &&
-      images &&
-      images.meta.readyCount > 0 &&
-      images.meta.pendingCount === 0 &&
-      images.meta.rejectedCount === 0
+    images &&
+    images.meta.readyCount > 0 &&
+    images.meta.pendingCount === 0 &&
+    images.meta.rejectedCount === 0
   )
   const reviewReady = dataComplete && imageComplete
   const imageStepStatus = resolveImageStepStatus({
@@ -78,17 +75,11 @@ function isDraftDataComplete(draft: ListingDraft) {
   const hasRequiredText =
     draft.title.trim().length >= 3 && draft.description.trim().length >= 10
   const hasLocation = Boolean(draft.location)
-  const hasValidAgeRange =
-    draft.ageMonthsMin === null ||
-    draft.ageMonthsMax === null ||
-    draft.ageMonthsMin <= draft.ageMonthsMax
   const hasValidContribution =
     draft.isFree ||
     (draft.contributionCents !== null && draft.contributionCents > 0)
 
-  return (
-    hasRequiredText && hasLocation && hasValidAgeRange && hasValidContribution
-  )
+  return hasRequiredText && hasLocation && hasValidContribution
 }
 
 function resolveImageStepStatus({

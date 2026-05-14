@@ -18,6 +18,7 @@ import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
 import { getSessionToken } from "@/lib/auth/session"
+import { formatAgeMonths, formatListingPrice } from "@/lib/listings/format"
 import { routes } from "@/lib/routes"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
@@ -121,7 +122,7 @@ export default async function ListingDetailPage({
                     : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
                 )}
               >
-                {listing.data.isFree ? "Adozione" : "Contributo"}
+                {formatListingPrice(listing.data)}
               </Badge>
               {listing.data.breed ? (
                 <Badge
@@ -195,7 +196,7 @@ export default async function ListingDetailPage({
                 <ListingFact
                   label="Eta"
                   tone="teal"
-                  value={formatAgeRange(listing.data)}
+                  value={formatAgeMonths(listing.data.ageMonths)}
                 />
                 <ListingFact
                   label="Sesso"
@@ -203,9 +204,9 @@ export default async function ListingDetailPage({
                   value={formatSex(listing.data.sex)}
                 />
                 <ListingFact
-                  label="Adozione"
+                  label="Prezzo"
                   tone={listing.data.isFree ? "olive" : "amber"}
-                  value={formatContribution(listing.data)}
+                  value={formatListingPrice(listing.data)}
                 />
               </dl>
             </div>
@@ -402,50 +403,6 @@ function formatOwnerProfileType(profileType: string) {
   }
 }
 
-function formatAgeRange(listing: PublicListingDetail) {
-  if (listing.ageMonthsMin === null && listing.ageMonthsMax === null) {
-    return "Eta non indicata"
-  }
-
-  if (
-    listing.ageMonthsMin !== null &&
-    listing.ageMonthsMax !== null &&
-    listing.ageMonthsMin === listing.ageMonthsMax
-  ) {
-    return formatAge(listing.ageMonthsMin)
-  }
-
-  if (listing.ageMonthsMin !== null && listing.ageMonthsMax !== null) {
-    return `${formatAge(listing.ageMonthsMin)} - ${formatAge(
-      listing.ageMonthsMax
-    )}`
-  }
-
-  if (listing.ageMonthsMin !== null) {
-    return `Da ${formatAge(listing.ageMonthsMin)}`
-  }
-
-  return `Fino a ${formatAge(listing.ageMonthsMax ?? 0)}`
-}
-
-function formatAge(months: number) {
-  if (months < 12) {
-    return months === 1 ? "1 mese" : `${months} mesi`
-  }
-
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-  const yearLabel = years === 1 ? "1 anno" : `${years} anni`
-
-  if (remainingMonths === 0) {
-    return yearLabel
-  }
-
-  return `${yearLabel} e ${remainingMonths} ${
-    remainingMonths === 1 ? "mese" : "mesi"
-  }`
-}
-
 function formatSex(sex: PublicListingDetail["sex"]) {
   switch (sex) {
     case "female":
@@ -455,17 +412,6 @@ function formatSex(sex: PublicListingDetail["sex"]) {
     default:
       return "Non indicato"
   }
-}
-
-function formatContribution(listing: PublicListingDetail) {
-  if (listing.isFree || listing.contributionCents === null) {
-    return "Adozione gratuita"
-  }
-
-  return new Intl.NumberFormat("it-IT", {
-    currency: "EUR",
-    style: "currency",
-  }).format(listing.contributionCents / 100)
 }
 
 function formatHealthLabel(label: string, value: boolean | null) {

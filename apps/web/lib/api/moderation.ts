@@ -28,6 +28,13 @@ type ModerationImages = {
     objectKeyThumb: string | null
     objectKeyLarge: string | null
   } | null
+  preview: Array<{
+    id: string
+    objectKeyThumb: string | null
+    objectKeyLarge: string | null
+    isCover: boolean
+    sortOrder: number
+  }>
 }
 
 type ModerationQueueMeta = {

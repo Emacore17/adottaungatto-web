@@ -86,9 +86,14 @@ type ListingOwnerRow<
 
 type ListingDraftRow = ListingOwnerRow<"draft", "draft">
 
+type EditableListingDraftRow = ListingOwnerRow<
+  "draft" | "pending_review",
+  "draft"
+>
+
 type ListingReviewSubmissionRow = ListingOwnerRow<"pending_review", "draft">
 
-type ListingDraftListRow = ListingDraftRow & {
+type ListingDraftListRow = EditableListingDraftRow & {
   total_count: number | string
 }
 
@@ -558,6 +563,13 @@ const activeDraftWhereSql = `
   and listing.deleted_at is null
 `
 
+const activeEditableDraftWhereSql = `
+  listing.owner_user_id = $1::uuid
+  and listing.moderation_status in ('draft', 'pending_review')
+  and listing.lifecycle_status = 'draft'
+  and listing.deleted_at is null
+`
+
 const publicListingWhereSql = `
   listing.moderation_status = 'approved'
   and listing.lifecycle_status = 'published'
@@ -623,6 +635,29 @@ const publicListingGeoFilterSql = `
   )
 `
 
+const publicListingFallbackParameterAnchorSql = `
+  and ($3::uuid is null or $3::uuid is not null)
+  and ($4::uuid is null or $4::uuid is not null)
+  and ($5::uuid is null or $5::uuid is not null)
+  and ($6::uuid is null or $6::uuid is not null)
+  and ($7::listing_sex is null or $7::listing_sex is not null)
+  and ($8::int is null or $8::int is not null)
+  and ($9::int is null or $9::int is not null)
+  and ($10::boolean is null or $10::boolean is not null)
+  and ($11::boolean is null or $11::boolean is not null)
+  and ($12::boolean is null or $12::boolean is not null)
+  and ($13::boolean is null or $13::boolean is not null)
+  and ($14::boolean is null or $14::boolean is not null)
+  and ($15::boolean is null or $15::boolean is not null)
+  and ($16::text is null or $16::text is not null)
+  and ($17::float8 is null or $17::float8 is not null)
+  and ($18::float8 is null or $18::float8 is not null)
+  and ($19::float8 is null or $19::float8 is not null)
+  and ($20::text is null or $20::text is not null)
+  and ($21::int is null or $21::int is not null)
+  and ($22::int is null or $22::int is not null)
+`
+
 const publicListingOrderSql = `
   order by
     active_promotions.priority desc nulls last,
@@ -663,6 +698,34 @@ const publicListingTrigramFallbackOrderSql = `
     listing.id
 `
 
+const publicListingRequestedLocationRankSql = `
+  case
+    when $4::uuid is not null and listing.municipality_id = $4::uuid then 0
+    when $5::uuid is not null and listing.province_id = $5::uuid then 1
+    when $6::uuid is not null and listing.region_id = $6::uuid then 2
+    else 3
+  end
+`
+
+const publicListingSuggestionOrderSql = `
+  order by
+    active_promotions.priority desc nulls last,
+    case
+      when $17::float8 is not null and $18::float8 is not null
+      then (${publicListingDistanceMetersSql})
+      else null
+    end asc nulls last,
+    (${publicListingRequestedLocationRankSql}) asc,
+    case
+      when $16::text is not null then (${publicListingTrigramScoreSql})
+      else null
+    end desc nulls last,
+    (${publicListingRankingScoreSql}) desc nulls last,
+    listing.published_at desc nulls last,
+    listing.updated_at desc,
+    listing.id
+`
+
 const activeMunicipalityLocationSql = `
   select
     municipality.id::text as municipality_id,
@@ -693,13 +756,22 @@ const listUserDraftsSql = `
     count(*) over()::int as total_count
   from listings listing
   ${listingDraftJoins}
-  where ${activeDraftWhereSql}
+  where ${activeEditableDraftWhereSql}
   order by listing.updated_at desc, listing.created_at desc, listing.id
   limit $2::int
   offset $3::int
 `
 
 const getUserDraftSql = `
+  select ${listingDraftSelectFields}
+  from listings listing
+  ${listingDraftJoins}
+  where ${activeEditableDraftWhereSql}
+    and listing.id = $2::uuid
+  limit 1
+`
+
+const getUserDraftForSubmissionSql = `
   select ${listingDraftSelectFields}
   from listings listing
   ${listingDraftJoins}
@@ -739,6 +811,39 @@ const listPublicListingsTrigramFallbackSql = `
     and (${publicListingTrigramScoreSql}) >= ${publicListingTrigramFallbackThreshold}
     ${publicListingGeoFilterSql}
   ${publicListingTrigramFallbackOrderSql}
+  limit $1::int
+  offset $2::int
+`
+
+const listPublicListingsExpandedRadiusFallbackSql = `
+  select
+    ${publicListingSelectFields},
+    count(*) over()::int as total_count
+  from listings listing
+  ${publicListingJoins}
+  where ${publicListingWhereSql}
+    ${publicListingExplicitFiltersSql}
+    ${publicListingFallbackParameterAnchorSql}
+    and (
+      $16::text is null
+      or (${publicListingSearchVectorSql})
+        @@ websearch_to_tsquery('italian', unaccent($16::text))
+      or (${publicListingTrigramScoreSql}) >= ${publicListingTrigramFallbackThreshold}
+    )
+  ${publicListingSuggestionOrderSql}
+  limit $1::int
+  offset $2::int
+`
+
+const listPublicListingsRelaxedFallbackSql = `
+  select
+    ${publicListingSelectFields},
+    count(*) over()::int as total_count
+  from listings listing
+  ${publicListingJoins}
+  where ${publicListingWhereSql}
+    ${publicListingFallbackParameterAnchorSql}
+  ${publicListingSuggestionOrderSql}
   limit $1::int
   offset $2::int
 `
@@ -898,7 +1003,7 @@ const updateUserDraftSql = `
       updated_at = now()
     where id = $1::uuid
       and owner_user_id = $2::uuid
-      and moderation_status = 'draft'
+      and moderation_status in ('draft', 'pending_review')
       and lifecycle_status = 'draft'
       and deleted_at is null
     returning *
@@ -990,7 +1095,7 @@ const countDraftImagesSql = `
   left join listing_images listing_image
     on listing_image.listing_id = listing.id
     and listing_image.deleted_at is null
-  where ${activeDraftWhereSql}
+  where ${activeEditableDraftWhereSql}
     and listing.id = $2::uuid
 `
 
@@ -1088,7 +1193,7 @@ const getDraftImageSql = `
   join listings listing on listing.id = listing_image.listing_id
   where listing.owner_user_id = $1::uuid
     and listing.id = $2::uuid
-    and listing.moderation_status = 'draft'
+    and listing.moderation_status in ('draft', 'pending_review')
     and listing.lifecycle_status = 'draft'
     and listing.deleted_at is null
     and listing_image.id = $3::uuid
@@ -1119,7 +1224,7 @@ const listDraftImagesSql = `
   join listings listing on listing.id = listing_image.listing_id
   where listing.owner_user_id = $1::uuid
     and listing.id = $2::uuid
-    and listing.moderation_status = 'draft'
+    and listing.moderation_status in ('draft', 'pending_review')
     and listing.lifecycle_status = 'draft'
     and listing.deleted_at is null
     and listing_image.deleted_at is null
@@ -1139,7 +1244,7 @@ const confirmDraftImageSql = `
     where listing.id = listing_images.listing_id
       and listing.owner_user_id = $1::uuid
       and listing.id = $2::uuid
-      and listing.moderation_status = 'draft'
+      and listing.moderation_status in ('draft', 'pending_review')
       and listing.lifecycle_status = 'draft'
       and listing.deleted_at is null
       and listing_images.id = $3::uuid
@@ -1175,7 +1280,7 @@ const deleteDraftImageSql = `
     join listings listing on listing.id = listing_image.listing_id
     where listing.owner_user_id = $1::uuid
       and listing.id = $2::uuid
-      and listing.moderation_status = 'draft'
+      and listing.moderation_status in ('draft', 'pending_review')
       and listing.lifecycle_status = 'draft'
       and listing.deleted_at is null
       and listing_image.id = $3::uuid
@@ -1231,7 +1336,7 @@ const reorderDraftImagesSql = `
   where listing.id = listing_image.listing_id
     and listing.owner_user_id = $1::uuid
     and listing.id = $2::uuid
-    and listing.moderation_status = 'draft'
+    and listing.moderation_status in ('draft', 'pending_review')
     and listing.lifecycle_status = 'draft'
     and listing.deleted_at is null
     and listing_image.id = requested.id
@@ -1246,7 +1351,7 @@ const setDraftImageCoverSql = `
     join listings listing on listing.id = listing_image.listing_id
     where listing.owner_user_id = $1::uuid
       and listing.id = $2::uuid
-      and listing.moderation_status = 'draft'
+      and listing.moderation_status in ('draft', 'pending_review')
       and listing.lifecycle_status = 'draft'
       and listing.deleted_at is null
       and listing_image.id = $3::uuid
@@ -1346,6 +1451,46 @@ export class ListingsService {
       }
     }
 
+    if (
+      rows.length === 0 &&
+      query.page === 1 &&
+      hasDistanceFallbackIntent(resolvedQuery)
+    ) {
+      rows = await this.databaseService.queryRows<PublicListingRow>(
+        listPublicListingsExpandedRadiusFallbackSql,
+        parameters
+      )
+
+      if (rows.length > 0) {
+        expansion = {
+          type: "expanded_radius",
+          reason: "empty_radius",
+          originalQuery: query.q ?? null,
+          originalRadiusKm: resolvedQuery.radiusKm,
+        }
+      }
+    }
+
+    if (
+      rows.length === 0 &&
+      query.page === 1 &&
+      hasPublicListingFallbackIntent(query)
+    ) {
+      rows = await this.databaseService.queryRows<PublicListingRow>(
+        listPublicListingsRelaxedFallbackSql,
+        parameters
+      )
+
+      if (rows.length > 0) {
+        expansion = {
+          type: "relaxed_filters",
+          reason: "empty_filtered",
+          originalQuery: query.q ?? null,
+          originalRadiusKm: resolvedQuery.radiusKm,
+        }
+      }
+    }
+
     const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0
 
     return {
@@ -1418,7 +1563,7 @@ export class ListingsService {
   }
 
   async draft(userId: string, id: string): Promise<ListingDraft> {
-    const [row] = await this.databaseService.queryRows<ListingDraftRow>(
+    const [row] = await this.databaseService.queryRows<EditableListingDraftRow>(
       getUserDraftSql,
       [userId, id]
     )
@@ -1446,8 +1591,8 @@ export class ListingsService {
         input.description,
         input.breedId ?? null,
         input.sex,
-        input.ageMonthsMin ?? null,
-        input.ageMonthsMax ?? null,
+        input.ageMonths ?? null,
+        input.ageMonths ?? null,
         location?.municipalityId ?? null,
         location?.provinceId ?? null,
         location?.regionId ?? null,
@@ -1479,7 +1624,7 @@ export class ListingsService {
       input.municipalityId
     )
     const contribution = resolveContributionUpdate(input)
-    const [row] = await this.databaseService.queryRows<ListingDraftRow>(
+    const [row] = await this.databaseService.queryRows<EditableListingDraftRow>(
       updateUserDraftSql,
       [
         id,
@@ -1493,10 +1638,10 @@ export class ListingsService {
         input.breedId ?? null,
         Object.hasOwn(input, "sex"),
         input.sex ?? null,
-        Object.hasOwn(input, "ageMonthsMin"),
-        input.ageMonthsMin ?? null,
-        Object.hasOwn(input, "ageMonthsMax"),
-        input.ageMonthsMax ?? null,
+        Object.hasOwn(input, "ageMonths"),
+        input.ageMonths ?? null,
+        Object.hasOwn(input, "ageMonths"),
+        input.ageMonths ?? null,
         Object.hasOwn(input, "municipalityId"),
         location?.municipalityId ?? null,
         location?.provinceId ?? null,
@@ -1548,7 +1693,7 @@ export class ListingsService {
     id: string
   ): Promise<ListingDraftSubmissionResponse> {
     const [draft] = await this.databaseService.queryRows<ListingDraftRow>(
-      getUserDraftSql,
+      getUserDraftForSubmissionSql,
       [userId, id]
     )
 
@@ -1890,7 +2035,7 @@ function resolveContributionUpdate(input: ListingDraftUpdateInput) {
   }
 }
 
-function mapListingDraftRow(row: ListingDraftRow): ListingDraft {
+function mapListingDraftRow(row: EditableListingDraftRow): ListingDraft {
   return {
     ...mapListingSharedFields(row),
     moderationStatus: row.moderation_status,
@@ -1958,8 +2103,40 @@ function resolvePublicListingQuery(
   }
 }
 
+function hasDistanceFallbackIntent(query: ResolvedPublicListingQuery) {
+  return (
+    query.distanceLat !== null &&
+    query.distanceLng !== null &&
+    query.radiusKm !== null
+  )
+}
+
+function hasPublicListingFallbackIntent(query: ListingPublicListQuery) {
+  return Boolean(
+    query.q ||
+    query.breedId ||
+    query.municipalityId ||
+    query.provinceId ||
+    query.regionId ||
+    query.sex ||
+    query.ageMonthsMin !== undefined ||
+    query.ageMonthsMax !== undefined ||
+    query.isFree !== undefined ||
+    query.contributionCentsMin !== undefined ||
+    query.contributionCentsMax !== undefined ||
+    query.isVaccinated !== undefined ||
+    query.isSterilized !== undefined ||
+    query.isDewormed !== undefined ||
+    query.hasMicrochip !== undefined ||
+    query.hasImages !== undefined ||
+    query.lat !== undefined ||
+    query.lng !== undefined ||
+    query.radiusKm !== undefined
+  )
+}
+
 function mapListingSharedFields(
-  row: ListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
+  row: EditableListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
 ) {
   return {
     id: row.id,
@@ -1975,8 +2152,7 @@ function mapListingSharedFields(
           }
         : null,
     sex: row.sex,
-    ageMonthsMin: row.age_months_min,
-    ageMonthsMax: row.age_months_max,
+    ageMonths: resolveListingAgeMonths(row),
     location: mapListingLocation(row),
     contributionCents: row.contribution_cents,
     isFree: row.is_free,
@@ -1988,6 +2164,28 @@ function mapListingSharedFields(
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
   }
+}
+
+function resolveListingAgeMonths({
+  age_months_max,
+  age_months_min,
+}: {
+  age_months_max: number | null
+  age_months_min: number | null
+}) {
+  if (age_months_min === null && age_months_max === null) {
+    return null
+  }
+
+  if (age_months_min === null) {
+    return age_months_max
+  }
+
+  if (age_months_max === null) {
+    return age_months_min
+  }
+
+  return Math.round((age_months_min + age_months_max) / 2)
 }
 
 function mapPublicListingImages(
@@ -2065,7 +2263,7 @@ function readNumber(value: unknown) {
 }
 
 function mapListingLocation(
-  row: ListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
+  row: EditableListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
 ): ListingDraftLocation | null {
   if (
     !row.municipality_id ||
@@ -2220,24 +2418,13 @@ function validateDraftSubmission(draft: ListingDraftRow): SubmissionIssue[] {
   }
 
   if (
-    draft.age_months_min !== null &&
-    draft.age_months_max !== null &&
-    draft.age_months_min > draft.age_months_max
-  ) {
-    issues.push({
-      path: ["ageMonthsMax"],
-      message: "Minimum age cannot be greater than maximum age.",
-    })
-  }
-
-  if (
     draft.is_free &&
     draft.contribution_cents !== null &&
     draft.contribution_cents > 0
   ) {
     issues.push({
       path: ["contributionCents"],
-      message: "Free listings cannot require a contribution.",
+      message: "Free listings cannot require a price.",
     })
   }
 
@@ -2247,7 +2434,7 @@ function validateDraftSubmission(draft: ListingDraftRow): SubmissionIssue[] {
   ) {
     issues.push({
       path: ["contributionCents"],
-      message: "Paid listings require a contribution amount.",
+      message: "Paid listings require a price.",
     })
   }
 

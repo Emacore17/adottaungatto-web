@@ -45,8 +45,9 @@ Un annuncio e' pubblico solo se:
 - Applica rate limit Redis per IP e operatore interno.
 - Mostra casi `open` collegati ad annunci in `pending_review`.
 - Ordina dai casi piu' vecchi ai piu' recenti.
-- Include dati annuncio, proprietario, luogo, conteggio immagini pronte e
-  copertina pronta quando disponibile.
+- Include dati annuncio, proprietario, luogo, conteggio immagini pronte,
+  copertina pronta e anteprima ordinata delle prime immagini pronte quando
+  disponibili.
 - Il frontend espone `/moderation` server-rendered, `noindex` e protetta da
   login, dentro un layout interno separato dal sito pubblico. La pagina legge
   questa coda tramite bearer token. Se l'API restituisce `403`, mostra uno
@@ -54,7 +55,10 @@ Un annuncio e' pubblico solo se:
   delle code.
 - La gestione operativa veloce vive in `/moderation/queue`: vista tabellare,
   selezione multipla, decisioni batch `approve`, `reject`, `suspend`, azioni
-  rapide per singola riga e anteprima cover per valutare i contenuti visuali.
+  rapide per singola riga, stati parlanti e anteprima multi-foto per valutare i
+  contenuti visuali. Su mobile la stessa coda usa card operative con checkbox,
+  anteprima immagini, dati essenziali e pulsanti touch per approvare, rifiutare
+  o sospendere.
 - La pagina supporta il filtro query `queue=all|pending|reported`, usato solo
   per scegliere quali sezioni operative mostrare. Le API restano la fonte per
   autorizzazioni, paginazione e dati.

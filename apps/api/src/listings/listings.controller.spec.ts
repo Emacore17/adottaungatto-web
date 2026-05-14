@@ -222,11 +222,13 @@ describe("ListingsController", () => {
     await controller.createDraft(createAuth(), {
       title: "  Gattino a Roma  ",
       description: "  Cerca una famiglia  ",
+      ageMonths: "18",
     })
 
     expect(listingsService.createDraft).toHaveBeenCalledWith("user-id", {
       title: "Gattino a Roma",
       description: "Cerca una famiglia",
+      ageMonths: 18,
       sex: "unknown",
       isFree: true,
       contactRequestsEnabled: true,

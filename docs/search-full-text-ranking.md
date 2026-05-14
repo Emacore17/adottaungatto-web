@@ -249,16 +249,21 @@ Implementato:
   un testo inline equivalente per annunci non ancora indicizzati;
 - la risposta valorizza `meta.expansion` con `type: "trigram_text"`,
   `reason: "empty_full_text"` e `originalQuery`.
+- se una ricerca con coordinate e raggio non restituisce righe, l'API usa
+  `expanded_radius`: rimuove `ST_DWithin`, mantiene ordinamento per distanza e
+  segnala `originalRadiusKm`;
+- se testo/filtri/raggio continuano a produrre zero risultati, l'API usa
+  `relaxed_filters`: propone annunci pubblicati ordinati per distanza, matching
+  geografico e similarita testuale quando disponibili.
 
 Pianificato:
 
 Applicare espansioni tracciate:
 
-1. raggio geografico piu ampio;
-2. passaggio da comune a provincia;
-3. passaggio da provincia a regione;
-4. rimozione solo di filtri soft definiti dal prodotto;
-5. annunci recenti nella stessa regione.
+1. passaggio esplicito da comune a provincia;
+2. passaggio esplicito da provincia a regione;
+3. rimozione selettiva solo di filtri soft definiti dal prodotto;
+4. suggerimenti diretti di luoghi o razze alternative.
 
 La risposta deve indicare cosa e' stato espanso:
 

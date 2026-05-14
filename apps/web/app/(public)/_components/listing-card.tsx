@@ -8,6 +8,7 @@ import {
 import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import type { PublicListingImage, PublicListingSummary } from "@/lib/api/types"
+import { formatAgeMonths, formatListingPrice } from "@/lib/listings/format"
 import { routes } from "@/lib/routes"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
@@ -101,13 +102,19 @@ function ListingCard({
               ) : null}
               <Badge
                 variant="outline"
+                className="border-brand-teal/20 bg-brand-teal-soft text-brand-teal-ink"
+              >
+                {formatAgeMonths(listing.ageMonths)}
+              </Badge>
+              <Badge
+                variant="outline"
                 className={cn(
                   listing.isFree
                     ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
                     : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
                 )}
               >
-                {listing.isFree ? "Adozione" : "Contributo"}
+                {formatListingPrice(listing)}
               </Badge>
             </CardAction>
           </CardHeader>

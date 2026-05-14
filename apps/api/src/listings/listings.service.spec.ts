@@ -310,6 +310,105 @@ describe("ListingsService", () => {
     ])
   })
 
+  it("expands the distance radius when nearby search returns no results", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            ...createPublicListingRow(),
+            total_count: "1",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 6,
+        lat: 41.8931,
+        lng: 12.4828,
+        radiusKm: 1,
+        sort: "distance",
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          id: "listing-id",
+        },
+      ],
+      meta: {
+        total: 1,
+        sort: "distance",
+        expansion: {
+          type: "expanded_radius",
+          reason: "empty_radius",
+          originalQuery: null,
+          originalRadiusKm: 1,
+        },
+      },
+    })
+
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
+      "ST_Distance"
+    )
+    expect(
+      vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]
+    ).not.toContain("ST_DWithin")
+  })
+
+  it("relaxes filters when strict and fuzzy searches return no results", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            ...createPublicListingRow(),
+            total_count: "1",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 20,
+        q: "zzzxqvnotfound",
+        hasImages: true,
+      })
+    ).resolves.toMatchObject({
+      items: [
+        {
+          id: "listing-id",
+        },
+      ],
+      meta: {
+        total: 1,
+        query: "zzzxqvnotfound",
+        expansion: {
+          type: "relaxed_filters",
+          reason: "empty_filtered",
+          originalQuery: "zzzxqvnotfound",
+          originalRadiusKm: null,
+        },
+      },
+    })
+
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(3)
+    expect(
+      vi.mocked(databaseService.queryRows).mock.calls[2]?.[0]
+    ).not.toContain("listing.breed_id = $3::uuid")
+    expect(
+      vi.mocked(databaseService.queryRows).mock.calls[2]?.[0]
+    ).not.toContain("ST_DWithin")
+  })
+
   it("loads a public listing detail with ready images", async () => {
     const databaseService = {
       queryRows: vi
@@ -373,6 +472,7 @@ describe("ListingsService", () => {
       queryRows: vi.fn().mockResolvedValue([
         {
           ...createDraftRow(),
+          moderation_status: "pending_review",
           total_count: "1",
         },
       ]),
@@ -389,6 +489,9 @@ describe("ListingsService", () => {
       10,
       10,
     ])
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[0]).toContain(
+      "moderation_status in ('draft', 'pending_review')"
+    )
     expect(response.meta).toEqual({
       page: 2,
       pageSize: 10,
@@ -398,6 +501,7 @@ describe("ListingsService", () => {
     expect(response.items[0]).toMatchObject({
       id: "listing-id",
       title: "Gattino a Roma",
+      moderationStatus: "pending_review",
       location: {
         municipality: {
           id: "municipality-id",
@@ -434,6 +538,7 @@ describe("ListingsService", () => {
         title: "Gattino a Roma",
         description: "Cerca una famiglia",
         sex: "female",
+        ageMonths: 18,
         municipalityId: "municipality-id",
         contributionCents: 1500,
         isFree: false,
@@ -453,8 +558,8 @@ describe("ListingsService", () => {
       "Cerca una famiglia",
       null,
       "female",
-      null,
-      null,
+      18,
+      18,
       "municipality-id",
       "province-id",
       "region-id",
@@ -1138,7 +1243,7 @@ function createDraftRow() {
     breed_name: "Europeo",
     breed_slug: "europeo",
     sex: "female",
-    age_months_min: 2,
+    age_months_min: 4,
     age_months_max: 4,
     municipality_id: "municipality-id",
     municipality_name: "Roma",
@@ -1175,7 +1280,7 @@ function createPublicListingRow() {
     breed_name: "Europeo",
     breed_slug: "europeo",
     sex: "female",
-    age_months_min: 2,
+    age_months_min: 4,
     age_months_max: 4,
     municipality_id: "municipality-id",
     municipality_name: "Roma",

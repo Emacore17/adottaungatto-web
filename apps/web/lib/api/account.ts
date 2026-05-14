@@ -52,8 +52,7 @@ export type ListingDraft = {
     slug: string
   } | null
   sex: ListingSex
-  ageMonthsMin: number | null
-  ageMonthsMax: number | null
+  ageMonths: number | null
   location: ListingLocation
   contributionCents: number | null
   isFree: boolean
@@ -62,7 +61,7 @@ export type ListingDraft = {
   isDewormed: boolean | null
   hasMicrochip: boolean | null
   contactRequestsEnabled: boolean
-  moderationStatus: "draft"
+  moderationStatus: "draft" | "pending_review"
   lifecycleStatus: "draft"
   createdAt: string
   updatedAt: string

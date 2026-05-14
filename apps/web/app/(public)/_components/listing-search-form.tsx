@@ -439,7 +439,7 @@ function ListingSearchForm({
         </label>
 
         <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Eta minima</span>
+          <span className={filterLabelClassName}>Eta da</span>
           <select
             className={controlClassName}
             value={filters.ageMonthsMin}
@@ -456,7 +456,7 @@ function ListingSearchForm({
         </label>
 
         <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Eta massima</span>
+          <span className={filterLabelClassName}>Eta fino a</span>
           <select
             className={controlClassName}
             value={filters.ageMonthsMax}

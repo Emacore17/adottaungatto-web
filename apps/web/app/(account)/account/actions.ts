@@ -172,9 +172,15 @@ export async function createDraftAction(formData: FormData) {
   const parsed = listingDraftCreateSchema.safeParse(
     readDraftFormPayload(formData)
   )
+  const initialImages = readFormFiles(formData, "images")
+  const initialCoverIndex = readFormInteger(formData, "initialCoverIndex")
 
   if (!parsed.success) {
     redirectWithStatus(nextPath, "error", "invalid")
+  }
+
+  if (initialImages.length > 10) {
+    redirectWithStatus(nextPath, "error", "invalid-image")
   }
 
   const result = await createAccountDraft(token, parsed.data)
@@ -187,8 +193,32 @@ export async function createDraftAction(formData: FormData) {
     redirectWithStatus(nextPath, "error", "api")
   }
 
+  const draftPath = routes.accountDraft(result.data.id)
+
+  for (const [index, file] of initialImages.entries()) {
+    const upload = await uploadDraftImageFile(
+      token,
+      result.data.id,
+      file,
+      index === initialCoverIndex
+    )
+
+    if (!upload.ok) {
+      if (upload.status === 401) {
+        redirect(routes.login(draftPath))
+      }
+
+      revalidateAccountPaths(result.data.id)
+      redirectWithStatus(draftPath, "error", upload.error)
+    }
+  }
+
   revalidateAccountPaths(result.data.id)
-  redirectWithStatus(routes.accountDraft(result.data.id), "created", "1")
+  redirectWithStatus(
+    draftPath,
+    "created",
+    initialImages.length > 0 ? "with-images" : "1"
+  )
 }
 
 export async function updateDraftAction(formData: FormData) {
@@ -243,7 +273,7 @@ export async function submitDraftForReviewAction(formData: FormData) {
   }
 
   revalidateAccountPaths(id.data.id)
-  redirect(routes.accountListingSubmitted)
+  redirect(`${routes.accountListingSubmitted}?draftId=${id.data.id}`)
 }
 
 export async function uploadDraftImageAction(formData: FormData) {
@@ -257,20 +287,11 @@ export async function uploadDraftImageAction(formData: FormData) {
     redirectWithStatus(nextPath, "error", "invalid-image")
   }
 
-  const input = listingImageUploadRequestSchema.safeParse({
-    mimeType: file.type,
-    sizeBytes: file.size,
-    isCover: readBooleanFormValue(formData, "isCover"),
-  })
-
-  if (!input.success) {
-    redirectWithStatus(nextPath, "error", "invalid-image")
-  }
-
-  const upload = await createAccountDraftImageUpload(
+  const upload = await uploadDraftImageFile(
     token,
     id.data.id,
-    input.data
+    file,
+    readBooleanFormValue(formData, "isCover")
   )
 
   if (!upload.ok && upload.status === 401) {
@@ -278,7 +299,48 @@ export async function uploadDraftImageAction(formData: FormData) {
   }
 
   if (!upload.ok) {
-    redirectWithStatus(nextPath, "error", "image-api")
+    redirectWithStatus(nextPath, "error", upload.error)
+  }
+
+  revalidateAccountPaths(id.data.id)
+  redirectWithStatus(nextPath, "uploaded", "1")
+}
+
+type DraftImageUploadError =
+  | "image-api"
+  | "image-confirm"
+  | "image-storage"
+  | "invalid-image"
+
+async function uploadDraftImageFile(
+  token: string,
+  draftId: string,
+  file: File,
+  isCover: boolean
+): Promise<
+  | {
+      ok: true
+    }
+  | {
+      error: DraftImageUploadError
+      ok: false
+      status?: number | null
+    }
+> {
+  const input = listingImageUploadRequestSchema.safeParse({
+    mimeType: file.type,
+    sizeBytes: file.size,
+    isCover,
+  })
+
+  if (!input.success) {
+    return { error: "invalid-image", ok: false }
+  }
+
+  const upload = await createAccountDraftImageUpload(token, draftId, input.data)
+
+  if (!upload.ok) {
+    return { error: "image-api", ok: false, status: upload.status }
   }
 
   const storageResponse = await fetch(upload.data.upload.url, {
@@ -288,25 +350,20 @@ export async function uploadDraftImageAction(formData: FormData) {
   })
 
   if (!storageResponse.ok) {
-    redirectWithStatus(nextPath, "error", "image-storage")
+    return { error: "image-storage", ok: false }
   }
 
   const confirmation = await confirmAccountDraftImageUpload(
     token,
-    id.data.id,
+    draftId,
     upload.data.image.id
   )
 
-  if (!confirmation.ok && confirmation.status === 401) {
-    redirect(routes.login(nextPath))
-  }
-
   if (!confirmation.ok) {
-    redirectWithStatus(nextPath, "error", "image-confirm")
+    return { error: "image-confirm", ok: false, status: confirmation.status }
   }
 
-  revalidateAccountPaths(id.data.id)
-  redirectWithStatus(nextPath, "uploaded", "1")
+  return { ok: true }
 }
 
 export async function deleteDraftImageAction(formData: FormData) {
@@ -463,8 +520,7 @@ function readDraftFormPayload(formData: FormData) {
     description: readFormString(formData, "description"),
     breedId: readNullableFormString(formData, "breedId"),
     sex: readFormString(formData, "sex"),
-    ageMonthsMin: readNullableFormNumber(formData, "ageMonthsMin"),
-    ageMonthsMax: readNullableFormNumber(formData, "ageMonthsMax"),
+    ageMonths: readAgeMonthsFormValue(formData),
     municipalityId: readNullableFormString(formData, "municipalityId"),
     contributionCents: isFree
       ? null
@@ -479,6 +535,19 @@ function readDraftFormPayload(formData: FormData) {
       "contactRequestsEnabled"
     ),
   }
+}
+
+function readAgeMonthsFormValue(formData: FormData) {
+  const value = readNullableFormNumber(formData, "ageValue")
+
+  if (value === null) {
+    return null
+  }
+
+  const unit = readFormString(formData, "ageUnit")
+  const multiplier = unit === "years" ? 12 : 1
+
+  return value * multiplier
 }
 
 function readAccountProfileFormPayload(formData: FormData):
@@ -564,6 +633,18 @@ function readFormFile(formData: FormData, key: string) {
   }
 
   return value
+}
+
+function readFormFiles(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .filter((value): value is File => value instanceof File && value.size > 0)
+}
+
+function readFormInteger(formData: FormData, key: string) {
+  const value = Number(readFormString(formData, key))
+
+  return Number.isInteger(value) && value >= 0 ? value : 0
 }
 
 function moveImageId(

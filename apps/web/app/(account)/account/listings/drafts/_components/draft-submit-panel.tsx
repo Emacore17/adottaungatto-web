@@ -27,15 +27,10 @@ function DraftSubmitPanel({
     <Card>
       <CardHeader>
         <CardTitle>Invio a revisione</CardTitle>
-        <CardDescription>
-          Puoi inviare quando i dati sono completi e almeno una foto risulta
-          Pronta.
-        </CardDescription>
+        <CardDescription>Serve almeno una foto pronta.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <p className="text-sm text-muted-foreground">
-          {readinessMessage}
-        </p>
+        <p className="text-sm text-muted-foreground">{readinessMessage}</p>
         <form action={submitDraftForReviewAction} className="flex justify-end">
           <input name="draftId" type="hidden" value={draftId} />
           <input name="nextPath" type="hidden" value={nextPath} />

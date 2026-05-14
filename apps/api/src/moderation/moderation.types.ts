@@ -39,6 +39,14 @@ export type ModerationAudit = {
   actions: ModerationAuditAction[]
 }
 
+export type ModerationQueueImage = {
+  id: string
+  objectKeyThumb: string | null
+  objectKeyLarge: string | null
+  isCover: boolean
+  sortOrder: number
+}
+
 export type ModerationQueueItem = {
   case: {
     id: string
@@ -86,6 +94,7 @@ export type ModerationQueueItem = {
       objectKeyThumb: string | null
       objectKeyLarge: string | null
     } | null
+    preview: ModerationQueueImage[]
   }
   audit: ModerationAudit
 }

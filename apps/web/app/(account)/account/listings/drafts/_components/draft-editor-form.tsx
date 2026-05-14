@@ -4,6 +4,9 @@ import {
   createDraftAction,
   updateDraftAction,
 } from "@/app/(account)/account/actions"
+import { DraftAdoptionPriceFields } from "@/app/(account)/account/listings/drafts/_components/draft-adoption-price-fields"
+import { DraftAgeField } from "@/app/(account)/account/listings/drafts/_components/draft-age-field"
+import { DraftInitialImageField } from "@/app/(account)/account/listings/drafts/_components/draft-initial-image-field"
 import { DraftMunicipalityField } from "@/app/(account)/account/listings/drafts/_components/draft-municipality-field"
 import type { ListingDraft } from "@/lib/api/account"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
@@ -59,13 +62,14 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
         <CardTitle>
           {isEditing ? "Modifica annuncio" : "Dati dell'annuncio"}
         </CardTitle>
-        <CardDescription>
-          Salva i dati, poi aggiungi almeno una foto. L&apos;annuncio resta
-          privato fino alla revisione.
-        </CardDescription>
+        <CardDescription>Resta privato fino alla revisione.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={action} className="grid gap-8">
+        <form
+          action={action}
+          className="grid gap-8"
+          encType="multipart/form-data"
+        >
           <input name="nextPath" type="hidden" value={currentPath} />
           {draft ? (
             <input name="draftId" type="hidden" value={draft.id} />
@@ -99,8 +103,7 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
                     rows={7}
                   />
                   <FieldDescription>
-                    Includi carattere, bisogni, contesto e condizioni di
-                    adozione.
+                    Scrivi carattere, bisogni e condizioni di adozione.
                   </FieldDescription>
                 </Field>
               </div>
@@ -148,70 +151,22 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
                   </NativeSelect>
                 </Field>
 
-                <Field>
-                  <FieldLabel htmlFor="ageMonthsMin">Eta minima</FieldLabel>
-                  <Input
-                    id="ageMonthsMin"
-                    name="ageMonthsMin"
-                    type="number"
-                    min={0}
-                    max={360}
-                    defaultValue={draft?.ageMonthsMin ?? ""}
-                  />
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="ageMonthsMax">Eta massima</FieldLabel>
-                  <Input
-                    id="ageMonthsMax"
-                    name="ageMonthsMax"
-                    type="number"
-                    min={0}
-                    max={360}
-                    defaultValue={draft?.ageMonthsMax ?? ""}
-                  />
-                </Field>
+                <DraftAgeField defaultAgeMonths={draft?.ageMonths} />
               </div>
             </FieldSet>
 
             <FieldSet>
-              <FieldLegend>Luogo e contributo</FieldLegend>
+              <FieldLegend>Luogo e adozione</FieldLegend>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field>
                   <FieldLabel>Comune</FieldLabel>
                   <DraftMunicipalityField initialPlace={initialPlace} />
                 </Field>
 
-                <Field>
-                  <FieldLabel htmlFor="contributionEuro">Contributo</FieldLabel>
-                  <Input
-                    id="contributionEuro"
-                    name="contributionEuro"
-                    type="number"
-                    min={0}
-                    max={5000}
-                    step="0.01"
-                    defaultValue={formatContributionEuro(
-                      draft?.contributionCents
-                    )}
-                  />
-                  <FieldDescription>Importo in euro.</FieldDescription>
-                </Field>
-
-                <Field orientation="horizontal" className="md:col-span-2">
-                  <Checkbox
-                    id="isFree"
-                    name="isFree"
-                    value="true"
-                    defaultChecked={draft?.isFree ?? true}
-                  />
-                  <FieldContent>
-                    <FieldLabel htmlFor="isFree">Adozione gratuita</FieldLabel>
-                    <FieldDescription>
-                      Lascia il contributo vuoto per gli annunci gratuiti.
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
+                <DraftAdoptionPriceFields
+                  defaultContributionCents={draft?.contributionCents}
+                  defaultIsFree={draft?.isFree ?? true}
+                />
               </div>
             </FieldSet>
 
@@ -241,6 +196,13 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
               </div>
             </FieldSet>
 
+            {!isEditing ? (
+              <FieldSet>
+                <FieldLegend>Foto</FieldLegend>
+                <DraftInitialImageField />
+              </FieldSet>
+            ) : null}
+
             <FieldSet>
               <FieldLegend>Contatto</FieldLegend>
               <Field orientation="horizontal">
@@ -255,7 +217,7 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
                     Accetta richieste di contatto
                   </FieldLabel>
                   <FieldDescription>
-                    Mostra il form pubblico e ricevi le richieste via email.
+                    Mostra il form pubblico e ricevi richieste via email.
                   </FieldDescription>
                 </FieldContent>
               </Field>
@@ -265,7 +227,7 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Button type="submit">
               <SaveIcon data-icon="inline-start" aria-hidden="true" />
-              {isEditing ? "Salva modifiche" : "Continua con le foto"}
+              {isEditing ? "Salva modifiche" : "Crea annuncio"}
             </Button>
           </div>
         </form>
@@ -335,14 +297,6 @@ function formatNullableBoolean(value: boolean | null | undefined) {
   }
 
   return ""
-}
-
-function formatContributionEuro(value: number | null | undefined) {
-  if (!value) {
-    return ""
-  }
-
-  return String(value / 100)
 }
 
 export { DraftEditorForm }

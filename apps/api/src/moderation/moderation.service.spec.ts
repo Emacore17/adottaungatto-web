@@ -51,6 +51,22 @@ describe("ModerationService", () => {
               "local/listings/listing-id/thumb/image.webp",
             cover_object_key_large:
               "local/listings/listing-id/large/image.webp",
+            preview_images: [
+              {
+                id: "image-id",
+                objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
+                objectKeyLarge: "local/listings/listing-id/large/image.webp",
+                isCover: true,
+                sortOrder: 0,
+              },
+              {
+                id: "image-id-2",
+                objectKeyThumb: "local/listings/listing-id/thumb/image-2.webp",
+                objectKeyLarge: "local/listings/listing-id/large/image-2.webp",
+                isCover: false,
+                sortOrder: 1,
+              },
+            ],
             audit_actions: [
               {
                 id: "action-id",
@@ -126,6 +142,22 @@ describe("ModerationService", () => {
               objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
               objectKeyLarge: "local/listings/listing-id/large/image.webp",
             },
+            preview: [
+              {
+                id: "image-id",
+                objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
+                objectKeyLarge: "local/listings/listing-id/large/image.webp",
+                isCover: true,
+                sortOrder: 0,
+              },
+              {
+                id: "image-id-2",
+                objectKeyThumb: "local/listings/listing-id/thumb/image-2.webp",
+                objectKeyLarge: "local/listings/listing-id/large/image-2.webp",
+                isCover: false,
+                sortOrder: 1,
+              },
+            ],
           },
           audit: {
             actions: [
@@ -201,6 +233,7 @@ describe("ModerationService", () => {
             cover_image_id: null,
             cover_object_key_thumb: null,
             cover_object_key_large: null,
+            preview_images: [],
             report_count: "3",
             first_reported_at: "2026-04-01T10:00:00.000Z",
             latest_reported_at: "2026-04-01T12:00:00.000Z",
@@ -268,6 +301,7 @@ describe("ModerationService", () => {
           images: {
             readyCount: 1,
             cover: null,
+            preview: [],
           },
           audit: {
             actions: [

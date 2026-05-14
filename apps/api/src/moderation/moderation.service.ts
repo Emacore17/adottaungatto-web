@@ -62,6 +62,7 @@ type PendingReviewQueueRow = {
   cover_image_id: string | null
   cover_object_key_thumb: string | null
   cover_object_key_large: string | null
+  preview_images: unknown
   audit_actions: unknown
 }
 
@@ -98,6 +99,7 @@ type ReportedListingQueueRow = {
   cover_image_id: string | null
   cover_object_key_thumb: string | null
   cover_object_key_large: string | null
+  preview_images: unknown
   report_count: number | string
   first_reported_at: Date | string
   latest_reported_at: Date | string
@@ -230,6 +232,38 @@ const pendingReviewQueueSql = `
       and is_cover = true
     order by listing_id, sort_order, created_at
   ),
+  preview_images as (
+    select
+      listing_id,
+      jsonb_agg(
+        jsonb_build_object(
+          'id',
+          id::text,
+          'objectKeyThumb',
+          object_key_thumb,
+          'objectKeyLarge',
+          object_key_large,
+          'isCover',
+          is_cover,
+          'sortOrder',
+          sort_order
+        )
+        order by is_cover desc, sort_order asc, created_at asc, id asc
+      ) as preview_images
+    from (
+      select
+        listing_images.*,
+        row_number() over (
+          partition by listing_id
+          order by is_cover desc, sort_order asc, created_at asc, id asc
+        ) as image_rank
+      from listing_images
+      where status = 'ready'
+        and deleted_at is null
+    ) listing_images
+    where image_rank <= 8
+    group by listing_id
+  ),
   audit_action_summaries as (
     select
       ranked_action.case_id,
@@ -308,6 +342,7 @@ const pendingReviewQueueSql = `
     cover_images.cover_image_id,
     cover_images.object_key_thumb as cover_object_key_thumb,
     cover_images.object_key_large as cover_object_key_large,
+    coalesce(preview_images.preview_images, '[]'::jsonb) as preview_images,
     coalesce(
       audit_action_summaries.audit_actions,
       '[]'::jsonb
@@ -321,6 +356,7 @@ const pendingReviewQueueSql = `
   left join geo_regions region on region.id = listing.region_id
   left join ready_images on ready_images.listing_id = listing.id
   left join cover_images on cover_images.listing_id = listing.id
+  left join preview_images on preview_images.listing_id = listing.id
   left join audit_action_summaries
     on audit_action_summaries.case_id = moderation_case.id
   where moderation_case.status = 'open'
@@ -354,6 +390,38 @@ const reportedListingsQueueSql = `
       and deleted_at is null
       and is_cover = true
     order by listing_id, sort_order, created_at
+  ),
+  preview_images as (
+    select
+      listing_id,
+      jsonb_agg(
+        jsonb_build_object(
+          'id',
+          id::text,
+          'objectKeyThumb',
+          object_key_thumb,
+          'objectKeyLarge',
+          object_key_large,
+          'isCover',
+          is_cover,
+          'sortOrder',
+          sort_order
+        )
+        order by is_cover desc, sort_order asc, created_at asc, id asc
+      ) as preview_images
+    from (
+      select
+        listing_images.*,
+        row_number() over (
+          partition by listing_id
+          order by is_cover desc, sort_order asc, created_at asc, id asc
+        ) as image_rank
+      from listing_images
+      where status = 'ready'
+        and deleted_at is null
+    ) listing_images
+    where image_rank <= 8
+    group by listing_id
   ),
   report_summaries as (
     select
@@ -462,6 +530,7 @@ const reportedListingsQueueSql = `
     cover_images.cover_image_id,
     cover_images.object_key_thumb as cover_object_key_thumb,
     cover_images.object_key_large as cover_object_key_large,
+    coalesce(preview_images.preview_images, '[]'::jsonb) as preview_images,
     report_summaries.report_count,
     report_summaries.first_reported_at,
     report_summaries.latest_reported_at,
@@ -487,6 +556,7 @@ const reportedListingsQueueSql = `
   left join geo_regions region on region.id = listing.region_id
   left join ready_images on ready_images.listing_id = listing.id
   left join cover_images on cover_images.listing_id = listing.id
+  left join preview_images on preview_images.listing_id = listing.id
   left join latest_reports
     on latest_reports.moderation_case_id = moderation_case.id
   left join audit_action_summaries
@@ -884,6 +954,7 @@ function mapQueueRow(row: PendingReviewQueueRow): ModerationQueueItem {
             objectKeyLarge: row.cover_object_key_large,
           }
         : null,
+      preview: parseQueueImages(row.preview_images),
     },
     audit: {
       actions: parseAuditActions(row.audit_actions),
@@ -929,6 +1000,7 @@ function mapReportedListingRow(
             objectKeyLarge: row.cover_object_key_large,
           }
         : null,
+      preview: parseQueueImages(row.preview_images),
     },
     audit: {
       actions: parseAuditActions(row.audit_actions),
@@ -1028,6 +1100,40 @@ function parseAuditActions(value: unknown): ModerationAuditAction[] {
         toStatus,
         createdAt: toIsoString(createdAt),
         actor: mapAuditActor(item.actor),
+      },
+    ]
+  })
+}
+
+function parseQueueImages(
+  value: unknown
+): ModerationQueueItem["images"]["preview"] {
+  const parsed = typeof value === "string" ? parseJson(value) : value
+
+  if (!Array.isArray(parsed)) {
+    return []
+  }
+
+  return parsed.flatMap((item) => {
+    if (!isRecord(item)) {
+      return []
+    }
+
+    if (
+      typeof item.id !== "string" ||
+      typeof item.isCover !== "boolean" ||
+      typeof item.sortOrder !== "number"
+    ) {
+      return []
+    }
+
+    return [
+      {
+        id: item.id,
+        objectKeyThumb: readNullableString(item, "objectKeyThumb"),
+        objectKeyLarge: readNullableString(item, "objectKeyLarge"),
+        isCover: item.isCover,
+        sortOrder: item.sortOrder,
       },
     ]
   })

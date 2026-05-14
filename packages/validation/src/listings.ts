@@ -55,8 +55,7 @@ const listingDraftFieldsSchema = z.object({
   description: z.string().trim().min(10).max(5000),
   breedId: nullableUuidSchema.optional(),
   sex: z.enum(listingSexes),
-  ageMonthsMin: z.coerce.number().int().min(0).max(360).nullable().optional(),
-  ageMonthsMax: z.coerce.number().int().min(0).max(360).nullable().optional(),
+  ageMonths: z.coerce.number().int().min(0).max(360).nullable().optional(),
   municipalityId: nullableUuidSchema.optional(),
   contributionCents: z.coerce
     .number()
@@ -175,28 +174,12 @@ export type ListingImageUploadRequestInput = z.infer<
   typeof listingImageUploadRequestSchema
 >
 
-export type ListingImageOrderInput = z.infer<
-  typeof listingImageOrderSchema
->
+export type ListingImageOrderInput = z.infer<typeof listingImageOrderSchema>
 
 function validateDraftFields(
   input: Partial<z.infer<typeof listingDraftFieldsSchema>>,
   context: z.RefinementCtx
 ) {
-  if (
-    input.ageMonthsMin !== undefined &&
-    input.ageMonthsMin !== null &&
-    input.ageMonthsMax !== undefined &&
-    input.ageMonthsMax !== null &&
-    input.ageMonthsMin > input.ageMonthsMax
-  ) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Minimum age cannot be greater than maximum age.",
-      path: ["ageMonthsMax"],
-    })
-  }
-
   if (
     input.isFree === true &&
     input.contributionCents !== undefined &&
@@ -205,7 +188,7 @@ function validateDraftFields(
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Free listings cannot require a contribution.",
+      message: "Free listings cannot require a price.",
       path: ["contributionCents"],
     })
   }
@@ -218,7 +201,7 @@ function validateDraftFields(
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Paid listings require a contribution amount.",
+      message: "Paid listings require a price.",
       path: ["contributionCents"],
     })
   }
@@ -257,7 +240,7 @@ function validatePublicListQuery(
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Minimum contribution cannot be greater than maximum contribution.",
+      message: "Minimum price cannot be greater than maximum price.",
       path: ["contributionCentsMax"],
     })
   }
@@ -269,7 +252,7 @@ function validatePublicListQuery(
   ) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Free listings cannot be filtered by contribution amount.",
+      message: "Free listings cannot be filtered by price.",
       path:
         input.contributionCentsMin !== undefined
           ? ["contributionCentsMin"]

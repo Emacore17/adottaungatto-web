@@ -9,6 +9,7 @@ import {
   ShieldAlertIcon,
 } from "lucide-react"
 
+import { formatModerationStatus } from "@/app/(admin)/moderation/_lib/moderation-labels"
 import { StorageImage } from "@/components/shared/storage-image"
 import { currentSession } from "@/lib/api/auth"
 import { getPublicObjectUrl } from "@/lib/api/assets"
@@ -377,7 +378,7 @@ function QueuePreviewRow({ item }: { item: ModerationPreviewItem }) {
       <div className="grid min-w-0 gap-1">
         <div className="flex flex-wrap gap-1.5">
           <Badge className="bg-brand-teal-soft text-brand-teal-ink">
-            {item.listing.moderationStatus}
+            {formatModerationStatus(item.listing.moderationStatus)}
           </Badge>
           {reportCount !== null ? (
             <Badge

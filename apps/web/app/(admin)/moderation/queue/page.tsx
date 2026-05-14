@@ -121,7 +121,7 @@ export default async function ModerationQueuePage({
                 Revisione operativa
               </h1>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Seleziona piu casi, controlla la cover e applica decisioni in
+                Seleziona piu casi, controlla le foto e applica decisioni in
                 blocco.
               </p>
             </div>

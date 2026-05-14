@@ -4,7 +4,6 @@ import { ArrowLeftIcon } from "lucide-react"
 import { requireAccountSession } from "@/app/(account)/account/_lib/session"
 import { DraftActionMessage } from "@/app/(account)/account/listings/drafts/_components/draft-action-message"
 import { DraftEditorForm } from "@/app/(account)/account/listings/drafts/_components/draft-editor-form"
-import { DraftWizardProgress } from "@/app/(account)/account/listings/drafts/_components/draft-wizard-progress"
 import { listPublicCatBreeds } from "@/lib/api/listings"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
@@ -28,20 +27,18 @@ export default async function NewDraftPage({
             Inserisci annuncio
           </h1>
           <p className="text-sm text-muted-foreground">
-            Compila i dati principali, poi continua con foto e invio a
-            revisione.
+            Dati, foto e invio a revisione in un solo percorso.
           </p>
         </div>
         <Button asChild variant="outline">
           <Link href={routes.accountDrafts}>
-            <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />
-            I miei annunci
+            <ArrowLeftIcon data-icon="inline-start" aria-hidden="true" />I miei
+            annunci
           </Link>
         </Button>
       </div>
 
       <DraftActionMessage searchParams={params} />
-      <DraftWizardProgress />
 
       {!breeds.ok ? (
         <div

@@ -22,6 +22,7 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
   const location = draft.location
     ? `${draft.location.municipality.name}, ${draft.location.province.name}`
     : "Luogo non indicato"
+  const isPendingReview = draft.moderationStatus === "pending_review"
 
   return (
     <Card className="ring-brand-amber/20 hover:ring-brand-amber/40">
@@ -29,7 +30,7 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-brand-amber-soft text-brand-teal-ink">
-              In lavorazione
+              {isPendingReview ? "In revisione" : "In lavorazione"}
             </Badge>
             <Badge variant="outline">{draft.sex}</Badge>
             {draft.breed ? (
@@ -58,10 +59,10 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
           <Button asChild variant="outline" size="sm">
             <Link href={routes.accountDraft(draft.id)}>
               <PencilIcon data-icon="inline-start" aria-hidden="true" />
-              Modifica
+              {isPendingReview ? "Rivedi" : "Modifica"}
             </Link>
           </Button>
-          {returnPath ? (
+          {returnPath && !isPendingReview ? (
             <form action={deleteDraftAction}>
               <input type="hidden" name="draftId" value={draft.id} />
               <input type="hidden" name="nextPath" value={returnPath} />

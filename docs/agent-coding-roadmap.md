@@ -104,7 +104,7 @@ Obiettivo: risolvere il problema utente attuale sulla creazione annuncio.
 Task:
 
 - sostituire il concetto visibile di "Crea bozza" con "Inserisci annuncio";
-- trasformare dati e immagini in un flusso unico o wizard guidato;
+- trasformare dati e immagini in un inserimento unico, senza testo ridondante;
 - bloccare l'invio a revisione solo con indicazioni precise e azionabili;
 - dopo l'invio mostrare una pagina/stato di conferma: annuncio inserito, in
   attesa di revisione, notifica futura;
@@ -121,8 +121,11 @@ Avanzamento 12 maggio 2026:
   presigned, processing worker, invio a revisione e pagina di conferma.
 - Fatto: `pnpm smoke:e2e` copre upload multiplo immagini usando fixture
   gattini locali quando disponibili.
-- Fatto: la UI mostra un flusso guidato dati, foto e revisione, con invio
-  disabilitato finche' dati e foto non sono pronti.
+- Fatto: la UI consente immagini gia' in creazione annuncio, anteprima
+  copertina/ordine, messaggi errore brevi e pagina post-invio con link per
+  rivedere l'annuncio.
+- Fatto: gli annunci in revisione restano consultabili/modificabili dal
+  proprietario, mentre la coda "I miei annunci" li mostra con stato parlante.
 
 Stato: Milestone B completata per il giro funzionale locale. La verifica con
 fixture demo realistiche resta nella Milestone A.
@@ -267,7 +270,8 @@ Avanzamento 12 maggio 2026:
   per vedere tutte le code, solo `pending_review` o solo segnalazioni.
 - Fatto: `/moderation/queue` offre una vista tabellare rapida con selezione
   multipla, decisioni batch approva/rifiuta/sospendi, azioni rapide per riga e
-  anteprima cover per controllo contenuti.
+  anteprima multi-foto per controllo contenuti, con layout mobile a card e
+  pulsanti touch per moderare senza tabella orizzontale.
 - Fatto: i motivi rapidi batch usano default per azione e supportano nota
   opzionale o motivo `other` con nota obbligatoria.
 - Fatto: le code API continuano a includere audit `moderation_actions`; la UI

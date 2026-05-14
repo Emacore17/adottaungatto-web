@@ -113,6 +113,30 @@ try {
     Number.isInteger(listings.items[0]?.stats?.favoriteCount),
     `count=${listings.items[0]?.stats?.favoriteCount ?? "missing"}`
   )
+  const relaxedSearch = await api(
+    "GET",
+    "/listings?q=zzzxqvnotfound&page=1&pageSize=3"
+  )
+  check(
+    "public listing relaxed search fallback",
+    relaxedSearch.items.length > 0 &&
+      relaxedSearch.meta?.expansion?.type === "relaxed_filters",
+    `items=${relaxedSearch.items.length} expansion=${
+      relaxedSearch.meta?.expansion?.type ?? "none"
+    }`
+  )
+  const expandedNearby = await api(
+    "GET",
+    "/listings?lat=0&lng=0&radiusKm=1&sort=distance&page=1&pageSize=3"
+  )
+  check(
+    "public listing expanded nearby fallback",
+    expandedNearby.items.length > 0 &&
+      expandedNearby.meta?.expansion?.type === "expanded_radius",
+    `items=${expandedNearby.items.length} expansion=${
+      expandedNearby.meta?.expansion?.type ?? "none"
+    }`
+  )
 
   const coverStorage = await fetch(
     `${storagePublicUrl}/${storageBucket}/${coverObjectKey}`
@@ -205,6 +229,7 @@ try {
       contactRequestsEnabled: true,
       description:
         "Annuncio completo creato dallo smoke test end to end con immagine.",
+      ageMonths: 18,
       isFree: true,
       municipalityId: municipality.id,
       sex: "unknown",
@@ -622,6 +647,7 @@ try {
     "web moderation quick queue content",
     moderationQueueHtml.includes("Revisione operativa") &&
       moderationQueueHtml.includes("Vista tabellare") &&
+      moderationQueueHtml.includes("In revisione") &&
       moderationQueueHtml.includes("Seleziona casi dalla tabella") &&
       moderationQueueHtml.includes("Azioni")
   )
@@ -680,6 +706,14 @@ try {
     adminToken
   )
   pass("demo moderation submitted case", `case=${submittedCase.case.id}`)
+  check(
+    "demo moderation submitted case images",
+    submittedCase.images.readyCount >= 2 &&
+      submittedCase.images.preview?.length >= 2,
+    `ready=${submittedCase.images.readyCount} preview=${
+      submittedCase.images.preview?.length ?? 0
+    }`
+  )
 
   const notificationStream = await openWebNotificationStream(token)
   const realtimeNotificationPromise = readWebNotificationEvent(

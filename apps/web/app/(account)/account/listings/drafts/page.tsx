@@ -79,10 +79,9 @@ export default async function DraftListingsPage({
         ) : (
           <Empty className="border">
             <EmptyHeader>
-              <EmptyTitle>Nessun annuncio in lavorazione</EmptyTitle>
+              <EmptyTitle>Nessun annuncio</EmptyTitle>
               <EmptyDescription>
-                Gli annunci inseriti saranno disponibili in questa area prima
-                della pubblicazione.
+                Qui trovi gli annunci in lavorazione o in revisione.
               </EmptyDescription>
             </EmptyHeader>
             <EmptyContent>

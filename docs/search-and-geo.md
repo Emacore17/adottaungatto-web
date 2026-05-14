@@ -64,11 +64,15 @@ Quando `q` e' presente, la lista applica ricerca full-text PostgreSQL con
 descrizione, razza e luogo. La query usa `listing_search_documents` quando il
 documento indicizzato esiste e cade sul vettore inline se il documento non e'
 ancora stato costruito. Se la prima pagina full-text non restituisce risultati,
-esegue un fallback `pg_trgm` tracciato in `meta.expansion`, senza rilassare i
-filtri espliciti. Il ranking `postgres-v1` combina testo, distanza opzionale,
+esegue un fallback `pg_trgm` tracciato in `meta.expansion`. Se anche i vincoli
+di raggio o filtri producono zero risultati, l'API propone alternative
+tracciate: `expanded_radius` rimuove il limite di raggio mantenendo distanza e
+filtri, `relaxed_filters` mostra suggerimenti pubblicati ordinati per vicinanza
+alla richiesta. Il ranking `postgres-v1` combina testo, distanza opzionale,
 freschezza, qualita, trust ed engagement iniziale. Senza `q`, resta ordinata
 per pubblicazione recente; con `sort=distance` e coordinate esplicite ordina
-per distanza entro `radiusKm`.
+per distanza entro `radiusKm`, poi usa i piu vicini disponibili se il raggio e'
+vuoto.
 
 Filtri iniziali:
 
@@ -107,9 +111,8 @@ migrazione `0013_elite_juggernaut.sql` aggiunge indici GiST expression su
 decisioni di moderazione, processing immagini del worker e like/unlike. Il
 worker espone `pnpm search:benchmark` per creare dataset sintetici marcati,
 aggiornare il documento ricerca in bulk e salvare EXPLAIN JSON locali. Non sono
-ancora implementati refresh sul futuro endpoint di modifica annunci pubblicati,
-espansioni geografiche per risultati vuoti e benchmark con fixture realistiche.
-I benchmark locali 10k/100k sono registrati in
+ancora implementati refresh sul futuro endpoint di modifica annunci pubblicati
+e benchmark con fixture realistiche. I benchmark locali 10k/100k sono registrati in
 [search-benchmark-results.md](search-benchmark-results.md).
 
 La specifica operativa per implementare questo blocco e' in
@@ -119,10 +122,11 @@ La specifica operativa per implementare questo blocco e' in
 
 Se la query non restituisce risultati:
 
-1. usare typo tolerance trigram, gia implementata per la prima pagina
-   full-text vuota;
-2. allargare la distanza geografica;
-3. rimuovere filtri meno critici, dichiarandolo all'utente;
+1. usare typo tolerance trigram, implementata per la prima pagina full-text
+   vuota;
+2. allargare la distanza geografica, implementato come `expanded_radius`;
+3. rimuovere filtri meno critici, dichiarandolo all'utente, implementato come
+   `relaxed_filters`;
 4. proporre risultati nella provincia o regione;
 5. suggerire luoghi o razze alternative via autocomplete;
 6. mostrare annunci recenti e di qualita nella stessa macro-area.

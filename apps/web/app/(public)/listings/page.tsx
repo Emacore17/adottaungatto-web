@@ -10,6 +10,7 @@ import {
   parseListingSearchParams,
 } from "@/lib/api/listings"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
+import type { PublicListingExpansion } from "@/lib/api/types"
 import { getSessionToken } from "@/lib/auth/session"
 import { routes } from "@/lib/routes"
 import { createPageMetadata } from "@/lib/seo/metadata"
@@ -71,6 +72,9 @@ export default async function ListingsPage({
         items.map((item) => item.id)
       )
     : new Set<string>()
+  const expansionMessage = meta?.expansion
+    ? formatExpansionMessage(meta.expansion)
+    : null
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:px-8">
@@ -88,7 +92,11 @@ export default async function ListingsPage({
                 Gatti disponibili
               </h1>
               <p className="text-sm text-muted-foreground">
-                {meta ? `${meta.total} risultati` : "Risultati non disponibili"}
+                {meta
+                  ? meta.expansion
+                    ? `${meta.total} suggerimenti`
+                    : `${meta.total} risultati`
+                  : "Risultati non disponibili"}
               </p>
             </div>
             {meta?.expansion ? (
@@ -101,6 +109,11 @@ export default async function ListingsPage({
             ) : null}
           </div>
         </div>
+        {expansionMessage ? (
+          <p className="rounded-lg border bg-card px-3 py-2 text-sm text-muted-foreground shadow-sm">
+            {expansionMessage}
+          </p>
+        ) : null}
         <ListingSearchForm
           breeds={breeds}
           defaultValues={{
@@ -141,6 +154,20 @@ export default async function ListingsPage({
       )}
     </main>
   )
+}
+
+function formatExpansionMessage(expansion: PublicListingExpansion) {
+  if (expansion.type === "trigram_text") {
+    return `Non ho trovato corrispondenze esatte per "${expansion.originalQuery}", quindi ti mostro annunci con testo simile.`
+  }
+
+  if (expansion.type === "expanded_radius") {
+    return expansion.originalRadiusKm
+      ? `Non ci sono annunci entro ${expansion.originalRadiusKm} km, quindi ti mostro quelli piu vicini disponibili.`
+      : "Non ci sono annunci nel raggio richiesto, quindi ti mostro quelli piu vicini disponibili."
+  }
+
+  return "Nessun annuncio coincide con tutti i filtri: ti mostro alternative ordinate per vicinanza alla richiesta."
 }
 
 function isSearchPlaceType(
