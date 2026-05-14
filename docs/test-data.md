@@ -9,16 +9,21 @@ Esistono:
 
 - `pnpm demo:setup`;
 - `pnpm dev:demo`;
+- `pnpm dev:demo -- --reset`;
+- `pnpm demo:fresh`;
 - `pnpm demo:reset`;
 - seed base con ruoli e razze;
 - seed demo con 5 utenti verificati: privato, rifugio, associazione,
   moderatore e admin;
+- seed luoghi demo idempotente: usa i luoghi italiani reali gia importati
+  quando esistono e crea fallback `DEMO-*` solo per quelli mancanti;
 - 15 annunci/casi demo: pubblicati, in revisione, bozze, rifiutato, sospeso e
   scaduto;
 - 1 promozione mock attiva su un annuncio pubblicato, visibile in cima a
   `/listings`;
 - upload asset demo su MinIO per 11 annunci, usando `immagini-gattini/` se
-  presente e fallback placeholder se assente;
+  presente e fallback placeholder se assente, con verifica di formato e
+  dimensioni large/thumb dopo l'upload;
 - smoke E2E locale `pnpm smoke:e2e` con login admin, controllo coda
   `pending_review`, dashboard moderazione, coda rapida tabellare, filtro
   segnalazioni, accesso negato per utente non moderatore e verifica dello shell
@@ -75,6 +80,9 @@ La demo include:
   presenti.
 - Se la cartella locale non esiste, gli asset placeholder sono generati in modo
   deterministico.
+- Ogni setup demo verifica che gli oggetti MinIO siano PNG servibili a
+  1200x900 e 480x360, cosi lista, dettaglio, desktop e mobile usano sempre una
+  variante coerente.
 - Se si versionano immagini reali, devono essere libere da vincoli di licenza e
   archiviate con attribuzione nel documento dedicato.
 
@@ -136,6 +144,9 @@ La demo include:
 ## Regole
 
 - I dati demo devono essere idempotenti.
+- I luoghi demo non devono duplicare o sostituire luoghi reali importati: se il
+  comune reale esiste, gli annunci demo devono referenziarlo; il record demo
+  serve solo come fallback locale minimo.
 - `pnpm demo:reset` puo eliminare volumi Docker locali, ma nessuno script demo
   deve toccare dati fuori dai servizi locali.
 - Gli ID stabili sono preferibili per test e documentazione.

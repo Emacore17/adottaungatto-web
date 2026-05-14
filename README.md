@@ -52,19 +52,28 @@ asset immagini e avviare web/API/worker:
 pnpm dev:demo
 ```
 
+Se il database locale o MinIO sono incoerenti dopo riavvii o passaggi tra
+sviluppatori, usare un solo comando distruttivo limitato ai volumi Docker
+locali:
+
+```bash
+pnpm dev:demo -- --reset
+```
+
 Account demo:
 
 - `rifugio.torino@demo.adottaungatto.local`
 - `volontari.italia@demo.adottaungatto.local`
 - `marta.demo@demo.adottaungatto.local`
+- `moderatore@demo.adottaungatto.local`
+- `admin@demo.adottaungatto.local`
 
 Password comune: `demo-password-123`
 
 Per ricreare tutto da zero eliminando i volumi Docker locali:
 
 ```bash
-pnpm demo:reset
-pnpm dev:demo
+pnpm demo:fresh
 ```
 
 URL locali:
@@ -128,6 +137,7 @@ pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 pnpm db:seed:demo
+pnpm demo:fresh
 pnpm demo:setup
 pnpm demo:reset
 pnpm dev:demo

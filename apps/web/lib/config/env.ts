@@ -27,7 +27,9 @@ export const webEnv = {
     "http://localhost:3000"
   ),
   storageBucket:
-    process.env.NEXT_PUBLIC_S3_BUCKET ?? process.env.S3_BUCKET ?? "",
+    process.env.NEXT_PUBLIC_S3_BUCKET ??
+    process.env.S3_BUCKET ??
+    "adottaungatto-local",
   storagePublicUrl: readUrl(
     process.env.NEXT_PUBLIC_S3_PUBLIC_ENDPOINT ??
       process.env.S3_PUBLIC_ENDPOINT,

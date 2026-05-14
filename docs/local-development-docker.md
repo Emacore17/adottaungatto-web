@@ -43,6 +43,8 @@ Gli script root attuali sono:
 
 ```bash
 pnpm dev:demo
+pnpm dev:demo -- --reset
+pnpm demo:fresh
 pnpm demo:setup
 pnpm demo:reset
 pnpm dev
@@ -73,15 +75,19 @@ target vedere [test-data.md](test-data.md).
 2. attende che i servizi siano raggiungibili;
 3. applica le migrazioni;
 4. inserisce seed base e fixture demo;
-5. carica immagini placeholder nel bucket MinIO locale;
+5. carica e verifica immagini large/thumb nel bucket MinIO locale;
 6. avvia `pnpm dev`.
 
 Il comando e' utile gia oggi, ma non rappresenta ancora il traguardo demo
 finale definito in [agent-coding-roadmap.md](agent-coding-roadmap.md).
 
+Se lo stato locale e' incoerente, `pnpm dev:demo -- --reset` elimina prima i
+volumi Docker locali e poi ricostruisce dati e asset prima di avviare l'app.
+
 `pnpm demo:setup` esegue solo la preparazione senza avviare i processi di
-sviluppo. `pnpm demo:reset` esegue `docker compose down -v --remove-orphans`:
-elimina i volumi locali Docker e consente di ripartire da un database vuoto.
+sviluppo. `pnpm demo:fresh` combina reset e setup senza avviare l'app.
+`pnpm demo:reset` esegue `docker compose down -v --remove-orphans`: elimina i
+volumi locali Docker e consente di ripartire da un database vuoto.
 
 ## Note
 

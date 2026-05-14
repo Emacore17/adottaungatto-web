@@ -11,9 +11,7 @@ import type { ListingPublicListQuery } from "@workspace/validation/listings"
 import type { PlaceAutocompleteType } from "@workspace/validation/places"
 
 import {
-  ageOptions,
   booleanFilterOptions,
-  priceRangeOptions,
   radiusOptions,
   sexOptions,
   sortOptions,
@@ -47,58 +45,45 @@ type SearchFilters = {
   sex: string
   ageMonthsMin: string
   ageMonthsMax: string
-  priceRange: (typeof priceRangeOptions)[number]["value"] | "custom"
+  contributionEurosMin: string
+  contributionEurosMax: string
+  priceMode: "all" | "free" | "range"
   sort: ListingPublicListQuery["sort"]
   radiusKm: string
 } & Record<BooleanFilterKey, boolean>
 
+type RangeKey =
+  | "ageMonthsMin"
+  | "ageMonthsMax"
+  | "contributionEurosMin"
+  | "contributionEurosMax"
+
+const maxCatAgeMonths = 360
+const maxContributionEuros = 500
+
 const controlClassName =
   "h-11 w-full rounded-lg border border-border bg-card/90 px-3 text-sm text-brand-ink outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:bg-card focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
+
+const numberControlClassName =
+  "h-10 w-full rounded-md border border-border bg-card/90 px-3 text-sm text-brand-ink outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:bg-card focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
+
+const rangeControlClassName =
+  "h-6 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
 
 const filterLabelClassName =
   "text-xs font-semibold tracking-normal text-muted-foreground uppercase"
 
-function getPriceRangeOption(value: SearchFilters["priceRange"]) {
-  return priceRangeOptions.find((option) => option.value === value) ?? null
-}
-
-function getOptionContributionCentsMin(
-  option: (typeof priceRangeOptions)[number]
-) {
-  return "contributionCentsMin" in option
-    ? option.contributionCentsMin
-    : undefined
-}
-
-function getOptionContributionCentsMax(
-  option: (typeof priceRangeOptions)[number]
-) {
-  return "contributionCentsMax" in option
-    ? option.contributionCentsMax
-    : undefined
-}
-
-function createInitialPriceRange(
+function createInitialPriceMode(
   defaultValues: ListingSearchDefaults
-): SearchFilters["priceRange"] {
+): SearchFilters["priceMode"] {
   if (defaultValues.isFree === true) {
     return "free"
   }
 
-  const min = defaultValues.contributionCentsMin
-  const max = defaultValues.contributionCentsMax
-
-  if (min === undefined && max === undefined) {
-    return "all"
-  }
-
-  return (
-    priceRangeOptions.find(
-      (option) =>
-        getOptionContributionCentsMin(option) === min &&
-        getOptionContributionCentsMax(option) === max
-    )?.value ?? "custom"
-  )
+  return defaultValues.contributionCentsMin !== undefined ||
+    defaultValues.contributionCentsMax !== undefined
+    ? "range"
+    : "all"
 }
 
 function createDefaultPlace(
@@ -161,7 +146,15 @@ function createInitialFilters(
     isSterilized: defaultValues.isSterilized === true,
     isVaccinated: defaultValues.isVaccinated === true,
     breedId: defaultValues.breedId ?? "",
-    priceRange: createInitialPriceRange(defaultValues),
+    contributionEurosMax:
+      defaultValues.contributionCentsMax !== undefined
+        ? String(defaultValues.contributionCentsMax / 100)
+        : "",
+    contributionEurosMin:
+      defaultValues.contributionCentsMin !== undefined
+        ? String(defaultValues.contributionCentsMin / 100)
+        : "",
+    priceMode: createInitialPriceMode(defaultValues),
     radiusKm:
       defaultValues.radiusKm !== undefined
         ? String(defaultValues.radiusKm)
@@ -195,10 +188,9 @@ function getActiveFilterCount(
   return (
     booleanCount +
     (filters.breedId ? 1 : 0) +
-    (filters.priceRange !== "all" ? 1 : 0) +
+    (filters.priceMode !== "all" ? 1 : 0) +
     (filters.sex ? 1 : 0) +
-    (filters.ageMonthsMin ? 1 : 0) +
-    (filters.ageMonthsMax ? 1 : 0) +
+    (filters.ageMonthsMin || filters.ageMonthsMax ? 1 : 0) +
     (filters.sort && filters.sort !== "relevance" ? 1 : 0) +
     (position ? 1 : 0)
   )
@@ -214,6 +206,100 @@ function getSelectedPlaceHiddenName(place: PlaceAutocompleteItem) {
   }
 
   return "regionId"
+}
+
+function readNumericFilterValue(value: string) {
+  if (!value.trim()) {
+    return null
+  }
+
+  const parsed = Number(value)
+
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function clampRangeInput(value: string, max: number) {
+  return clampNumber(Math.round(Number(value)), 0, max)
+}
+
+function formatNumberInput(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1)
+}
+
+function formatAgeMonths(months: number) {
+  if (months === 0) {
+    return "0 mesi"
+  }
+
+  if (months < 12) {
+    return `${months} mesi`
+  }
+
+  const years = months / 12
+
+  return `${formatNumberInput(years)} ${years === 1 ? "anno" : "anni"}`
+}
+
+function formatAgeRange(filters: SearchFilters) {
+  const min = readNumericFilterValue(filters.ageMonthsMin)
+  const max = readNumericFilterValue(filters.ageMonthsMax)
+
+  if (min === null && max === null) {
+    return "Qualsiasi eta"
+  }
+
+  if (min !== null && max !== null) {
+    return `${formatAgeMonths(min)} - ${formatAgeMonths(max)}`
+  }
+
+  if (min !== null) {
+    return `Da ${formatAgeMonths(min)}`
+  }
+
+  return `Fino a ${formatAgeMonths(max ?? maxCatAgeMonths)}`
+}
+
+function monthsToYearsInput(value: string) {
+  const months = readNumericFilterValue(value)
+
+  return months === null ? "" : formatNumberInput(months / 12)
+}
+
+function yearsToMonthsValue(value: string) {
+  const years = readNumericFilterValue(value)
+
+  if (years === null) {
+    return ""
+  }
+
+  return String(Math.round(clampNumber(years, 0, 30) * 12))
+}
+
+function formatPriceRange(filters: SearchFilters) {
+  if (filters.priceMode === "free") {
+    return "Solo in regalo"
+  }
+
+  const min = readNumericFilterValue(filters.contributionEurosMin)
+  const max = readNumericFilterValue(filters.contributionEurosMax)
+
+  if (filters.priceMode === "all" || (min === null && max === null)) {
+    return "Qualsiasi contributo"
+  }
+
+  if (min !== null && max !== null) {
+    return `${min} - ${max} euro`
+  }
+
+  if (min !== null) {
+    return `Da ${min} euro`
+  }
+
+  return `Fino a ${max ?? maxContributionEuros} euro`
 }
 
 function ListingSearchForm({
@@ -264,37 +350,18 @@ function ListingSearchForm({
       entries.push(["breedId", filters.breedId])
     }
 
-    const priceRange = getPriceRangeOption(filters.priceRange)
-
-    if (priceRange && "isFree" in priceRange && priceRange.isFree) {
+    if (filters.priceMode === "free") {
       entries.push(["isFree", "true"])
-    } else if (priceRange) {
-      if (getOptionContributionCentsMin(priceRange) !== undefined) {
-        entries.push([
-          "contributionCentsMin",
-          String(getOptionContributionCentsMin(priceRange)),
-        ])
+    } else if (filters.priceMode === "range") {
+      const min = readNumericFilterValue(filters.contributionEurosMin)
+      const max = readNumericFilterValue(filters.contributionEurosMax)
+
+      if (min !== null) {
+        entries.push(["contributionCentsMin", String(min * 100)])
       }
 
-      if (getOptionContributionCentsMax(priceRange) !== undefined) {
-        entries.push([
-          "contributionCentsMax",
-          String(getOptionContributionCentsMax(priceRange)),
-        ])
-      }
-    } else if (filters.priceRange === "custom") {
-      if (defaultValues.contributionCentsMin !== undefined) {
-        entries.push([
-          "contributionCentsMin",
-          String(defaultValues.contributionCentsMin),
-        ])
-      }
-
-      if (defaultValues.contributionCentsMax !== undefined) {
-        entries.push([
-          "contributionCentsMax",
-          String(defaultValues.contributionCentsMax),
-        ])
+      if (max !== null) {
+        entries.push(["contributionCentsMax", String(max * 100)])
       }
     }
 
@@ -321,38 +388,58 @@ function ListingSearchForm({
     }
 
     return entries
-  }, [
-    defaultValues.contributionCentsMax,
-    defaultValues.contributionCentsMin,
-    effectiveSort,
-    filters,
-    position,
-    selectedPlace,
-  ])
+  }, [effectiveSort, filters, position, selectedPlace])
 
   function updateFilter<Key extends keyof SearchFilters>(
     key: Key,
     value: SearchFilters[Key]
   ) {
     setFilters((current) => {
-      const next = {
+      return {
         ...current,
         [key]: value,
       }
+    })
+  }
 
-      const min = next.ageMonthsMin ? Number(next.ageMonthsMin) : null
-      const max = next.ageMonthsMax ? Number(next.ageMonthsMax) : null
+  function updateRangeFilter(
+    minKey: RangeKey,
+    maxKey: RangeKey,
+    edge: "min" | "max",
+    rawValue: string,
+    maxAllowed: number
+  ) {
+    setFilters((current) => {
+      const value =
+        rawValue === "" ? "" : String(clampRangeInput(rawValue, maxAllowed))
+      const next = { ...current }
+
+      next[edge === "min" ? minKey : maxKey] = value
+
+      const min = readNumericFilterValue(next[minKey])
+      const max = readNumericFilterValue(next[maxKey])
 
       if (min !== null && max !== null && min > max) {
-        if (key === "ageMonthsMin") {
-          next.ageMonthsMax = ""
+        if (edge === "min") {
+          next[maxKey] = String(min)
         } else {
-          next.ageMonthsMin = ""
+          next[minKey] = String(max)
         }
       }
 
       return next
     })
+  }
+
+  function handlePriceModeChange(mode: SearchFilters["priceMode"]) {
+    setFilters((current) => ({
+      ...current,
+      contributionEurosMax:
+        mode === "range" && current.contributionEurosMax === ""
+          ? "200"
+          : current.contributionEurosMax,
+      priceMode: mode,
+    }))
   }
 
   function handlePlaceSelect(place: PlaceAutocompleteItem | null) {
@@ -439,63 +526,6 @@ function ListingSearchForm({
         </label>
 
         <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Eta da</span>
-          <select
-            className={controlClassName}
-            value={filters.ageMonthsMin}
-            onChange={(event) =>
-              updateFilter("ageMonthsMin", event.target.value)
-            }
-          >
-            {ageOptions.map((option) => (
-              <option key={`min-${option.value || "any"}`} value={option.value}>
-                {option.value ? `Da ${option.label}` : option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Eta fino a</span>
-          <select
-            className={controlClassName}
-            value={filters.ageMonthsMax}
-            onChange={(event) =>
-              updateFilter("ageMonthsMax", event.target.value)
-            }
-          >
-            {ageOptions.map((option) => (
-              <option key={`max-${option.value || "any"}`} value={option.value}>
-                {option.value ? `Fino a ${option.label}` : option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Prezzo</span>
-          <select
-            className={controlClassName}
-            value={filters.priceRange}
-            onChange={(event) =>
-              updateFilter(
-                "priceRange",
-                event.target.value as SearchFilters["priceRange"]
-              )
-            }
-          >
-            {priceRangeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-            {filters.priceRange === "custom" ? (
-              <option value="custom">Fascia selezionata</option>
-            ) : null}
-          </select>
-        </label>
-
-        <label className="grid gap-1.5 xl:col-span-3">
           <span className={filterLabelClassName}>Ordina</span>
           <select
             className={controlClassName}
@@ -518,6 +548,240 @@ function ListingSearchForm({
             ))}
           </select>
         </label>
+
+        <div className="grid gap-3 rounded-lg border border-brand-teal/14 bg-card/72 p-3 xl:col-span-6">
+          <div className="flex items-start justify-between gap-3">
+            <span className={filterLabelClassName}>Eta</span>
+            <span className="text-right text-xs font-semibold text-brand-teal-ink">
+              {formatAgeRange(filters)}
+            </span>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Da</span>
+              <input
+                type="range"
+                min={0}
+                max={maxCatAgeMonths}
+                step={6}
+                value={filters.ageMonthsMin || "0"}
+                onChange={(event) =>
+                  updateRangeFilter(
+                    "ageMonthsMin",
+                    "ageMonthsMax",
+                    "min",
+                    event.target.value,
+                    maxCatAgeMonths
+                  )
+                }
+                className={rangeControlClassName}
+              />
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Fino a</span>
+              <input
+                type="range"
+                min={0}
+                max={maxCatAgeMonths}
+                step={6}
+                value={filters.ageMonthsMax || String(maxCatAgeMonths)}
+                onChange={(event) =>
+                  updateRangeFilter(
+                    "ageMonthsMin",
+                    "ageMonthsMax",
+                    "max",
+                    event.target.value,
+                    maxCatAgeMonths
+                  )
+                }
+                className={rangeControlClassName}
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Da anni</span>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                step={0.5}
+                value={monthsToYearsInput(filters.ageMonthsMin)}
+                onChange={(event) =>
+                  updateRangeFilter(
+                    "ageMonthsMin",
+                    "ageMonthsMax",
+                    "min",
+                    yearsToMonthsValue(event.target.value),
+                    maxCatAgeMonths
+                  )
+                }
+                className={numberControlClassName}
+                placeholder="0"
+              />
+            </label>
+
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground">Fino anni</span>
+              <input
+                type="number"
+                min={0}
+                max={30}
+                step={0.5}
+                value={monthsToYearsInput(filters.ageMonthsMax)}
+                onChange={(event) =>
+                  updateRangeFilter(
+                    "ageMonthsMin",
+                    "ageMonthsMax",
+                    "max",
+                    yearsToMonthsValue(event.target.value),
+                    maxCatAgeMonths
+                  )
+                }
+                className={numberControlClassName}
+                placeholder="30"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="grid gap-3 rounded-lg border border-brand-amber/18 bg-card/72 p-3 xl:col-span-6">
+          <div className="flex items-start justify-between gap-3">
+            <span className={filterLabelClassName}>Contributo</span>
+            <span className="text-right text-xs font-semibold text-brand-teal-ink">
+              {formatPriceRange(filters)}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            {(["all", "free", "range"] as const).map((mode) => (
+              <label
+                key={mode}
+                className={cn(
+                  "flex min-h-10 cursor-pointer items-center justify-center rounded-md border px-2 text-center text-xs font-semibold transition-[border-color,background-color,color,box-shadow] focus-within:border-ring focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_20%,transparent)]",
+                  filters.priceMode === mode
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-card/84 text-muted-foreground hover:border-primary/30 hover:bg-brand-teal-soft hover:text-brand-teal-ink"
+                )}
+              >
+                <input
+                  type="radio"
+                  value={mode}
+                  checked={filters.priceMode === mode}
+                  onChange={() => handlePriceModeChange(mode)}
+                  className="sr-only"
+                />
+                {mode === "all"
+                  ? "Qualsiasi"
+                  : mode === "free"
+                    ? "Gratis"
+                    : "Fascia"}
+              </label>
+            ))}
+          </div>
+
+          {filters.priceMode === "range" ? (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">Da euro</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxContributionEuros}
+                    step={10}
+                    value={filters.contributionEurosMin || "0"}
+                    onChange={(event) =>
+                      updateRangeFilter(
+                        "contributionEurosMin",
+                        "contributionEurosMax",
+                        "min",
+                        event.target.value,
+                        maxContributionEuros
+                      )
+                    }
+                    className={rangeControlClassName}
+                  />
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">
+                    Fino euro
+                  </span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={maxContributionEuros}
+                    step={10}
+                    value={
+                      filters.contributionEurosMax ||
+                      String(maxContributionEuros)
+                    }
+                    onChange={(event) =>
+                      updateRangeFilter(
+                        "contributionEurosMin",
+                        "contributionEurosMax",
+                        "max",
+                        event.target.value,
+                        maxContributionEuros
+                      )
+                    }
+                    className={rangeControlClassName}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">Da</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={maxContributionEuros}
+                    step={10}
+                    value={filters.contributionEurosMin}
+                    onChange={(event) =>
+                      updateRangeFilter(
+                        "contributionEurosMin",
+                        "contributionEurosMax",
+                        "min",
+                        event.target.value,
+                        maxContributionEuros
+                      )
+                    }
+                    className={numberControlClassName}
+                    placeholder="0"
+                  />
+                </label>
+
+                <label className="grid gap-1">
+                  <span className="text-xs text-muted-foreground">Fino</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={maxContributionEuros}
+                    step={10}
+                    value={filters.contributionEurosMax}
+                    onChange={(event) =>
+                      updateRangeFilter(
+                        "contributionEurosMin",
+                        "contributionEurosMax",
+                        "max",
+                        event.target.value,
+                        maxContributionEuros
+                      )
+                    }
+                    className={numberControlClassName}
+                    placeholder="200"
+                  />
+                </label>
+              </div>
+            </>
+          ) : null}
+        </div>
 
         <div className="grid gap-1.5 xl:col-span-6">
           <span className={filterLabelClassName}>Distanza</span>

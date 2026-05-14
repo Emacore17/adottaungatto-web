@@ -113,6 +113,9 @@ function NearbyState({
 
 function NearbyListingsSection() {
   const mountedRef = useRef(true)
+  const fallbackRequestIdRef = useRef(0)
+  const nearbyReadyRequestIdRef = useRef(0)
+  const nearbyRequestIdRef = useRef(0)
   const [status, setStatus] = useState<NearbyStatus>("checking")
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
   const [listings, setListings] = useState<PublicListingSummary[]>([])
@@ -125,7 +128,16 @@ function NearbyListingsSection() {
   }, [])
 
   const fetchFallbackListings = useCallback(async (message: string) => {
-    setStatus("loading")
+    const fallbackRequestId = fallbackRequestIdRef.current + 1
+    const nearbyRequestIdAtStart = nearbyRequestIdRef.current
+
+    fallbackRequestIdRef.current = fallbackRequestId
+    setFallbackMessage(message)
+    setStatus((currentStatus) =>
+      currentStatus === "locating" || currentStatus === "loading"
+        ? currentStatus
+        : "loading"
+    )
 
     try {
       const params = new URLSearchParams({
@@ -143,17 +155,32 @@ function NearbyListingsSection() {
 
       const payload = (await response.json()) as PublicListingListResponse
 
-      if (!mountedRef.current) {
+      if (
+        !mountedRef.current ||
+        fallbackRequestId !== fallbackRequestIdRef.current ||
+        nearbyReadyRequestIdRef.current > nearbyRequestIdAtStart
+      ) {
         return
       }
 
       setListings(payload.items)
       setFallbackMessage(message)
-      setStatus("ready")
+      setStatus((currentStatus) =>
+        nearbyRequestIdRef.current > nearbyRequestIdAtStart &&
+        nearbyReadyRequestIdRef.current < nearbyRequestIdRef.current
+          ? currentStatus
+          : "ready"
+      )
     } catch {
-      if (mountedRef.current) {
+      if (
+        mountedRef.current &&
+        fallbackRequestId === fallbackRequestIdRef.current &&
+        nearbyRequestIdRef.current === nearbyRequestIdAtStart
+      ) {
         setListings([])
-        setFallbackMessage(null)
+        setFallbackMessage(
+          "Non riesco a caricare gli annunci: riprova tra poco."
+        )
         setStatus("error")
       }
     }
@@ -161,8 +188,11 @@ function NearbyListingsSection() {
 
   const fetchNearbyListings = useCallback(
     async (nextCoordinates: Coordinates) => {
+      const requestId = nearbyRequestIdRef.current + 1
+
+      nearbyRequestIdRef.current = requestId
       setStatus("loading")
-      setFallbackMessage(null)
+      setFallbackMessage("Sto cercando annunci vicino a te.")
 
       try {
         const params = new URLSearchParams({
@@ -183,11 +213,19 @@ function NearbyListingsSection() {
 
         const payload = (await response.json()) as PublicListingListResponse
 
-        if (!mountedRef.current) {
+        if (!mountedRef.current || requestId !== nearbyRequestIdRef.current) {
+          return
+        }
+
+        if (payload.items.length === 0) {
+          void fetchFallbackListings(
+            "Non ho trovato annunci vicino a te: ti mostro annunci recenti."
+          )
           return
         }
 
         setListings(payload.items)
+        nearbyReadyRequestIdRef.current = requestId
         setFallbackMessage(
           payload.meta.expansion
             ? formatNearbyExpansionMessage(payload.meta.expansion)
@@ -195,7 +233,7 @@ function NearbyListingsSection() {
         )
         setStatus("ready")
       } catch {
-        if (mountedRef.current) {
+        if (mountedRef.current && requestId === nearbyRequestIdRef.current) {
           void fetchFallbackListings(
             "Non riesco a caricare gli annunci vicini: ti mostro annunci recenti."
           )
@@ -241,6 +279,10 @@ function NearbyListingsSection() {
   }, [fetchFallbackListings, fetchNearbyListings])
 
   useEffect(() => {
+    void fetchFallbackListings(
+      "Sto verificando la posizione: intanto ti mostro annunci recenti."
+    )
+
     if (!navigator.geolocation) {
       void fetchFallbackListings(
         "Non posso leggere la posizione da questo browser: ti mostro annunci recenti."
@@ -249,7 +291,9 @@ function NearbyListingsSection() {
     }
 
     if (!navigator.permissions?.query) {
-      setStatus("idle")
+      void fetchFallbackListings(
+        "Attiva la posizione per ordinare gli annunci per distanza. Intanto ti mostro annunci recenti."
+      )
       return
     }
 
@@ -274,11 +318,15 @@ function NearbyListingsSection() {
           return
         }
 
-        setStatus("idle")
+        void fetchFallbackListings(
+          "Attiva la posizione per ordinare gli annunci per distanza. Intanto ti mostro annunci recenti."
+        )
       })
       .catch(() => {
         if (!cancelled && mountedRef.current) {
-          setStatus("idle")
+          void fetchFallbackListings(
+            "Non riesco a verificare i permessi posizione: ti mostro annunci recenti."
+          )
         }
       })
 
@@ -339,7 +387,7 @@ function NearbyListingsSection() {
           </div>
         </div>
 
-        {status === "ready" && listings.length > 0 ? (
+        {listings.length > 0 ? (
           <>
             {fallbackMessage ? (
               <NearbyState>{fallbackMessage}</NearbyState>
@@ -352,29 +400,18 @@ function NearbyListingsSection() {
           </>
         ) : null}
 
-        {status === "ready" && listings.length === 0 ? (
+        {listings.length === 0 && isBusy ? (
+          <NearbyState action={null}>
+            {fallbackMessage ??
+              "Sto preparando gli annunci vicini e carico intanto i risultati disponibili."}
+          </NearbyState>
+        ) : null}
+
+        {listings.length === 0 && !isBusy ? (
           <NearbyState action={null}>
             {fallbackMessage ??
               "Non ho trovato annunci disponibili per questa richiesta."}
           </NearbyState>
-        ) : null}
-
-        {status === "idle" ? (
-          <NearbyState>
-            Attiva la posizione per mostrare qui gli annunci piu vicini.
-          </NearbyState>
-        ) : null}
-
-        {isBusy ? (
-          <NearbyState>Sto preparando gli annunci vicini.</NearbyState>
-        ) : null}
-
-        {status === "denied" ? (
-          <NearbyState>Posizione non disponibile nel browser.</NearbyState>
-        ) : null}
-
-        {status === "error" ? (
-          <NearbyState>Non riesco a caricare gli annunci vicini.</NearbyState>
         ) : null}
       </div>
     </section>

@@ -109,11 +109,12 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   per query principali.
 - Benchmark locali ricerca eseguiti su 10k e 100k annunci sintetici, con piani
   EXPLAIN salvati localmente e indici geography aggiunti per query distanza.
-- Percorso demo locale con `pnpm demo:setup`, `pnpm dev:demo` e
-  `pnpm demo:reset`: avvia servizi, applica migrazioni, crea dati demo e carica
-  asset MinIO per account, annunci e code demo. Se la cartella locale
-  `immagini-gattini/` esiste, `worker demo:assets` usa quelle foto come
-  sorgente; altrimenti genera placeholder deterministici.
+- Percorso demo locale con `pnpm dev:demo`, `pnpm dev:demo -- --reset` e
+  `pnpm demo:fresh`: avvia servizi, applica migrazioni, crea dati demo, evita
+  duplicati sui luoghi reali gia importati e verifica asset MinIO per account,
+  annunci e code demo. Se la cartella locale `immagini-gattini/` esiste,
+  `worker demo:assets` usa quelle foto come sorgente; altrimenti genera
+  placeholder deterministici.
 - Smoke test E2E locale `pnpm smoke:e2e` per health API, ricerca pubblica,
   readiness/metriche/alert API, header di correlazione, ricerca pubblica, auth,
   creazione annuncio, upload immagine, processing worker, invio a
@@ -244,15 +245,17 @@ della UI avanzata e uso della CLI shadcn da `apps/web`.
 
 ## Stato demo locale
 
-`pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Oggi
-prepara servizi Docker, migrazioni, seed base, 5 utenti demo, 15 annunci/casi
-demo e 11 asset immagine. Gli account includono utente privato, rifugio,
+`pnpm dev:demo` e' disponibile ed e' il percorso di avvio consigliato. Con
+`--reset` riparte da volumi Docker vuoti nello stesso comando. Oggi prepara
+servizi Docker, migrazioni, seed base, 5 utenti demo, 15 annunci/casi demo e 11
+asset immagine validati. Gli account includono utente privato, rifugio,
 associazione, moderatore e admin. Gli annunci coprono pubblicati,
 `pending_review`, bozze, rifiutato, sospeso da segnalazione e scaduto. Il worker
 processa automaticamente le immagini in `processing` durante l'avvio
 applicativo, quindi il flusso locale standard non richiede piu' la CLI manuale.
-Gli asset demo usano le foto locali in `immagini-gattini/` quando presenti e
-cadono sui placeholder deterministici quando la cartella non esiste. La UI
+Gli asset demo usano le foto locali in `immagini-gattini/` quando presenti,
+cadono sui placeholder deterministici quando la cartella non esiste e vengono
+riletti da MinIO per verificare PNG large/thumb nelle dimensioni attese. La UI
 renderizza le immagini storage tramite proxy Next same-origin `/api/storage/...`
 senza passare dall'optimizer, cosi' funzionano anche da telefono su server
 locale remoto. La lista `/listings` usa card orizzontali, una per riga, con foto

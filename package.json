@@ -9,6 +9,7 @@
     "db:seed": "pnpm --filter @workspace/db db:seed",
     "db:seed:demo": "pnpm --filter @workspace/db db:seed:demo",
     "db:studio": "pnpm --filter @workspace/db db:studio",
+    "demo:fresh": "node scripts/local/demo-fresh.mjs",
     "demo:reset": "node scripts/local/demo-reset.mjs",
     "demo:setup": "node scripts/local/demo-setup.mjs",
     "dev": "turbo dev",

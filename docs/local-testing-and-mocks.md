@@ -10,8 +10,11 @@ In locale sono disponibili:
 - `pnpm docker:up` per PostgreSQL/PostGIS, Redis, MinIO e Mailpit;
 - `pnpm db:migrate` e `pnpm db:seed`;
 - `pnpm demo:setup` per avviare infrastruttura, migrare, fare seed demo e
-  caricare asset MinIO;
+  caricare e verificare asset MinIO;
 - `pnpm dev:demo` per preparare la demo e avviare `pnpm dev`;
+- `pnpm dev:demo -- --reset` per eliminare i volumi Docker locali, ricostruire
+  dati e asset, poi avviare la demo in un unico comando;
+- `pnpm demo:fresh` per reset e setup completo senza avviare i processi dev;
 - `pnpm demo:reset` per eliminare volumi Docker locali e ripartire;
 - `pnpm geo:import`, `pnpm geo:promote`, `pnpm geo:boundaries`;
 - `pnpm media:process` per processare immagini in coda;
@@ -21,7 +24,8 @@ In locale sono disponibili:
 
 Esiste quindi un percorso demo unico. Le immagini demo realistiche sono usate
 quando esiste la cartella locale `immagini-gattini/`; senza quella cartella il
-worker genera placeholder deterministici.
+worker genera placeholder deterministici e verifica che ogni variante MinIO sia
+servibile come PNG nelle dimensioni attese.
 
 ## Obiettivo locale
 
@@ -36,19 +40,17 @@ Un nuovo sviluppatore o agente deve poter arrivare a una demo locale con:
 7. Mailpit e MinIO verificabili;
 8. comandi di reset chiari e non ambigui.
 
-## File e script da completare
+## Script principali
 
-Questi file o contenuti vanno completati in task dedicati:
-
-- `scripts/local/bootstrap.ps1`: setup locale idempotente;
-- `scripts/local/reset-data.ps1`: reset dati applicativi, con conferma
-  esplicita;
-- `packages/db/src/seed-demo.ts`: fixture demo realistiche e stati annunci;
-- `scripts/local/smoke-api.ps1`: chiamate smoke contro API locale;
-- `apps/worker/src/demo/upload-demo-assets.ts`: sorgenti immagini demo locali,
-  fallback placeholder e futuro checksum;
-- `docs/api-smoke-tests.md`: sequenza manuale minima per verificare i flussi;
-- `docs/test-data.md`: utenti, ruoli e annunci demo standard.
+- `scripts/local/demo-setup.mjs`: prepara infrastruttura, migrazioni, seed e
+  immagini.
+- `scripts/local/dev-demo.mjs`: prepara la demo e avvia web/API/worker; con
+  `--reset` riparte prima da volumi Docker vuoti.
+- `scripts/local/demo-fresh.mjs`: reset piu setup senza avvio persistente.
+- `scripts/local/e2e-smoke.mjs`: smoke applicativo completo contro i servizi
+  locali gia avviati.
+- `apps/worker/src/demo/upload-demo-assets.ts`: genera/upload immagini demo e
+  valida che large e thumb siano leggibili da MinIO.
 
 ## Fixture target
 

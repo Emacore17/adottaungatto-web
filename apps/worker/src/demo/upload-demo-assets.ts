@@ -1,5 +1,6 @@
 import { existsSync } from "node:fs"
 import { join } from "node:path"
+import type { Readable } from "node:stream"
 import { fileURLToPath, pathToFileURL } from "node:url"
 
 import * as Minio from "minio"
@@ -91,12 +92,31 @@ const demoAssets = [
   },
 ] as const
 
+const assetVariants = [
+  {
+    height: 900,
+    suffix: ".png",
+    width: 1200,
+  },
+  {
+    height: 900,
+    suffix: "-large.png",
+    width: 1200,
+  },
+  {
+    height: 360,
+    suffix: "-thumb.png",
+    width: 480,
+  },
+] as const
+
 type DemoAssetSummary = {
   bucket: string
   objects: number
   placeholderImages: number
   sourceImageDir: string
   sourceImages: number
+  verifiedObjects: number
 }
 
 type DemoImageOptions = {
@@ -160,12 +180,15 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
     objects += 3
   }
 
+  const verifiedObjects = await verifyDemoAssetObjects(client)
+
   return {
     bucket,
     objects,
     placeholderImages,
     sourceImageDir,
     sourceImages,
+    verifiedObjects,
   }
 }
 
@@ -237,6 +260,59 @@ function putObject(client: Minio.Client, objectKey: string, data: Buffer) {
   return client.putObject(bucket, objectKey, data, data.byteLength, {
     "Content-Type": "image/png",
   })
+}
+
+async function verifyDemoAssetObjects(client: Minio.Client) {
+  let verifiedObjects = 0
+
+  for (const asset of demoAssets) {
+    for (const variant of assetVariants) {
+      await verifyDemoAssetObject(client, `${asset.key}${variant.suffix}`, {
+        height: variant.height,
+        width: variant.width,
+      })
+      verifiedObjects += 1
+    }
+  }
+
+  return verifiedObjects
+}
+
+async function verifyDemoAssetObject(
+  client: Minio.Client,
+  objectKey: string,
+  expected: Pick<DemoImageOptions, "height" | "width">
+) {
+  const objectStream = await client.getObject(bucket, objectKey)
+  const buffer = await streamToBuffer(objectStream)
+  const metadata = await sharp(buffer).metadata()
+
+  if (metadata.format !== "png") {
+    throw new Error(
+      `Demo asset ${objectKey} has format ${metadata.format ?? "unknown"}.`
+    )
+  }
+
+  if (
+    metadata.width !== expected.width ||
+    metadata.height !== expected.height
+  ) {
+    throw new Error(
+      `Demo asset ${objectKey} is ${metadata.width ?? "unknown"}x${
+        metadata.height ?? "unknown"
+      }, expected ${expected.width}x${expected.height}.`
+    )
+  }
+}
+
+async function streamToBuffer(stream: Readable) {
+  const chunks: Buffer[] = []
+
+  for await (const chunk of stream) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+  }
+
+  return Buffer.concat(chunks)
 }
 
 function isCliEntrypoint() {

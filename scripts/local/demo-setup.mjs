@@ -1,7 +1,12 @@
 import { pathToFileURL } from "node:url"
 
 import { createDemoEnv } from "./demo-env.mjs"
-import { pnpmCommand, run, waitForTcpPort } from "./demo-utils.mjs"
+import {
+  pnpmCommand,
+  run,
+  waitForDockerComposeServices,
+  waitForTcpPort,
+} from "./demo-utils.mjs"
 
 export async function setupDemo() {
   const env = createDemoEnv()
@@ -9,7 +14,15 @@ export async function setupDemo() {
   console.log("Starting local infrastructure...")
   await run("docker", ["compose", "up", "-d"], { env })
 
-  console.log("Waiting for PostgreSQL, Redis and MinIO...")
+  console.log("Waiting for Docker healthchecks...")
+  await waitForDockerComposeServices(
+    ["postgres", "redis", "minio", "mailpit"],
+    {
+      env,
+    }
+  )
+
+  console.log("Waiting for PostgreSQL, Redis and MinIO ports...")
   await Promise.all([
     waitForTcpPort(5432),
     waitForTcpPort(6379),
