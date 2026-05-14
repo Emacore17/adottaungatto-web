@@ -1,13 +1,21 @@
 import Link from "next/link"
 import {
   BellIcon,
+  BadgeCheckIcon,
   CheckCircle2Icon,
+  ArrowRightIcon,
+  LockKeyholeIcon,
   MailIcon,
   PhoneIcon,
+  SendIcon,
+  ShieldCheckIcon,
   UserIcon,
+  XCircleIcon,
 } from "lucide-react"
 
 import {
+  confirmPhoneVerificationAction,
+  requestPhoneVerificationAction,
   updateNotificationPreferencesAction,
   updateProfileAction,
 } from "@/app/(account)/account/actions"
@@ -32,6 +40,12 @@ import {
   FieldLabel,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@workspace/ui/components/native-select"
+import { Separator } from "@workspace/ui/components/separator"
+import { phoneCountryCodes, splitPhoneNumber } from "@/lib/phone"
 
 type AccountSettingsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
@@ -42,6 +56,10 @@ export default async function AccountSettingsPage({
 }: AccountSettingsPageProps) {
   const params = await searchParams
   const status = readSettingsStatus(params.settings)
+  const phoneCode =
+    typeof params.phoneCode === "string" && params.phoneCode.length === 6
+      ? params.phoneCode
+      : null
   const { token } = await requireAccountSession(routes.accountSettings)
   const profile = await getCurrentUserProfile(token)
 
@@ -70,7 +88,7 @@ export default async function AccountSettingsPage({
         </Button>
       </div>
 
-      <SettingsFeedback status={status} />
+      <SettingsFeedback status={status} phoneCode={phoneCode} />
 
       {profile.ok ? (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -81,6 +99,7 @@ export default async function AccountSettingsPage({
 
           <aside className="flex flex-col gap-4">
             <ProfileSummary profile={profile.data} />
+            <AccountSectionsCard />
           </aside>
         </div>
       ) : (
@@ -96,6 +115,9 @@ export default async function AccountSettingsPage({
 }
 
 function ProfileForm({ profile }: { profile: CurrentUserProfile }) {
+  const phoneParts = splitPhoneNumber(profile.phoneE164)
+  const phoneVerified = Boolean(profile.phoneVerifiedAt)
+
   return (
     <Card>
       <CardHeader>
@@ -126,27 +148,148 @@ function ProfileForm({ profile }: { profile: CurrentUserProfile }) {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="phoneE164">Telefono</FieldLabel>
-              <Input
-                id="phoneE164"
-                name="phoneE164"
-                defaultValue={profile.phoneE164 ?? ""}
-                inputMode="tel"
-                placeholder="+393331234567"
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div className="grid gap-1">
+                  <FieldLabel htmlFor="phoneNationalNumber">
+                    Telefono
+                  </FieldLabel>
+                  <FieldDescription>
+                    Prefisso e numero. Lascia vuoto per rimuoverlo.
+                  </FieldDescription>
+                </div>
+                {profile.phoneE164 ? (
+                  <Badge
+                    variant={phoneVerified ? "secondary" : "outline"}
+                    className={
+                      phoneVerified
+                        ? "w-fit bg-brand-teal-soft text-brand-teal-ink"
+                        : "w-fit"
+                    }
+                  >
+                    {phoneVerified ? (
+                      <BadgeCheckIcon
+                        aria-hidden="true"
+                        data-icon="inline-start"
+                      />
+                    ) : (
+                      <XCircleIcon
+                        aria-hidden="true"
+                        data-icon="inline-start"
+                      />
+                    )}
+                    {phoneVerified ? "Verificato" : "Da verificare"}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="grid gap-2 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                <NativeSelect
+                  name="phoneCountryCode"
+                  aria-label="Prefisso internazionale"
+                  className="w-full"
+                  defaultValue={phoneParts.countryCode}
+                >
+                  {phoneCountryCodes.map((country) => (
+                    <NativeSelectOption key={country.code} value={country.code}>
+                      {country.label}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+                <Input
+                  id="phoneNationalNumber"
+                  name="phoneNationalNumber"
+                  defaultValue={phoneParts.nationalNumber}
+                  inputMode="tel"
+                  autoComplete="tel-national"
+                  placeholder="3331234567"
+                />
+              </div>
+            </Field>
+
+            <Field orientation="horizontal">
+              <Checkbox
+                id="showPhoneOnListings"
+                name="showPhoneOnListings"
+                value="true"
+                defaultChecked={profile.showPhoneOnListings}
+                disabled={!profile.phoneE164}
               />
-              <FieldDescription>
-                Formato internazionale. Lascia vuoto per rimuoverlo.
-              </FieldDescription>
+              <FieldContent>
+                <FieldLabel htmlFor="showPhoneOnListings">
+                  Usa questo telefono nei nuovi annunci
+                </FieldLabel>
+                <FieldDescription>
+                  Viene mostrato solo dopo verifica. Puoi cambiarlo per ogni
+                  annuncio.
+                </FieldDescription>
+              </FieldContent>
             </Field>
           </FieldGroup>
 
-          <div className="flex justify-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            {profile.phoneE164 ? (
+              <Button
+                type="submit"
+                name="phoneIntent"
+                value="remove"
+                variant="outline"
+              >
+                <PhoneIcon data-icon="inline-start" aria-hidden="true" />
+                Rimuovi telefono
+              </Button>
+            ) : null}
             <Button type="submit">
               <CheckCircle2Icon data-icon="inline-start" aria-hidden="true" />
               Salva profilo
             </Button>
           </div>
         </form>
+        {profile.phoneE164 && !phoneVerified ? (
+          <div className="mt-6 grid gap-3 rounded-md border border-brand-teal/18 bg-brand-teal-soft/55 p-4">
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-medium text-brand-teal-ink">
+                Verifica telefono
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Richiedi il codice e inserisci le 6 cifre ricevute.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)]">
+              <form action={requestPhoneVerificationAction}>
+                <input
+                  type="hidden"
+                  name="nextPath"
+                  value={routes.accountSettings}
+                />
+                <Button type="submit" variant="outline">
+                  <SendIcon data-icon="inline-start" aria-hidden="true" />
+                  Invia codice
+                </Button>
+              </form>
+              <form
+                action={confirmPhoneVerificationAction}
+                className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+              >
+                <input
+                  type="hidden"
+                  name="nextPath"
+                  value={routes.accountSettings}
+                />
+                <Input
+                  name="code"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  pattern="\d{6}"
+                  maxLength={6}
+                  placeholder="123456"
+                />
+                <Button type="submit">
+                  <BadgeCheckIcon data-icon="inline-start" aria-hidden="true" />
+                  Verifica
+                </Button>
+              </form>
+            </div>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -259,6 +402,43 @@ function ProfileSummary({ profile }: { profile: CurrentUserProfile }) {
   )
 }
 
+function AccountSectionsCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Sicurezza account</CardTitle>
+        <CardDescription>
+          Password e azioni critiche sono separate.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 text-sm">
+        <Button asChild variant="outline" className="justify-between">
+          <Link href={routes.accountSecurity}>
+            <span className="inline-flex items-center gap-2">
+              <LockKeyholeIcon data-icon="inline-start" aria-hidden="true" />
+              Cambia password
+            </span>
+            <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="justify-between">
+          <Link href={routes.accountDanger}>
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheckIcon data-icon="inline-start" aria-hidden="true" />
+              Gestione account
+            </span>
+            <ArrowRightIcon data-icon="inline-end" aria-hidden="true" />
+          </Link>
+        </Button>
+        <Separator />
+        <p className="text-muted-foreground">
+          Le operazioni critiche chiedono sempre la password attuale.
+        </p>
+      </CardContent>
+    </Card>
+  )
+}
+
 function InfoRow({
   icon: Icon,
   label,
@@ -280,13 +460,28 @@ function InfoRow({
 }
 
 function SettingsFeedback({
+  phoneCode,
   status,
 }: {
+  phoneCode: string | null
   status:
+    | "account-api"
+    | "account-confirm-invalid"
+    | "account-password-invalid"
     | "invalid-notifications"
+    | "invalid-password"
     | "invalid-profile"
     | "notifications-api"
     | "notifications-saved"
+    | "password-api"
+    | "password-current"
+    | "password-mismatch"
+    | "password-saved"
+    | "phone-already-verified"
+    | "phone-code-api"
+    | "phone-code-invalid"
+    | "phone-code-sent"
+    | "phone-verified"
     | "profile-api"
     | "profile-saved"
     | null
@@ -296,10 +491,25 @@ function SettingsFeedback({
   }
 
   const message = {
+    "account-api": "Non e' stato possibile aggiornare lo stato account.",
+    "account-confirm-invalid": "Scrivi ELIMINA per confermare.",
+    "account-password-invalid": "Password non valida per questa operazione.",
     "invalid-notifications": "Controlla le preferenze email selezionate.",
+    "invalid-password": "Controlla la nuova password prima di salvare.",
     "invalid-profile": "Controlla nome e telefono prima di salvare.",
     "notifications-api": "Non e' stato possibile salvare le preferenze.",
     "notifications-saved": "Preferenze email aggiornate.",
+    "password-api": "Non e' stato possibile cambiare password.",
+    "password-current": "La password attuale non e' corretta.",
+    "password-mismatch": "Le nuove password non coincidono.",
+    "password-saved": "Password aggiornata e sessione ruotata.",
+    "phone-already-verified": "Il telefono e' gia' verificato.",
+    "phone-code-api": "Non e' stato possibile inviare il codice.",
+    "phone-code-invalid": "Codice telefono non valido o scaduto.",
+    "phone-code-sent": phoneCode
+      ? `Codice inviato. In demo locale usa ${phoneCode}.`
+      : "Codice inviato al telefono.",
+    "phone-verified": "Telefono verificato.",
     "profile-api": "Non e' stato possibile salvare il profilo.",
     "profile-saved": "Profilo aggiornato.",
   }[status]
@@ -318,10 +528,23 @@ function readSettingsStatus(value: string | string[] | undefined) {
   const raw = Array.isArray(value) ? value[0] : value
 
   if (
+    raw === "account-api" ||
+    raw === "account-confirm-invalid" ||
+    raw === "account-password-invalid" ||
     raw === "invalid-notifications" ||
+    raw === "invalid-password" ||
     raw === "invalid-profile" ||
     raw === "notifications-api" ||
     raw === "notifications-saved" ||
+    raw === "password-api" ||
+    raw === "password-current" ||
+    raw === "password-mismatch" ||
+    raw === "password-saved" ||
+    raw === "phone-already-verified" ||
+    raw === "phone-code-api" ||
+    raw === "phone-code-invalid" ||
+    raw === "phone-code-sent" ||
+    raw === "phone-verified" ||
     raw === "profile-api" ||
     raw === "profile-saved"
   ) {

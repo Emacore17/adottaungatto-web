@@ -28,6 +28,7 @@ describe("AuthController", () => {
       password: "a strong password",
       displayName: "Emanuele",
       profileType: "private",
+      showPhoneOnListings: false,
     })
     expect(rateLimitService.enforce).toHaveBeenCalledWith([
       expect.objectContaining({

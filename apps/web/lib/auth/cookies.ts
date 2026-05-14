@@ -4,7 +4,9 @@ import type { AuthSessionResponse } from "@/lib/api/auth"
 import { isProduction } from "@/lib/config/env"
 import { sessionCookieName } from "@/lib/auth/constants"
 
-export async function setSessionCookie(session: AuthSessionResponse["session"]) {
+export async function setSessionCookie(
+  session: AuthSessionResponse["session"]
+) {
   const cookieStore = await cookies()
 
   cookieStore.set(sessionCookieName, session.token, {
@@ -14,4 +16,10 @@ export async function setSessionCookie(session: AuthSessionResponse["session"]) 
     sameSite: "lax",
     secure: isProduction,
   })
+}
+
+export async function clearSessionCookie() {
+  const cookieStore = await cookies()
+
+  cookieStore.delete(sessionCookieName)
 }

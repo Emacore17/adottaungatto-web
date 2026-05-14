@@ -1,186 +1,177 @@
-# Readiness per produzione
+# Production readiness
 
-Decisione attuale: il progetto non e' ancora pronto per produzione. Questa
-checklist definisce cosa manca prima di un rilascio corretto.
+Aggiornato al 14 maggio 2026.
 
-## Gate minimi di rilascio
+Questo documento e' la checklist operativa per portare il repository in
+produzione. Distingue tra:
 
-Prima della produzione devono essere verdi:
+- readiness del codice: build, test, migrazioni e smoke locali verdi;
+- go-live pubblico: infrastruttura, provider, segreti, monitoraggio e policy
+  legali configurati fuori dal repository.
 
-- typecheck, lint, test unitari e test integrazione;
-- migrazioni applicate su staging e verificate;
-- backup e restore testati;
-- health check e readiness check separati;
-- log strutturati e trace id propagati;
-- rate limit sui flussi sensibili;
-- alert locali esposti e soglie documentate;
-- segreti gestiti fuori dal repository;
-- scansione dipendenze e immagini container;
-- smoke test post-deploy;
-- piano rollback documentato.
+## Stato attuale
 
-## Autenticazione e autorizzazione
+Il codice applicativo e' allineato per una release candidate tecnica:
 
-La base e' corretta per sviluppo: sessioni bearer, token hashati, ruoli e
-ownership. Mancano per produzione:
+- monorepo pnpm/Turbo con `web`, `api`, `worker` e pacchetti condivisi;
+- auth email/password con verifica email, reset password, cambio password,
+  logout, revoca sessioni e cookie browser `HttpOnly`/`SameSite=Lax`;
+- RBAC API centralizzato per moderazione tramite `RolesGuard`;
+- origin check su Server Action e route handler mutative same-origin;
+- rate limit Redis su auth, luoghi, ricerca pubblica, upload, contatti,
+  utenti, notifiche, moderazione e limite globale API;
+- cache contract centralizzato con tag Next e `Cache-Control` esplicito per
+  endpoint pubblici, privati e storage proxy;
+- immagini gestite via object storage, proxy web same-origin e fallback UI;
+- ricerca PostgreSQL full-text/trigram/geografica con metriche aggregate;
+- admin/moderazione con code separate, claim casi, azioni batch, note interne,
+  segnalazioni e attivita recenti;
+- health, readiness, metriche locali e alert locali API;
+- demo locale ripetibile con dati, immagini e smoke end-to-end.
 
-- cookie `HttpOnly`, `Secure`, `SameSite=Lax/Strict` se il frontend usera
-  sessioni browser;
-- CSRF per richieste state-changing basate su cookie;
-- rotazione e scadenza sessioni configurabili per ambiente;
-- revoke globale e gestione dispositivi/sessioni utente;
-- rate limit iniziale presente su registrazione, login, verifica email, reset
-  password, cambio password, upload immagini bozza e principali endpoint
-  admin/moderazione; tuning base disponibile via `RATE_LIMIT_ENABLED`,
-  `RATE_LIMIT_LIMIT_MULTIPLIER` e `RATE_LIMIT_WINDOW_MULTIPLIER`, da validare
-  dietro proxy fidato e completare con altri flussi sensibili e lock
-  progressivo account;
-- protezione brute force e lock progressivo account;
-- OAuth Google completo, se confermato;
-- MFA almeno per admin e moderatori;
-- audit log esplicito per azioni admin, cambio email, cambio ruoli e ban;
-- gestione ruoli da area admin con principio del minimo privilegio.
+Non dichiarare il servizio pubblico finche' i gate esterni sotto non sono stati
+eseguiti nell'ambiente reale.
 
-## Sicurezza applicativa
+## Comandi gate
 
-Mancano:
+Gate repository senza dipendenze esterne oltre al workspace:
 
-- security headers e policy CORS per ambiente;
-- validazione dimensione payload e timeout request;
-- sanitizzazione contenuti testuali dove vengono renderizzati dal frontend;
-- log redaction per email, token, header auth e dati personali;
-- controllo MIME reale e magic bytes per upload;
-- scansione malware o quarantena immagini;
-- lifecycle policy e cancellazione sicura oggetti storage;
-- dependency scanning, SAST e secret scanning in CI;
+```bash
+pnpm release:check
+```
+
+Equivale a:
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Gate locale completo con servizi Docker gia avviati e app in esecuzione:
+
+```bash
+pnpm release:smoke
+```
+
+Equivale a:
+
+```bash
+pnpm db:migrate
+pnpm smoke:e2e
+```
+
+Prima di una release:
+
+- `pnpm release:check` deve essere verde;
+- le migrazioni devono essere applicate prima in staging;
+- `pnpm release:smoke` deve passare su staging o ambiente equivalente;
+- `git diff --check` deve essere pulito;
+- il deploy deve avere rollback applicativo e piano di migrazione.
+
+## Configurazione produzione
+
+Usare `.env.production.example` come riferimento. In produzione:
+
+- `APP_ENV=production`;
+- URL pubblici devono essere HTTPS;
+- `API_TRUST_PROXY=true` se API e' dietro proxy, load balancer o CDN;
+- `TRUSTED_ACTION_ORIGINS` deve includere solo origin web autorizzati;
+- database, Redis, mail e object storage devono essere provider reali;
+- credenziali MinIO/locali non sono accettate;
+- segreti devono provenire da secret manager o variabili ambiente del provider.
+
+`loadApiEnv()` rifiuta configurazioni `production` che puntano a localhost o
+usano i default locali MinIO/bucket.
+
+## Sicurezza
+
+Gia presente:
+
+- session token hashati lato API;
+- cookie browser sicuri in `production`;
+- origin check per mutazioni web;
+- RBAC per code e decisioni di moderazione;
+- rate limit multi-chiave per endpoint sensibili;
+- header di sicurezza web/API, HSTS in HTTPS production;
+- validazione Zod sui payload pubblici e privati principali;
+- audit moderazione su `moderation_actions`;
+- private responses `no-store` su dati account/notifiche/favoriti.
+
+Da chiudere come gate esterno o milestone immediata post-RC:
+
+- MFA obbligatoria per `admin` e `moderator`;
+- provider SMS reale o feature flag esplicito per verifica telefono;
+- gestione sessioni attive da UI e revoca selettiva;
+- secret scanning, dependency scanning e SAST in CI;
 - DAST su staging;
-- backup cifrati e retention definita;
-- policy privacy, cookie, termini e gestione richieste GDPR.
+- policy privacy/cookie/termini e procedure GDPR;
+- retention differenziata per log tecnici, audit e dati personali.
 
-## Frontend e SEO
+## Osservabilita
 
-Lo scaffolding Next.js e le prime viste pubbliche/account/admin esistono. Prima
-di produzione servono:
+Gia presente:
 
-- flusso inserimento annuncio completo e verificato con immagini;
-- dashboard account e impostazioni profilo ordinate;
-- preferiti con interazione rapida coerente tra lista e scheda;
-- area admin/moderazione separata e protetta;
-- pagine pubbliche Server Component con metadata, canonical, Open Graph e
-  JSON-LD mantenute coerenti;
-- `robots.ts` e `sitemap.ts` coerenti con ambienti e annunci pubblicati;
-- gestione sessione browser con cookie sicuri e CSRF se si useranno mutazioni
-  cookie-based;
-- policy noindex per account, admin, preview e combinazioni search rumorose;
-- verifica performance mobile, accessibilita e Core Web Vitals sulle route
-  pubbliche principali.
+- `GET /health`;
+- `GET /health/ready`;
+- `GET /health/metrics`;
+- `GET /health/alerts`;
+- log JSON API per richieste HTTP con `requestId` e `traceId`;
+- metriche aggregate ricerca pubblica senza query raw.
 
-Le convenzioni sono in
-[frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md).
+Per produzione:
 
-## Scalabilita
+- esportare metriche/traces/log a OpenTelemetry, Dynatrace o provider
+  equivalente;
+- creare dashboard p95/p99, error rate, throughput ricerca, Redis, database,
+  storage e worker;
+- alertare login falliti, rate limit anomali, errori 5xx, code worker, upload
+  falliti e azioni admin ad alto rischio.
 
-Il modular monolith e' adatto alla fase iniziale e puo servire un pubblico ampio
-se resta stateless e se i servizi gestiti sono dimensionati correttamente.
-Prima di dichiararlo scalabile servono:
+## Dati e migrazioni
 
-- pool connessioni e PgBouncer o equivalente;
-- worker separati e code robuste per email, immagini e job lenti;
-- CDN davanti alle immagini;
-- limiti upload iniziali e protezione costi storage da completare con valori
-  calibrati per ambiente;
-- cache breve per dati geografici e metadata pubblici;
-- indici verificati con EXPLAIN su dataset realistici;
-- load test su ricerca, dettaglio annuncio, login e upload;
-- metriche p95/p99 per endpoint principali;
-- strategia per replica lettura o motore search dedicato quando necessario.
+Regole:
 
-## Ricerca
+- ogni modifica schema deve avere migrazione Drizzle committata;
+- non modificare migrazioni gia rilasciate;
+- migrazioni distruttive solo con backfill, finestra manutenzione e rollback;
+- backup e restore devono essere testati prima del go-live;
+- applicare migrazioni in staging prima della produzione;
+- registrare durata e output delle migrazioni critiche.
 
-La ricerca e' il fulcro del prodotto. Oggi esiste una lista pubblica filtrabile
-con query full-text `q`, ranking `postgres-v1` e documento denormalizzato
-`listing_search_documents` con backfill iniziale e refresh sui flussi principali
-di moderazione, immagini e like. Prossimi requisiti:
+Le fixture demo sono solo locali. Non usare account o password demo in ambienti
+pubblici.
 
-- refresh del documento ricerca sul futuro endpoint di modifica annunci
-  pubblicati;
-- filtri espliciti sempre applicati prima del ranking;
-- espansioni geografiche o filtri soft per risultati vuoti, oltre al fallback
-  trigram gia implementato;
-- benchmark limite 1M o con fixture realistiche oltre ai 10k/100k sintetici gia
-  eseguiti localmente;
-- confronto periodico degli EXPLAIN JSON salvati per query principali;
-- soglie p95: lista pubblica sotto 300 ms su dataset iniziale, sotto 500 ms con
-  ranking e filtri complessi;
-- test antiregressione sugli indici.
+## Performance e cache
 
-PostgreSQL puo gestire migliaia di annunci senza problemi se indicizzato e
-misurato. Per centinaia di migliaia o ranking piu evoluto, valutare Typesense,
-Meilisearch o OpenSearch con sincronizzazione event-driven.
+Gia presente:
 
-La specifica tecnica del primo ranking PostgreSQL e' in
-[search-full-text-ranking.md](search-full-text-ranking.md).
+- cache Next con tag centralizzati;
+- `Cache-Control` differenziato per dati pubblici, privati e storage;
+- indici ricerca e immagini pronte;
+- metriche aggregate di latenza ricerca.
 
-## Annunci sponsorizzati
+Gate produzione:
 
-Non sono implementati. Prima di svilupparli serve una policy prodotto:
+- verificare Core Web Vitals su mobile per home, lista, dettaglio, login e
+  moderazione;
+- eseguire load test su ricerca, dettaglio annuncio, login, upload e code
+  moderazione;
+- calibrare rate limit e TTL cache su traffico reale;
+- usare CDN per immagini pubbliche.
 
-- separazione chiara tra ranking organico e promozione;
-- label visibile "sponsorizzato";
-- budget, durata, targeting geografico e categoria;
-- limiti per evitare saturazione dei risultati;
-- audit delle impression e dei click;
-- reportistica per inserzionisti;
-- controllo moderazione prima di attivare la promozione;
-- compatibilita con norme pubblicitarie e privacy.
+## Go-live checklist
 
-## Profilo utente
-
-Il profilo base esiste. Mancano:
-
-- avatar e immagini profilo con moderazione;
-- descrizione pubblica, tipo soggetto e dati associazione;
-- eventuali canali aggiuntivi o finestre orarie per il contatto proprietario;
-- estensione anti-abuso contatti oltre al primo rate limit dedicato;
-- verifica telefono;
-- gestione sessioni attive;
-- cambio email;
-- export/cancellazione dati personali;
-- pagina pubblica profilo, se prevista.
-
-## Moderazione e amministrazione
-
-Moderazione backend avviata, area admin non completa. Prima della produzione:
-
-- UI admin separata o sezione protetta non indicizzata;
-- accesso solo per ruoli interni con MFA;
-- audit completo e non modificabile;
-- filtri coda, assegnazione casi e note interne;
-- gestione utenti, sospensioni, ruoli e blocchi;
-- template motivazioni versionati;
-- strumenti anti-abuso e tuning dei rate limit amministrativi;
-- protezione contro enumeration di risorse interne;
-- log e alert sulle azioni ad alto rischio.
-
-## Osservabilita attuale
-
-La base locale include:
-
-- interceptor API globale con `x-request-id` e `x-trace-id`;
-- log JSON per richiesta senza body, header auth o payload upload;
-- contatori HTTP in memoria per richieste, errori, status code e durate per
-  route;
-- `GET /health/ready` per readiness aggregata database/Redis;
-- `GET /health/metrics` per snapshot locale verificata dallo smoke.
-- `GET /health/alerts` per valutazione locale di error rate, richieste in
-  flight e p95 per route con soglie configurabili.
-
-Prima della produzione restano necessari esportazione OpenTelemetry,
-dashboard/alert gestiti dal provider operativo, log redaction verificata in
-ambiente, retention e correlazione con audit amministrativo.
-
-## Decisione operativa
-
-Rilasciare in produzione solo dopo una milestone dedicata di hardening. Prima
-di quella milestone e' accettabile una demo locale o staging chiuso, non un
-servizio pubblico.
+1. `pnpm release:check` verde.
+2. Migrazioni applicate e verificate in staging.
+3. Smoke staging verde.
+4. Backup/restore provati.
+5. Variabili produzione validate con `APP_ENV=production`.
+6. Segreti fuori dal repository.
+7. Provider email, storage, Redis e database configurati.
+8. OpenTelemetry/dashboard/alert attivi.
+9. Rate limit calibrati.
+10. Policy privacy/cookie/termini pubblicate.
+11. Piano rollback e owner release definiti.
+12. Smoke post-deploy produzione eseguito.

@@ -3,6 +3,7 @@ import type {
   ListingDraftCreateInput,
   ListingDraftListQuery,
   ListingDraftUpdateInput,
+  ListingContactPhoneMode,
   ListingImageOrderInput,
   ListingImageMimeType,
   ListingImageUploadRequestInput,
@@ -61,6 +62,11 @@ export type ListingDraft = {
   isDewormed: boolean | null
   hasMicrochip: boolean | null
   contactRequestsEnabled: boolean
+  contactPhone: {
+    mode: ListingContactPhoneMode
+    phoneE164: string | null
+    phoneVerifiedAt: string | null
+  }
   moderationStatus: "draft" | "pending_review"
   lifecycleStatus: "draft"
   createdAt: string
@@ -83,6 +89,18 @@ export type ListingReviewSubmission = Omit<ListingDraft, "moderationStatus"> & {
 export type ListingDraftSubmissionResponse = {
   submitted: true
   listing: ListingReviewSubmission
+}
+
+export type ListingPhoneVerificationRequestResponse = {
+  alreadyVerified: boolean
+  expiresAt: string | null
+  sent: boolean
+  devCode?: string
+}
+
+export type ListingPhoneVerificationConfirmResponse = {
+  phoneVerifiedAt: string
+  verified: true
 }
 
 export type ListingImage = {
@@ -217,6 +235,11 @@ export type NotificationMarkAllReadResponse = {
   updatedCount: number
 }
 
+export type NotificationDeleteResponse = {
+  deleted: true
+  notificationId: string
+}
+
 export function listAccountDrafts(
   bearerToken: string,
   query: Partial<ListingDraftListQuery> = {}
@@ -273,6 +296,36 @@ export function submitAccountDraftForReview(
     `/listings/me/drafts/${draftId}/submit-review`,
     {
       bearerToken,
+      cache: "no-store",
+      method: "POST",
+    }
+  )
+}
+
+export function requestAccountDraftPhoneVerification(
+  bearerToken: string,
+  draftId: string
+): Promise<ApiResult<ListingPhoneVerificationRequestResponse>> {
+  return apiFetch<ListingPhoneVerificationRequestResponse>(
+    `/listings/me/drafts/${draftId}/phone-verification/request`,
+    {
+      bearerToken,
+      cache: "no-store",
+      method: "POST",
+    }
+  )
+}
+
+export function confirmAccountDraftPhoneVerification(
+  bearerToken: string,
+  draftId: string,
+  input: { code: string }
+): Promise<ApiResult<ListingPhoneVerificationConfirmResponse>> {
+  return apiFetch<ListingPhoneVerificationConfirmResponse>(
+    `/listings/me/drafts/${draftId}/phone-verification/confirm`,
+    {
+      bearerToken,
+      body: input,
       cache: "no-store",
       method: "POST",
     }
@@ -440,6 +493,20 @@ export function markAllAccountNotificationsRead(
     cache: "no-store",
     method: "POST",
   })
+}
+
+export function deleteAccountNotification(
+  bearerToken: string,
+  notificationId: string
+): Promise<ApiResult<NotificationDeleteResponse>> {
+  return apiFetch<NotificationDeleteResponse>(
+    `/notifications/${notificationId}`,
+    {
+      bearerToken,
+      cache: "no-store",
+      method: "DELETE",
+    }
+  )
 }
 
 export function deleteAccountDraft(

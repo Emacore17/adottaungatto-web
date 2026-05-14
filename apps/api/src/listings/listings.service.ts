@@ -1,24 +1,35 @@
+import { randomInt } from "node:crypto"
+import { performance } from "node:perf_hooks"
+
 import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
+  ServiceUnavailableException,
 } from "@nestjs/common"
 import { listingImageMaxSizeBytes } from "@workspace/validation"
 import type {
+  ListingContactPhoneMode,
   ListingDraftCreateInput,
   ListingDraftListQuery,
   ListingDraftUpdateInput,
   ListingImageOrderInput,
   ListingImageUploadRequestInput,
+  ListingPhoneVerificationConfirmInput,
   ListingPublicListQuery,
   ListingPublicSort,
   ListingSex,
 } from "@workspace/validation"
 
+import { hashPassword, verifyPassword } from "../auth/auth.service.js"
+import { API_ENV } from "../config/config.module.js"
+import type { ApiEnv } from "../config/env.js"
 import { DatabaseService } from "../database/database.service.js"
 import { NotificationsService } from "../notifications/notifications.service.js"
+import { ObservabilityService } from "../observability/observability.service.js"
 import { ObjectStorageService } from "../storage/object-storage.service.js"
 import type {
   ListingDraft,
@@ -33,6 +44,8 @@ import type {
   ListingImageListResponse,
   ListingImageOrderResponse,
   ListingImageUploadResponse,
+  ListingPhoneVerificationConfirmResponse,
+  ListingPhoneVerificationRequestResponse,
   PublicCatBreed,
   PublicListingDetail,
   PublicListingImage,
@@ -45,6 +58,13 @@ const maxListingImages = 10
 const publicListingRankingVersion = "postgres-v1" as const
 const defaultPublicListingRadiusKm = 50
 const publicListingTrigramFallbackThreshold = 0.22
+
+type ListingsEnv = Pick<ApiEnv, "APP_ENV" | "PHONE_VERIFICATION_TTL_MINUTES">
+
+const defaultListingsEnv: ListingsEnv = {
+  APP_ENV: "local",
+  PHONE_VERIFICATION_TTL_MINUTES: 10,
+}
 
 type ListingOwnerRow<
   ModerationStatus extends "draft" | "pending_review",
@@ -78,6 +98,9 @@ type ListingOwnerRow<
   is_dewormed: boolean | null
   has_microchip: boolean | null
   contact_requests_enabled: boolean
+  contact_phone_mode: ListingContactPhoneMode
+  contact_phone_e164: string | null
+  contact_phone_verified_at: Date | string | null
   moderation_status: ModerationStatus
   lifecycle_status: LifecycleStatus
   created_at: Date | string
@@ -122,6 +145,7 @@ type PublicListingRow = Omit<
   is_sponsored: boolean
   sponsorship_label: string | null
   sponsorship_placement: string | null
+  public_phone_e164: string | null
 }
 
 type ResolvedPublicListingQuery = {
@@ -201,6 +225,28 @@ type PublicCatBreedRow = {
   slug: string
 }
 
+type ListingPhoneVerificationCodeRow = {
+  id: string
+  phone_e164: string
+  code_hash: string
+}
+
+type ListingPhoneVerificationRequestRow = {
+  phone_e164: string | null
+  contact_phone_verified_at: Date | string | null
+  code_id: string | null
+  expires_at: Date | string | null
+}
+
+type ListingPhoneVerificationConfirmRow = {
+  contact_phone_verified_at: Date | string
+}
+
+type CurrentUserPhoneForListingRow = {
+  phone_e164: string | null
+  phone_verified_at: Date | string | null
+}
+
 const listingDraftSelectFields = `
   listing.id::text,
   listing.title,
@@ -236,6 +282,9 @@ const listingDraftSelectFields = `
   listing.is_dewormed,
   listing.has_microchip,
   listing.contact_requests_enabled,
+  listing.contact_phone_mode::text as contact_phone_mode,
+  listing.contact_phone_e164,
+  listing.contact_phone_verified_at,
   listing.moderation_status::text as moderation_status,
   listing.lifecycle_status::text as lifecycle_status,
   listing.created_at,
@@ -277,6 +326,20 @@ const publicListingSelectFields = `
   listing.is_dewormed,
   listing.has_microchip,
   listing.contact_requests_enabled,
+  listing.contact_phone_mode::text as contact_phone_mode,
+  listing.contact_phone_e164,
+  listing.contact_phone_verified_at,
+  case
+    when listing.contact_phone_mode = 'account'
+      and owner.phone_e164 is not null
+      and owner.phone_verified_at is not null
+    then owner.phone_e164
+    when listing.contact_phone_mode = 'listing'
+      and listing.contact_phone_e164 is not null
+      and listing.contact_phone_verified_at is not null
+    then listing.contact_phone_e164
+    else null
+  end as public_phone_e164,
   listing.published_at,
   listing.expires_at,
   listing.created_at,
@@ -905,7 +968,9 @@ const createUserDraftSql = `
       is_sterilized,
       is_dewormed,
       has_microchip,
-      contact_requests_enabled
+      contact_requests_enabled,
+      contact_phone_mode,
+      contact_phone_e164
     )
     values (
       $1::uuid,
@@ -929,7 +994,12 @@ const createUserDraftSql = `
       $17::boolean,
       $18::boolean,
       $19::boolean,
-      $20::boolean
+      $20::boolean,
+      $21::listing_contact_phone_mode,
+      case
+        when $21::listing_contact_phone_mode = 'listing' then $22::text
+        else null
+      end
     )
     returning *
   )
@@ -999,6 +1069,27 @@ const updateUserDraftSql = `
       contact_requests_enabled = case
         when $34::boolean then $35::boolean
         else contact_requests_enabled
+      end,
+      contact_phone_mode = case
+        when $36::boolean then $37::listing_contact_phone_mode
+        else contact_phone_mode
+      end,
+      contact_phone_e164 = case
+        when $36::boolean then
+          case
+            when $37::listing_contact_phone_mode = 'listing' then $38::text
+            else null
+          end
+        else contact_phone_e164
+      end,
+      contact_phone_verified_at = case
+        when $36::boolean
+          and (
+            $37::listing_contact_phone_mode <> 'listing'
+            or $38::text is distinct from contact_phone_e164
+          )
+        then null
+        else contact_phone_verified_at
       end,
       updated_at = now()
     where id = $1::uuid
@@ -1109,6 +1200,108 @@ const countDraftImageReadinessSql = `
   from listing_images listing_image
   where listing_image.listing_id = $1::uuid
     and listing_image.deleted_at is null
+`
+
+const createListingPhoneVerificationCodeSql = `
+  with target_listing as (
+    select
+      listing.id,
+      listing.owner_user_id,
+      listing.contact_phone_e164,
+      listing.contact_phone_verified_at
+    from listings listing
+    where listing.id = $2::uuid
+      and listing.owner_user_id = $1::uuid
+      and listing.contact_phone_mode = 'listing'
+      and listing.deleted_at is null
+      and listing.lifecycle_status = 'draft'
+      and listing.moderation_status in ('draft', 'pending_review')
+    limit 1
+  ),
+  consumed_existing as (
+    update listing_phone_verification_codes
+    set consumed_at = now(),
+        updated_at = now()
+    where listing_id = (select id from target_listing)
+      and user_id = $1::uuid
+      and consumed_at is null
+    returning id
+  ),
+  inserted_code as (
+    insert into listing_phone_verification_codes (
+      user_id,
+      listing_id,
+      phone_e164,
+      code_hash,
+      expires_at
+    )
+    select
+      target_listing.owner_user_id,
+      target_listing.id,
+      target_listing.contact_phone_e164,
+      $3,
+      $4
+    from target_listing
+    where target_listing.contact_phone_e164 is not null
+      and target_listing.contact_phone_verified_at is null
+    returning id::text as code_id, expires_at
+  )
+  select
+    target_listing.contact_phone_e164 as phone_e164,
+    target_listing.contact_phone_verified_at,
+    inserted_code.code_id,
+    inserted_code.expires_at
+  from target_listing
+  left join inserted_code on true
+`
+
+const activeListingPhoneVerificationCodeSql = `
+  select id::text, phone_e164, code_hash
+  from listing_phone_verification_codes
+  where user_id = $1::uuid
+    and listing_id = $2::uuid
+    and consumed_at is null
+    and expires_at > now()
+  order by created_at desc
+  limit 1
+`
+
+const confirmListingPhoneVerificationCodeSql = `
+  with consumed_code as (
+    update listing_phone_verification_codes
+    set consumed_at = now(),
+        updated_at = now()
+    where id = $3::uuid
+      and user_id = $1::uuid
+      and listing_id = $2::uuid
+      and consumed_at is null
+      and expires_at > now()
+    returning phone_e164
+  ),
+  updated_listing as (
+    update listings
+    set contact_phone_verified_at = now(),
+        updated_at = now()
+    from consumed_code
+    where listings.id = $2::uuid
+      and listings.owner_user_id = $1::uuid
+      and listings.contact_phone_mode = 'listing'
+      and listings.contact_phone_e164 = consumed_code.phone_e164
+      and listings.deleted_at is null
+      and listings.lifecycle_status = 'draft'
+      and listings.moderation_status in ('draft', 'pending_review')
+    returning listings.contact_phone_verified_at
+  )
+  select contact_phone_verified_at
+  from updated_listing
+`
+
+const currentUserPhoneForListingSql = `
+  select phone_e164, phone_verified_at
+  from users
+  where id = $1::uuid
+    and deleted_at is null
+  limit 1
 `
 
 const createDraftImageSql = `
@@ -1392,6 +1585,8 @@ const setDraftImageCoverSql = `
 
 @Injectable()
 export class ListingsService {
+  private readonly logger = new Logger(ListingsService.name)
+
   constructor(
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
@@ -1399,12 +1594,18 @@ export class ListingsService {
     private readonly objectStorageService: ObjectStorageService,
     @Optional()
     @Inject(NotificationsService)
-    private readonly notificationsService?: NotificationsService
+    private readonly notificationsService?: NotificationsService,
+    @Inject(API_ENV)
+    private readonly env: ListingsEnv = defaultListingsEnv,
+    @Optional()
+    @Inject(ObservabilityService)
+    private readonly observabilityService?: ObservabilityService
   ) {}
 
   async listPublic(
     query: ListingPublicListQuery
   ): Promise<PublicListingListResponse> {
+    const startedAt = performance.now()
     const resolvedQuery = resolvePublicListingQuery(query)
     const parameters = [
       query.pageSize,
@@ -1493,7 +1694,7 @@ export class ListingsService {
 
     const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0
 
-    return {
+    const response = {
       items: rows.map(mapPublicListingSummaryRow),
       meta: {
         page: query.page,
@@ -1506,6 +1707,17 @@ export class ListingsService {
         expansion,
       },
     }
+
+    this.observabilityService?.recordPublicListingSearch({
+      durationMs: Math.round(performance.now() - startedAt),
+      expansionType: expansion?.type ?? null,
+      hasGeo: hasDistanceFallbackIntent(resolvedQuery),
+      queryPresent: Boolean(query.q),
+      resultCount: response.items.length,
+      sort: resolvedQuery.sort,
+    })
+
+    return response
   }
 
   async listPublicCatBreeds(): Promise<PublicCatBreed[]> {
@@ -1605,6 +1817,8 @@ export class ListingsService {
         input.isDewormed ?? null,
         input.hasMicrochip ?? null,
         input.contactRequestsEnabled,
+        input.contactPhoneMode ?? "none",
+        input.contactPhoneE164 ?? null,
       ]
     )
 
@@ -1662,6 +1876,9 @@ export class ListingsService {
         input.hasMicrochip ?? null,
         Object.hasOwn(input, "contactRequestsEnabled"),
         input.contactRequestsEnabled ?? null,
+        Object.hasOwn(input, "contactPhoneMode"),
+        input.contactPhoneMode ?? null,
+        input.contactPhoneE164 ?? null,
       ]
     )
 
@@ -1688,6 +1905,89 @@ export class ListingsService {
     return { deleted: true }
   }
 
+  async requestDraftPhoneVerification(
+    userId: string,
+    id: string
+  ): Promise<ListingPhoneVerificationRequestResponse> {
+    const code = createPhoneVerificationCode()
+    const expiresAt = new Date(
+      Date.now() + this.env.PHONE_VERIFICATION_TTL_MINUTES * 60 * 1000
+    ).toISOString()
+    const [row] =
+      await this.databaseService.queryRows<ListingPhoneVerificationRequestRow>(
+        createListingPhoneVerificationCodeSql,
+        [userId, id, await hashPassword(code), expiresAt]
+      )
+
+    if (!row) {
+      throw new NotFoundException("Listing draft not found.")
+    }
+
+    if (!row.phone_e164) {
+      throw new BadRequestException("Listing phone number is required.")
+    }
+
+    if (!row.code_id || !row.expires_at) {
+      return {
+        alreadyVerified: true,
+        expiresAt: null,
+        sent: false,
+      }
+    }
+
+    await this.sendPhoneVerificationCode(row.phone_e164, code)
+
+    return {
+      alreadyVerified: false,
+      devCode: canExposePhoneVerificationCode(this.env) ? code : undefined,
+      expiresAt: toIsoString(row.expires_at),
+      sent: true,
+    }
+  }
+
+  async confirmDraftPhoneVerification(
+    userId: string,
+    id: string,
+    input: ListingPhoneVerificationConfirmInput
+  ): Promise<ListingPhoneVerificationConfirmResponse> {
+    const [codeRow] =
+      await this.databaseService.queryRows<ListingPhoneVerificationCodeRow>(
+        activeListingPhoneVerificationCodeSql,
+        [userId, id]
+      )
+
+    if (!codeRow) {
+      throw new BadRequestException(
+        "Invalid or expired listing phone verification code."
+      )
+    }
+
+    const codeMatches = await verifyPassword(input.code, codeRow.code_hash)
+
+    if (!codeMatches) {
+      throw new BadRequestException(
+        "Invalid or expired listing phone verification code."
+      )
+    }
+
+    const [row] =
+      await this.databaseService.queryRows<ListingPhoneVerificationConfirmRow>(
+        confirmListingPhoneVerificationCodeSql,
+        [userId, id, codeRow.id]
+      )
+
+    if (!row) {
+      throw new BadRequestException(
+        "Listing phone number changed before verification."
+      )
+    }
+
+    return {
+      phoneVerifiedAt: toIsoString(row.contact_phone_verified_at),
+      verified: true,
+    }
+  }
+
   async submitDraftForReview(
     userId: string,
     id: string
@@ -1707,6 +2007,15 @@ export class ListingsService {
       throw new BadRequestException({
         message: "Listing draft is not ready for review.",
         issues,
+      })
+    }
+
+    const phoneIssues = await this.validateDraftPhoneReadiness(userId, draft)
+
+    if (phoneIssues.length > 0) {
+      throw new BadRequestException({
+        message: "Listing draft is not ready for review.",
+        issues: phoneIssues,
       })
     }
 
@@ -2002,6 +2311,69 @@ export class ListingsService {
       rejectedCount: row ? Number(row.rejected_count) : 0,
     }
   }
+
+  private async validateDraftPhoneReadiness(
+    userId: string,
+    draft: ListingDraftRow
+  ): Promise<SubmissionIssue[]> {
+    if (draft.contact_phone_mode === "none") {
+      return []
+    }
+
+    if (draft.contact_phone_mode === "account") {
+      const [userPhone] =
+        await this.databaseService.queryRows<CurrentUserPhoneForListingRow>(
+          currentUserPhoneForListingSql,
+          [userId]
+        )
+
+      if (!userPhone?.phone_e164 || !userPhone.phone_verified_at) {
+        return [
+          {
+            path: ["contactPhoneMode"],
+            message:
+              "Account phone must be added and verified before review submission.",
+          },
+        ]
+      }
+
+      return []
+    }
+
+    if (!draft.contact_phone_e164 || !draft.contact_phone_verified_at) {
+      return [
+        {
+          path: ["contactPhoneE164"],
+          message:
+            "Listing phone number must be verified before review submission.",
+        },
+      ]
+    }
+
+    return []
+  }
+
+  private async sendPhoneVerificationCode(phoneE164: string, code: string) {
+    if (!canExposePhoneVerificationCode(this.env)) {
+      throw new ServiceUnavailableException(
+        "Phone verification SMS provider is not configured."
+      )
+    }
+
+    if (this.env.APP_ENV === "local" && process.env.NODE_ENV !== "test") {
+      this.logger.log(
+        `Listing phone verification code for ${phoneE164}: ${code}`
+      )
+    }
+  }
+}
+
+function createPhoneVerificationCode() {
+  return randomInt(0, 1_000_000).toString().padStart(6, "0")
+}
+
+function canExposePhoneVerificationCode(env: ListingsEnv) {
+  return env.APP_ENV === "local" || env.APP_ENV === "test"
 }
 
 export function createListingSlug(title: string): string {
@@ -2038,6 +2410,7 @@ function resolveContributionUpdate(input: ListingDraftUpdateInput) {
 function mapListingDraftRow(row: EditableListingDraftRow): ListingDraft {
   return {
     ...mapListingSharedFields(row),
+    contactPhone: mapListingContactPhone(row),
     moderationStatus: row.moderation_status,
     lifecycleStatus: row.lifecycle_status,
   }
@@ -2048,6 +2421,7 @@ function mapListingReviewSubmissionRow(
 ): ListingReviewSubmission {
   return {
     ...mapListingSharedFields(row),
+    contactPhone: mapListingContactPhone(row),
     moderationStatus: row.moderation_status,
     lifecycleStatus: row.lifecycle_status,
   }
@@ -2058,6 +2432,7 @@ function mapPublicListingSummaryRow(
 ): PublicListingSummary {
   return {
     ...mapListingSharedFields(row),
+    publicPhoneE164: row.public_phone_e164,
     publishedAt: toIsoStringOrNull(row.published_at),
     expiresAt: toIsoStringOrNull(row.expires_at),
     owner: {
@@ -2163,6 +2538,16 @@ function mapListingSharedFields(
     contactRequestsEnabled: row.contact_requests_enabled,
     createdAt: toIsoString(row.created_at),
     updatedAt: toIsoString(row.updated_at),
+  }
+}
+
+function mapListingContactPhone(
+  row: EditableListingDraftRow | ListingReviewSubmissionRow
+): ListingDraft["contactPhone"] {
+  return {
+    mode: row.contact_phone_mode,
+    phoneE164: row.contact_phone_e164,
+    phoneVerifiedAt: toIsoStringOrNull(row.contact_phone_verified_at),
   }
 }
 

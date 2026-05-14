@@ -96,6 +96,12 @@ export const listingImageStatus = pgEnum("listing_image_status", [
   "deleted",
 ])
 
+export const listingContactPhoneMode = pgEnum("listing_contact_phone_mode", [
+  "none",
+  "account",
+  "listing",
+])
+
 export const moderationCaseStatus = pgEnum("moderation_case_status", [
   "open",
   "approved",
@@ -149,6 +155,9 @@ export const users = pgTable(
     emailVerifiedAt: timestamp("email_verified_at", { withTimezone: true }),
     phoneE164: text("phone_e164"),
     phoneVerifiedAt: timestamp("phone_verified_at", { withTimezone: true }),
+    showPhoneOnListings: boolean("show_phone_on_listings")
+      .notNull()
+      .default(false),
     displayName: text("display_name").notNull(),
     profileType: profileType("profile_type").notNull().default("private"),
     status: userStatus("status").notNull().default("pending_verification"),
@@ -295,6 +304,28 @@ export const passwordResetTokens = pgTable(
       table.tokenHash
     ),
     userActiveIdx: index("password_reset_tokens_user_active_idx").on(
+      table.userId,
+      table.consumedAt,
+      table.expiresAt
+    ),
+  })
+)
+
+export const phoneVerificationCodes = pgTable(
+  "phone_verification_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    phoneE164: text("phone_e164").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    userActiveIdx: index("phone_verification_codes_user_active_idx").on(
       table.userId,
       table.consumedAt,
       table.expiresAt
@@ -540,6 +571,13 @@ export const listings = pgTable(
     contactRequestsEnabled: boolean("contact_requests_enabled")
       .notNull()
       .default(true),
+    contactPhoneMode: listingContactPhoneMode("contact_phone_mode")
+      .notNull()
+      .default("none"),
+    contactPhoneE164: text("contact_phone_e164"),
+    contactPhoneVerifiedAt: timestamp("contact_phone_verified_at", {
+      withTimezone: true,
+    }),
     moderationStatus: listingModerationStatus("moderation_status")
       .notNull()
       .default("draft"),
@@ -594,6 +632,34 @@ export const listings = pgTable(
   })
 )
 
+export const listingPhoneVerificationCodes = pgTable(
+  "listing_phone_verification_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    listingId: uuid("listing_id")
+      .notNull()
+      .references(() => listings.id, { onDelete: "cascade" }),
+    phoneE164: text("phone_e164").notNull(),
+    codeHash: text("code_hash").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (table) => ({
+    listingActiveIdx: index(
+      "listing_phone_verification_codes_listing_active_idx"
+    ).on(table.listingId, table.consumedAt, table.expiresAt),
+    userActiveIdx: index("listing_phone_verification_codes_user_active_idx").on(
+      table.userId,
+      table.consumedAt,
+      table.expiresAt
+    ),
+  })
+)
+
 export const listingImages = pgTable(
   "listing_images",
   {
@@ -625,6 +691,15 @@ export const listingImages = pgTable(
       table.listingId,
       table.sortOrder
     ),
+    readyListingSortIdx: index("listing_images_ready_listing_sort_idx")
+      .on(
+        table.listingId,
+        table.isCover,
+        table.sortOrder,
+        table.createdAt,
+        table.id
+      )
+      .where(sql`${table.status} = 'ready' AND ${table.deletedAt} IS NULL`),
     objectKeyOriginalIdx: uniqueIndex(
       "listing_images_object_key_original_idx"
     ).on(table.objectKeyOriginal),

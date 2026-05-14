@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 
 import { webEnv } from "@/lib/config/env"
+import { privateNoStoreCacheControl } from "@/lib/http/responses"
 
 type StorageRouteContext = {
   params: Promise<{
@@ -9,6 +10,8 @@ type StorageRouteContext = {
 }
 
 export const dynamic = "force-dynamic"
+
+const storageImageCacheControl = "public, max-age=31536000, immutable"
 
 function encodeObjectKey(objectKey: string) {
   return objectKey.split("/").map(encodeURIComponent).join("/")
@@ -29,7 +32,7 @@ export async function GET(_request: Request, context: StorageRouteContext) {
   const objectKey = readObjectKey(params.objectKey)
 
   if (!objectKey || !webEnv.storageBucket) {
-    return NextResponse.json({ message: "Image not found." }, { status: 404 })
+    return imageErrorResponse("Image not found.", 404)
   }
 
   let response: Response
@@ -37,17 +40,18 @@ export async function GET(_request: Request, context: StorageRouteContext) {
   try {
     response = await fetch(
       `${webEnv.storagePublicUrl}/${webEnv.storageBucket}/${encodeObjectKey(objectKey)}`,
-      { cache: "no-store" }
+      {
+        next: {
+          revalidate: 86_400,
+        },
+      }
     )
   } catch {
-    return NextResponse.json(
-      { message: "Image storage is not reachable." },
-      { status: 502 }
-    )
+    return imageErrorResponse("Image storage is not reachable.", 502)
   }
 
   if (!response.ok || !response.body) {
-    return NextResponse.json({ message: "Image not found." }, { status: 404 })
+    return imageErrorResponse("Image not found.", 404)
   }
 
   const headers = new Headers()
@@ -64,12 +68,23 @@ export async function GET(_request: Request, context: StorageRouteContext) {
 
   headers.set(
     "cache-control",
-    response.headers.get("cache-control") ??
-      "public, max-age=31536000, immutable"
+    response.headers.get("cache-control") ?? storageImageCacheControl
   )
 
   return new Response(response.body, {
     headers,
     status: response.status,
   })
+}
+
+function imageErrorResponse(message: string, status: number) {
+  return NextResponse.json(
+    { message },
+    {
+      headers: {
+        "Cache-Control": privateNoStoreCacheControl,
+      },
+      status,
+    }
+  )
 }

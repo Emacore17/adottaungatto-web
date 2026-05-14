@@ -16,6 +16,7 @@ export type AuthUser = {
   email: string
   displayName: string
   profileType: AuthUserProfileType
+  roles?: string[]
   status: AuthUserStatus
 }
 

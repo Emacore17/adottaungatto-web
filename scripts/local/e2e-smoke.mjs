@@ -435,6 +435,7 @@ try {
     {
       headers: {
         Cookie: `aug_session=${token}`,
+        Origin: webBaseUrl,
       },
       method: "POST",
     }
@@ -467,6 +468,7 @@ try {
     {
       headers: {
         Cookie: `aug_session=${token}`,
+        Origin: webBaseUrl,
       },
       method: "DELETE",
     }

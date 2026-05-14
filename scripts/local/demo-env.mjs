@@ -23,7 +23,6 @@ export const demoEnv = {
   S3_PUBLIC_ENDPOINT: "http://localhost:9000",
   S3_REGION: "local",
   S3_SECRET_ACCESS_KEY: "minioadmin",
-  SESSION_SECRET: "local-demo-session-secret",
 }
 
 export function createDemoEnv() {

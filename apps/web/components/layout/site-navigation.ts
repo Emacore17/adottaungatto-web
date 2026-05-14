@@ -84,7 +84,6 @@ const publicRightNavigation = [
 ] as const satisfies readonly SiteNavigationItem[]
 
 const accountRightNavigation = [
-  accountNavigationItem,
   draftsNavigationItem,
 ] as const satisfies readonly SiteNavigationItem[]
 
@@ -97,11 +96,14 @@ export function createSiteHeaderNavigation(
   isAuthenticated: boolean
 ): SiteHeaderNavigation {
   const right = isAuthenticated ? accountRightNavigation : publicRightNavigation
+  const mobile = isAuthenticated
+    ? [...leftNavigation, accountNavigationItem, draftsNavigationItem]
+    : [...leftNavigation, ...right]
 
   return {
     left: leftNavigation,
     right,
-    mobile: [...leftNavigation, ...right],
+    mobile,
   }
 }
 

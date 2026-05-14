@@ -1,11 +1,12 @@
 import {
   BadRequestException,
-  ForbiddenException,
+  ConflictException,
   Inject,
   Injectable,
   NotFoundException,
 } from "@nestjs/common"
 import type {
+  ModerationCommentInput,
   ModerationDecisionInput,
   PaginationQuery,
 } from "@workspace/validation"
@@ -16,20 +17,20 @@ import { MailService } from "../mail/mail.service.js"
 import { NotificationsService } from "../notifications/notifications.service.js"
 import type {
   ListingLifecycleStatus,
+  ModerationClaimResponse,
+  ModerationCommentResponse,
   ListingModerationStatus,
   ModerationDecisionAction,
   ModerationDecisionResponse,
   ModerationAuditAction,
   ModerationQueueItem,
   ModerationQueueResponse,
+  ModerationRecentActionItem,
+  ModerationRecentActionsResponse,
   ReportResolutionStatus,
   ReportedListingQueueItem,
   ReportedListingQueueResponse,
 } from "./moderation.types.js"
-
-type ModeratorRoleRow = {
-  role_code: string
-}
 
 type PendingReviewQueueRow = {
   total_count: number | string
@@ -113,6 +114,31 @@ type ReportedListingQueueRow = {
   audit_actions: unknown
 }
 
+type RecentModerationActionRow = {
+  total_count: number | string
+  action_id: string
+  action_type: ModerationRecentActionItem["action"]["type"]
+  action_reason_code: string | null
+  action_reason_text: string | null
+  action_from_status: ListingModerationStatus | null
+  action_to_status: ListingModerationStatus | null
+  action_created_at: Date | string
+  case_id: string
+  case_status: ModerationRecentActionItem["case"]["status"]
+  assigned_to_user_id: string | null
+  listing_id: string
+  listing_title: string
+  listing_slug: string
+  listing_moderation_status: ListingModerationStatus
+  listing_lifecycle_status: ListingLifecycleStatus
+  owner_user_id: string
+  owner_email: string
+  owner_display_name: string
+  actor_user_id: string | null
+  actor_email: string | null
+  actor_display_name: string | null
+}
+
 type ModerationDecisionStatus = "approved" | "rejected" | "suspended"
 
 type DecisionLifecycleStatus = "draft" | "published"
@@ -155,7 +181,22 @@ type ReportNotification = {
   reasonCode: string
 }
 
-const moderatorRoles = new Set(["admin", "moderator"])
+type ModerationClaimRow = {
+  action_id: string | null
+  assigned_to_user_id: string | null
+  case_id: string
+  previous_assigned_to_user_id: string | null
+  updated_at: Date | string | null
+}
+
+type ModerationCommentRow = {
+  action_created_at: Date | string
+  action_id: string
+  case_id: string
+  case_status: ModerationCommentResponse["case"]["status"]
+  comment_text: string
+  updated_at: Date | string
+}
 
 const moderationAuditActionTypes = new Set([
   "opened",
@@ -199,16 +240,6 @@ const moderationDecisionConfigs = {
     reportStatus: "resolved",
   },
 } satisfies Record<ModerationDecisionAction, ModerationDecisionConfig>
-
-const moderatorRolesSql = `
-  select roles.code as role_code
-  from user_roles
-  join roles on roles.id = user_roles.role_id
-  join users on users.id = user_roles.user_id
-  where user_roles.user_id = $1::uuid
-    and users.deleted_at is null
-    and users.status in ('active', 'pending_verification')
-`
 
 const pendingReviewQueueSql = `
   with ready_images as (
@@ -569,6 +600,43 @@ const reportedListingsQueueSql = `
   offset $2::int
 `
 
+const recentModerationActionsSql = `
+  select
+    count(*) over()::int as total_count,
+    moderation_action.id::text as action_id,
+    moderation_action.action::text as action_type,
+    moderation_action.reason_code as action_reason_code,
+    moderation_action.reason_text as action_reason_text,
+    moderation_action.from_status::text as action_from_status,
+    moderation_action.to_status::text as action_to_status,
+    moderation_action.created_at as action_created_at,
+    moderation_case.id::text as case_id,
+    moderation_case.status::text as case_status,
+    moderation_case.assigned_to_user_id::text as assigned_to_user_id,
+    listing.id::text as listing_id,
+    listing.title as listing_title,
+    listing.slug as listing_slug,
+    listing.moderation_status::text as listing_moderation_status,
+    listing.lifecycle_status::text as listing_lifecycle_status,
+    owner.id::text as owner_user_id,
+    owner.email as owner_email,
+    owner.display_name as owner_display_name,
+    actor.id::text as actor_user_id,
+    actor.email as actor_email,
+    actor.display_name as actor_display_name
+  from moderation_actions moderation_action
+  join moderation_cases moderation_case
+    on moderation_case.id = moderation_action.case_id
+  join listings listing on listing.id = moderation_case.listing_id
+  join users owner on owner.id = listing.owner_user_id
+  left join users actor on actor.id = moderation_action.actor_user_id
+  where listing.deleted_at is null
+    and owner.deleted_at is null
+  order by moderation_action.created_at desc, moderation_action.id desc
+  limit $1::int
+  offset $2::int
+`
+
 const decideListingCaseSql = `
   with target_case as (
     select
@@ -591,6 +659,10 @@ const decideListingCaseSql = `
       on owner_notification_preferences.user_id = owner.id
     where moderation_case.id = $1::uuid
       and moderation_case.status = 'open'
+      and (
+        moderation_case.assigned_to_user_id is null
+        or moderation_case.assigned_to_user_id = $2::uuid
+      )
       and listing.moderation_status in ('pending_review', 'approved')
       and listing.lifecycle_status in ('draft', 'published')
       and listing.deleted_at is null
@@ -743,6 +815,118 @@ const decideListingCaseSql = `
   join report_resolution on true
 `
 
+const claimListingCaseSql = `
+  with target_case as (
+    select
+      moderation_case.id,
+      moderation_case.assigned_to_user_id::text as previous_assigned_to_user_id
+    from moderation_cases moderation_case
+    join listings listing on listing.id = moderation_case.listing_id
+    join users owner on owner.id = listing.owner_user_id
+    where moderation_case.id = $1::uuid
+      and moderation_case.status = 'open'
+      and listing.deleted_at is null
+      and owner.deleted_at is null
+    for update of moderation_case
+  ),
+  updated_case as (
+    update moderation_cases
+    set
+      assigned_to_user_id = $2::uuid,
+      updated_at = now()
+    from target_case
+    where moderation_cases.id = target_case.id
+      and (
+        target_case.previous_assigned_to_user_id is null
+        or target_case.previous_assigned_to_user_id = $2::text
+      )
+    returning
+      moderation_cases.id::text as case_id,
+      moderation_cases.assigned_to_user_id::text as assigned_to_user_id,
+      moderation_cases.updated_at
+  ),
+  inserted_action as (
+    insert into moderation_actions (
+      case_id,
+      actor_user_id,
+      action,
+      metadata
+    )
+    select
+      updated_case.case_id::uuid,
+      $2::uuid,
+      'assigned'::moderation_action_type,
+      jsonb_build_object(
+        'previousAssignedToUserId',
+        target_case.previous_assigned_to_user_id
+      )
+    from updated_case
+    join target_case on target_case.id = updated_case.case_id::uuid
+    where target_case.previous_assigned_to_user_id is null
+    returning id::text
+  )
+  select
+    target_case.id::text as case_id,
+    target_case.previous_assigned_to_user_id,
+    updated_case.assigned_to_user_id,
+    updated_case.updated_at,
+    inserted_action.id as action_id
+  from target_case
+  left join updated_case on true
+  left join inserted_action on true
+`
+
+const commentListingCaseSql = `
+  with target_case as (
+    select
+      moderation_case.id,
+      moderation_case.status::text as case_status
+    from moderation_cases moderation_case
+    join listings listing on listing.id = moderation_case.listing_id
+    join users owner on owner.id = listing.owner_user_id
+    where moderation_case.id = $1::uuid
+      and listing.deleted_at is null
+      and owner.deleted_at is null
+    for update of moderation_case
+  ),
+  updated_case as (
+    update moderation_cases
+    set updated_at = now()
+    from target_case
+    where moderation_cases.id = target_case.id
+    returning
+      moderation_cases.id::text as case_id,
+      moderation_cases.status::text as case_status,
+      moderation_cases.updated_at
+  ),
+  inserted_action as (
+    insert into moderation_actions (
+      case_id,
+      actor_user_id,
+      action,
+      reason_text,
+      metadata
+    )
+    select
+      target_case.id,
+      $2::uuid,
+      'commented'::moderation_action_type,
+      $3::text,
+      jsonb_build_object('visibility', 'internal')
+    from target_case
+    returning id::text, created_at
+  )
+  select
+    updated_case.case_id,
+    updated_case.case_status,
+    updated_case.updated_at,
+    inserted_action.id as action_id,
+    inserted_action.created_at as action_created_at,
+    $3::text as comment_text
+  from updated_case
+  join inserted_action on true
+`
+
 @Injectable()
 export class ModerationService {
   constructor(
@@ -760,8 +944,6 @@ export class ModerationService {
     moderatorUserId: string,
     query: PaginationQuery
   ): Promise<ModerationQueueResponse> {
-    await this.assertCanModerate(moderatorUserId)
-
     const rows = await this.databaseService.queryRows<PendingReviewQueueRow>(
       pendingReviewQueueSql,
       [query.pageSize, (query.page - 1) * query.pageSize]
@@ -783,8 +965,6 @@ export class ModerationService {
     moderatorUserId: string,
     query: PaginationQuery
   ): Promise<ReportedListingQueueResponse> {
-    await this.assertCanModerate(moderatorUserId)
-
     const rows = await this.databaseService.queryRows<ReportedListingQueueRow>(
       reportedListingsQueueSql,
       [query.pageSize, (query.page - 1) * query.pageSize]
@@ -802,13 +982,94 @@ export class ModerationService {
     }
   }
 
+  async recentListingActions(
+    moderatorUserId: string,
+    query: PaginationQuery
+  ): Promise<ModerationRecentActionsResponse> {
+    const rows = await this.databaseService.queryRows<RecentModerationActionRow>(
+      recentModerationActionsSql,
+      [query.pageSize, (query.page - 1) * query.pageSize]
+    )
+    const total = rows[0] ? Number(rows[0].total_count) : 0
+
+    return {
+      items: rows.map(mapRecentActionRow),
+      meta: {
+        page: query.page,
+        pageSize: query.pageSize,
+        total,
+        totalPages: Math.ceil(total / query.pageSize),
+      },
+    }
+  }
+
+  async claimListingCase(
+    moderatorUserId: string,
+    caseId: string
+  ): Promise<ModerationClaimResponse> {
+    const [row] = await this.databaseService.queryRows<ModerationClaimRow>(
+      claimListingCaseSql,
+      [caseId, moderatorUserId]
+    )
+
+    if (!row) {
+      throw new NotFoundException("Moderation case not found or not open.")
+    }
+
+    if (!row.assigned_to_user_id || !row.updated_at) {
+      throw new ConflictException(
+        "Moderation case is already assigned to another moderator."
+      )
+    }
+
+    return {
+      claimed: true,
+      action: row.action_id ? { id: row.action_id } : null,
+      case: {
+        id: row.case_id,
+        assignedToUserId: row.assigned_to_user_id,
+        updatedAt: toIsoString(row.updated_at),
+      },
+    }
+  }
+
+  async commentListingCase(
+    moderatorUserId: string,
+    caseId: string,
+    input: ModerationCommentInput
+  ): Promise<ModerationCommentResponse> {
+    const [row] = await this.databaseService.queryRows<ModerationCommentRow>(
+      commentListingCaseSql,
+      [caseId, moderatorUserId, input.note]
+    )
+
+    if (!row) {
+      throw new NotFoundException("Moderation case not found.")
+    }
+
+    return {
+      commented: true,
+      action: {
+        id: row.action_id,
+        createdAt: toIsoString(row.action_created_at),
+      },
+      case: {
+        id: row.case_id,
+        status: row.case_status,
+        updatedAt: toIsoString(row.updated_at),
+      },
+      comment: {
+        text: row.comment_text,
+      },
+    }
+  }
+
   async decideListingCase(
     moderatorUserId: string,
     caseId: string,
     decision: ModerationDecisionAction,
     input: ModerationDecisionInput
   ): Promise<ModerationDecisionResponse> {
-    await this.assertCanModerate(moderatorUserId)
     assertDecisionReason(input)
 
     const config = moderationDecisionConfigs[decision]
@@ -838,17 +1099,6 @@ export class ModerationService {
     await this.sendDecisionNotifications(row, config.action, input)
 
     return response
-  }
-
-  private async assertCanModerate(userId: string) {
-    const rows = await this.databaseService.queryRows<ModeratorRoleRow>(
-      moderatorRolesSql,
-      [userId]
-    )
-
-    if (!rows.some((row) => moderatorRoles.has(row.role_code))) {
-      throw new ForbiddenException("Moderator role required.")
-    }
   }
 
   private async sendDecisionNotifications(
@@ -1024,6 +1274,47 @@ function mapReportedListingRow(
             }
           : null,
     },
+  }
+}
+
+function mapRecentActionRow(
+  row: RecentModerationActionRow
+): ModerationRecentActionItem {
+  return {
+    action: {
+      id: row.action_id,
+      type: row.action_type,
+      reasonCode: row.action_reason_code,
+      reasonText: row.action_reason_text,
+      fromStatus: row.action_from_status,
+      toStatus: row.action_to_status,
+      createdAt: toIsoString(row.action_created_at),
+    },
+    case: {
+      id: row.case_id,
+      status: row.case_status,
+      assignedToUserId: row.assigned_to_user_id,
+    },
+    listing: {
+      id: row.listing_id,
+      title: row.listing_title,
+      slug: row.listing_slug,
+      moderationStatus: row.listing_moderation_status,
+      lifecycleStatus: row.listing_lifecycle_status,
+    },
+    owner: {
+      id: row.owner_user_id,
+      email: row.owner_email,
+      displayName: row.owner_display_name,
+    },
+    actor:
+      row.actor_user_id && row.actor_email && row.actor_display_name
+        ? {
+            id: row.actor_user_id,
+            email: row.actor_email,
+            displayName: row.actor_display_name,
+          }
+        : null,
   }
 }
 

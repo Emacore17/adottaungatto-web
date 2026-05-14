@@ -4,6 +4,8 @@ import type { PlaceAutocompleteType } from "@workspace/validation/places"
 import { autocompletePlaces } from "@/lib/api/places"
 
 const placeTypes = new Set(["municipality", "province", "region"])
+const placeAutocompleteCacheControl =
+  "public, max-age=300, stale-while-revalidate=86400"
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -11,15 +13,22 @@ export async function GET(request: Request) {
   const type = searchParams.get("type") ?? undefined
 
   if (q.length < 2) {
-    return NextResponse.json({
-      items: [],
-      meta: {
-        query: q,
-        normalizedQuery: q,
-        limit: 8,
-        type: type ?? "all",
+    return NextResponse.json(
+      {
+        items: [],
+        meta: {
+          query: q,
+          normalizedQuery: q,
+          limit: 8,
+          type: type ?? "all",
+        },
       },
-    })
+      {
+        headers: {
+          "Cache-Control": placeAutocompleteCacheControl,
+        },
+      }
+    )
   }
 
   const result = await autocompletePlaces({
@@ -38,5 +47,9 @@ export async function GET(request: Request) {
     )
   }
 
-  return NextResponse.json(result.data)
+  return NextResponse.json(result.data, {
+    headers: {
+      "Cache-Control": placeAutocompleteCacheControl,
+    },
+  })
 }

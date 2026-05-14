@@ -60,6 +60,7 @@ export type PublicListingSummary = {
   isDewormed: boolean | null
   hasMicrochip: boolean | null
   contactRequestsEnabled: boolean
+  publicPhoneE164: string | null
   publishedAt: string | null
   expiresAt: string | null
   createdAt: string

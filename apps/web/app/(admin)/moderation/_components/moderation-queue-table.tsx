@@ -6,10 +6,16 @@ import {
   CheckIcon,
   CirclePauseIcon,
   ImageIcon,
+  MessageSquareIcon,
+  UserCheckIcon,
   XCircleIcon,
 } from "lucide-react"
 
-import { decideModerationBatchAction } from "@/app/(admin)/moderation/actions"
+import {
+  claimModerationCaseAction,
+  commentModerationCaseAction,
+  decideModerationBatchAction,
+} from "@/app/(admin)/moderation/actions"
 import { formatModerationStatus } from "@/app/(admin)/moderation/_lib/moderation-labels"
 import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
@@ -29,6 +35,8 @@ import { Checkbox } from "@workspace/ui/components/checkbox"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -244,6 +252,7 @@ function ModerationQueueRow({
   const previewImages = createPreviewImages(item)
   const reportCount = "reports" in item ? item.reports.count : null
   const latestReport = "reports" in item ? item.reports.latest : null
+  const latestComment = getLatestComment(item)
 
   return (
     <tr className="border-b last:border-b-0 hover:bg-muted/35">
@@ -272,6 +281,7 @@ function ModerationQueueRow({
                 {reportCount}
               </Badge>
             ) : null}
+            <AssignmentBadge assignedToUserId={item.case.assignedToUserId} />
           </div>
           <span className="font-medium">{item.listing.title}</span>
           <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">
@@ -280,6 +290,11 @@ function ModerationQueueRow({
           {latestReport?.description ? (
             <span className="line-clamp-1 text-xs text-brand-coral-strong">
               Report: {latestReport.description}
+            </span>
+          ) : null}
+          {latestComment?.reasonText ? (
+            <span className="line-clamp-1 text-xs text-muted-foreground">
+              Nota: {latestComment.reasonText}
             </span>
           ) : null}
         </div>
@@ -307,6 +322,16 @@ function ModerationQueueRow({
       </td>
       <td className="px-3 py-3 align-top">
         <div className="flex justify-end gap-1.5">
+          <ClaimCaseButton
+            assignedToUserId={item.case.assignedToUserId}
+            caseId={item.case.id}
+            nextPath={nextPath}
+          />
+          <CommentCaseDialog
+            caseId={item.case.id}
+            latestComment={latestComment?.reasonText ?? null}
+            nextPath={nextPath}
+          />
           <QuickDecisionButton
             action="approve"
             caseId={item.case.id}
@@ -342,6 +367,7 @@ function MobileModerationCard({
   const previewImages = createPreviewImages(item)
   const reportCount = "reports" in item ? item.reports.count : null
   const latestReport = "reports" in item ? item.reports.latest : null
+  const latestComment = getLatestComment(item)
 
   return (
     <Card
@@ -373,6 +399,7 @@ function MobileModerationCard({
                   {reportCount}
                 </Badge>
               ) : null}
+              <AssignmentBadge assignedToUserId={item.case.assignedToUserId} />
             </div>
             <h2 className="line-clamp-2 text-sm font-semibold">
               {item.listing.title}
@@ -410,10 +437,28 @@ function MobileModerationCard({
               tone="danger"
             />
           ) : null}
+          {latestComment?.reasonText ? (
+            <InfoBlock label="Nota" value={latestComment.reasonText} />
+          ) : null}
         </div>
       </CardContent>
 
       <CardFooter className="grid grid-cols-2 gap-2 border-t px-4 pt-3">
+        <CommentCaseDialog
+          caseId={item.case.id}
+          className="col-span-2 w-full"
+          latestComment={latestComment?.reasonText ?? null}
+          nextPath={nextPath}
+          showLabel
+        />
+        <ClaimCaseButton
+          assignedToUserId={item.case.assignedToUserId}
+          caseId={item.case.id}
+          className="w-full"
+          formClassName="col-span-2"
+          nextPath={nextPath}
+          showLabel
+        />
         <QuickDecisionButton
           action="approve"
           caseId={item.case.id}
@@ -613,6 +658,145 @@ function createPreviewImages(
         },
       ]
     : []
+}
+
+function getLatestComment(item: ModerationTableItem) {
+  return (
+    item.audit.actions.find(
+      (action) => action.action === "commented" && action.reasonText
+    ) ?? null
+  )
+}
+
+function AssignmentBadge({
+  assignedToUserId,
+}: {
+  assignedToUserId: string | null
+}) {
+  if (!assignedToUserId) {
+    return null
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+    >
+      <UserCheckIcon aria-hidden="true" data-icon="inline-start" />
+      In carico
+    </Badge>
+  )
+}
+
+function ClaimCaseButton({
+  assignedToUserId,
+  caseId,
+  className,
+  formClassName,
+  nextPath,
+  showLabel = false,
+}: {
+  assignedToUserId: string | null
+  caseId: string
+  className?: string
+  formClassName?: string
+  nextPath: string
+  showLabel?: boolean
+}) {
+  if (assignedToUserId) {
+    return null
+  }
+
+  return (
+    <form action={claimModerationCaseAction} className={formClassName}>
+      <input type="hidden" name="caseId" value={caseId} />
+      <input type="hidden" name="nextPath" value={nextPath} />
+      <Button
+        type="submit"
+        variant="secondary"
+        size={showLabel ? "sm" : "icon-sm"}
+        aria-label="Prendi in carico"
+        title="Prendi in carico"
+        className={className}
+      >
+        <UserCheckIcon
+          aria-hidden="true"
+          data-icon={showLabel ? "inline-start" : undefined}
+        />
+        {showLabel ? "Prendi in carico" : null}
+      </Button>
+    </form>
+  )
+}
+
+function CommentCaseDialog({
+  caseId,
+  className,
+  latestComment,
+  nextPath,
+  showLabel = false,
+}: {
+  caseId: string
+  className?: string
+  latestComment: string | null
+  nextPath: string
+  showLabel?: boolean
+}) {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size={showLabel ? "sm" : "icon-sm"}
+          aria-label="Aggiungi nota interna"
+          title="Aggiungi nota interna"
+          className={className}
+        >
+          <MessageSquareIcon
+            aria-hidden="true"
+            data-icon={showLabel ? "inline-start" : undefined}
+          />
+          {showLabel ? "Nota interna" : null}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Nota interna</DialogTitle>
+          <DialogDescription>Timeline interna del caso.</DialogDescription>
+        </DialogHeader>
+
+        {latestComment ? (
+          <div className="rounded-lg border bg-muted/25 p-3 text-xs text-muted-foreground">
+            <span className="font-medium text-foreground">Ultima nota</span>
+            <p className="mt-1 leading-5">{latestComment}</p>
+          </div>
+        ) : null}
+
+        <form action={commentModerationCaseAction} className="grid gap-4">
+          <input type="hidden" name="caseId" value={caseId} />
+          <input type="hidden" name="nextPath" value={nextPath} />
+          <Field className="gap-1.5">
+            <FieldLabel htmlFor={`moderation-comment-${caseId}`}>
+              Nuova nota
+            </FieldLabel>
+            <Textarea
+              id={`moderation-comment-${caseId}`}
+              name="note"
+              maxLength={2000}
+              minLength={2}
+              required
+              placeholder="Aggiungi una nota per il team"
+              className="min-h-28 resize-y"
+            />
+          </Field>
+          <DialogFooter>
+            <Button type="submit">Salva nota</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 function QuickDecisionButton({

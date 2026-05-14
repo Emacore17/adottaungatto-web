@@ -200,6 +200,37 @@ describe("NotificationsService", () => {
     })
   })
 
+  it("deletes a notification", async () => {
+    const databaseService = {
+      queryRows: vi.fn((sql: string) => {
+        if (sql.includes("delete from notifications")) {
+          return Promise.resolve([{ id: "notification-id" }])
+        }
+
+        return Promise.resolve([{ unread_count: "1" }])
+      }),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+
+    await expect(service.delete("user-id", "notification-id")).resolves.toEqual(
+      {
+        deleted: true,
+        notificationId: "notification-id",
+      }
+    )
+  })
+
+  it("throws when deleting a missing notification", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const service = new NotificationsService(databaseService)
+
+    await expect(
+      service.delete("user-id", "missing-id")
+    ).rejects.toBeInstanceOf(NotFoundException)
+  })
+
   it("creates listing moderation decision notifications", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([

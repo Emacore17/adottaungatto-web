@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
   Inject,
   Param,
@@ -69,6 +70,21 @@ export class NotificationsController {
       const { notificationId } = notificationIdParamSchema.parse(params)
 
       return this.notificationsService.markRead(auth.user.id, notificationId)
+    } catch (error) {
+      throwValidationError(error, "Invalid notification id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Delete(":notificationId")
+  async delete(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>
+  ) {
+    try {
+      const { notificationId } = notificationIdParamSchema.parse(params)
+
+      return this.notificationsService.delete(auth.user.id, notificationId)
     } catch (error) {
       throwValidationError(error, "Invalid notification id.")
     }

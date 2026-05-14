@@ -8,7 +8,6 @@ import {
 } from "lucide-react"
 
 import { ModerationQueueTable } from "@/app/(admin)/moderation/_components/moderation-queue-table"
-import { currentSession } from "@/lib/api/auth"
 import {
   listPendingReviewModerationQueue,
   listReportedListingsModerationQueue,
@@ -61,12 +60,6 @@ export default async function ModerationQueuePage({
     redirect(routes.login(routes.moderationQueue))
   }
 
-  const session = await currentSession(token)
-
-  if (!session.ok) {
-    redirect(routes.login(routes.moderationQueue))
-  }
-
   const params = await searchParams
   const queue = readQueueType(params.queue)
   const page = readPageParam(params.page)
@@ -74,6 +67,10 @@ export default async function ModerationQueuePage({
   const decisionCount = readSingleParam(params.decisionCount)
   const decisionFailed = readSingleParam(params.decisionFailed)
   const decisionError = readSingleParam(params.decisionError)
+  const claim = readSingleParam(params.claim)
+  const claimError = readSingleParam(params.claimError)
+  const comment = readSingleParam(params.comment)
+  const commentError = readSingleParam(params.commentError)
 
   const [pendingQueue, reportedQueue] = await Promise.all([
     listPendingReviewModerationQueue(token, {
@@ -91,7 +88,7 @@ export default async function ModerationQueuePage({
   }
 
   if (isApiStatus(pendingQueue, 403) || isApiStatus(reportedQueue, 403)) {
-    return <AccessDenied displayName={session.data.user.displayName} />
+    redirect(routes.account)
   }
 
   const activeQueue = queue === "pending" ? pendingQueue : reportedQueue
@@ -139,6 +136,10 @@ export default async function ModerationQueuePage({
       </section>
 
       <DecisionFeedback
+        claim={claim}
+        claimError={claimError}
+        comment={comment}
+        commentError={commentError}
         decision={decision}
         decisionCount={decisionCount}
         decisionFailed={decisionFailed}
@@ -279,18 +280,81 @@ function QueueSwitcher({
 }
 
 function DecisionFeedback({
+  claim,
+  claimError,
+  comment,
+  commentError,
   decision,
   decisionCount,
   decisionFailed,
   error,
 }: {
+  claim: string | null
+  claimError: string | null
+  comment: string | null
+  commentError: string | null
   decision: string | null
   decisionCount: string | null
   decisionFailed: string | null
   error: string | null
 }) {
-  if (!decision && !error) {
+  if (
+    !decision &&
+    !error &&
+    !claim &&
+    !claimError &&
+    !comment &&
+    !commentError
+  ) {
     return null
+  }
+
+  if (commentError) {
+    return (
+      <Card className="ring-destructive/35">
+        <CardHeader>
+          <CardTitle>Nota non salvata</CardTitle>
+          <CardDescription>{formatCommentError(commentError)}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (comment) {
+    return (
+      <Card className="ring-primary/25">
+        <CardHeader>
+          <CardTitle>Nota interna salvata</CardTitle>
+          <CardDescription>
+            La timeline del caso e&apos; stata aggiornata.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (claimError) {
+    return (
+      <Card className="ring-destructive/35">
+        <CardHeader>
+          <CardTitle>Caso non assegnato</CardTitle>
+          <CardDescription>{formatClaimError(claimError)}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (claim) {
+    return (
+      <Card className="ring-primary/25">
+        <CardHeader>
+          <CardTitle>Caso preso in carico</CardTitle>
+          <CardDescription>
+            La coda e&apos; stata aggiornata con la nuova assegnazione.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
   }
 
   if (error) {
@@ -318,24 +382,24 @@ function DecisionFeedback({
   )
 }
 
-function AccessDenied({ displayName }: { displayName: string }) {
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-      <Empty className="border bg-card">
-        <EmptyHeader>
-          <EmptyTitle>Accesso alla moderazione non consentito</EmptyTitle>
-          <EmptyDescription>
-            {displayName} non ha un ruolo abilitato per le code di moderazione.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild variant="outline">
-            <Link href={routes.account}>Torna al profilo</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
-    </main>
-  )
+function formatClaimError(value: string) {
+  if (value === "already_assigned") {
+    return "Il caso e' gia' in carico a un altro moderatore."
+  }
+
+  if (value === "invalid_case") {
+    return "Il caso selezionato non e' valido."
+  }
+
+  return `Codice errore: ${value}.`
+}
+
+function formatCommentError(value: string) {
+  if (value === "invalid_comment") {
+    return "Scrivi una nota interna di almeno due caratteri."
+  }
+
+  return `Codice errore: ${value}.`
 }
 
 function isApiStatus<T>(result: QueueResult<T>, status: number) {

@@ -14,6 +14,7 @@ import type {
   ListingReportDecisionNotificationPayload,
   ListingReviewSubmissionNotificationPayload,
   Notification,
+  NotificationDeleteResponse,
   NotificationListResponse,
   NotificationMarkAllReadResponse,
   NotificationRealtimeEvent,
@@ -110,6 +111,13 @@ const markAllNotificationsReadSql = `
   )
   select count(*)::int as updated_count
   from updated
+`
+
+const deleteNotificationSql = `
+  delete from notifications
+  where user_id = $1::uuid
+    and id = $2::uuid
+  returning id::text
 `
 
 @Injectable()
@@ -240,6 +248,34 @@ export class NotificationsService {
       type: "read_all",
       data: {
         ...result,
+        ...(await this.unreadCount(userId)),
+      },
+    }))
+
+    return result
+  }
+
+  async delete(
+    userId: string,
+    notificationId: string
+  ): Promise<NotificationDeleteResponse> {
+    const [row] = await this.databaseService.queryRows<{
+      id: string
+    }>(deleteNotificationSql, [userId, notificationId])
+
+    if (!row) {
+      throw new NotFoundException("Notification not found.")
+    }
+
+    const result = {
+      deleted: true,
+      notificationId: row.id,
+    } as const
+
+    this.publishToUser(userId, async () => ({
+      type: "deleted",
+      data: {
+        notificationId: result.notificationId,
         ...(await this.unreadCount(userId)),
       },
     }))

@@ -26,6 +26,8 @@
     "search:benchmark": "pnpm --filter worker search:benchmark",
     "smoke:e2e": "node scripts/local/e2e-smoke.mjs",
     "lint": "turbo lint",
+    "release:check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "release:smoke": "pnpm db:migrate && pnpm smoke:e2e",
     "format": "turbo format",
     "test": "turbo test",
     "typecheck": "turbo typecheck"

@@ -4,7 +4,9 @@ import type { ApiEnv } from "../config/env.js"
 import { DatabaseService } from "./database.service.js"
 
 const testEnv: ApiEnv = {
+  API_GLOBAL_RATE_LIMIT_PER_MINUTE: 1200,
   API_PORT: 4000,
+  API_TRUST_PROXY: false,
   APP_ENV: "test",
   APP_URL: "http://localhost:3000",
   DATABASE_URL:
@@ -18,6 +20,7 @@ const testEnv: ApiEnv = {
   OBSERVABILITY_ALERT_MIN_REQUESTS: 20,
   OBSERVABILITY_ALERT_P95_MS_THRESHOLD: 1000,
   PASSWORD_RESET_TTL_MINUTES: 30,
+  PHONE_VERIFICATION_TTL_MINUTES: 10,
   RATE_LIMIT_ENABLED: true,
   RATE_LIMIT_LIMIT_MULTIPLIER: 1,
   RATE_LIMIT_WINDOW_MULTIPLIER: 1,

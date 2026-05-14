@@ -46,6 +46,10 @@ type ReadAllEvent = SnapshotEvent & {
   updatedCount: number
 }
 
+type DeletedEvent = SnapshotEvent & {
+  notificationId: string
+}
+
 type RealtimeNotificationsContextValue = {
   connected: boolean
   enabled: boolean
@@ -120,6 +124,15 @@ function RealtimeNotificationsProvider({
 
     source.addEventListener("read_all", (event) => {
       const data = parseRealtimeEvent<ReadAllEvent>(event)
+
+      if (data) {
+        setUnreadCount(data.unreadCount)
+        refreshAccountViews(pathname, router)
+      }
+    })
+
+    source.addEventListener("deleted", (event) => {
+      const data = parseRealtimeEvent<DeletedEvent>(event)
 
       if (data) {
         setUnreadCount(data.unreadCount)

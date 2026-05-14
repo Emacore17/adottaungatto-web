@@ -68,6 +68,7 @@ describe("AuthService", () => {
       password: "a strong password",
       displayName: "Emanuele",
       profileType: "private",
+      showPhoneOnListings: false,
     })
     const [, parameters = []] = vi.mocked(databaseService.queryRows).mock
       .calls[0]!
@@ -76,8 +77,10 @@ describe("AuthService", () => {
     expect(parameters[1]).toBe("user@example.com")
     expect(parameters[3]).toBe("Emanuele")
     expect(parameters[4]).toBe("private")
-    expect(parameters[5]).toBe(hashSessionToken(response.session.token))
-    expect(parameters[6]).toEqual(expect.any(String))
+    expect(parameters[5]).toBeNull()
+    expect(parameters[6]).toBe(false)
+    expect(parameters[7]).toBe(hashSessionToken(response.session.token))
+    expect(parameters[8]).toEqual(expect.any(String))
     await expect(
       verifyPassword("a strong password", String(parameters[2]))
     ).resolves.toBe(true)
@@ -533,7 +536,9 @@ describe("AuthService", () => {
 })
 
 const testEnv: ApiEnv = {
+  API_GLOBAL_RATE_LIMIT_PER_MINUTE: 1200,
   API_PORT: 4000,
+  API_TRUST_PROXY: false,
   APP_ENV: "test",
   APP_URL: "http://localhost:3000",
   DATABASE_URL:
@@ -547,6 +552,7 @@ const testEnv: ApiEnv = {
   OBSERVABILITY_ALERT_MIN_REQUESTS: 20,
   OBSERVABILITY_ALERT_P95_MS_THRESHOLD: 1000,
   PASSWORD_RESET_TTL_MINUTES: 30,
+  PHONE_VERIFICATION_TTL_MINUTES: 10,
   RATE_LIMIT_ENABLED: true,
   RATE_LIMIT_LIMIT_MULTIPLIER: 1,
   RATE_LIMIT_WINDOW_MULTIPLIER: 1,

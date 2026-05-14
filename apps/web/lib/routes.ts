@@ -50,6 +50,9 @@ export const routes = {
     withSearchParams("/listings", query),
   listing: (id: string) => `/listings/${id}`,
   login: (next?: string) => withSearchParams("/login", { next }),
+  forgotPassword: "/forgot-password",
+  resetPassword: (token?: string) =>
+    withSearchParams("/reset-password", { token }),
   register: "/register",
   account: "/account",
   accountListingSubmitted: "/account/listings/submitted",
@@ -60,6 +63,8 @@ export const routes = {
   accountFavorites: "/account/favorites",
   accountNotifications: "/account/notifications",
   accountSettings: "/account/settings",
+  accountSecurity: "/account/settings/security",
+  accountDanger: "/account/settings/account",
   moderation: "/moderation",
   moderationQueue: "/moderation/queue",
 }

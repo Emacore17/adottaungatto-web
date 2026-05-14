@@ -24,7 +24,7 @@ function DesktopNavigation({ align = "start", items }: DesktopNavigationProps) {
     <nav aria-label="Navigazione principale">
       <ul
         className={cn(
-          "flex items-center gap-1",
+          "flex items-center gap-2",
           align === "end" ? "justify-end" : "justify-start"
         )}
       >
@@ -39,7 +39,7 @@ function DesktopNavigation({ align = "start", items }: DesktopNavigationProps) {
                 href={item.href}
                 aria-current={isCurrentPage ? "page" : undefined}
                 className={cn(
-                  "relative inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold tracking-normal transition-[background-color,color,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
+                  "relative inline-flex h-9 items-center rounded-lg px-3.5 text-sm font-semibold tracking-normal transition-[background-color,color,box-shadow] duration-200 ease-out focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none",
                   !isAccent &&
                     "text-brand-teal-ink/78 hover:bg-brand-teal-soft hover:text-brand-teal-ink",
                   !isAccent &&
@@ -48,7 +48,7 @@ function DesktopNavigation({ align = "start", items }: DesktopNavigationProps) {
                     isActive &&
                     "text-brand-teal-ink after:scale-x-100",
                   isAccent &&
-                    "border border-primary/20 bg-primary px-3.5 text-primary-foreground shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--color-primary)_78%,transparent)] hover:bg-primary/92 hover:shadow-[0_20px_42px_-30px_color-mix(in_oklab,var(--color-primary)_78%,transparent)]",
+                    "border border-primary/20 bg-primary px-4 text-primary-foreground shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--color-primary)_78%,transparent)] hover:bg-primary/92 hover:shadow-[0_20px_42px_-30px_color-mix(in_oklab,var(--color-primary)_78%,transparent)]",
                   isAccent && isActive && "ring-1 ring-primary/30",
                   "active:opacity-90"
                 )}

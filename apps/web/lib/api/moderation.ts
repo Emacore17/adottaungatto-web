@@ -1,4 +1,7 @@
-import type { ModerationDecisionInput } from "@workspace/validation/moderation"
+import type {
+  ModerationCommentInput,
+  ModerationDecisionInput,
+} from "@workspace/validation/moderation"
 import type { PaginationQuery } from "@workspace/validation/pagination"
 
 import { apiFetch, type ApiResult } from "@/lib/api/client"
@@ -158,7 +161,99 @@ export type ReportedListingQueueResponse = {
   meta: ModerationQueueMeta
 }
 
+export type ModerationRecentActionItem = {
+  action: {
+    id: string
+    type:
+      | "opened"
+      | "assigned"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | "closed"
+      | "commented"
+      | "reported"
+    reasonCode: string | null
+    reasonText: string | null
+    fromStatus:
+      | "draft"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | null
+    toStatus:
+      | "draft"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+      | null
+    createdAt: string
+  }
+  case: {
+    id: string
+    status: "open" | "approved" | "rejected" | "suspended" | "closed"
+    assignedToUserId: string | null
+  }
+  listing: {
+    id: string
+    title: string
+    slug: string
+    moderationStatus:
+      | "draft"
+      | "pending_review"
+      | "approved"
+      | "rejected"
+      | "suspended"
+    lifecycleStatus: "draft" | "published" | "expired" | "adopted" | "deleted"
+  }
+  owner: {
+    id: string
+    email: string
+    displayName: string
+  }
+  actor: {
+    id: string
+    email: string
+    displayName: string
+  } | null
+}
+
+export type ModerationRecentActionsResponse = {
+  items: ModerationRecentActionItem[]
+  meta: ModerationQueueMeta
+}
+
 export type ModerationDecisionAction = "approve" | "reject" | "suspend"
+
+export type ModerationClaimResponse = {
+  claimed: true
+  action: {
+    id: string
+  } | null
+  case: {
+    id: string
+    assignedToUserId: string
+    updatedAt: string
+  }
+}
+
+export type ModerationCommentResponse = {
+  commented: true
+  action: {
+    id: string
+    createdAt: string
+  }
+  case: {
+    id: string
+    status: "open" | "approved" | "rejected" | "suspended" | "closed"
+    updatedAt: string
+  }
+  comment: {
+    text: string
+  }
+}
 
 export type ModerationDecisionResponse = {
   decided: true
@@ -220,6 +315,22 @@ export function listReportedListingsModerationQueue(
   )
 }
 
+export function listRecentModerationActions(
+  bearerToken: string,
+  query: Partial<PaginationQuery> = {}
+): Promise<ApiResult<ModerationRecentActionsResponse>> {
+  const params = createPaginationParams(query)
+  const queryString = params.toString()
+
+  return apiFetch<ModerationRecentActionsResponse>(
+    `/moderation/listings/actions/recent${queryString ? `?${queryString}` : ""}`,
+    {
+      bearerToken,
+      cache: "no-store",
+    }
+  )
+}
+
 export function decideModerationListingCase(
   bearerToken: string,
   caseId: string,
@@ -228,6 +339,36 @@ export function decideModerationListingCase(
 ): Promise<ApiResult<ModerationDecisionResponse>> {
   return apiFetch<ModerationDecisionResponse>(
     `/moderation/listings/cases/${caseId}/${action}`,
+    {
+      bearerToken,
+      body: input,
+      cache: "no-store",
+      method: "POST",
+    }
+  )
+}
+
+export function claimModerationListingCase(
+  bearerToken: string,
+  caseId: string
+): Promise<ApiResult<ModerationClaimResponse>> {
+  return apiFetch<ModerationClaimResponse>(
+    `/moderation/listings/cases/${caseId}/claim`,
+    {
+      bearerToken,
+      cache: "no-store",
+      method: "POST",
+    }
+  )
+}
+
+export function commentModerationListingCase(
+  bearerToken: string,
+  caseId: string,
+  input: ModerationCommentInput
+): Promise<ApiResult<ModerationCommentResponse>> {
+  return apiFetch<ModerationCommentResponse>(
+    `/moderation/listings/cases/${caseId}/comments`,
     {
       bearerToken,
       body: input,

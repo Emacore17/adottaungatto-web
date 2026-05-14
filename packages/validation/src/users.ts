@@ -1,6 +1,12 @@
 import { z } from "zod"
 
-import { authProfileTypes } from "./auth.js"
+const userProfileTypes = [
+  "private",
+  "professional",
+  "association",
+  "shelter",
+  "breeder",
+] as const
 
 export const userProfileUpdateSchema = z
   .object({
@@ -11,7 +17,8 @@ export const userProfileUpdateSchema = z
       .regex(/^\+[1-9]\d{7,14}$/)
       .nullable()
       .optional(),
-    profileType: z.enum(authProfileTypes).optional(),
+    showPhoneOnListings: z.boolean().optional(),
+    profileType: z.enum(userProfileTypes).optional(),
   })
   .strict()
   .refine((value) => Object.keys(value).length > 0, {
@@ -28,8 +35,31 @@ export const userNotificationPreferencesUpdateSchema = z
     message: "At least one notification preference must be provided.",
   })
 
+export const userPhoneVerificationConfirmSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/),
+  })
+  .strict()
+
+export const userAccountPasswordConfirmationSchema = z
+  .object({
+    password: z.string().min(1).max(128),
+  })
+  .strict()
+
 export type UserProfileUpdateInput = z.infer<typeof userProfileUpdateSchema>
 
 export type UserNotificationPreferencesUpdateInput = z.infer<
   typeof userNotificationPreferencesUpdateSchema
+>
+
+export type UserPhoneVerificationConfirmInput = z.infer<
+  typeof userPhoneVerificationConfirmSchema
+>
+
+export type UserAccountPasswordConfirmationInput = z.infer<
+  typeof userAccountPasswordConfirmationSchema
 >

@@ -65,6 +65,12 @@ Un annuncio e' pubblico solo se:
 - Ogni item di coda include dati operativi essenziali: annuncio, proprietario,
   luogo, immagini pronte, data apertura e conteggio segnalazioni dove presente.
   Le ultime azioni `moderation_actions` restano disponibili dalla risposta API.
+- I casi possono essere presi in carico tramite claim per ridurre doppie
+  decisioni concorrenti. Una decisione su caso assegnato e' accettata solo dal
+  moderatore assegnato.
+- La coda permette note interne per caso; ogni nota crea una azione
+  `commented` in `moderation_actions` e resta visibile nella timeline del
+  caso.
 - I motivi rapidi batch usano un default in base all'azione: approvazione
   conforme, rifiuto per policy o sospensione per rischio. Il moderatore puo
   cambiare motivo e aggiungere una nota; `other` richiede nota obbligatoria.
@@ -95,9 +101,17 @@ segnalazione collegati ad annunci gia pubblicati. In questo contesto
 
 Endpoint:
 
+- `POST /moderation/listings/cases/:caseId/claim`;
+- `POST /moderation/listings/cases/:caseId/comments`;
 - `POST /moderation/listings/cases/:caseId/approve`;
 - `POST /moderation/listings/cases/:caseId/reject`;
 - `POST /moderation/listings/cases/:caseId/suspend`.
+
+Claim e note interne:
+
+- richiedono ruolo `moderator` o `admin`;
+- applicano rate limit Redis per IP, operatore interno e caso;
+- aggiornano audit e pagine di moderazione.
 
 Ogni decisione:
 
@@ -162,11 +176,12 @@ Ricevono inoltre una notifica in-app leggibile dal centro notifiche.
 ## Persistenza
 
 Lo schema iniziale usa `moderation_cases` per la coda operativa,
-`moderation_actions` per audit di apertura, segnalazioni e decisioni e
+`moderation_actions` per audit di apertura, assegnazione, commenti interni,
+segnalazioni e decisioni e
 `reports` per collegare le segnalazioni utente al target e, quando disponibile,
-al caso di moderazione. La dashboard interna mostra le ultime azioni per ogni
-caso in coda; per produzione l'audit deve diventare completo, non modificabile
-e ricercabile.
+al caso di moderazione. La dashboard interna mostra code, attivita recenti e
+ultime azioni per ogni caso in coda. Per produzione l'audit deve restare
+immutabile, ricercabile e collegato agli alert operativi.
 
 ## Controlli automatici iniziali
 
@@ -195,10 +210,11 @@ e ricercabile.
 - Policy interne versionate.
 - Template di motivazione per moderatori.
 
-## Gap produzione
+## Gate produzione
 
-La moderazione backend e' avviata e la dashboard interna locale esiste, ma
-l'area amministrativa completa non e' pronta per produzione. Prima di un
-rilascio pubblico servono MFA per ruoli interni, audit piu esteso, gestione
-ruoli, tuning dei rate limit, strumenti anti-abuso, filtri coda avanzati e
-logging/alert sulle azioni ad alto rischio.
+La moderazione e' pronta come base operativa di release candidate: code
+separate, segnalazioni, claim, note interne, batch, attivita recenti, RBAC,
+rate limit e audit sono implementati. Prima del go-live pubblico servono MFA
+per ruoli interni, gestione ruoli completa, strumenti anti-abuso piu evoluti,
+filtri coda avanzati, immutabilita/retention audit definite e alert sulle
+azioni ad alto rischio.

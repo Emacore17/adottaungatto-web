@@ -1,6 +1,6 @@
 import {
   BadRequestException,
-  ForbiddenException,
+  ConflictException,
   NotFoundException,
 } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
@@ -14,77 +14,72 @@ import { ModerationService } from "./moderation.service.js"
 describe("ModerationService", () => {
   it("lists pending-review items for moderators", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([{ role_code: "moderator" }])
-        .mockResolvedValueOnce([
-          {
-            total_count: "1",
-            case_id: "case-id",
-            case_status: "open",
-            case_reason_code: "listing_submission",
-            case_created_at: "2026-04-01T10:00:00.000Z",
-            assigned_to_user_id: null,
-            listing_id: "listing-id",
-            listing_title: "Gattino a Roma",
-            listing_slug: "gattino-a-roma",
-            listing_description: "Cerca una famiglia",
-            listing_moderation_status: "pending_review",
-            listing_lifecycle_status: "draft",
-            listing_created_at: "2026-04-01T09:00:00.000Z",
-            listing_updated_at: "2026-04-01T09:30:00.000Z",
-            owner_user_id: "owner-id",
-            owner_email: "owner@example.com",
-            owner_display_name: "Owner",
-            municipality_id: "municipality-id",
-            municipality_name: "Roma",
-            municipality_istat_code: "058091",
-            province_id: "province-id",
-            province_name: "Roma",
-            province_istat_code: "058",
-            region_id: "region-id",
-            region_name: "Lazio",
-            region_istat_code: "12",
-            ready_image_count: "2",
-            cover_image_id: "image-id",
-            cover_object_key_thumb:
-              "local/listings/listing-id/thumb/image.webp",
-            cover_object_key_large:
-              "local/listings/listing-id/large/image.webp",
-            preview_images: [
-              {
-                id: "image-id",
-                objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
-                objectKeyLarge: "local/listings/listing-id/large/image.webp",
-                isCover: true,
-                sortOrder: 0,
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          total_count: "1",
+          case_id: "case-id",
+          case_status: "open",
+          case_reason_code: "listing_submission",
+          case_created_at: "2026-04-01T10:00:00.000Z",
+          assigned_to_user_id: null,
+          listing_id: "listing-id",
+          listing_title: "Gattino a Roma",
+          listing_slug: "gattino-a-roma",
+          listing_description: "Cerca una famiglia",
+          listing_moderation_status: "pending_review",
+          listing_lifecycle_status: "draft",
+          listing_created_at: "2026-04-01T09:00:00.000Z",
+          listing_updated_at: "2026-04-01T09:30:00.000Z",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          municipality_id: "municipality-id",
+          municipality_name: "Roma",
+          municipality_istat_code: "058091",
+          province_id: "province-id",
+          province_name: "Roma",
+          province_istat_code: "058",
+          region_id: "region-id",
+          region_name: "Lazio",
+          region_istat_code: "12",
+          ready_image_count: "2",
+          cover_image_id: "image-id",
+          cover_object_key_thumb: "local/listings/listing-id/thumb/image.webp",
+          cover_object_key_large: "local/listings/listing-id/large/image.webp",
+          preview_images: [
+            {
+              id: "image-id",
+              objectKeyThumb: "local/listings/listing-id/thumb/image.webp",
+              objectKeyLarge: "local/listings/listing-id/large/image.webp",
+              isCover: true,
+              sortOrder: 0,
+            },
+            {
+              id: "image-id-2",
+              objectKeyThumb: "local/listings/listing-id/thumb/image-2.webp",
+              objectKeyLarge: "local/listings/listing-id/large/image-2.webp",
+              isCover: false,
+              sortOrder: 1,
+            },
+          ],
+          audit_actions: [
+            {
+              id: "action-id",
+              action: "opened",
+              reasonCode: "listing_submission",
+              reasonText: "Invio a revisione.",
+              fromStatus: "draft",
+              toStatus: "pending_review",
+              createdAt: "2026-04-01T10:00:00.000Z",
+              actor: {
+                id: "owner-id",
+                email: "owner@example.com",
+                displayName: "Owner",
               },
-              {
-                id: "image-id-2",
-                objectKeyThumb: "local/listings/listing-id/thumb/image-2.webp",
-                objectKeyLarge: "local/listings/listing-id/large/image-2.webp",
-                isCover: false,
-                sortOrder: 1,
-              },
-            ],
-            audit_actions: [
-              {
-                id: "action-id",
-                action: "opened",
-                reasonCode: "listing_submission",
-                reasonText: "Invio a revisione.",
-                fromStatus: "draft",
-                toStatus: "pending_review",
-                createdAt: "2026-04-01T10:00:00.000Z",
-                actor: {
-                  id: "owner-id",
-                  email: "owner@example.com",
-                  displayName: "Owner",
-                },
-              },
-            ],
-          },
-        ]),
+            },
+          ],
+        },
+      ]),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
@@ -187,81 +182,168 @@ describe("ModerationService", () => {
       },
     })
     expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      10, 10,
+    ])
+  })
+
+  it("claims an open moderation case", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          previous_assigned_to_user_id: null,
+          assigned_to_user_id: "moderator-id",
+          updated_at: "2026-04-01T10:15:00.000Z",
+          action_id: "action-id",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.claimListingCase("moderator-id", "case-id")
+    ).resolves.toEqual({
+      claimed: true,
+      action: {
+        id: "action-id",
+      },
+      case: {
+        id: "case-id",
+        assignedToUserId: "moderator-id",
+        updatedAt: "2026-04-01T10:15:00.000Z",
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "case-id",
       "moderator-id",
     ])
-    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
-      10, 10,
+  })
+
+  it("rejects claim when another moderator already owns the case", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          previous_assigned_to_user_id: "other-moderator-id",
+          assigned_to_user_id: null,
+          updated_at: null,
+          action_id: null,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.claimListingCase("moderator-id", "case-id")
+    ).rejects.toBeInstanceOf(ConflictException)
+  })
+
+  it("adds an internal moderation comment", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          case_status: "open",
+          updated_at: "2026-04-01T10:20:00.000Z",
+          action_id: "action-id",
+          action_created_at: "2026-04-01T10:20:00.000Z",
+          comment_text: "Controllare le immagini prima della decisione.",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.commentListingCase("moderator-id", "case-id", {
+        note: "Controllare le immagini prima della decisione.",
+      })
+    ).resolves.toEqual({
+      commented: true,
+      action: {
+        id: "action-id",
+        createdAt: "2026-04-01T10:20:00.000Z",
+      },
+      case: {
+        id: "case-id",
+        status: "open",
+        updatedAt: "2026-04-01T10:20:00.000Z",
+      },
+      comment: {
+        text: "Controllare le immagini prima della decisione.",
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "case-id",
+      "moderator-id",
+      "Controllare le immagini prima della decisione.",
     ])
   })
 
   it("lists reported listings for moderators", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([{ role_code: "moderator" }])
-        .mockResolvedValueOnce([
-          {
-            total_count: "1",
-            case_id: "case-id",
-            case_status: "open",
-            case_reason_code: "user_report",
-            case_created_at: "2026-04-01T10:00:00.000Z",
-            assigned_to_user_id: "moderator-id",
-            listing_id: "listing-id",
-            listing_title: "Gatto adulto a Milano",
-            listing_slug: "gatto-adulto-a-milano",
-            listing_description: "Annuncio pubblicato da verificare",
-            listing_moderation_status: "approved",
-            listing_lifecycle_status: "published",
-            listing_published_at: "2026-03-25T10:00:00.000Z",
-            listing_expires_at: null,
-            listing_created_at: "2026-03-24T10:00:00.000Z",
-            listing_updated_at: "2026-03-25T10:00:00.000Z",
-            owner_user_id: "owner-id",
-            owner_email: "owner@example.com",
-            owner_display_name: "Owner",
-            municipality_id: null,
-            municipality_name: null,
-            municipality_istat_code: null,
-            province_id: null,
-            province_name: null,
-            province_istat_code: null,
-            region_id: null,
-            region_name: null,
-            region_istat_code: null,
-            ready_image_count: "1",
-            cover_image_id: null,
-            cover_object_key_thumb: null,
-            cover_object_key_large: null,
-            preview_images: [],
-            report_count: "3",
-            first_reported_at: "2026-04-01T10:00:00.000Z",
-            latest_reported_at: "2026-04-01T12:00:00.000Z",
-            latest_report_id: "report-id",
-            latest_reporter_user_id: "reporter-id",
-            latest_reporter_email: "reporter@example.com",
-            latest_reporter_display_name: "Reporter",
-            latest_report_reason_code: "suspected_scam",
-            latest_report_description: "Richiesta sospetta.",
-            latest_report_created_at: "2026-04-01T12:00:00.000Z",
-            audit_actions: [
-              {
-                id: "action-id",
-                action: "reported",
-                reasonCode: "suspected_scam",
-                reasonText: "Richiesta sospetta.",
-                fromStatus: "approved",
-                toStatus: "approved",
-                createdAt: "2026-04-01T12:00:00.000Z",
-                actor: {
-                  id: "reporter-id",
-                  email: "reporter@example.com",
-                  displayName: "Reporter",
-                },
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          total_count: "1",
+          case_id: "case-id",
+          case_status: "open",
+          case_reason_code: "user_report",
+          case_created_at: "2026-04-01T10:00:00.000Z",
+          assigned_to_user_id: "moderator-id",
+          listing_id: "listing-id",
+          listing_title: "Gatto adulto a Milano",
+          listing_slug: "gatto-adulto-a-milano",
+          listing_description: "Annuncio pubblicato da verificare",
+          listing_moderation_status: "approved",
+          listing_lifecycle_status: "published",
+          listing_published_at: "2026-03-25T10:00:00.000Z",
+          listing_expires_at: null,
+          listing_created_at: "2026-03-24T10:00:00.000Z",
+          listing_updated_at: "2026-03-25T10:00:00.000Z",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          municipality_id: null,
+          municipality_name: null,
+          municipality_istat_code: null,
+          province_id: null,
+          province_name: null,
+          province_istat_code: null,
+          region_id: null,
+          region_name: null,
+          region_istat_code: null,
+          ready_image_count: "1",
+          cover_image_id: null,
+          cover_object_key_thumb: null,
+          cover_object_key_large: null,
+          preview_images: [],
+          report_count: "3",
+          first_reported_at: "2026-04-01T10:00:00.000Z",
+          latest_reported_at: "2026-04-01T12:00:00.000Z",
+          latest_report_id: "report-id",
+          latest_reporter_user_id: "reporter-id",
+          latest_reporter_email: "reporter@example.com",
+          latest_reporter_display_name: "Reporter",
+          latest_report_reason_code: "suspected_scam",
+          latest_report_description: "Richiesta sospetta.",
+          latest_report_created_at: "2026-04-01T12:00:00.000Z",
+          audit_actions: [
+            {
+              id: "action-id",
+              action: "reported",
+              reasonCode: "suspected_scam",
+              reasonText: "Richiesta sospetta.",
+              fromStatus: "approved",
+              toStatus: "approved",
+              createdAt: "2026-04-01T12:00:00.000Z",
+              actor: {
+                id: "reporter-id",
+                email: "reporter@example.com",
+                displayName: "Reporter",
               },
-            ],
-          },
-        ]),
+            },
+          ],
+        },
+      ]),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
@@ -344,53 +426,119 @@ describe("ModerationService", () => {
         totalPages: 1,
       },
     })
-    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
       5, 10,
     ])
   })
 
-  it("rejects users without moderation roles", async () => {
+  it("lists recent moderation actions for the dashboard", async () => {
     const databaseService = {
-      queryRows: vi.fn().mockResolvedValue([{ role_code: "registered_user" }]),
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          total_count: "1",
+          action_id: "action-id",
+          action_type: "approved",
+          action_reason_code: "policy_ok",
+          action_reason_text: null,
+          action_from_status: "pending_review",
+          action_to_status: "approved",
+          action_created_at: "2026-04-01T11:00:00.000Z",
+          case_id: "case-id",
+          case_status: "approved",
+          assigned_to_user_id: "moderator-id",
+          listing_id: "listing-id",
+          listing_title: "Gattino a Roma",
+          listing_slug: "gattino-a-roma",
+          listing_moderation_status: "approved",
+          listing_lifecycle_status: "published",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          actor_user_id: "moderator-id",
+          actor_email: "moderator@example.com",
+          actor_display_name: "Moderator",
+        },
+      ]),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
     await expect(
-      service.pendingReviewQueue("user-id", {
+      service.recentListingActions("moderator-id", {
         page: 1,
-        pageSize: 10,
+        pageSize: 8,
       })
-    ).rejects.toBeInstanceOf(ForbiddenException)
-    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+    ).resolves.toEqual({
+      items: [
+        {
+          action: {
+            id: "action-id",
+            type: "approved",
+            reasonCode: "policy_ok",
+            reasonText: null,
+            fromStatus: "pending_review",
+            toStatus: "approved",
+            createdAt: "2026-04-01T11:00:00.000Z",
+          },
+          case: {
+            id: "case-id",
+            status: "approved",
+            assignedToUserId: "moderator-id",
+          },
+          listing: {
+            id: "listing-id",
+            title: "Gattino a Roma",
+            slug: "gattino-a-roma",
+            moderationStatus: "approved",
+            lifecycleStatus: "published",
+          },
+          owner: {
+            id: "owner-id",
+            email: "owner@example.com",
+            displayName: "Owner",
+          },
+          actor: {
+            id: "moderator-id",
+            email: "moderator@example.com",
+            displayName: "Moderator",
+          },
+        },
+      ],
+      meta: {
+        page: 1,
+        pageSize: 8,
+        total: 1,
+        totalPages: 1,
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      8, 0,
+    ])
   })
 
   it("approves pending-review cases and writes an action", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([{ role_code: "admin" }])
-        .mockResolvedValueOnce([
-          {
-            case_id: "case-id",
-            case_status: "approved",
-            case_closed_at: "2026-04-01T11:00:00.000Z",
-            action_id: "action-id",
-            listing_id: "listing-id",
-            listing_title: "Gattino a Roma",
-            listing_slug: "gattino-a-roma",
-            listing_moderation_status: "approved",
-            listing_lifecycle_status: "published",
-            listing_published_at: "2026-04-01T11:00:00.000Z",
-            listing_updated_at: "2026-04-01T11:00:00.000Z",
-            owner_user_id: "owner-id",
-            owner_email: "owner@example.com",
-            owner_display_name: "Owner",
-            owner_listing_moderation_decision_email_enabled: true,
-            report_resolution_status: "dismissed",
-            report_resolution_count: "0",
-            report_notifications: [],
-          },
-        ]),
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          case_status: "approved",
+          case_closed_at: "2026-04-01T11:00:00.000Z",
+          action_id: "action-id",
+          listing_id: "listing-id",
+          listing_title: "Gattino a Roma",
+          listing_slug: "gattino-a-roma",
+          listing_moderation_status: "approved",
+          listing_lifecycle_status: "published",
+          listing_published_at: "2026-04-01T11:00:00.000Z",
+          listing_updated_at: "2026-04-01T11:00:00.000Z",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          owner_listing_moderation_decision_email_enabled: true,
+          report_resolution_status: "dismissed",
+          report_resolution_count: "0",
+          report_notifications: [],
+        },
+      ]),
     } as unknown as DatabaseService
     const {
       listingSearchDocumentsService,
@@ -454,7 +602,7 @@ describe("ModerationService", () => {
     expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
       "listing-id"
     )
-    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
       "case-id",
       "moderator-id",
       "approved",
@@ -474,40 +622,37 @@ describe("ModerationService", () => {
     "%s pending-review cases with the expected target states",
     async (decision, moderationStatus, lifecycleStatus, reportStatus) => {
       const databaseService = {
-        queryRows: vi
-          .fn()
-          .mockResolvedValueOnce([{ role_code: "moderator" }])
-          .mockResolvedValueOnce([
-            {
-              case_id: "case-id",
-              case_status: moderationStatus,
-              case_closed_at: "2026-04-01T11:00:00.000Z",
-              action_id: "action-id",
-              listing_id: "listing-id",
-              listing_title: "Gattino a Roma",
-              listing_slug: "gattino-a-roma",
-              listing_moderation_status: moderationStatus,
-              listing_lifecycle_status: lifecycleStatus,
-              listing_published_at: null,
-              listing_updated_at: "2026-04-01T11:00:00.000Z",
-              owner_user_id: "owner-id",
-              owner_email: "owner@example.com",
-              owner_display_name: "Owner",
-              owner_listing_moderation_decision_email_enabled: true,
-              report_resolution_status: reportStatus,
-              report_resolution_count: "2",
-              report_notifications: [
-                {
-                  reportId: "report-id",
-                  reporterUserId: "reporter-id",
-                  reporterEmail: "reporter@example.com",
-                  reporterDisplayName: "Reporter",
-                  listingReportDecisionEmailEnabled: true,
-                  reasonCode: "suspected_scam",
-                },
-              ],
-            },
-          ]),
+        queryRows: vi.fn().mockResolvedValueOnce([
+          {
+            case_id: "case-id",
+            case_status: moderationStatus,
+            case_closed_at: "2026-04-01T11:00:00.000Z",
+            action_id: "action-id",
+            listing_id: "listing-id",
+            listing_title: "Gattino a Roma",
+            listing_slug: "gattino-a-roma",
+            listing_moderation_status: moderationStatus,
+            listing_lifecycle_status: lifecycleStatus,
+            listing_published_at: null,
+            listing_updated_at: "2026-04-01T11:00:00.000Z",
+            owner_user_id: "owner-id",
+            owner_email: "owner@example.com",
+            owner_display_name: "Owner",
+            owner_listing_moderation_decision_email_enabled: true,
+            report_resolution_status: reportStatus,
+            report_resolution_count: "2",
+            report_notifications: [
+              {
+                reportId: "report-id",
+                reporterUserId: "reporter-id",
+                reporterEmail: "reporter@example.com",
+                reporterDisplayName: "Reporter",
+                listingReportDecisionEmailEnabled: true,
+                reasonCode: "suspected_scam",
+              },
+            ],
+          },
+        ]),
       } as unknown as DatabaseService
       const {
         listingSearchDocumentsService,
@@ -559,7 +704,7 @@ describe("ModerationService", () => {
         reportResolutionStatus: reportStatus,
       })
 
-      expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
         "case-id",
         "moderator-id",
         moderationStatus,
@@ -578,40 +723,37 @@ describe("ModerationService", () => {
 
   it("skips moderation decision email for opted-out listing owners", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([{ role_code: "moderator" }])
-        .mockResolvedValueOnce([
-          {
-            case_id: "case-id",
-            case_status: "rejected",
-            case_closed_at: "2026-04-01T11:00:00.000Z",
-            action_id: "action-id",
-            listing_id: "listing-id",
-            listing_title: "Gattino a Roma",
-            listing_slug: "gattino-a-roma",
-            listing_moderation_status: "rejected",
-            listing_lifecycle_status: "draft",
-            listing_published_at: null,
-            listing_updated_at: "2026-04-01T11:00:00.000Z",
-            owner_user_id: "owner-id",
-            owner_email: "owner@example.com",
-            owner_display_name: "Owner",
-            owner_listing_moderation_decision_email_enabled: false,
-            report_resolution_status: "resolved",
-            report_resolution_count: "1",
-            report_notifications: [
-              {
-                reportId: "report-id",
-                reporterUserId: "reporter-id",
-                reporterEmail: "reporter@example.com",
-                reporterDisplayName: "Reporter",
-                listingReportDecisionEmailEnabled: true,
-                reasonCode: "suspected_scam",
-              },
-            ],
-          },
-        ]),
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          case_status: "rejected",
+          case_closed_at: "2026-04-01T11:00:00.000Z",
+          action_id: "action-id",
+          listing_id: "listing-id",
+          listing_title: "Gattino a Roma",
+          listing_slug: "gattino-a-roma",
+          listing_moderation_status: "rejected",
+          listing_lifecycle_status: "draft",
+          listing_published_at: null,
+          listing_updated_at: "2026-04-01T11:00:00.000Z",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          owner_listing_moderation_decision_email_enabled: false,
+          report_resolution_status: "resolved",
+          report_resolution_count: "1",
+          report_notifications: [
+            {
+              reportId: "report-id",
+              reporterUserId: "reporter-id",
+              reporterEmail: "reporter@example.com",
+              reporterDisplayName: "Reporter",
+              listingReportDecisionEmailEnabled: true,
+              reasonCode: "suspected_scam",
+            },
+          ],
+        },
+      ]),
     } as unknown as DatabaseService
     const {
       listingSearchDocumentsService,
@@ -651,22 +793,19 @@ describe("ModerationService", () => {
 
   it("rejects moderation decisions without a reason", async () => {
     const databaseService = {
-      queryRows: vi.fn().mockResolvedValue([{ role_code: "moderator" }]),
+      queryRows: vi.fn(),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
     await expect(
       service.decideListingCase("moderator-id", "case-id", "reject", {})
     ).rejects.toBeInstanceOf(BadRequestException)
-    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+    expect(databaseService.queryRows).not.toHaveBeenCalled()
   })
 
   it("returns not found when the case cannot be decided", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([{ role_code: "moderator" }])
-        .mockResolvedValueOnce([]),
+      queryRows: vi.fn().mockResolvedValueOnce([]),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 

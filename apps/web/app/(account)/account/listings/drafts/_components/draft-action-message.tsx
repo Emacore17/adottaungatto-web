@@ -7,6 +7,9 @@ const messages = {
   saved: "Modifiche salvate.",
   submitted: "Annuncio inviato in revisione.",
   uploaded: "Foto aggiornata.",
+  "phone-code-sent": "Codice inviato al numero dell'annuncio.",
+  "phone-already-verified": "Numero dell'annuncio gia verificato.",
+  "phone-verified": "Numero dell'annuncio verificato.",
 } as const
 
 const errors = {
@@ -19,14 +22,18 @@ const errors = {
   "image-cover": "Copertina non aggiornata.",
   "image-delete": "Foto non eliminata.",
   "image-order": "Ordine foto non salvato.",
-  "not-ready": "Aggiungi i dati obbligatori e una foto pronta.",
+  "not-ready":
+    "Aggiungi i dati obbligatori, una foto pronta e verifica il telefono se lo mostri.",
+  "phone-code-api": "Codice non inviato. Salva un numero e riprova.",
+  "phone-code-invalid": "Codice non valido o scaduto.",
 } as const
 
 function DraftActionMessage({ searchParams }: DraftActionMessageProps) {
   const success = pickMessage(searchParams, messages)
+  const phoneSuccess = pickMessage(searchParams, messages, "phone")
   const error = pickMessage(searchParams, errors, "error")
 
-  if (!success && !error) {
+  if (!success && !phoneSuccess && !error) {
     return null
   }
 
@@ -39,7 +46,12 @@ function DraftActionMessage({ searchParams }: DraftActionMessageProps) {
           : "rounded-md border border-brand-olive/30 bg-brand-olive-soft px-4 py-3 text-sm text-brand-teal-ink"
       }
     >
-      {error ?? success}
+      {error ?? phoneSuccess ?? success}
+      {readParam(searchParams.phoneCode) ? (
+        <span className="mt-1 block font-mono text-xs">
+          Codice sviluppo: {readParam(searchParams.phoneCode)}
+        </span>
+      ) : null}
     </div>
   )
 }

@@ -4,6 +4,7 @@ import {
   Get,
   Inject,
   Query,
+  Req,
 } from "@nestjs/common"
 import {
   placeAutocompleteQuerySchema,
@@ -11,21 +12,36 @@ import {
 } from "@workspace/validation"
 import { ZodError } from "zod"
 
+import { RateLimitService } from "../rate-limit/rate-limit.service.js"
+import {
+  getPlaceAutocompleteRateLimitRules,
+  getPlaceNearbyRateLimitRules,
+  type PlacesRateLimitRequest,
+} from "./places-rate-limit.js"
 import { PlacesService } from "./places.service.js"
 
 @Controller("places")
 export class PlacesController {
   constructor(
     @Inject(PlacesService)
-    private readonly placesService: PlacesService
+    private readonly placesService: PlacesService,
+    @Inject(RateLimitService)
+    private readonly rateLimitService: RateLimitService
   ) {}
 
   @Get("autocomplete")
-  async autocomplete(@Query() query: Record<string, unknown>) {
+  async autocomplete(
+    @Query() query: Record<string, unknown>,
+    @Req() request: PlacesRateLimitRequest = {}
+  ) {
     try {
-      return this.placesService.autocomplete(
-        placeAutocompleteQuerySchema.parse(query)
+      const input = placeAutocompleteQuerySchema.parse(query)
+
+      await this.rateLimitService.enforce(
+        getPlaceAutocompleteRateLimitRules(input, request)
       )
+
+      return this.placesService.autocomplete(input)
     } catch (error) {
       if (error instanceof ZodError) {
         throw new BadRequestException({
@@ -39,9 +55,18 @@ export class PlacesController {
   }
 
   @Get("nearby")
-  async nearby(@Query() query: Record<string, unknown>) {
+  async nearby(
+    @Query() query: Record<string, unknown>,
+    @Req() request: PlacesRateLimitRequest = {}
+  ) {
     try {
-      return this.placesService.nearby(placeNearbyQuerySchema.parse(query))
+      const input = placeNearbyQuerySchema.parse(query)
+
+      await this.rateLimitService.enforce(
+        getPlaceNearbyRateLimitRules(input, request)
+      )
+
+      return this.placesService.nearby(input)
     } catch (error) {
       if (error instanceof ZodError) {
         throw new BadRequestException({

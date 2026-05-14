@@ -114,6 +114,7 @@ describe("UsersService", () => {
       true,
       "+39123456789",
       null,
+      null,
     ])
   })
 
@@ -197,6 +198,7 @@ describe("UsersService", () => {
       "user-id",
       null,
       false,
+      null,
       null,
       "professional",
     ])

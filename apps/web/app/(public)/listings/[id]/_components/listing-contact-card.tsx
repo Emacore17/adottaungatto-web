@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { LogInIcon, MailIcon } from "lucide-react"
+import { LogInIcon, MailIcon, PhoneCallIcon } from "lucide-react"
 
 import { contactListingOwnerAction } from "@/app/(public)/listings/[id]/actions"
 import { routes } from "@/lib/routes"
@@ -29,6 +29,7 @@ type ListingContactCardProps = {
   isAuthenticated: boolean
   isEnabled: boolean
   listingId: string
+  publicPhoneE164: string | null
 }
 
 function ListingContactCard({
@@ -37,6 +38,7 @@ function ListingContactCard({
   isAuthenticated,
   isEnabled,
   listingId,
+  publicPhoneE164,
 }: ListingContactCardProps) {
   const messageInvalid = contactStatus === "invalid"
 
@@ -52,6 +54,14 @@ function ListingContactCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
+        {publicPhoneE164 ? (
+          <Button asChild variant="outline" className="w-full justify-start">
+            <a href={`tel:${publicPhoneE164}`}>
+              <PhoneCallIcon data-icon="inline-start" aria-hidden="true" />
+              {publicPhoneE164}
+            </a>
+          </Button>
+        ) : null}
         <ContactFeedback status={contactStatus} />
         {!isEnabled ? (
           <p className="rounded-md border border-brand-amber/30 bg-brand-amber-soft px-3 py-2 text-sm text-brand-teal-ink">

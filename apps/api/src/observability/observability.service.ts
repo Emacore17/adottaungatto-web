@@ -21,6 +21,15 @@ export type HttpRequestMetricsInput = {
   traceId: string
 }
 
+export type PublicListingSearchMetricsInput = {
+  durationMs: number
+  expansionType: string | null
+  hasGeo: boolean
+  queryPresent: boolean
+  resultCount: number
+  sort: string
+}
+
 type ObservabilityAlertEnv = Pick<
   ApiEnv,
   | "OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD"
@@ -55,7 +64,18 @@ type RouteMetrics = {
   statusCodeCounts: Record<string, number>
 }
 
+type PublicListingSearchMetrics = {
+  durationSamplesMs: number[]
+  expansionCounts: Record<string, number>
+  geoRequestsTotal: number
+  queryRequestsTotal: number
+  requestsTotal: number
+  resultCountSamples: number[]
+  sortCounts: Record<string, number>
+}
+
 const maxRouteSamples = 200
+const maxSearchSamples = 200
 
 @Injectable()
 export class ObservabilityService {
@@ -65,6 +85,7 @@ export class ObservabilityService {
   private errorsTotal = 0
   private inFlightRequests = 0
   private requestsTotal = 0
+  private readonly publicListingSearch = createPublicListingSearchMetrics()
   private readonly statusCodeCounts: Record<string, number> = {}
 
   constructor(
@@ -122,6 +143,35 @@ export class ObservabilityService {
     this.logHttpRequest(input)
   }
 
+  recordPublicListingSearch(input: PublicListingSearchMetricsInput) {
+    this.publicListingSearch.requestsTotal += 1
+
+    if (input.queryPresent) {
+      this.publicListingSearch.queryRequestsTotal += 1
+    }
+
+    if (input.hasGeo) {
+      this.publicListingSearch.geoRequestsTotal += 1
+    }
+
+    incrementCount(this.publicListingSearch.sortCounts, input.sort)
+    incrementCount(
+      this.publicListingSearch.expansionCounts,
+      input.expansionType ?? "none"
+    )
+    pushSample(
+      this.publicListingSearch.durationSamplesMs,
+      input.durationMs,
+      maxSearchSamples
+    )
+    pushSample(
+      this.publicListingSearch.resultCountSamples,
+      input.resultCount,
+      maxSearchSamples
+    )
+    this.logPublicListingSearch(input)
+  }
+
   snapshot() {
     return {
       service: "api",
@@ -146,6 +196,21 @@ export class ObservabilityService {
             durationMs: summarizeDurations(route.durationSamplesMs),
           }))
           .sort((left, right) => right.requestsTotal - left.requestsTotal),
+      },
+      search: {
+        publicListings: {
+          requestsTotal: this.publicListingSearch.requestsTotal,
+          queryRequestsTotal: this.publicListingSearch.queryRequestsTotal,
+          geoRequestsTotal: this.publicListingSearch.geoRequestsTotal,
+          sortCounts: { ...this.publicListingSearch.sortCounts },
+          expansionCounts: { ...this.publicListingSearch.expansionCounts },
+          durationMs: summarizeDurations(
+            this.publicListingSearch.durationSamplesMs
+          ),
+          resultCount: summarizeDurations(
+            this.publicListingSearch.resultCountSamples
+          ),
+        },
       },
     }
   }
@@ -244,6 +309,22 @@ export class ObservabilityService {
       })
     )
   }
+
+  private logPublicListingSearch(input: PublicListingSearchMetricsInput) {
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: "info",
+        event: "public_listing_search",
+        durationMs: input.durationMs,
+        resultCount: input.resultCount,
+        expansionType: input.expansionType,
+        queryPresent: input.queryPresent,
+        hasGeo: input.hasGeo,
+        sort: input.sort,
+      })
+    )
+  }
 }
 
 function resolveAlertConfig(
@@ -271,8 +352,28 @@ function createRouteMetrics(method: string, route: string): RouteMetrics {
   }
 }
 
+function createPublicListingSearchMetrics(): PublicListingSearchMetrics {
+  return {
+    durationSamplesMs: [],
+    expansionCounts: {},
+    geoRequestsTotal: 0,
+    queryRequestsTotal: 0,
+    requestsTotal: 0,
+    resultCountSamples: [],
+    sortCounts: {},
+  }
+}
+
 function incrementCount(counts: Record<string, number>, key: string) {
   counts[key] = (counts[key] ?? 0) + 1
+}
+
+function pushSample(samples: number[], value: number, maxSamples: number) {
+  samples.push(value)
+
+  if (samples.length > maxSamples) {
+    samples.shift()
+  }
 }
 
 function summarizeDurations(samples: number[]) {

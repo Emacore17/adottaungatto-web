@@ -5,6 +5,9 @@ import {
   parseListingSearchParams,
 } from "@/lib/api/listings"
 
+const publicListingsCacheControl =
+  "public, max-age=30, stale-while-revalidate=120"
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const parsed = parseListingSearchParams(
@@ -24,5 +27,9 @@ export async function GET(request: Request) {
     )
   }
 
-  return NextResponse.json(result.data)
+  return NextResponse.json(result.data, {
+    headers: {
+      "Cache-Control": publicListingsCacheControl,
+    },
+  })
 }

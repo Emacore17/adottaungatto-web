@@ -1,7 +1,10 @@
 import Link from "next/link"
-import { CheckIcon } from "lucide-react"
+import { CheckIcon, Trash2Icon } from "lucide-react"
 
-import { markNotificationReadAction } from "@/app/(account)/account/actions"
+import {
+  deleteNotificationAction,
+  markNotificationReadAction,
+} from "@/app/(account)/account/actions"
 import type { Notification } from "@/lib/api/account"
 import { routes } from "@/lib/routes"
 import { Badge } from "@workspace/ui/components/badge"
@@ -77,6 +80,20 @@ function AccountNotificationCard({
               <Button type="submit" variant="secondary" size="sm">
                 <CheckIcon data-icon="inline-start" aria-hidden="true" />
                 Segna letta
+              </Button>
+            </form>
+          ) : null}
+          {returnPath ? (
+            <form action={deleteNotificationAction}>
+              <input
+                type="hidden"
+                name="notificationId"
+                value={notification.id}
+              />
+              <input type="hidden" name="nextPath" value={returnPath} />
+              <Button type="submit" variant="destructive" size="sm">
+                <Trash2Icon data-icon="inline-start" aria-hidden="true" />
+                Elimina
               </Button>
             </form>
           ) : null}

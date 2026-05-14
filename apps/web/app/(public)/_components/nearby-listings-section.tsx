@@ -122,6 +122,8 @@ function NearbyListingsSection() {
   const [fallbackMessage, setFallbackMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    mountedRef.current = true
+
     return () => {
       mountedRef.current = false
     }
@@ -145,9 +147,7 @@ function NearbyListingsSection() {
         pageSize: String(nearbyListingsLimit),
         sort: "recent",
       })
-      const response = await fetch(`/api/listings?${params.toString()}`, {
-        cache: "no-store",
-      })
+      const response = await fetch(`/api/listings?${params.toString()}`)
 
       if (!response.ok) {
         throw new Error("Fallback listings request failed.")
@@ -203,9 +203,7 @@ function NearbyListingsSection() {
           radiusKm: String(nearbyRadiusKm),
           sort: "distance",
         })
-        const response = await fetch(`/api/listings?${params.toString()}`, {
-          cache: "no-store",
-        })
+        const response = await fetch(`/api/listings?${params.toString()}`)
 
         if (!response.ok) {
           throw new Error("Nearby listings request failed.")

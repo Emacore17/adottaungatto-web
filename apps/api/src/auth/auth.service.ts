@@ -55,6 +55,7 @@ type AuthUserRow = {
   email: string
   display_name: string
   profile_type: AuthUserProfileType
+  roles?: string[]
   status: AuthUserStatus
 }
 
@@ -109,9 +110,20 @@ const registerSql = `
       password_hash,
       display_name,
       profile_type,
+      phone_e164,
+      show_phone_on_listings,
       status
     )
-    values ($1, $2, $3, $4, $5::profile_type, 'pending_verification')
+    values (
+      $1,
+      $2,
+      $3,
+      $4,
+      $5::profile_type,
+      $6::text,
+      $7::boolean,
+      'pending_verification'
+    )
     returning
       id,
       email,
@@ -129,7 +141,7 @@ const registerSql = `
   ),
   inserted_session as (
     insert into sessions (user_id, token_hash, expires_at)
-    select inserted_user.id, $6, $7
+    select inserted_user.id, $8, $9
     from inserted_user
     returning id::text as session_id, expires_at
   )
@@ -139,6 +151,7 @@ const registerSql = `
     inserted_user.display_name,
     inserted_user.profile_type,
     inserted_user.status,
+    array['registered_user']::text[] as roles,
     inserted_session.session_id,
     inserted_session.expires_at
   from inserted_user
@@ -148,15 +161,23 @@ const registerSql = `
 
 const userByEmailSql = `
   select
-    id::text,
-    email,
-    display_name,
-    profile_type::text as profile_type,
-    status::text as status,
-    password_hash
+    users.id::text,
+    users.email,
+    users.display_name,
+    users.profile_type::text as profile_type,
+    users.status::text as status,
+    users.password_hash,
+    coalesce(
+      array_agg(roles.code order by roles.code)
+        filter (where roles.code is not null),
+      '{}'::text[]
+    ) as roles
   from users
+  left join user_roles on user_roles.user_id = users.id
+  left join roles on roles.id = user_roles.role_id
   where email_normalized = $1
     and deleted_at is null
+  group by users.id
   limit 1
 `
 
@@ -173,14 +194,22 @@ const currentSessionSql = `
     users.display_name,
     users.profile_type::text as profile_type,
     users.status::text as status,
+    coalesce(
+      array_agg(roles.code order by roles.code)
+        filter (where roles.code is not null),
+      '{}'::text[]
+    ) as roles,
     sessions.id::text as session_id,
     sessions.expires_at
   from sessions
   join users on users.id = sessions.user_id
+  left join user_roles on user_roles.user_id = users.id
+  left join roles on roles.id = user_roles.role_id
   where sessions.token_hash = $1
     and sessions.revoked_at is null
     and sessions.expires_at > now()
     and users.deleted_at is null
+  group by users.id, sessions.id
   limit 1
 `
 
@@ -409,6 +438,8 @@ export class AuthService {
           passwordHash,
           input.displayName,
           input.profileType,
+          input.phoneE164 ?? null,
+          input.showPhoneOnListings,
           tokenHash,
           expiresAt,
         ]
@@ -767,13 +798,20 @@ function mapSessionResponse(
 }
 
 function mapUser(row: AuthUserRow): AuthUser {
+  const roles = normalizeRoles(row.roles)
+
   return {
     id: row.id,
     email: row.email,
     displayName: row.display_name,
     profileType: row.profile_type,
+    ...(roles ? { roles } : {}),
     status: row.status,
   }
+}
+
+function normalizeRoles(roles: string[] | undefined) {
+  return Array.isArray(roles) ? roles : null
 }
 
 function assertUserCanAuthenticate(user: AuthUserRow) {

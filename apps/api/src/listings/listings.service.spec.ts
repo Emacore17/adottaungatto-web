@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest"
 import type { DatabaseService } from "../database/database.service.js"
 import type { NotificationsService } from "../notifications/notifications.service.js"
 import type { ObjectStorageService } from "../storage/object-storage.service.js"
+import { hashPassword, verifyPassword } from "../auth/auth.service.js"
 import { createListingSlug, ListingsService } from "./listings.service.js"
 
 describe("ListingsService", () => {
@@ -543,6 +544,7 @@ describe("ListingsService", () => {
         contributionCents: 1500,
         isFree: false,
         contactRequestsEnabled: false,
+        contactPhoneMode: "none",
       })
     ).resolves.toMatchObject({
       id: "listing-id",
@@ -585,6 +587,7 @@ describe("ListingsService", () => {
         municipalityId: "missing-municipality-id",
         isFree: true,
         contactRequestsEnabled: true,
+        contactPhoneMode: "none",
       })
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
@@ -680,6 +683,74 @@ describe("ListingsService", () => {
     expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
       "listing-id",
       "user-id",
+    ])
+  })
+
+  it("requests a verification code for a listing-only phone", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          phone_e164: "+39123456789",
+          contact_phone_verified_at: null,
+          code_id: "code-id",
+          expires_at: "2026-04-01T10:10:00.000Z",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    const response = await service.requestDraftPhoneVerification(
+      "user-id",
+      "listing-id"
+    )
+    const [, parameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[0]!
+
+    expect(response).toMatchObject({
+      alreadyVerified: false,
+      expiresAt: "2026-04-01T10:10:00.000Z",
+      sent: true,
+    })
+    expect(response.devCode).toMatch(/^\d{6}$/)
+    expect(parameters[0]).toBe("user-id")
+    expect(parameters[1]).toBe("listing-id")
+    await expect(
+      verifyPassword(String(response.devCode), String(parameters[2]))
+    ).resolves.toBe(true)
+  })
+
+  it("confirms a verification code for a listing-only phone", async () => {
+    const codeHash = await hashPassword("123456")
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            id: "code-id",
+            phone_e164: "+39123456789",
+            code_hash: codeHash,
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            contact_phone_verified_at: "2026-04-01T10:05:00.000Z",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.confirmDraftPhoneVerification("user-id", "listing-id", {
+        code: "123456",
+      })
+    ).resolves.toEqual({
+      phoneVerifiedAt: "2026-04-01T10:05:00.000Z",
+      verified: true,
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      "user-id",
+      "listing-id",
+      "code-id",
     ])
   })
 
@@ -1263,6 +1334,9 @@ function createDraftRow() {
     is_dewormed: null,
     has_microchip: null,
     contact_requests_enabled: true,
+    contact_phone_mode: "none",
+    contact_phone_e164: null,
+    contact_phone_verified_at: null,
     moderation_status: "draft",
     lifecycle_status: "draft",
     created_at: "2026-04-01T09:00:00.000Z",
@@ -1300,6 +1374,10 @@ function createPublicListingRow() {
     is_dewormed: true,
     has_microchip: false,
     contact_requests_enabled: true,
+    contact_phone_mode: "none",
+    contact_phone_e164: null,
+    contact_phone_verified_at: null,
+    public_phone_e164: null,
     published_at: "2026-04-20T10:00:00.000Z",
     expires_at: null,
     created_at: "2026-04-01T09:00:00.000Z",

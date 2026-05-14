@@ -9,6 +9,7 @@ import type {
   PublicListingDetail,
   PublicListingListResponse,
 } from "@/lib/api/types"
+import { cacheTags } from "@/lib/cache/tags"
 
 type SearchParamValue = string | string[] | undefined
 type SearchParamsInput = Record<string, SearchParamValue>
@@ -91,7 +92,7 @@ export function listPublicListings(
     queryString ? `/listings?${queryString}` : "/listings",
     {
       revalidate: 60,
-      tags: ["public-listings"],
+      tags: [cacheTags.publicListings],
     }
   )
 }
@@ -108,7 +109,7 @@ export function getPublicListing(
         }
       : {
           revalidate: options.revalidate ?? 60,
-          tags: [`public-listing:${id}`],
+          tags: [cacheTags.publicListing(id)],
         }
   )
 }
@@ -116,7 +117,7 @@ export function getPublicListing(
 export function listPublicCatBreeds(): Promise<ApiResult<PublicCatBreed[]>> {
   return apiFetch<PublicCatBreed[]>("/listings/breeds", {
     revalidate: 3600,
-    tags: ["public-cat-breeds"],
+    tags: [cacheTags.publicCatBreeds],
   })
 }
 

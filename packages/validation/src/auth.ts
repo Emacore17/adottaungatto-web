@@ -14,6 +14,13 @@ export const authRegisterSchema = z.object({
   email: emailSchema,
   password: z.string().min(10).max(128),
   displayName: z.string().trim().min(2).max(80),
+  phoneE164: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{7,14}$/)
+    .nullable()
+    .optional(),
+  showPhoneOnListings: z.boolean().default(false),
   profileType: z.enum(authProfileTypes).default("private"),
 })
 

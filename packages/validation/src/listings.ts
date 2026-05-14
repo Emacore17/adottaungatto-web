@@ -2,6 +2,7 @@ import { z } from "zod"
 
 export const listingSexes = ["male", "female", "unknown"] as const
 export const listingPublicSorts = ["relevance", "recent", "distance"] as const
+export const listingContactPhoneModes = ["none", "account", "listing"] as const
 
 export const listingImageMimeTypes = [
   "image/jpeg",
@@ -70,6 +71,13 @@ const listingDraftFieldsSchema = z.object({
   isDewormed: z.boolean().nullable().optional(),
   hasMicrochip: z.boolean().nullable().optional(),
   contactRequestsEnabled: z.boolean(),
+  contactPhoneMode: z.enum(listingContactPhoneModes).optional(),
+  contactPhoneE164: z
+    .string()
+    .trim()
+    .regex(/^\+[1-9]\d{7,14}$/)
+    .nullable()
+    .optional(),
 })
 
 export const listingDraftCreateSchema = listingDraftFieldsSchema
@@ -77,6 +85,7 @@ export const listingDraftCreateSchema = listingDraftFieldsSchema
     sex: z.enum(listingSexes).default("unknown"),
     isFree: z.boolean().default(true),
     contactRequestsEnabled: z.boolean().default(true),
+    contactPhoneMode: z.enum(listingContactPhoneModes).default("none"),
   })
   .strict()
   .superRefine(validateDraftFields)
@@ -154,9 +163,20 @@ export const listingImageOrderSchema = z
   })
   .strict()
 
+export const listingPhoneVerificationConfirmSchema = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$/),
+  })
+  .strict()
+
 export type ListingSex = (typeof listingSexes)[number]
 
 export type ListingPublicSort = (typeof listingPublicSorts)[number]
+
+export type ListingContactPhoneMode = (typeof listingContactPhoneModes)[number]
 
 export type ListingImageMimeType = (typeof listingImageMimeTypes)[number]
 
@@ -176,10 +196,34 @@ export type ListingImageUploadRequestInput = z.infer<
 
 export type ListingImageOrderInput = z.infer<typeof listingImageOrderSchema>
 
+export type ListingPhoneVerificationConfirmInput = z.infer<
+  typeof listingPhoneVerificationConfirmSchema
+>
+
 function validateDraftFields(
   input: Partial<z.infer<typeof listingDraftFieldsSchema>>,
   context: z.RefinementCtx
 ) {
+  if (input.contactPhoneMode === "listing" && !input.contactPhoneE164) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Listing phone mode requires a phone number.",
+      path: ["contactPhoneE164"],
+    })
+  }
+
+  if (
+    input.contactPhoneMode !== undefined &&
+    input.contactPhoneMode !== "listing" &&
+    input.contactPhoneE164
+  ) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Phone number is only accepted for listing phone mode.",
+      path: ["contactPhoneE164"],
+    })
+  }
+
   if (
     input.isFree === true &&
     input.contributionCents !== undefined &&

@@ -20,6 +20,7 @@ import {
   listingImageIdParamSchema,
   listingImageOrderSchema,
   listingImageUploadRequestSchema,
+  listingPhoneVerificationConfirmSchema,
   listingPublicIdParamSchema,
   listingPublicListQuerySchema,
 } from "@workspace/validation"
@@ -31,7 +32,10 @@ import type { CurrentAuthSessionResponse } from "../auth/auth.types.js"
 import { RateLimitService } from "../rate-limit/rate-limit.service.js"
 import {
   getConfirmDraftImageUploadRateLimitRules,
+  getConfirmDraftPhoneVerificationRateLimitRules,
   getCreateDraftImageUploadRateLimitRules,
+  getListPublicListingsRateLimitRules,
+  getRequestDraftPhoneVerificationRateLimitRules,
   type ListingsRateLimitRequest,
 } from "./listings-rate-limit.js"
 import { ListingsService } from "./listings.service.js"
@@ -46,11 +50,18 @@ export class ListingsController {
   ) {}
 
   @Get()
-  async listPublic(@Query() query: Record<string, unknown>) {
+  async listPublic(
+    @Query() query: Record<string, unknown>,
+    @Req() request: ListingsRateLimitRequest = {}
+  ) {
     try {
-      return this.listingsService.listPublic(
-        listingPublicListQuerySchema.parse(query)
+      const input = listingPublicListQuerySchema.parse(query)
+
+      await this.rateLimitService.enforce(
+        getListPublicListingsRateLimitRules(input, request)
       )
+
+      return this.listingsService.listPublic(input)
     } catch (error) {
       throwValidationError(error, "Invalid public listing query.")
     }
@@ -226,6 +237,63 @@ export class ListingsController {
       return this.listingsService.deleteDraftImage(auth.user.id, id, imageId)
     } catch (error) {
       throwValidationError(error, "Invalid listing image id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Post("me/drafts/:id/phone-verification/request")
+  async requestDraftPhoneVerification(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>,
+    @Req() request: ListingsRateLimitRequest
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+
+      await this.rateLimitService.enforce(
+        getRequestDraftPhoneVerificationRateLimitRules(
+          auth.user.id,
+          id,
+          request
+        )
+      )
+
+      return this.listingsService.requestDraftPhoneVerification(
+        auth.user.id,
+        id
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid listing draft id.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Post("me/drafts/:id/phone-verification/confirm")
+  async confirmDraftPhoneVerification(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>,
+    @Body() body: unknown,
+    @Req() request: ListingsRateLimitRequest
+  ) {
+    try {
+      const { id } = listingDraftIdParamSchema.parse(params)
+      const input = listingPhoneVerificationConfirmSchema.parse(body)
+
+      await this.rateLimitService.enforce(
+        getConfirmDraftPhoneVerificationRateLimitRules(
+          auth.user.id,
+          id,
+          request
+        )
+      )
+
+      return this.listingsService.confirmDraftPhoneVerification(
+        auth.user.id,
+        id,
+        input
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid listing phone verification payload.")
     }
   }
 

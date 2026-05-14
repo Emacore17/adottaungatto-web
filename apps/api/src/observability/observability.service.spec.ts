@@ -67,6 +67,59 @@ describe("ObservabilityService", () => {
     logSpy.mockRestore()
   })
 
+  it("records public listing search metrics without raw query text", () => {
+    const service = new ObservabilityService()
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined)
+
+    service.recordPublicListingSearch({
+      durationMs: 40,
+      expansionType: null,
+      hasGeo: false,
+      queryPresent: false,
+      resultCount: 12,
+      sort: "recent",
+    })
+    service.recordPublicListingSearch({
+      durationMs: 90,
+      expansionType: "expanded_radius",
+      hasGeo: true,
+      queryPresent: true,
+      resultCount: 4,
+      sort: "distance",
+    })
+
+    expect(service.snapshot().search.publicListings).toMatchObject({
+      requestsTotal: 2,
+      queryRequestsTotal: 1,
+      geoRequestsTotal: 1,
+      sortCounts: {
+        distance: 1,
+        recent: 1,
+      },
+      expansionCounts: {
+        expanded_radius: 1,
+        none: 1,
+      },
+      durationMs: {
+        avg: 65,
+        p50: 40,
+        p95: 90,
+        p99: 90,
+      },
+      resultCount: {
+        avg: 8,
+        p50: 4,
+        p95: 12,
+        p99: 12,
+      },
+    })
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.not.stringContaining("siamese")
+    )
+
+    logSpy.mockRestore()
+  })
+
   it("does not alert before the minimum request count", () => {
     const service = new ObservabilityService({
       OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: 0.01,

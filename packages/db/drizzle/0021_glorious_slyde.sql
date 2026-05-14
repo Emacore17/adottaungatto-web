@@ -1,0 +1,1 @@
+CREATE INDEX "listing_images_ready_listing_sort_idx" ON "listing_images" USING btree ("listing_id","is_cover","sort_order","created_at","id") WHERE "listing_images"."status" = 'ready' AND "listing_images"."deleted_at" IS NULL;

@@ -15,9 +15,9 @@ export default function AuthLayout({
   children: React.ReactNode
 }>) {
   return (
-    <div className="flex min-h-svh flex-col bg-background pt-24 text-foreground sm:pt-28">
+    <div className="auth-page-bg flex min-h-svh flex-col bg-background pt-24 text-foreground sm:pt-28">
       <SiteHeader />
-      <main className="flex flex-1 items-center justify-center px-4 py-10">
+      <main className="relative z-10 flex flex-1 items-start justify-center px-4 py-4 sm:items-center sm:px-6 sm:py-6 lg:px-8 lg:py-10">
         {children}
       </main>
     </div>

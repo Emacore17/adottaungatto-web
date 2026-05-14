@@ -5,6 +5,7 @@ import { requireAccountSession } from "@/app/(account)/account/_lib/session"
 import { DraftActionMessage } from "@/app/(account)/account/listings/drafts/_components/draft-action-message"
 import { DraftEditorForm } from "@/app/(account)/account/listings/drafts/_components/draft-editor-form"
 import { listPublicCatBreeds } from "@/lib/api/listings"
+import { getCurrentUserProfile } from "@/lib/api/users"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 
@@ -16,8 +17,11 @@ export default async function NewDraftPage({
   searchParams,
 }: NewDraftPageProps) {
   const params = await searchParams
-  await requireAccountSession(routes.accountDraftNew)
-  const breeds = await listPublicCatBreeds()
+  const { token } = await requireAccountSession(routes.accountDraftNew)
+  const [breeds, profile] = await Promise.all([
+    listPublicCatBreeds(),
+    getCurrentUserProfile(token),
+  ])
 
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -49,7 +53,10 @@ export default async function NewDraftPage({
         </div>
       ) : null}
 
-      <DraftEditorForm breeds={breeds.ok ? breeds.data : []} />
+      <DraftEditorForm
+        breeds={breeds.ok ? breeds.data : []}
+        profile={profile.ok ? profile.data : null}
+      />
     </main>
   )
 }

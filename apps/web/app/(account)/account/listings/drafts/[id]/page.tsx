@@ -10,6 +10,7 @@ import { DraftImagePanel } from "@/app/(account)/account/listings/drafts/_compon
 import { DraftSubmitPanel } from "@/app/(account)/account/listings/drafts/_components/draft-submit-panel"
 import { getAccountDraft, listAccountDraftImages } from "@/lib/api/account"
 import { listPublicCatBreeds } from "@/lib/api/listings"
+import { getCurrentUserProfile } from "@/lib/api/users"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -40,10 +41,11 @@ export default async function EditDraftPage({
     return <DraftUnavailable message="Identificativo annuncio non valido." />
   }
 
-  const [draft, breeds, images] = await Promise.all([
+  const [draft, breeds, images, profile] = await Promise.all([
     getAccountDraft(token, parsed.data.id),
     listPublicCatBreeds(),
     listAccountDraftImages(token, parsed.data.id),
+    getCurrentUserProfile(token),
   ])
 
   if (!draft.ok) {
@@ -90,6 +92,7 @@ export default async function EditDraftPage({
             breeds.ok ? breeds.data : draft.data.breed ? [draft.data.breed] : []
           }
           draft={draft.data}
+          profile={profile.ok ? profile.data : null}
         />
         <aside className="grid h-fit gap-6">
           <DraftImagePanel

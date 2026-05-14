@@ -4,6 +4,7 @@ import {
   ArrowRightIcon,
   ClockIcon,
   FileTextIcon,
+  HistoryIcon,
   ImageIcon,
   ListChecksIcon,
   ShieldAlertIcon,
@@ -11,12 +12,14 @@ import {
 
 import { formatModerationStatus } from "@/app/(admin)/moderation/_lib/moderation-labels"
 import { StorageImage } from "@/components/shared/storage-image"
-import { currentSession } from "@/lib/api/auth"
 import { getPublicObjectUrl } from "@/lib/api/assets"
 import {
   listPendingReviewModerationQueue,
+  listRecentModerationActions,
   listReportedListingsModerationQueue,
   type ModerationQueueItem,
+  type ModerationRecentActionItem,
+  type ModerationRecentActionsResponse,
   type ReportedListingQueueItem,
 } from "@/lib/api/moderation"
 import { getSessionToken } from "@/lib/auth/session"
@@ -32,7 +35,6 @@ import {
 } from "@workspace/ui/components/card"
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
@@ -74,20 +76,18 @@ export default async function ModerationPage({
     redirect(routes.login(routes.moderation))
   }
 
-  const session = await currentSession(token)
-
-  if (!session.ok) {
-    redirect(routes.login(routes.moderation))
-  }
-
   const params = await searchParams
   const queueFilter = readQueueFilter(params.queue)
   const decision = readSingleParam(params.decision)
   const decisionCount = readSingleParam(params.decisionCount)
   const decisionFailed = readSingleParam(params.decisionFailed)
   const decisionError = readSingleParam(params.decisionError)
+  const claim = readSingleParam(params.claim)
+  const claimError = readSingleParam(params.claimError)
+  const comment = readSingleParam(params.comment)
+  const commentError = readSingleParam(params.commentError)
 
-  const [pendingQueue, reportedQueue] = await Promise.all([
+  const [pendingQueue, reportedQueue, recentActions] = await Promise.all([
     listPendingReviewModerationQueue(token, {
       page: 1,
       pageSize: dashboardPageSize,
@@ -96,14 +96,26 @@ export default async function ModerationPage({
       page: 1,
       pageSize: dashboardPageSize,
     }),
+    listRecentModerationActions(token, {
+      page: 1,
+      pageSize: 8,
+    }),
   ])
 
-  if (isApiStatus(pendingQueue, 401) || isApiStatus(reportedQueue, 401)) {
+  if (
+    isApiStatus(pendingQueue, 401) ||
+    isApiStatus(reportedQueue, 401) ||
+    isApiStatus(recentActions, 401)
+  ) {
     redirect(routes.login(routes.moderation))
   }
 
-  if (isApiStatus(pendingQueue, 403) || isApiStatus(reportedQueue, 403)) {
-    return <AccessDenied displayName={session.data.user.displayName} />
+  if (
+    isApiStatus(pendingQueue, 403) ||
+    isApiStatus(reportedQueue, 403) ||
+    isApiStatus(recentActions, 403)
+  ) {
+    redirect(routes.account)
   }
 
   const pendingTotal = pendingQueue.ok ? pendingQueue.data.meta.total : null
@@ -148,6 +160,10 @@ export default async function ModerationPage({
       </section>
 
       <DecisionFeedback
+        claim={claim}
+        claimError={claimError}
+        comment={comment}
+        commentError={commentError}
         decision={decision}
         decisionCount={decisionCount}
         decisionFailed={decisionFailed}
@@ -179,6 +195,8 @@ export default async function ModerationPage({
       </section>
 
       <QueueFilterNav activeFilter={queueFilter} />
+
+      <RecentActivitySection result={recentActions} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         {queueFilter !== "reported" ? (
@@ -351,6 +369,83 @@ function QueuePreviewSection<Item extends ModerationPreviewItem>({
   )
 }
 
+function RecentActivitySection({
+  result,
+}: {
+  result: QueueResult<ModerationRecentActionsResponse>
+}) {
+  return (
+    <section className="rounded-lg border bg-card shadow-sm">
+      <div className="flex flex-col justify-between gap-3 border-b p-4 sm:flex-row sm:items-center">
+        <div className="grid gap-1">
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-normal">
+            <HistoryIcon aria-hidden="true" className="size-5" />
+            Attivita recenti
+          </h2>
+          {result.ok ? (
+            <p className="text-sm text-muted-foreground">
+              Ultime {result.data.items.length} azioni registrate in audit
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      {result.ok && result.data.items.length > 0 ? (
+        <div className="divide-y">
+          {result.data.items.map((item) => (
+            <RecentActivityRow key={item.action.id} item={item} />
+          ))}
+        </div>
+      ) : null}
+
+      {result.ok && result.data.items.length === 0 ? (
+        <Empty>
+          <EmptyHeader>
+            <EmptyTitle>Nessuna attivita recente</EmptyTitle>
+            <EmptyDescription>
+              Le decisioni e le assegnazioni compariranno qui.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      ) : null}
+
+      {!result.ok ? (
+        <div className="p-4 text-sm text-destructive">{result.message}</div>
+      ) : null}
+    </section>
+  )
+}
+
+function RecentActivityRow({ item }: { item: ModerationRecentActionItem }) {
+  return (
+    <article className="grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <div className="grid min-w-0 gap-1.5">
+        <div className="flex flex-wrap gap-1.5">
+          <Badge className={getRecentActionBadgeClass(item.action.type)}>
+            {formatRecentActionLabel(item.action.type)}
+          </Badge>
+          <Badge variant="outline">
+            {formatModerationStatus(item.listing.moderationStatus)}
+          </Badge>
+        </div>
+        <h3 className="truncate text-sm font-semibold">{item.listing.title}</h3>
+        <p className="truncate text-xs text-muted-foreground">
+          {item.actor?.displayName ?? "Sistema"} - {item.owner.displayName}
+        </p>
+        {item.action.reasonText ? (
+          <p className="line-clamp-1 text-xs text-muted-foreground">
+            {item.action.reasonText}
+          </p>
+        ) : null}
+      </div>
+
+      <p className="text-xs text-muted-foreground sm:text-right">
+        {formatDateTime(item.action.createdAt)}
+      </p>
+    </article>
+  )
+}
+
 function QueuePreviewRow({ item }: { item: ModerationPreviewItem }) {
   const coverUrl = getPublicObjectUrl(
     item.images.cover?.objectKeyThumb ?? item.images.cover?.objectKeyLarge
@@ -403,18 +498,81 @@ function QueuePreviewRow({ item }: { item: ModerationPreviewItem }) {
 }
 
 function DecisionFeedback({
+  claim,
+  claimError,
+  comment,
+  commentError,
   decision,
   decisionCount,
   decisionFailed,
   error,
 }: {
+  claim: string | null
+  claimError: string | null
+  comment: string | null
+  commentError: string | null
   decision: string | null
   decisionCount: string | null
   decisionFailed: string | null
   error: string | null
 }) {
-  if (!decision && !error) {
+  if (
+    !decision &&
+    !error &&
+    !claim &&
+    !claimError &&
+    !comment &&
+    !commentError
+  ) {
     return null
+  }
+
+  if (commentError) {
+    return (
+      <Card className="ring-destructive/35">
+        <CardHeader>
+          <CardTitle>Nota non salvata</CardTitle>
+          <CardDescription>{formatCommentError(commentError)}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (comment) {
+    return (
+      <Card className="ring-primary/25">
+        <CardHeader>
+          <CardTitle>Nota interna salvata</CardTitle>
+          <CardDescription>
+            La timeline del caso e&apos; stata aggiornata.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (claimError) {
+    return (
+      <Card className="ring-destructive/35">
+        <CardHeader>
+          <CardTitle>Caso non assegnato</CardTitle>
+          <CardDescription>{formatClaimError(claimError)}</CardDescription>
+        </CardHeader>
+      </Card>
+    )
+  }
+
+  if (claim) {
+    return (
+      <Card className="ring-primary/25">
+        <CardHeader>
+          <CardTitle>Caso preso in carico</CardTitle>
+          <CardDescription>
+            La coda e&apos; stata aggiornata con la nuova assegnazione.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    )
   }
 
   if (error) {
@@ -442,24 +600,76 @@ function DecisionFeedback({
   )
 }
 
-function AccessDenied({ displayName }: { displayName: string }) {
-  return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 px-4 py-10 sm:px-6 lg:px-8">
-      <Empty className="border bg-card">
-        <EmptyHeader>
-          <EmptyTitle>Accesso alla moderazione non consentito</EmptyTitle>
-          <EmptyDescription>
-            {displayName} non ha un ruolo abilitato per le code di moderazione.
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild variant="outline">
-            <Link href={routes.account}>Torna al profilo</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
-    </main>
-  )
+function formatClaimError(value: string) {
+  if (value === "already_assigned") {
+    return "Il caso e' gia' in carico a un altro moderatore."
+  }
+
+  if (value === "invalid_case") {
+    return "Il caso selezionato non e' valido."
+  }
+
+  return `Codice errore: ${value}.`
+}
+
+function formatCommentError(value: string) {
+  if (value === "invalid_comment") {
+    return "Scrivi una nota interna di almeno due caratteri."
+  }
+
+  return `Codice errore: ${value}.`
+}
+
+function formatRecentActionLabel(
+  value: ModerationRecentActionItem["action"]["type"]
+) {
+  if (value === "approved") {
+    return "Approvato"
+  }
+
+  if (value === "rejected") {
+    return "Rifiutato"
+  }
+
+  if (value === "suspended") {
+    return "Sospeso"
+  }
+
+  if (value === "assigned") {
+    return "Assegnato"
+  }
+
+  if (value === "reported") {
+    return "Segnalato"
+  }
+
+  if (value === "commented") {
+    return "Commento"
+  }
+
+  if (value === "closed") {
+    return "Chiuso"
+  }
+
+  return "Aperto"
+}
+
+function getRecentActionBadgeClass(
+  value: ModerationRecentActionItem["action"]["type"]
+) {
+  if (value === "approved") {
+    return "bg-brand-teal-soft text-brand-teal-ink"
+  }
+
+  if (value === "rejected" || value === "reported") {
+    return "bg-brand-coral-soft text-brand-coral-strong"
+  }
+
+  if (value === "suspended") {
+    return "bg-brand-amber-soft text-brand-teal-ink"
+  }
+
+  return "bg-brand-olive-soft text-brand-teal-ink"
 }
 
 function isApiStatus<T>(result: QueueResult<T>, status: number) {

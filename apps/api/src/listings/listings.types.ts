@@ -6,6 +6,7 @@ import type {
   ListingImageMimeType,
   ListingImageUploadRequestInput,
   ListingPublicListQuery,
+  ListingContactPhoneMode,
   ListingSex,
 } from "@workspace/validation"
 
@@ -51,6 +52,11 @@ export type ListingDraft = {
   isDewormed: boolean | null
   hasMicrochip: boolean | null
   contactRequestsEnabled: boolean
+  contactPhone: {
+    mode: ListingContactPhoneMode
+    phoneE164: string | null
+    phoneVerifiedAt: string | null
+  }
   moderationStatus: "draft" | "pending_review"
   lifecycleStatus: "draft"
   createdAt: string
@@ -78,6 +84,18 @@ export type ListingDraftDeleteResponse = {
 export type ListingDraftSubmissionResponse = {
   submitted: true
   listing: ListingReviewSubmission
+}
+
+export type ListingPhoneVerificationRequestResponse = {
+  alreadyVerified: boolean
+  expiresAt: string | null
+  sent: boolean
+  devCode?: string
+}
+
+export type ListingPhoneVerificationConfirmResponse = {
+  phoneVerifiedAt: string
+  verified: true
 }
 
 export type ListingImage = {
@@ -178,6 +196,7 @@ export type PublicListingSummary = {
   isDewormed: boolean | null
   hasMicrochip: boolean | null
   contactRequestsEnabled: boolean
+  publicPhoneE164: string | null
   publishedAt: string | null
   expiresAt: string | null
   createdAt: string

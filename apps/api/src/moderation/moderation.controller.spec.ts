@@ -113,6 +113,44 @@ describe("ModerationController", () => {
     expect(moderationService.reportedListingsQueue).not.toHaveBeenCalled()
   })
 
+  it("validates recent moderation action queries and delegates", async () => {
+    const moderationService = {
+      recentListingActions: vi.fn().mockResolvedValue({ items: [], meta: {} }),
+    } as unknown as ModerationService
+    const rateLimitService = createRateLimitService()
+    const controller = new ModerationController(
+      moderationService,
+      rateLimitService
+    )
+
+    await controller.recentListingActions(
+      createAuth(),
+      {
+        page: "1",
+        pageSize: "8",
+      },
+      createRequest()
+    )
+
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.20",
+        namespace: "moderation:queue:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:moderator-id",
+        namespace: "moderation:queue:recent-actions:user",
+      }),
+    ])
+    expect(moderationService.recentListingActions).toHaveBeenCalledWith(
+      "moderator-id",
+      {
+        page: 1,
+        pageSize: 8,
+      }
+    )
+  })
+
   it("validates and delegates approve decisions", async () => {
     const moderationService = {
       decideListingCase: vi.fn().mockResolvedValue({ decided: true }),
@@ -154,6 +192,88 @@ describe("ModerationController", () => {
       "approve",
       {
         reasonCode: "policy_ok",
+      }
+    )
+  })
+
+  it("validates and delegates claim requests", async () => {
+    const moderationService = {
+      claimListingCase: vi.fn().mockResolvedValue({ claimed: true }),
+    } as unknown as ModerationService
+    const rateLimitService = createRateLimitService()
+    const controller = new ModerationController(
+      moderationService,
+      rateLimitService
+    )
+
+    await controller.claimListingCase(
+      createAuth(),
+      {
+        caseId: "11111111-1111-4111-8111-111111111111",
+      },
+      createRequest()
+    )
+
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.20",
+        namespace: "moderation:claim:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:moderator-id",
+        namespace: "moderation:claim:user",
+      }),
+      expect.objectContaining({
+        identifier: "case:11111111-1111-4111-8111-111111111111",
+        namespace: "moderation:claim:case",
+      }),
+    ])
+    expect(moderationService.claimListingCase).toHaveBeenCalledWith(
+      "moderator-id",
+      "11111111-1111-4111-8111-111111111111"
+    )
+  })
+
+  it("validates and delegates comment requests", async () => {
+    const moderationService = {
+      commentListingCase: vi.fn().mockResolvedValue({ commented: true }),
+    } as unknown as ModerationService
+    const rateLimitService = createRateLimitService()
+    const controller = new ModerationController(
+      moderationService,
+      rateLimitService
+    )
+
+    await controller.commentListingCase(
+      createAuth(),
+      {
+        caseId: "11111111-1111-4111-8111-111111111111",
+      },
+      {
+        note: "Controllare le immagini prima della decisione.",
+      },
+      createRequest()
+    )
+
+    expect(rateLimitService.enforce).toHaveBeenCalledWith([
+      expect.objectContaining({
+        identifier: "ip:203.0.113.20",
+        namespace: "moderation:comment:ip",
+      }),
+      expect.objectContaining({
+        identifier: "user:moderator-id",
+        namespace: "moderation:comment:user",
+      }),
+      expect.objectContaining({
+        identifier: "case:11111111-1111-4111-8111-111111111111",
+        namespace: "moderation:comment:case",
+      }),
+    ])
+    expect(moderationService.commentListingCase).toHaveBeenCalledWith(
+      "moderator-id",
+      "11111111-1111-4111-8111-111111111111",
+      {
+        note: "Controllare le immagini prima della decisione.",
       }
     )
   })

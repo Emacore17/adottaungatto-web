@@ -7,11 +7,12 @@ import { RateLimitModule } from "../rate-limit/rate-limit.module.js"
 import { AuthController } from "./auth.controller.js"
 import { BearerAuthGuard } from "./auth.guard.js"
 import { AuthService } from "./auth.service.js"
+import { RolesGuard } from "./roles.guard.js"
 
 @Module({
   imports: [ConfigModule, DatabaseModule, MailModule, RateLimitModule],
   controllers: [AuthController],
-  providers: [AuthService, BearerAuthGuard],
-  exports: [AuthService, BearerAuthGuard],
+  providers: [AuthService, BearerAuthGuard, RolesGuard],
+  exports: [AuthService, BearerAuthGuard, RolesGuard],
 })
 export class AuthModule {}

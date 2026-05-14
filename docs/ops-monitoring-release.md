@@ -3,6 +3,9 @@
 Questo documento definisce il target operativo per sviluppo, staging e
 produzione.
 
+La strategia concreta di hosting, CI/CD, segreti, costi e comandi di deploy e'
+in [deploy-strategy.md](deploy-strategy.md).
+
 ## Ambienti
 
 ### local
@@ -127,22 +130,20 @@ Alert minimi:
 Pipeline minima:
 
 1. installazione con pnpm lockfile;
-2. typecheck;
-3. lint;
-4. test;
-5. build;
-6. generate/check migrazioni;
-7. dependency scan e secret scan;
-8. build immagini container;
-9. push su registry;
-10. deploy staging;
-11. migrazioni staging;
-12. smoke test staging;
-13. approvazione manuale produzione;
-14. deploy produzione;
-15. migrazioni produzione controllate;
-16. smoke test produzione;
-17. annotazione release in Dynatrace.
+2. `pnpm release:check`;
+3. generate/check migrazioni;
+4. validazione env `APP_ENV=production`;
+5. dependency scan e secret scan;
+6. build immagini container;
+7. push su registry;
+8. deploy staging;
+9. migrazioni staging;
+10. smoke test staging;
+11. approvazione manuale produzione;
+12. deploy produzione;
+13. migrazioni produzione controllate;
+14. smoke test produzione;
+15. annotazione release in Dynatrace o provider equivalente.
 
 ## Migrazioni
 

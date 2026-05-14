@@ -12,17 +12,26 @@ export type ListingLifecycleStatus =
   | "adopted"
   | "deleted"
 
+export type ModerationCaseStatus =
+  | "open"
+  | "approved"
+  | "rejected"
+  | "suspended"
+  | "closed"
+
+export type ModerationActionType =
+  | "opened"
+  | "assigned"
+  | "approved"
+  | "rejected"
+  | "suspended"
+  | "closed"
+  | "commented"
+  | "reported"
+
 export type ModerationAuditAction = {
   id: string
-  action:
-    | "opened"
-    | "assigned"
-    | "approved"
-    | "rejected"
-    | "suspended"
-    | "closed"
-    | "commented"
-    | "reported"
+  action: ModerationActionType
   reasonCode: string | null
   reasonText: string | null
   fromStatus: ListingModerationStatus | null
@@ -163,9 +172,81 @@ export type ReportedListingQueueResponse = {
   }
 }
 
+export type ModerationRecentActionItem = {
+  action: {
+    id: string
+    type: ModerationActionType
+    reasonCode: string | null
+    reasonText: string | null
+    fromStatus: ListingModerationStatus | null
+    toStatus: ListingModerationStatus | null
+    createdAt: string
+  }
+  case: {
+    id: string
+    status: ModerationCaseStatus
+    assignedToUserId: string | null
+  }
+  listing: {
+    id: string
+    title: string
+    slug: string
+    moderationStatus: ListingModerationStatus
+    lifecycleStatus: ListingLifecycleStatus
+  }
+  owner: {
+    id: string
+    email: string
+    displayName: string
+  }
+  actor: {
+    id: string
+    email: string
+    displayName: string
+  } | null
+}
+
+export type ModerationRecentActionsResponse = {
+  items: ModerationRecentActionItem[]
+  meta: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
 export type ModerationDecisionAction = "approve" | "reject" | "suspend"
 
 export type ReportResolutionStatus = "resolved" | "dismissed"
+
+export type ModerationClaimResponse = {
+  claimed: true
+  action: {
+    id: string
+  } | null
+  case: {
+    id: string
+    assignedToUserId: string
+    updatedAt: string
+  }
+}
+
+export type ModerationCommentResponse = {
+  commented: true
+  action: {
+    id: string
+    createdAt: string
+  }
+  case: {
+    id: string
+    status: ModerationCaseStatus
+    updatedAt: string
+  }
+  comment: {
+    text: string
+  }
+}
 
 export type ModerationDecisionResponse = {
   decided: true

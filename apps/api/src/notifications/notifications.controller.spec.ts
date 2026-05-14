@@ -106,6 +106,43 @@ describe("NotificationsController", () => {
     })
     expect(notificationsService.markAllRead).toHaveBeenCalledWith("user-id")
   })
+
+  it("validates notification ids before deleting", async () => {
+    const notificationsService = {
+      delete: vi.fn().mockResolvedValue({
+        deleted: true,
+        notificationId: "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+      }),
+    } as unknown as NotificationsService
+    const controller = new NotificationsController(notificationsService)
+
+    await expect(
+      controller.delete(createAuth(), {
+        notificationId: "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+      })
+    ).resolves.toEqual({
+      deleted: true,
+      notificationId: "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa",
+    })
+
+    expect(notificationsService.delete).toHaveBeenCalledWith(
+      "user-id",
+      "aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa"
+    )
+  })
+
+  it("rejects invalid notification ids before deleting", async () => {
+    const notificationsService = {
+      delete: vi.fn(),
+    } as unknown as NotificationsService
+    const controller = new NotificationsController(notificationsService)
+
+    await expect(
+      controller.delete(createAuth(), {
+        notificationId: "invalid",
+      })
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
 })
 
 function createAuth(): CurrentAuthSessionResponse {

@@ -28,3 +28,11 @@ export const moderationDecisionSchema = z
 export type ModerationDecisionInput = z.infer<
   typeof moderationDecisionSchema
 >
+
+export const moderationCommentSchema = z
+  .object({
+    note: z.string().trim().min(2).max(2000),
+  })
+  .strict()
+
+export type ModerationCommentInput = z.infer<typeof moderationCommentSchema>

@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common"
+import { APP_INTERCEPTOR } from "@nestjs/core"
 
 import { AuthModule } from "./auth/auth.module.js"
 import { ConfigModule } from "./config/config.module.js"
@@ -14,6 +15,8 @@ import { ObservabilityModule } from "./observability/observability.module.js"
 import { PlacesModule } from "./places/places.module.js"
 import { RedisModule } from "./redis/redis.module.js"
 import { ReportsModule } from "./reports/reports.module.js"
+import { GlobalRateLimitInterceptor } from "./rate-limit/global-rate-limit.interceptor.js"
+import { RateLimitModule } from "./rate-limit/rate-limit.module.js"
 import { UsersModule } from "./users/users.module.js"
 
 @Module({
@@ -22,6 +25,7 @@ import { UsersModule } from "./users/users.module.js"
     ObservabilityModule,
     DatabaseModule,
     RedisModule,
+    RateLimitModule,
     HealthModule,
     PlacesModule,
     AuthModule,
@@ -33,6 +37,12 @@ import { UsersModule } from "./users/users.module.js"
     FavoritesModule,
     LikesModule,
     ContactsModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: GlobalRateLimitInterceptor,
+    },
   ],
 })
 export class AppModule {}

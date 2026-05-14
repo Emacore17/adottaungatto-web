@@ -51,6 +51,8 @@ pnpm dev
 pnpm test
 pnpm lint
 pnpm typecheck
+pnpm release:check
+pnpm release:smoke
 pnpm db:migrate
 pnpm db:seed
 pnpm db:seed:demo
@@ -78,8 +80,8 @@ target vedere [test-data.md](test-data.md).
 5. carica e verifica immagini large/thumb nel bucket MinIO locale;
 6. avvia `pnpm dev`.
 
-Il comando e' utile gia oggi, ma non rappresenta ancora il traguardo demo
-finale definito in [agent-coding-roadmap.md](agent-coding-roadmap.md).
+Il comando e' il percorso locale consigliato per ricostruire una demo
+navigabile e verificabile.
 
 Se lo stato locale e' incoerente, `pnpm dev:demo -- --reset` elimina prima i
 volumi Docker locali e poi ricostruisce dati e asset prima di avviare l'app.
@@ -98,3 +100,5 @@ volumi locali Docker e consente di ripartire da un database vuoto.
   automaticamente.
 - I log locali e la cache `.turbo` sono artefatti ignorati da Git e possono
   essere rimossi durante la pulizia del workspace.
+- Per controlli pre-release locali usare `pnpm release:check`; con servizi e
+  app gia attivi usare anche `pnpm release:smoke`.

@@ -2,7 +2,9 @@ import { BadRequestException } from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
 import type { CurrentAuthSessionResponse } from "../auth/auth.types.js"
+import type { RateLimitService } from "../rate-limit/rate-limit.service.js"
 import { UsersController } from "./users.controller.js"
+import type { UsersRateLimitRequest } from "./users-rate-limit.js"
 import type { UsersService } from "./users.service.js"
 
 describe("UsersController", () => {
@@ -10,7 +12,7 @@ describe("UsersController", () => {
     const usersService = {
       currentProfile: vi.fn().mockResolvedValue({ id: "user-id" }),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
     const auth: CurrentAuthSessionResponse = {
       user: {
         id: "user-id",
@@ -34,7 +36,7 @@ describe("UsersController", () => {
     const usersService = {
       updateCurrentProfile: vi.fn().mockResolvedValue({ id: "user-id" }),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
     const auth = createAuth()
 
     await expect(
@@ -54,7 +56,7 @@ describe("UsersController", () => {
     const usersService = {
       updateCurrentProfile: vi.fn(),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
 
     await expect(controller.updateMe(createAuth(), {})).rejects.toBeInstanceOf(
       BadRequestException
@@ -68,7 +70,7 @@ describe("UsersController", () => {
         listingReportDecisionEmail: false,
       }),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
 
     await expect(
       controller.notificationPreferences(createAuth())
@@ -88,7 +90,7 @@ describe("UsersController", () => {
         .fn()
         .mockResolvedValue({ listingModerationDecisionEmail: false }),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
 
     await expect(
       controller.updateNotificationPreferences(createAuth(), {
@@ -107,13 +109,84 @@ describe("UsersController", () => {
     const usersService = {
       updateCurrentNotificationPreferences: vi.fn(),
     } as unknown as UsersService
-    const controller = new UsersController(usersService)
+    const controller = createController(usersService)
 
     await expect(
       controller.updateNotificationPreferences(createAuth(), {})
     ).rejects.toBeInstanceOf(BadRequestException)
   })
+
+  it("requests phone verification with rate limiting", async () => {
+    const usersService = {
+      requestPhoneVerification: vi.fn().mockResolvedValue({ sent: true }),
+    } as unknown as UsersService
+    const rateLimitService = createRateLimitService()
+    const controller = createController(usersService, rateLimitService)
+
+    await expect(
+      controller.requestPhoneVerification(createAuth(), createRequest())
+    ).resolves.toEqual({ sent: true })
+
+    expect(rateLimitService.enforce).toHaveBeenCalled()
+    expect(usersService.requestPhoneVerification).toHaveBeenCalledWith(
+      "user-id"
+    )
+  })
+
+  it("validates phone verification confirmation payloads", async () => {
+    const usersService = {
+      confirmPhoneVerification: vi.fn().mockResolvedValue({ verified: true }),
+    } as unknown as UsersService
+    const controller = createController(usersService)
+
+    await expect(
+      controller.confirmPhoneVerification(
+        createAuth(),
+        { code: "123456" },
+        createRequest()
+      )
+    ).resolves.toEqual({ verified: true })
+
+    expect(usersService.confirmPhoneVerification).toHaveBeenCalledWith(
+      "user-id",
+      { code: "123456" }
+    )
+  })
+
+  it("rejects invalid phone verification codes", async () => {
+    const usersService = {
+      confirmPhoneVerification: vi.fn(),
+    } as unknown as UsersService
+    const controller = createController(usersService)
+
+    await expect(
+      controller.confirmPhoneVerification(
+        createAuth(),
+        { code: "12" },
+        createRequest()
+      )
+    ).rejects.toBeInstanceOf(BadRequestException)
+  })
 })
+
+function createController(
+  usersService: UsersService,
+  rateLimitService = createRateLimitService()
+) {
+  return new UsersController(usersService, rateLimitService)
+}
+
+function createRateLimitService() {
+  return {
+    enforce: vi.fn().mockResolvedValue(undefined),
+  } as unknown as RateLimitService
+}
+
+function createRequest(): UsersRateLimitRequest {
+  return {
+    ip: "127.0.0.1",
+  }
+}
 
 function createAuth(): CurrentAuthSessionResponse {
   return {

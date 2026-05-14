@@ -1,12 +1,14 @@
 "use server"
 
-import { revalidatePath } from "next/cache"
+import { revalidatePath, updateTag } from "next/cache"
 import { redirect } from "next/navigation"
 import { favoriteListingIdParamSchema } from "@workspace/validation/favorites"
 
 import { addAccountFavorite, removeAccountFavorite } from "@/lib/api/account"
 import { getSessionToken } from "@/lib/auth/session"
+import { cacheTags } from "@/lib/cache/tags"
 import { routes } from "@/lib/routes"
+import { assertTrustedActionOrigin } from "@/lib/security/server-action-origin"
 
 type FavoriteAction = "add" | "remove"
 type FavoriteResult = "error" | "removed" | "saved" | "unavailable"
@@ -18,6 +20,8 @@ export async function saveFavoriteAction(formData: FormData) {
 }
 
 export async function toggleFavoriteAction(formData: FormData) {
+  await assertTrustedActionOrigin()
+
   const parsed = favoriteListingIdParamSchema.safeParse({
     listingId: readFormString(formData, "listingId"),
   })
@@ -40,6 +44,8 @@ export async function toggleFavoriteAction(formData: FormData) {
       : await addAccountFavorite(token, parsed.data.listingId)
 
   if (result.ok) {
+    updateTag(cacheTags.publicListings)
+    updateTag(cacheTags.publicListing(parsed.data.listingId))
     revalidatePath(routes.listings())
     revalidatePath(routes.listing(parsed.data.listingId))
     revalidatePath(routes.account)

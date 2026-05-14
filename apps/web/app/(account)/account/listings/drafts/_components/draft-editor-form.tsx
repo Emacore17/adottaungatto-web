@@ -1,7 +1,9 @@
-import { SaveIcon } from "lucide-react"
+import { PhoneIcon, SaveIcon, ShieldCheckIcon } from "lucide-react"
 
 import {
+  confirmDraftPhoneVerificationAction,
   createDraftAction,
+  requestDraftPhoneVerificationAction,
   updateDraftAction,
 } from "@/app/(account)/account/actions"
 import { DraftAdoptionPriceFields } from "@/app/(account)/account/listings/drafts/_components/draft-adoption-price-fields"
@@ -11,6 +13,8 @@ import { DraftMunicipalityField } from "@/app/(account)/account/listings/drafts/
 import type { ListingDraft } from "@/lib/api/account"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
 import type { PublicCatBreed } from "@/lib/api/types"
+import type { CurrentUserProfile } from "@/lib/api/users"
+import { phoneCountryCodes, splitPhoneNumber } from "@/lib/phone"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -40,6 +44,7 @@ import { Textarea } from "@workspace/ui/components/textarea"
 type DraftEditorFormProps = {
   breeds: PublicCatBreed[]
   draft?: ListingDraft
+  profile?: CurrentUserProfile | null
 }
 
 const booleanSelectOptions = [
@@ -48,13 +53,20 @@ const booleanSelectOptions = [
   { label: "No", value: "false" },
 ] as const
 
-function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
+function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
   const isEditing = Boolean(draft)
   const action = draft ? updateDraftAction : createDraftAction
   const currentPath = draft
     ? routes.accountDraft(draft.id)
     : routes.accountDraftNew
   const initialPlace = createInitialMunicipalityPlace(draft)
+  const accountPhoneReady = Boolean(
+    profile?.phoneE164 && profile.phoneVerifiedAt
+  )
+  const defaultContactPhoneMode =
+    draft?.contactPhone.mode ??
+    (accountPhoneReady && profile?.showPhoneOnListings ? "account" : "none")
+  const listingPhone = splitPhoneNumber(draft?.contactPhone.phoneE164 ?? null)
 
   return (
     <Card>
@@ -205,22 +217,118 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
 
             <FieldSet>
               <FieldLegend>Contatto</FieldLegend>
-              <Field orientation="horizontal">
-                <Checkbox
-                  id="contactRequestsEnabled"
-                  name="contactRequestsEnabled"
-                  value="true"
-                  defaultChecked={draft?.contactRequestsEnabled ?? true}
-                />
-                <FieldContent>
-                  <FieldLabel htmlFor="contactRequestsEnabled">
-                    Accetta richieste di contatto
-                  </FieldLabel>
-                  <FieldDescription>
-                    Mostra il form pubblico e ricevi richieste via email.
-                  </FieldDescription>
-                </FieldContent>
-              </Field>
+              <div className="grid gap-5">
+                <Field orientation="horizontal">
+                  <Checkbox
+                    id="contactRequestsEnabled"
+                    name="contactRequestsEnabled"
+                    value="true"
+                    defaultChecked={draft?.contactRequestsEnabled ?? true}
+                  />
+                  <FieldContent>
+                    <FieldLabel htmlFor="contactRequestsEnabled">
+                      Accetta richieste di contatto
+                    </FieldLabel>
+                    <FieldDescription>
+                      Mostra il form pubblico e ricevi richieste via email.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+
+                <div className="rounded-md border border-brand-teal/15 bg-brand-teal-soft/40 p-4">
+                  <div className="grid gap-4">
+                    <Field>
+                      <FieldLabel htmlFor="contactPhoneMode">
+                        Telefono nell&apos;annuncio
+                      </FieldLabel>
+                      <NativeSelect
+                        id="contactPhoneMode"
+                        name="contactPhoneMode"
+                        defaultValue={defaultContactPhoneMode}
+                        className="w-full"
+                      >
+                        <NativeSelectOption value="none">
+                          Non mostrare telefono
+                        </NativeSelectOption>
+                        <NativeSelectOption
+                          value="account"
+                          disabled={!accountPhoneReady}
+                        >
+                          Usa telefono account
+                        </NativeSelectOption>
+                        <NativeSelectOption value="listing">
+                          Usa telefono solo per questo annuncio
+                        </NativeSelectOption>
+                      </NativeSelect>
+                      <FieldDescription>
+                        Il numero diventa pubblico solo dopo la verifica.
+                      </FieldDescription>
+                    </Field>
+
+                    {!accountPhoneReady ? (
+                      <p className="rounded-md border border-brand-amber/25 bg-brand-amber-soft px-3 py-2 text-sm text-brand-teal-ink">
+                        Per usare il telefono account devi prima aggiungerlo e
+                        verificarlo nel profilo.
+                      </p>
+                    ) : null}
+
+                    <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                      <Field>
+                        <FieldLabel htmlFor="listingPhoneCountryCode">
+                          Prefisso
+                        </FieldLabel>
+                        <NativeSelect
+                          id="listingPhoneCountryCode"
+                          name="listingPhoneCountryCode"
+                          defaultValue={listingPhone.countryCode}
+                          className="w-full"
+                        >
+                          {phoneCountryCodes.map((country) => (
+                            <NativeSelectOption
+                              key={country.code}
+                              value={country.code}
+                            >
+                              {country.label}
+                            </NativeSelectOption>
+                          ))}
+                        </NativeSelect>
+                      </Field>
+                      <Field>
+                        <FieldLabel htmlFor="listingPhoneNationalNumber">
+                          Numero per questo annuncio
+                        </FieldLabel>
+                        <Input
+                          id="listingPhoneNationalNumber"
+                          name="listingPhoneNationalNumber"
+                          defaultValue={listingPhone.nationalNumber}
+                          inputMode="tel"
+                          maxLength={20}
+                          placeholder="3331234567"
+                        />
+                      </Field>
+                    </div>
+
+                    {!profile?.phoneE164 ? (
+                      <Field orientation="horizontal">
+                        <Checkbox
+                          id="saveListingPhoneToAccount"
+                          name="saveListingPhoneToAccount"
+                          value="true"
+                        />
+                        <FieldContent>
+                          <FieldLabel htmlFor="saveListingPhoneToAccount">
+                            Aggiungi questo numero anche all&apos;account
+                          </FieldLabel>
+                          <FieldDescription>
+                            Lo salvi nel profilo, poi lo verifichi dalle
+                            impostazioni account.
+                          </FieldDescription>
+                        </FieldContent>
+                      </Field>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
             </FieldSet>
           </FieldGroup>
 
@@ -231,6 +339,9 @@ function DraftEditorForm({ breeds, draft }: DraftEditorFormProps) {
             </Button>
           </div>
         </form>
+        {draft?.contactPhone.mode === "listing" ? (
+          <ListingPhoneVerificationPanel draft={draft} nextPath={currentPath} />
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -261,6 +372,68 @@ function BooleanSelectField({
         ))}
       </NativeSelect>
     </Field>
+  )
+}
+
+function ListingPhoneVerificationPanel({
+  draft,
+  nextPath,
+}: {
+  draft: ListingDraft
+  nextPath: string
+}) {
+  const isVerified = Boolean(draft.contactPhone.phoneVerifiedAt)
+
+  return (
+    <div className="mt-6 grid gap-4 rounded-md border border-brand-olive/25 bg-brand-olive-soft p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-brand-teal-ink">
+          {isVerified ? (
+            <ShieldCheckIcon className="size-4" aria-hidden="true" />
+          ) : (
+            <PhoneIcon className="size-4" aria-hidden="true" />
+          )}
+        </span>
+        <div className="grid gap-1 text-sm">
+          <p className="font-medium text-brand-teal-ink">
+            {isVerified ? "Telefono verificato" : "Verifica telefono annuncio"}
+          </p>
+          <p className="text-muted-foreground">
+            {isVerified
+              ? "Questo numero puo essere mostrato quando l'annuncio sara pubblicato."
+              : "Invia il codice, poi inseriscilo qui. In locale il codice compare anche nel messaggio di stato."}
+          </p>
+        </div>
+      </div>
+
+      {!isVerified ? (
+        <div className="grid gap-3 sm:grid-cols-[auto_minmax(0,1fr)]">
+          <form action={requestDraftPhoneVerificationAction}>
+            <input name="draftId" type="hidden" value={draft.id} />
+            <input name="nextPath" type="hidden" value={nextPath} />
+            <Button type="submit" variant="outline">
+              Invia codice
+            </Button>
+          </form>
+          <form
+            action={confirmDraftPhoneVerificationAction}
+            className="flex flex-col gap-2 sm:flex-row"
+          >
+            <input name="draftId" type="hidden" value={draft.id} />
+            <input name="nextPath" type="hidden" value={nextPath} />
+            <Input
+              name="code"
+              inputMode="numeric"
+              maxLength={6}
+              minLength={6}
+              placeholder="123456"
+              required
+            />
+            <Button type="submit">Verifica</Button>
+          </form>
+        </div>
+      ) : null}
+    </div>
   )
 }
 

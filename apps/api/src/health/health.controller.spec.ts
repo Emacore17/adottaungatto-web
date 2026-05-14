@@ -99,6 +99,9 @@ describe("HealthController", () => {
 
     expect(response.service).toBe("api")
     expect(response.http.requestsTotal).toBeGreaterThanOrEqual(0)
+    expect(response.search.publicListings.requestsTotal).toBeGreaterThanOrEqual(
+      0
+    )
   })
 
   it("returns observability alerts", () => {

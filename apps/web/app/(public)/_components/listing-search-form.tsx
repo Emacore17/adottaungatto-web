@@ -21,6 +21,11 @@ import type { PublicCatBreed } from "@/lib/api/types"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
+import { Input } from "@workspace/ui/components/input"
+import {
+  NativeSelect,
+  NativeSelectOption,
+} from "@workspace/ui/components/native-select"
 import { cn } from "@workspace/ui/lib/utils"
 
 type ListingSearchDefaults = Partial<ListingPublicListQuery> & {
@@ -61,15 +66,9 @@ type RangeKey =
 const maxCatAgeMonths = 360
 const maxContributionEuros = 500
 
-const controlClassName =
-  "h-11 w-full rounded-lg border border-border bg-card/90 px-3 text-sm text-brand-ink outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:bg-card focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
-
-const numberControlClassName =
-  "h-10 w-full rounded-md border border-border bg-card/90 px-3 text-sm text-brand-ink outline-none transition-[border-color,box-shadow,background-color] focus:border-ring focus:bg-card focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)] disabled:cursor-not-allowed disabled:bg-muted/55 disabled:text-muted-foreground"
-
-const rangeControlClassName =
-  "h-6 w-full cursor-pointer accent-primary disabled:cursor-not-allowed disabled:opacity-50"
-
+const compactFieldClassName = "grid gap-1.5"
+const compactInputClassName = "h-9 bg-card/88"
+const compactSelectClassName = "w-full"
 const filterLabelClassName =
   "text-xs font-semibold tracking-normal text-muted-foreground uppercase"
 
@@ -288,7 +287,7 @@ function formatPriceRange(filters: SearchFilters) {
   const max = readNumericFilterValue(filters.contributionEurosMax)
 
   if (filters.priceMode === "all" || (min === null && max === null)) {
-    return "Qualsiasi contributo"
+    return "Qualsiasi prezzo"
   }
 
   if (min !== null && max !== null) {
@@ -488,127 +487,65 @@ function ListingSearchForm({
   const filterControls = (
     <div className="grid gap-4 text-left">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
-        <label className="grid gap-1.5 xl:col-span-3">
+        <label className={cn(compactFieldClassName, "xl:col-span-3")}>
           <span className={filterLabelClassName}>Razza</span>
-          <select
-            className={controlClassName}
+          <NativeSelect
+            className={compactSelectClassName}
             value={filters.breedId}
             disabled={breeds.length === 0}
             onChange={(event) => updateFilter("breedId", event.target.value)}
           >
-            <option value="">
+            <NativeSelectOption value="">
               {breeds.length > 0 ? "Tutte le razze" : "Razze non disponibili"}
-            </option>
+            </NativeSelectOption>
             {filters.breedId && !selectedBreedIsKnown ? (
-              <option value={filters.breedId}>Razza selezionata</option>
+              <NativeSelectOption value={filters.breedId}>
+                Razza selezionata
+              </NativeSelectOption>
             ) : null}
             {breeds.map((breed) => (
-              <option key={breed.id} value={breed.id}>
+              <NativeSelectOption key={breed.id} value={breed.id}>
                 {breed.name}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         </label>
 
-        <label className="grid gap-1.5 xl:col-span-3">
+        <label className={cn(compactFieldClassName, "xl:col-span-2")}>
           <span className={filterLabelClassName}>Sesso</span>
-          <select
-            className={controlClassName}
+          <NativeSelect
+            className={compactSelectClassName}
             value={filters.sex}
             onChange={(event) => updateFilter("sex", event.target.value)}
           >
             {sexOptions.map((option) => (
-              <option key={option.value || "any-sex"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="grid gap-1.5 xl:col-span-3">
-          <span className={filterLabelClassName}>Ordina</span>
-          <select
-            className={controlClassName}
-            value={effectiveSort}
-            onChange={(event) =>
-              updateFilter(
-                "sort",
-                event.target.value as ListingPublicListQuery["sort"]
-              )
-            }
-          >
-            {sortOptions.map((option) => (
-              <option
-                key={option.value}
+              <NativeSelectOption
+                key={option.value || "any-sex"}
                 value={option.value}
-                disabled={option.value === "distance" && !position}
               >
                 {option.label}
-              </option>
+              </NativeSelectOption>
             ))}
-          </select>
+          </NativeSelect>
         </label>
 
-        <div className="grid gap-3 rounded-lg border border-brand-teal/14 bg-card/72 p-3 xl:col-span-6">
-          <div className="flex items-start justify-between gap-3">
+        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
+          <div className="flex min-h-5 items-center justify-between gap-2">
             <span className={filterLabelClassName}>Eta</span>
-            <span className="text-right text-xs font-semibold text-brand-teal-ink">
+            <span className="truncate text-right text-xs font-medium text-muted-foreground">
               {formatAgeRange(filters)}
             </span>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Da</span>
-              <input
-                type="range"
-                min={0}
-                max={maxCatAgeMonths}
-                step={6}
-                value={filters.ageMonthsMin || "0"}
-                onChange={(event) =>
-                  updateRangeFilter(
-                    "ageMonthsMin",
-                    "ageMonthsMax",
-                    "min",
-                    event.target.value,
-                    maxCatAgeMonths
-                  )
-                }
-                className={rangeControlClassName}
-              />
-            </label>
-
-            <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Fino a</span>
-              <input
-                type="range"
-                min={0}
-                max={maxCatAgeMonths}
-                step={6}
-                value={filters.ageMonthsMax || String(maxCatAgeMonths)}
-                onChange={(event) =>
-                  updateRangeFilter(
-                    "ageMonthsMin",
-                    "ageMonthsMax",
-                    "max",
-                    event.target.value,
-                    maxCatAgeMonths
-                  )
-                }
-                className={rangeControlClassName}
-              />
-            </label>
-          </div>
-
           <div className="grid grid-cols-2 gap-2">
-            <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Da anni</span>
-              <input
+            <label>
+              <span className="sr-only">Eta minima in anni</span>
+              <Input
                 type="number"
                 min={0}
                 max={30}
                 step={0.5}
+                inputMode="decimal"
                 value={monthsToYearsInput(filters.ageMonthsMin)}
                 onChange={(event) =>
                   updateRangeFilter(
@@ -619,18 +556,19 @@ function ListingSearchForm({
                     maxCatAgeMonths
                   )
                 }
-                className={numberControlClassName}
-                placeholder="0"
+                className={compactInputClassName}
+                placeholder="Da anni"
               />
             </label>
 
-            <label className="grid gap-1">
-              <span className="text-xs text-muted-foreground">Fino anni</span>
-              <input
+            <label>
+              <span className="sr-only">Eta massima in anni</span>
+              <Input
                 type="number"
                 min={0}
                 max={30}
                 step={0.5}
+                inputMode="decimal"
                 value={monthsToYearsInput(filters.ageMonthsMax)}
                 onChange={(event) =>
                   updateRangeFilter(
@@ -641,107 +579,52 @@ function ListingSearchForm({
                     maxCatAgeMonths
                   )
                 }
-                className={numberControlClassName}
-                placeholder="30"
+                className={compactInputClassName}
+                placeholder="A anni"
               />
             </label>
           </div>
         </div>
 
-        <div className="grid gap-3 rounded-lg border border-brand-amber/18 bg-card/72 p-3 xl:col-span-6">
-          <div className="flex items-start justify-between gap-3">
-            <span className={filterLabelClassName}>Contributo</span>
-            <span className="text-right text-xs font-semibold text-brand-teal-ink">
+        <div className={cn(compactFieldClassName, "xl:col-span-4")}>
+          <div className="flex min-h-5 items-center justify-between gap-2">
+            <span className={filterLabelClassName}>Prezzo</span>
+            <span className="truncate text-right text-xs font-medium text-muted-foreground">
               {formatPriceRange(filters)}
             </span>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            {(["all", "free", "range"] as const).map((mode) => (
-              <label
-                key={mode}
-                className={cn(
-                  "flex min-h-10 cursor-pointer items-center justify-center rounded-md border px-2 text-center text-xs font-semibold transition-[border-color,background-color,color,box-shadow] focus-within:border-ring focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_20%,transparent)]",
-                  filters.priceMode === mode
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-card/84 text-muted-foreground hover:border-primary/30 hover:bg-brand-teal-soft hover:text-brand-teal-ink"
-                )}
-              >
-                <input
-                  type="radio"
-                  value={mode}
-                  checked={filters.priceMode === mode}
-                  onChange={() => handlePriceModeChange(mode)}
-                  className="sr-only"
-                />
-                {mode === "all"
-                  ? "Qualsiasi"
-                  : mode === "free"
-                    ? "Gratis"
-                    : "Fascia"}
-              </label>
-            ))}
-          </div>
+          <div
+            className={cn(
+              "grid gap-2",
+              filters.priceMode === "range" &&
+                "sm:grid-cols-[minmax(7rem,0.9fr)_minmax(0,1fr)_minmax(0,1fr)]"
+            )}
+          >
+            <NativeSelect
+              className={compactSelectClassName}
+              value={filters.priceMode}
+              onChange={(event) =>
+                handlePriceModeChange(
+                  event.target.value as SearchFilters["priceMode"]
+                )
+              }
+            >
+              <NativeSelectOption value="all">Qualsiasi</NativeSelectOption>
+              <NativeSelectOption value="free">Gratis</NativeSelectOption>
+              <NativeSelectOption value="range">Fascia</NativeSelectOption>
+            </NativeSelect>
 
-          {filters.priceMode === "range" ? (
-            <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">Da euro</span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={maxContributionEuros}
-                    step={10}
-                    value={filters.contributionEurosMin || "0"}
-                    onChange={(event) =>
-                      updateRangeFilter(
-                        "contributionEurosMin",
-                        "contributionEurosMax",
-                        "min",
-                        event.target.value,
-                        maxContributionEuros
-                      )
-                    }
-                    className={rangeControlClassName}
-                  />
-                </label>
-
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">
-                    Fino euro
-                  </span>
-                  <input
-                    type="range"
-                    min={0}
-                    max={maxContributionEuros}
-                    step={10}
-                    value={
-                      filters.contributionEurosMax ||
-                      String(maxContributionEuros)
-                    }
-                    onChange={(event) =>
-                      updateRangeFilter(
-                        "contributionEurosMin",
-                        "contributionEurosMax",
-                        "max",
-                        event.target.value,
-                        maxContributionEuros
-                      )
-                    }
-                    className={rangeControlClassName}
-                  />
-                </label>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">Da</span>
-                  <input
+            {filters.priceMode === "range" ? (
+              <>
+                <label>
+                  <span className="sr-only">Prezzo minimo</span>
+                  <Input
                     type="number"
                     min={0}
                     max={maxContributionEuros}
                     step={10}
+                    inputMode="numeric"
                     value={filters.contributionEurosMin}
                     onChange={(event) =>
                       updateRangeFilter(
@@ -752,18 +635,19 @@ function ListingSearchForm({
                         maxContributionEuros
                       )
                     }
-                    className={numberControlClassName}
-                    placeholder="0"
+                    className={compactInputClassName}
+                    placeholder="Da euro"
                   />
                 </label>
 
-                <label className="grid gap-1">
-                  <span className="text-xs text-muted-foreground">Fino</span>
-                  <input
+                <label>
+                  <span className="sr-only">Prezzo massimo</span>
+                  <Input
                     type="number"
                     min={0}
                     max={maxContributionEuros}
                     step={10}
+                    inputMode="numeric"
                     value={filters.contributionEurosMax}
                     onChange={(event) =>
                       updateRangeFilter(
@@ -774,38 +658,62 @@ function ListingSearchForm({
                         maxContributionEuros
                       )
                     }
-                    className={numberControlClassName}
-                    placeholder="200"
+                    className={compactInputClassName}
+                    placeholder="A euro"
                   />
                 </label>
-              </div>
-            </>
-          ) : null}
+              </>
+            ) : null}
+          </div>
         </div>
 
-        <div className="grid gap-1.5 xl:col-span-6">
+        <label className={cn(compactFieldClassName, "xl:col-span-3")}>
+          <span className={filterLabelClassName}>Ordina</span>
+          <NativeSelect
+            className={compactSelectClassName}
+            value={effectiveSort}
+            onChange={(event) =>
+              updateFilter(
+                "sort",
+                event.target.value as ListingPublicListQuery["sort"]
+              )
+            }
+          >
+            {sortOptions.map((option) => (
+              <NativeSelectOption
+                key={option.value}
+                value={option.value}
+                disabled={option.value === "distance" && !position}
+              >
+                {option.label}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </label>
+
+        <div className={cn(compactFieldClassName, "xl:col-span-5")}>
           <span className={filterLabelClassName}>Distanza</span>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <select
-              className={controlClassName}
+            <NativeSelect
+              className={compactSelectClassName}
               value={filters.radiusKm}
               disabled={!position}
               onChange={(event) => updateFilter("radiusKm", event.target.value)}
             >
               {radiusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+                <NativeSelectOption key={option.value} value={option.value}>
                   {option.label}
-                </option>
+                </NativeSelectOption>
               ))}
-            </select>
+            </NativeSelect>
 
             <Button
               type="button"
               variant="outline"
-              size="lg"
+              size="sm"
               onClick={useCurrentPosition}
               disabled={positionLoading}
-              className="h-11 rounded-md px-3"
+              className="h-9 rounded-md px-3"
             >
               <LocateFixedIcon aria-hidden="true" data-icon="inline-start" />
               {positionLoading ? "Rilevo..." : "Usa posizione"}

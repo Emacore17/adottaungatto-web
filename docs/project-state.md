@@ -1,6 +1,6 @@
 # Stato attuale del progetto
 
-Aggiornato al 13 maggio 2026.
+Aggiornato al 14 maggio 2026.
 
 Questo documento e' il riepilogo breve da leggere prima di avviare nuovi
 sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
@@ -17,7 +17,7 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   pubblici/auth/account e SEO di base.
 - Schema database con utenti, ruoli, sessioni, geografia, annunci, immagini,
   moderazione, report, notifiche, preferiti e like.
-- Migrazioni Drizzle fino a `0018_notification_events.sql`.
+- Migrazioni Drizzle fino a `0021_glorious_slyde.sql`.
 - Seed iniziale per ruoli e razze.
 - Import luoghi italiani e confini amministrativi Istat tramite worker.
 - API health, health database e health Redis.
@@ -33,20 +33,28 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   `OBSERVABILITY_ALERT_P95_MS_THRESHOLD`.
 - Auth API con registrazione, login, logout, sessione corrente, verifica email,
   recupero password e cambio password autenticato.
+- Cookie browser `HttpOnly`, `SameSite=Lax` e `Secure` in `production`;
+  origin check su Server Action e route handler mutative same-origin.
+- Header di sicurezza web/API, HSTS in production HTTPS e configurazione
+  `TRUSTED_ACTION_ORIGINS` per origin autorizzati.
 - Rate limit Redis fixed-window iniziale sui flussi auth sensibili,
-  sull'upload immagini bozza e sugli endpoint principali admin/moderazione, con
+  sull'upload immagini bozza, sugli endpoint pubblici costosi, sulle azioni
+  account/notifiche/utenti e sugli endpoint admin/moderazione, con
   chiavi identificative hashate, risposta `429` con `retryAfterSeconds` e
   tuning base via `RATE_LIMIT_ENABLED`, `RATE_LIMIT_LIMIT_MULTIPLIER` e
   `RATE_LIMIT_WINDOW_MULTIPLIER`.
+- Rate limit globale API per IP con `API_GLOBAL_RATE_LIMIT_PER_MINUTE` e
+  supporto `API_TRUST_PROXY` per ambienti dietro proxy/CDN.
 - Profilo utente autenticato con update e preferenze email non essenziali,
   esposti anche dalla pagina `/account/settings`.
 - CRUD bozze annuncio, invio a moderazione e upload immagini presigned con
   rate limit su richiesta URL upload e conferma upload.
 - Worker per processamento immagini e varianti WebP, con loop automatico
   durante l'avvio dell'app `worker` e CLI one-shot `pnpm media:process`.
-- Moderazione annunci e segnalazioni con code, decisioni e audit su
-  `moderation_actions`; lettura code e decisioni admin hanno rate limit Redis
-  iniziali per IP, operatore e caso.
+- Moderazione annunci e segnalazioni con code, RBAC API centralizzato,
+  claim/assegnazione caso, note interne, decisioni batch, attivita recenti e
+  audit su `moderation_actions`; lettura code e mutazioni admin hanno rate
+  limit Redis per IP, operatore e caso.
 - Email applicative via Mailpit locale e notifiche in-app.
 - Canale notifiche real-time locale via SSE autenticato:
   `GET /notifications/stream` sul backend, proxy Next same-origin
@@ -133,30 +141,25 @@ sviluppi. Descrive lo stato reale del repository, non lo stato desiderato.
   notifiche di contatto proprietario e approvazione moderatore senza refresh
   manuale.
 
-## Non pronto per produzione
+## Readiness produzione
 
-Il progetto e' una base backend solida, ma non e' ancora rilasciabile in
-produzione. Mancano almeno:
+Il repository e' allineato come release candidate tecnica: lint, typecheck,
+unit test, build, migrazioni locali e smoke E2E sono i gate da eseguire prima
+del rilascio. Il comando sintetico per il codice e' `pnpm release:check`; il
+giro locale completo e' `pnpm release:smoke` con Docker e app gia attivi.
 
-- hardening HTTP, calibrazione dei valori di rate limit per ambiente e
-  protezioni anti-abuso estese;
-- cookie/sessioni browser production-grade e CSRF quando si useranno cookie;
-- integrazione osservabilita production-grade con OpenTelemetry/Dynatrace o
-  equivalente, alert gestiti dal provider e audit centralizzato;
-- pipeline CI/CD e ambienti separati;
-- backup/restore verificati e strategia rollback migrazioni;
-- espansioni ricerca geografiche o filtri soft, benchmark 1M o realistici e
-  refresh sul futuro update di annunci pubblicati;
-- amministrazione completa oltre la moderazione locale e UI interna piu estesa;
-- frontend applicativo oltre la consultazione pubblica: eventuale estensione
-  delle notifiche in-app real-time ad altri eventi prodotto, eventuali canali o
-  finestre orarie per il contatto proprietario e amministrazione interna piu
-  estesa;
-- suite end-to-end completa e fixture dati realistiche oltre allo smoke locale;
-- policy GDPR/privacy/cookie e retention dati.
-- il giro locale prodotto e' coperto dallo smoke principale; resta da
-  consolidare licenza/attribuzione degli asset reali se dovranno essere
-  versionati.
+Il go-live pubblico richiede ancora gate esterni non committabili nel
+repository:
+
+- segreti gestiti fuori dal repository e variabili derivate da
+  `.env.production.example`;
+- ambienti staging/production separati;
+- backup/restore provati e rollback documentato;
+- provider reali per database, Redis, mail, storage, CDN e osservabilita;
+- OpenTelemetry/dashboard/alert gestiti dal provider;
+- MFA obbligatoria per ruoli interni;
+- policy privacy/cookie/termini e procedure GDPR;
+- calibrazione rate limit e load test su traffico realistico.
 
 ## Stato ricerca
 
@@ -183,17 +186,19 @@ Mancano benchmark limite 1M, fixture realistiche e test di carico API.
 Auth e autorizzazione sono avviate correttamente per una fase iniziale:
 
 - bearer session token hashato lato server;
-- ruoli base;
+- ruoli base e guard RBAC centralizzata per moderazione;
 - ownership sulle risorse utente, coperta dallo smoke locale per bozze,
   immagini bozza, preferiti e notifiche;
-- controllo ruoli su moderazione;
+- origin check su mutazioni web e cookie browser sicuri in production;
 - token monouso hashati per email verification e reset password.
+- validazione API env production: configurazioni locali/MinIO default vengono
+  rifiutate con `APP_ENV=production`.
 
-Prima della produzione servono supporto proxy fidato per l'IP client,
-calibrazione dei rate limit su traffico reale, lock progressivo account, policy
-sessioni, cookie sicuri se usati dal browser, log redatti, segreti gestiti da
-provider, hardening upload oltre i limiti iniziali, backup, collegamento degli
-alert locali a un provider operativo e audit amministrativo piu esteso.
+Prima del go-live pubblico servono MFA per admin/moderatori, provider SMS o
+feature flag per verifica telefono, supporto proxy fidato, calibrazione rate
+limit su traffico reale, log redatti verificati, secret/dependency scanning,
+backup, collegamento degli alert locali a un provider operativo e audit
+amministrativo piu esteso.
 
 ## Stato frontend
 
@@ -277,4 +282,5 @@ e notificato al proprietario anche tramite stream real-time.
 - Prima di chiudere un task eseguire almeno `pnpm typecheck`, `pnpm test`,
   `pnpm lint` e `git diff --check` quando sono stati toccati codice o schema;
   se i servizi locali sono avviati, eseguire anche `pnpm smoke:e2e`.
-- A fine round committare le modifiche con un messaggio breve.
+- Committare a fine round solo quando richiesto o quando il flusso di lavoro
+  del repository lo prevede.

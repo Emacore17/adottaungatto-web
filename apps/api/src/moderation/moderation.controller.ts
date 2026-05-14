@@ -12,6 +12,7 @@ import {
 } from "@nestjs/common"
 import {
   moderationCaseIdParamSchema,
+  moderationCommentSchema,
   moderationDecisionSchema,
   paginationQuerySchema,
 } from "@workspace/validation"
@@ -20,14 +21,20 @@ import { ZodError } from "zod"
 import { BearerAuthGuard } from "../auth/auth.guard.js"
 import { CurrentAuth } from "../auth/current-auth.decorator.js"
 import type { CurrentAuthSessionResponse } from "../auth/auth.types.js"
+import { RequireRoles } from "../auth/roles.decorator.js"
+import { RolesGuard } from "../auth/roles.guard.js"
 import { RateLimitService } from "../rate-limit/rate-limit.service.js"
 import {
+  getModerationClaimRateLimitRules,
+  getModerationCommentRateLimitRules,
   getModerationDecisionRateLimitRules,
   getModerationQueueRateLimitRules,
   type ModerationRateLimitRequest,
 } from "./moderation-rate-limit.js"
 import { ModerationService } from "./moderation.service.js"
 
+@RequireRoles("admin", "moderator")
+@UseGuards(BearerAuthGuard, RolesGuard)
 @Controller("moderation")
 export class ModerationController {
   constructor(
@@ -37,7 +44,6 @@ export class ModerationController {
     private readonly rateLimitService: RateLimitService
   ) {}
 
-  @UseGuards(BearerAuthGuard)
   @Get("listings/pending-review")
   async pendingReviewQueue(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
@@ -61,7 +67,6 @@ export class ModerationController {
     }
   }
 
-  @UseGuards(BearerAuthGuard)
   @Get("listings/reported")
   async reportedListingsQueue(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
@@ -81,7 +86,29 @@ export class ModerationController {
     }
   }
 
-  @UseGuards(BearerAuthGuard)
+  @Get("listings/actions/recent")
+  async recentListingActions(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Query() query: Record<string, unknown>,
+    @Req() request: ModerationRateLimitRequest
+  ) {
+    try {
+      const input = paginationQuerySchema.parse(query)
+
+      await this.rateLimitService.enforce(
+        getModerationQueueRateLimitRules(
+          auth.user.id,
+          "recent-actions",
+          request
+        )
+      )
+
+      return this.moderationService.recentListingActions(auth.user.id, input)
+    } catch (error) {
+      throwValidationError(error, "Invalid recent moderation actions query.")
+    }
+  }
+
   @Post("listings/cases/:caseId/approve")
   async approveListingCase(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
@@ -113,7 +140,50 @@ export class ModerationController {
     }
   }
 
-  @UseGuards(BearerAuthGuard)
+  @Post("listings/cases/:caseId/claim")
+  async claimListingCase(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>,
+    @Req() request: ModerationRateLimitRequest
+  ) {
+    try {
+      const { caseId } = moderationCaseIdParamSchema.parse(params)
+
+      await this.rateLimitService.enforce(
+        getModerationClaimRateLimitRules(auth.user.id, caseId, request)
+      )
+
+      return this.moderationService.claimListingCase(auth.user.id, caseId)
+    } catch (error) {
+      throwValidationError(error, "Invalid moderation claim payload.")
+    }
+  }
+
+  @Post("listings/cases/:caseId/comments")
+  async commentListingCase(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: Record<string, unknown>,
+    @Body() body: unknown,
+    @Req() request: ModerationRateLimitRequest
+  ) {
+    try {
+      const { caseId } = moderationCaseIdParamSchema.parse(params)
+      const input = moderationCommentSchema.parse(body)
+
+      await this.rateLimitService.enforce(
+        getModerationCommentRateLimitRules(auth.user.id, caseId, request)
+      )
+
+      return this.moderationService.commentListingCase(
+        auth.user.id,
+        caseId,
+        input
+      )
+    } catch (error) {
+      throwValidationError(error, "Invalid moderation comment payload.")
+    }
+  }
+
   @Post("listings/cases/:caseId/reject")
   async rejectListingCase(
     @CurrentAuth() auth: CurrentAuthSessionResponse,
@@ -145,7 +215,6 @@ export class ModerationController {
     }
   }
 
-  @UseGuards(BearerAuthGuard)
   @Post("listings/cases/:caseId/suspend")
   async suspendListingCase(
     @CurrentAuth() auth: CurrentAuthSessionResponse,

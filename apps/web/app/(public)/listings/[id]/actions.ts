@@ -9,10 +9,13 @@ import {
 import { createListingContactRequest } from "@/lib/api/contacts"
 import { getSessionToken } from "@/lib/auth/session"
 import { routes } from "@/lib/routes"
+import { assertTrustedActionOrigin } from "@/lib/security/server-action-origin"
 
 type ContactResult = "error" | "invalid" | "sent" | "unavailable"
 
 export async function contactListingOwnerAction(formData: FormData) {
+  await assertTrustedActionOrigin()
+
   const listingId = readFormString(formData, "listingId")
   const parsedParams = listingContactListingIdParamSchema.safeParse({
     listingId,

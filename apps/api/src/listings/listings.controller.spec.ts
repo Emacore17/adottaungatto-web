@@ -232,6 +232,7 @@ describe("ListingsController", () => {
       sex: "unknown",
       isFree: true,
       contactRequestsEnabled: true,
+      contactPhoneMode: "none",
     })
   })
 

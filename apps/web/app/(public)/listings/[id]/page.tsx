@@ -246,6 +246,7 @@ export default async function ListingDetailPage({
             isAuthenticated={Boolean(sessionToken)}
             isEnabled={listing.data.contactRequestsEnabled}
             listingId={listing.data.id}
+            publicPhoneE164={listing.data.publicPhoneE164}
           />
         </aside>
       </main>

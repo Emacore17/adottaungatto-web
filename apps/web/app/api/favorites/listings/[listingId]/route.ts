@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server"
 import { favoriteListingIdParamSchema } from "@workspace/validation/favorites"
 
 import { addAccountFavorite, removeAccountFavorite } from "@/lib/api/account"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
 import { getSessionToken } from "@/lib/auth/session"
+import { privateJson } from "@/lib/http/responses"
+import { isTrustedRequestOrigin } from "@/lib/security/server-action-origin"
 
 type FavoriteRouteContext = {
   params: Promise<{
@@ -14,7 +15,11 @@ type FavoriteRouteContext = {
 
 export const dynamic = "force-dynamic"
 
-export async function POST(_request: Request, context: FavoriteRouteContext) {
+export async function POST(request: Request, context: FavoriteRouteContext) {
+  if (!isTrustedRequestOrigin(request)) {
+    return forbiddenResponse()
+  }
+
   return mutateListingFavorite(context, "save")
 }
 
@@ -23,7 +28,7 @@ export async function GET(_request: Request, context: FavoriteRouteContext) {
   const parsedParams = favoriteListingIdParamSchema.safeParse(params)
 
   if (!parsedParams.success) {
-    return NextResponse.json(
+    return privateJson(
       { message: "Invalid listing id." },
       { status: 400 }
     )
@@ -32,7 +37,7 @@ export async function GET(_request: Request, context: FavoriteRouteContext) {
   const token = await getSessionToken()
 
   if (!token) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 })
+    return privateJson({ message: "Unauthorized." }, { status: 401 })
   }
 
   const listing = await getPublicListing(parsedParams.data.listingId, {
@@ -40,7 +45,7 @@ export async function GET(_request: Request, context: FavoriteRouteContext) {
   })
 
   if (!listing.ok) {
-    return NextResponse.json(
+    return privateJson(
       { message: listing.message },
       { status: listing.status ?? 502 }
     )
@@ -50,14 +55,18 @@ export async function GET(_request: Request, context: FavoriteRouteContext) {
     parsedParams.data.listingId,
   ])
 
-  return NextResponse.json({
+  return privateJson({
     favoriteCount: listing.data.stats.favoriteCount,
     favorited: favoriteListingIds.has(parsedParams.data.listingId),
     listingId: parsedParams.data.listingId,
   })
 }
 
-export async function DELETE(_request: Request, context: FavoriteRouteContext) {
+export async function DELETE(request: Request, context: FavoriteRouteContext) {
+  if (!isTrustedRequestOrigin(request)) {
+    return forbiddenResponse()
+  }
+
   return mutateListingFavorite(context, "remove")
 }
 
@@ -69,7 +78,7 @@ async function mutateListingFavorite(
   const parsedParams = favoriteListingIdParamSchema.safeParse(params)
 
   if (!parsedParams.success) {
-    return NextResponse.json(
+    return privateJson(
       { message: "Invalid listing id." },
       { status: 400 }
     )
@@ -78,7 +87,7 @@ async function mutateListingFavorite(
   const token = await getSessionToken()
 
   if (!token) {
-    return NextResponse.json({ message: "Unauthorized." }, { status: 401 })
+    return privateJson({ message: "Unauthorized." }, { status: 401 })
   }
 
   const result =
@@ -87,7 +96,7 @@ async function mutateListingFavorite(
       : await removeAccountFavorite(token, parsedParams.data.listingId)
 
   if (!result.ok) {
-    return NextResponse.json(
+    return privateJson(
       { message: result.message },
       { status: result.status ?? 502 }
     )
@@ -97,9 +106,13 @@ async function mutateListingFavorite(
     cache: "no-store",
   })
 
-  return NextResponse.json({
+  return privateJson({
     ...result.data,
     favoriteCount: listing.ok ? listing.data.stats.favoriteCount : undefined,
     favorited: action === "save",
   })
+}
+
+function forbiddenResponse() {
+  return privateJson({ message: "Forbidden." }, { status: 403 })
 }

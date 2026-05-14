@@ -1,76 +1,36 @@
 # adottaungatto.it
 
-Monorepo per la piattaforma italiana di annunci per adozione responsabile di
+Monorepo della piattaforma italiana per annunci di adozione responsabile di
 gatti e gattini.
 
 ## Workspace
 
-- `apps/web`: Next.js + shadcn/ui.
-- `apps/api`: API NestJS/Fastify, con endpoint `GET /health`.
-- `apps/worker`: worker TypeScript per job asincroni, con stub import luoghi.
-- `packages/db`: schema Drizzle, client PostgreSQL e migrazioni.
-- `packages/domain`: costanti e tipi di dominio condivisi.
-- `packages/validation`: schemi Zod condivisibili.
-- `packages/ui`: componenti shadcn/ui del template.
-- `docs`: documentazione architetturale e ADR.
+- `apps/web`: frontend Next.js.
+- `apps/api`: API NestJS/Fastify.
+- `apps/worker`: job asincroni per media, geografia e benchmark ricerca.
+- `packages/db`: schema Drizzle, migrazioni e seed.
+- `packages/domain`: costanti e tipi di dominio.
+- `packages/validation`: schemi Zod condivisi.
+- `packages/ui`: componenti UI condivisi.
+- `docs`: documentazione tecnica e operativa.
 
-## Documentazione operativa
-
-- [docs/project-state.md](docs/project-state.md): stato reale e gap principali.
-- [docs/agent-coding-roadmap.md](docs/agent-coding-roadmap.md): milestone
-  operative per agenti di coding AI e traguardo locale finale.
-- [docs/test-data.md](docs/test-data.md): contratto dati demo e fixture locali.
-- [docs/production-readiness.md](docs/production-readiness.md): cosa manca per
-  la produzione.
-- [docs/search-full-text-ranking.md](docs/search-full-text-ranking.md):
-  specifica operativa per ricerca full-text, ranking e benchmark.
-- [docs/search-benchmark-results.md](docs/search-benchmark-results.md):
-  risultati locali dei benchmark ricerca.
-- [docs/frontend-nextjs-shadcn-guidelines.md](docs/frontend-nextjs-shadcn-guidelines.md):
-  linee guida per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
-- [docs/local-testing-and-mocks.md](docs/local-testing-and-mocks.md): mock,
-  fixture e prova locale.
-- [docs/ops-monitoring-release.md](docs/ops-monitoring-release.md): ambienti,
-  osservabilita, Dynatrace e CI/CD.
-- [docs/agent-documentation-plan.md](docs/agent-documentation-plan.md): piano
-  documentale per i prossimi lavori con agenti AI.
-
-## Servizi locali
+## Avvio locale
 
 ```bash
-pnpm docker:up
-pnpm db:migrate
-pnpm dev
-```
-
-## Demo locale da zero
-
-Per preparare infrastruttura, migrazioni, luoghi demo, annunci pubblicati,
-asset immagini e avviare web/API/worker:
-
-```bash
+pnpm install
 pnpm dev:demo
 ```
 
-Se il database locale o MinIO sono incoerenti dopo riavvii o passaggi tra
-sviluppatori, usare un solo comando distruttivo limitato ai volumi Docker
-locali:
+`pnpm dev:demo` avvia l'infrastruttura Docker, applica migrazioni, prepara dati
+demo, carica asset immagini e avvia web/API/worker.
+
+Se database o MinIO locali sono incoerenti:
 
 ```bash
 pnpm dev:demo -- --reset
 ```
 
-Account demo:
-
-- `rifugio.torino@demo.adottaungatto.local`
-- `volontari.italia@demo.adottaungatto.local`
-- `marta.demo@demo.adottaungatto.local`
-- `moderatore@demo.adottaungatto.local`
-- `admin@demo.adottaungatto.local`
-
-Password comune: `demo-password-123`
-
-Per ricreare tutto da zero eliminando i volumi Docker locali:
+Per ricreare solo infrastruttura e dati senza avviare i processi applicativi:
 
 ```bash
 pnpm demo:fresh
@@ -80,52 +40,22 @@ URL locali:
 
 - Web: http://localhost:3000
 - API health: http://localhost:4000/health
-- API autocomplete luoghi: http://localhost:4000/places/autocomplete?q=Aosta
-- API luoghi vicini: http://localhost:4000/places/nearby?lat=45.7496&lng=7.3063&radiusKm=10&type=municipality
-- API annunci pubblici: `GET http://localhost:4000/listings`,
-  `GET http://localhost:4000/listings?q=siamese%20roma&sort=relevance`,
-  `GET http://localhost:4000/listings?lat=41.8931&lng=12.4828&radiusKm=25&sort=distance`,
-  `GET http://localhost:4000/listings/:id`
-- API auth: `POST http://localhost:4000/auth/register`,
-  `POST http://localhost:4000/auth/login`,
-  `POST http://localhost:4000/auth/email-verification/request`,
-  `POST http://localhost:4000/auth/email-verification/verify`,
-  `POST http://localhost:4000/auth/password-reset/request`,
-  `POST http://localhost:4000/auth/password-reset/confirm`,
-  `POST http://localhost:4000/auth/password/change`,
-  `GET http://localhost:4000/auth/me`
-- API profilo: `GET http://localhost:4000/users/me`,
-  `PATCH http://localhost:4000/users/me`,
-  `GET http://localhost:4000/users/me/notification-preferences`,
-  `PATCH http://localhost:4000/users/me/notification-preferences`
-- API bozze annunci utente: `GET http://localhost:4000/listings/me/drafts`,
-  `POST http://localhost:4000/listings/me/drafts`,
-  `POST http://localhost:4000/listings/me/drafts/:id/submit-review`,
-  `POST http://localhost:4000/listings/me/drafts/:id/images/upload-url`,
-  `POST http://localhost:4000/listings/me/drafts/:id/images/:imageId/confirm`,
-  `GET http://localhost:4000/listings/me/drafts/:id`,
-  `PATCH http://localhost:4000/listings/me/drafts/:id`,
-  `DELETE http://localhost:4000/listings/me/drafts/:id`
-- API moderazione: `GET http://localhost:4000/moderation/listings/pending-review`,
-  `GET http://localhost:4000/moderation/listings/reported`,
-  `POST http://localhost:4000/moderation/listings/cases/:caseId/approve`,
-  `POST http://localhost:4000/moderation/listings/cases/:caseId/reject`,
-  `POST http://localhost:4000/moderation/listings/cases/:caseId/suspend`
-- API segnalazioni: `POST http://localhost:4000/reports/listings/:listingId`
-- API preferiti: `GET http://localhost:4000/favorites/listings`,
-  `POST http://localhost:4000/favorites/listings/:listingId`,
-  `DELETE http://localhost:4000/favorites/listings/:listingId`
-- API like: `GET http://localhost:4000/likes/listings/:listingId`,
-  `POST http://localhost:4000/likes/listings/:listingId`,
-  `DELETE http://localhost:4000/likes/listings/:listingId`
-- API notifiche: `GET http://localhost:4000/notifications`,
-  `GET http://localhost:4000/notifications/unread-count`,
-  `POST http://localhost:4000/notifications/:notificationId/read`,
-  `POST http://localhost:4000/notifications/read-all`
+- API readiness: http://localhost:4000/health/ready
+- API metrics: http://localhost:4000/health/metrics
 - MinIO console: http://localhost:9001
 - Mailpit: http://localhost:8025
 
-## Script principali
+Account demo:
+
+- `rifugio.torino@demo.adottaungatto.local`
+- `volontari.italia@demo.adottaungatto.local`
+- `marta.demo@demo.adottaungatto.local`
+- `moderatore@demo.adottaungatto.local`
+- `admin@demo.adottaungatto.local`
+
+Password demo: `demo-password-123`
+
+## Comandi principali
 
 ```bash
 pnpm dev
@@ -133,37 +63,51 @@ pnpm build
 pnpm test
 pnpm lint
 pnpm typecheck
-pnpm db:generate
+pnpm release:check
+pnpm release:smoke
 pnpm db:migrate
 pnpm db:seed
 pnpm db:seed:demo
-pnpm demo:fresh
-pnpm demo:setup
-pnpm demo:reset
-pnpm dev:demo
-pnpm geo:import
-pnpm geo:import:apply
-pnpm geo:promote
-pnpm geo:promote:apply
-pnpm geo:boundaries
-pnpm geo:boundaries:apply
+pnpm smoke:e2e
 pnpm media:process
 pnpm search:benchmark -- --size=10000
 ```
 
-## Stato
+`pnpm release:check` esegue lint, typecheck, test e build dell'intero
+workspace. `pnpm release:smoke` applica migrazioni e lancia lo smoke E2E locale
+contro servizi e app gia attivi.
 
-Il progetto ha una base applicativa funzionante: monorepo pnpm, API NestJS,
-worker, Next.js/shadcn, database PostGIS, auth, bozze annuncio, immagini,
-moderazione iniziale, ricerca pubblica, preferiti, like, contatti, notifiche e
-demo locale.
+## Produzione
 
-Non e' ancora completo come prodotto locale. I prossimi sviluppi seguono
-`docs/agent-coding-roadmap.md`: completare dati demo, flusso "Inserisci
-annuncio" con immagini e revisione, dashboard account, preferiti con cuore
-toggle, lista annunci orizzontale con sponsorizzato mock e admin/moderazione
-separati.
+Usare `.env.production.example` come riferimento e non committare mai env reali.
+Con `APP_ENV=production` l'API rifiuta configurazioni locali come localhost,
+MinIO default o bucket locale.
 
-Il traguardo locale e': `pnpm dev:demo` + `pnpm smoke:e2e` devono produrre un
-giro completo navigabile e verificabile con utenti, annunci, immagini,
-moderazione e notifiche.
+Prima del go-live seguire [docs/production-readiness.md](docs/production-readiness.md).
+La strategia concreta di deploy e' in
+[docs/deploy-strategy.md](docs/deploy-strategy.md).
+I gate minimi sono:
+
+- `pnpm release:check` verde;
+- migrazioni verificate in staging;
+- smoke staging/post-deploy verde;
+- segreti gestiti fuori dal repository;
+- provider reali per database, Redis, mail, storage e osservabilita;
+- backup/restore e rollback documentati.
+
+## Documentazione
+
+- [docs/README.md](docs/README.md): indice documentazione.
+- [docs/production-readiness.md](docs/production-readiness.md): gate di
+  produzione e checklist go-live.
+- [docs/deploy-strategy.md](docs/deploy-strategy.md): stack cloud, CI/CD,
+  segreti, costi e guida deploy.
+- [docs/project-state.md](docs/project-state.md): stato reale del repository.
+- [docs/local-development-docker.md](docs/local-development-docker.md): sviluppo
+  locale con Docker.
+- [docs/test-data.md](docs/test-data.md): dati demo e fixture.
+- [docs/moderation.md](docs/moderation.md): moderazione e segnalazioni.
+- [docs/search-full-text-ranking.md](docs/search-full-text-ranking.md): ricerca
+  full-text/geografica e ranking.
+- [docs/ops-monitoring-release.md](docs/ops-monitoring-release.md): ambienti,
+  monitoraggio e rilascio.

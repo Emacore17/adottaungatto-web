@@ -11,10 +11,12 @@ export type ModerationRateLimitRequest = RateLimitRequest
 
 const moderationMinuteWindowSeconds = 60
 const moderationDecisionWindowSeconds = 15 * 60
+const moderationClaimWindowSeconds = 15 * 60
+const moderationCommentWindowSeconds = 15 * 60
 
 export function getModerationQueueRateLimitRules(
   userId: string,
-  queue: "pending-review" | "reported",
+  queue: "pending-review" | "recent-actions" | "reported",
   request: ModerationRateLimitRequest
 ): RateLimitRule[] {
   return [
@@ -57,6 +59,60 @@ export function getModerationDecisionRateLimitRules(
       resourceIdentifier("case", caseId),
       10,
       moderationDecisionWindowSeconds
+    ),
+  ]
+}
+
+export function getModerationClaimRateLimitRules(
+  userId: string,
+  caseId: string,
+  request: ModerationRateLimitRequest
+): RateLimitRule[] {
+  return [
+    createRateLimitRule(
+      "moderation:claim:ip",
+      clientIdentifier(request),
+      180,
+      moderationClaimWindowSeconds
+    ),
+    createRateLimitRule(
+      "moderation:claim:user",
+      userIdentifier(userId),
+      100,
+      moderationClaimWindowSeconds
+    ),
+    createRateLimitRule(
+      "moderation:claim:case",
+      resourceIdentifier("case", caseId),
+      20,
+      moderationClaimWindowSeconds
+    ),
+  ]
+}
+
+export function getModerationCommentRateLimitRules(
+  userId: string,
+  caseId: string,
+  request: ModerationRateLimitRequest
+): RateLimitRule[] {
+  return [
+    createRateLimitRule(
+      "moderation:comment:ip",
+      clientIdentifier(request),
+      180,
+      moderationCommentWindowSeconds
+    ),
+    createRateLimitRule(
+      "moderation:comment:user",
+      userIdentifier(userId),
+      120,
+      moderationCommentWindowSeconds
+    ),
+    createRateLimitRule(
+      "moderation:comment:case",
+      resourceIdentifier("case", caseId),
+      50,
+      moderationCommentWindowSeconds
     ),
   ]
 }

@@ -1,47 +1,61 @@
 # Documentazione tecnica
 
-Questa cartella raccoglie la documentazione iniziale del progetto
-adottaungatto.it.
+Indice aggiornato della documentazione di `adottaungatto.it`.
 
-## Documenti creati
+## Operativa
 
-- [architecture.md](architecture.md): analisi architetturale e principi guida.
-- [backend-stack.md](backend-stack.md): scelta motivata dello stack backend.
-- [monorepo-structure.md](monorepo-structure.md): struttura consigliata del monorepo.
-- [roadmap.md](roadmap.md): roadmap a milestone incrementali.
-- [modules.md](modules.md): moduli principali del sistema.
-- [data-model.md](data-model.md): modello dati iniziale.
-- [project-state.md](project-state.md): stato reale del repository e gap principali.
-- [agent-coding-roadmap.md](agent-coding-roadmap.md): roadmap operativa ottimizzata per agenti di coding AI.
-- [frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md): linee guida operative per scaffolding frontend Next.js, shadcn/ui, SEO e agenti AI.
-- [frontend-brand-redesign.md](frontend-brand-redesign.md): stato e specifica operativa del redesign visuale basato sul nuovo logo.
-- [search-and-geo.md](search-and-geo.md): strategia di ricerca full-text e geografica.
-- [search-full-text-ranking.md](search-full-text-ranking.md): specifica operativa per ranking, indici e benchmark ricerca.
-- [search-benchmark-results.md](search-benchmark-results.md): risultati locali dei benchmark ricerca.
-- [italian-places-import.md](italian-places-import.md): import dei luoghi italiani da fonti ufficiali.
-- [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
-- [production-readiness.md](production-readiness.md): checklist per arrivare a produzione.
-- [ops-monitoring-release.md](ops-monitoring-release.md): ambienti, osservabilita, Dynatrace e CI/CD.
-- [local-testing-and-mocks.md](local-testing-and-mocks.md): mock, fixture e prova locale.
-- [test-data.md](test-data.md): contratto dei dati demo e fixture locali.
-- [sponsored-listings-business.md](sponsored-listings-business.md): strategia per annunci sponsorizzati.
-- [agent-documentation-plan.md](agent-documentation-plan.md): piano documentale ottimizzato per agenti AI.
-- [contacts.md](contacts.md): contatto proprietario privacy-first.
-- [favorites.md](favorites.md): preferiti degli annunci pubblicati.
-- [likes.md](likes.md): like pubblici aggregati sugli annunci pubblicati.
-- [moderation.md](moderation.md): moderazione annunci e segnalazioni.
-- [notifications.md](notifications.md): centro notifiche in-app.
-- [images.md](images.md): gestione immagini e asset statici.
-- [local-development-docker.md](local-development-docker.md): sviluppo locale con Docker.
-- [first-technical-tasks.md](first-technical-tasks.md): primi task tecnici.
+- [production-readiness.md](production-readiness.md): gate di produzione,
+  configurazione e checklist go-live.
+- [deploy-strategy.md](deploy-strategy.md): strategia concreta di deploy,
+  stack cloud, CI/CD, segreti, costi e guida operativa.
+- [project-state.md](project-state.md): stato reale del repository e rischi
+  residui.
+- [local-development-docker.md](local-development-docker.md): sviluppo locale,
+  Docker, demo e reset.
+- [test-data.md](test-data.md): utenti, annunci, immagini e fixture demo.
+- [ops-monitoring-release.md](ops-monitoring-release.md): ambienti,
+  osservabilita, CI/CD e rilascio.
+
+## Architettura
+
+- [architecture.md](architecture.md): principi architetturali.
+- [backend-stack.md](backend-stack.md): scelta dello stack backend.
+- [monorepo-structure.md](monorepo-structure.md): struttura workspace.
+- [data-model.md](data-model.md): modello dati.
+- [modules.md](modules.md): moduli applicativi.
 - [adr](adr): decisioni architetturali.
 
-## Regole di aggiornamento
+## Aree funzionali
 
-- Ogni scelta tecnica rilevante va registrata in un ADR.
-- Ogni milestone deve aggiornare almeno roadmap, task e setup se cambia il modo
-  di sviluppare o testare in locale.
-- La documentazione deve descrivere lo stato reale del repository, non uno stato
-  desiderato non ancora implementato.
-- Ogni round di lavoro deve chiudersi con commit breve dopo le verifiche
-  adeguate al tipo di modifica.
+- [authz.md](authz.md): autenticazione, autorizzazione e ruoli.
+- [moderation.md](moderation.md): moderazione, segnalazioni e audit.
+- [notifications.md](notifications.md): notifiche in-app e real-time locale.
+- [contacts.md](contacts.md): contatto proprietario privacy-first.
+- [favorites.md](favorites.md): preferiti.
+- [likes.md](likes.md): like aggregati storici.
+- [images.md](images.md): upload, processamento e storage immagini.
+- [search-and-geo.md](search-and-geo.md): ricerca e geografia.
+- [search-full-text-ranking.md](search-full-text-ranking.md): ranking e indici.
+- [italian-places-import.md](italian-places-import.md): import luoghi ISTAT.
+
+## Storico e roadmap
+
+Questi documenti descrivono evoluzioni o decisioni passate. Usarli come
+contesto, non come stato di produzione:
+
+- [roadmap.md](roadmap.md)
+- [agent-coding-roadmap.md](agent-coding-roadmap.md)
+- [frontend-nextjs-shadcn-guidelines.md](frontend-nextjs-shadcn-guidelines.md)
+- [frontend-brand-redesign.md](frontend-brand-redesign.md)
+- [search-benchmark-results.md](search-benchmark-results.md)
+- [sponsored-listings-business.md](sponsored-listings-business.md)
+- [local-testing-and-mocks.md](local-testing-and-mocks.md)
+- [first-technical-tasks.md](first-technical-tasks.md)
+- [agent-documentation-plan.md](agent-documentation-plan.md)
+
+## Regole
+
+- La documentazione deve descrivere lo stato reale, non solo quello desiderato.
+- Ogni scelta tecnica rilevante va registrata in ADR o nel documento dell'area.
+- Ogni modifica a setup, env, migrazioni o release deve aggiornare
+  `production-readiness.md` o `ops-monitoring-release.md`.

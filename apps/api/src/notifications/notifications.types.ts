@@ -31,6 +31,11 @@ export type NotificationMarkAllReadResponse = {
   updatedCount: number
 }
 
+export type NotificationDeleteResponse = {
+  deleted: true
+  notificationId: string
+}
+
 export type NotificationRealtimeEvent =
   | {
       type: "snapshot"
@@ -52,6 +57,12 @@ export type NotificationRealtimeEvent =
   | {
       type: "read_all"
       data: NotificationUnreadCountResponse & NotificationMarkAllReadResponse
+    }
+  | {
+      type: "deleted"
+      data: NotificationUnreadCountResponse & {
+        notificationId: string
+      }
     }
   | {
       type: "ping"
