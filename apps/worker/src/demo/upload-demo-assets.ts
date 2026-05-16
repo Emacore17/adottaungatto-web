@@ -142,7 +142,7 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
     await client.makeBucket(bucket, process.env.S3_REGION ?? "local")
   }
 
-  await client.setBucketPolicy(bucket, createPublicReadPolicy(bucket))
+  await applyPublicReadPolicy(client, bucket)
 
   let objects = 0
   let placeholderImages = 0
@@ -192,6 +192,23 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
   }
 }
 
+type BucketPolicyClient = Pick<Minio.Client, "setBucketPolicy">
+
+export async function applyPublicReadPolicy(
+  client: BucketPolicyClient,
+  targetBucket: string
+) {
+  try {
+    await client.setBucketPolicy(targetBucket, createPublicReadPolicy(targetBucket))
+  } catch (error) {
+    if (isUnsupportedBucketPolicyError(error)) {
+      return
+    }
+
+    throw error
+  }
+}
+
 function createPublicReadPolicy(targetBucket: string) {
   return JSON.stringify({
     Statement: [
@@ -204,6 +221,19 @@ function createPublicReadPolicy(targetBucket: string) {
     ],
     Version: "2012-10-17",
   })
+}
+
+function isUnsupportedBucketPolicyError(error: unknown) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined
+  const message = error instanceof Error ? error.message : String(error)
+
+  return code === "NotImplemented" || message.includes("PutBucketPolicy")
 }
 
 function resolveSourceImagePath(fileName: string) {
