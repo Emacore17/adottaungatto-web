@@ -73,11 +73,14 @@ Uso: ambiente online per sviluppatori, molto vicino alla produzione.
 
 #### Stato dev-online - primo deploy
 
-Aggiornato il 16 maggio 2026.
+Aggiornato il 16 maggio 2026. Ultimo deploy applicativo verificato:
+`bb28e7a725ac15d982fc3b06599295a7c9ce2a09`.
 
-- Commit deployato: `b774d14c5987c3e7ff362a261fbf15aa22845fae`.
-- CI: GitHub Actions `ci.yml` run `25960255733`, esito `success`.
-- Deploy: GitHub Actions `deploy-dev.yml` run `25960255717`, esito `success`.
+- Commit primo deploy: `b774d14c5987c3e7ff362a261fbf15aa22845fae`.
+- CI ultimo deploy: GitHub Actions `ci.yml` run `25965021958`, esito
+  `success`.
+- Deploy ultimo deploy: GitHub Actions `deploy-dev.yml` run `25965021948`,
+  esito `success`.
 - Web temporaneo:
   `https://ca-adotta-dev-web.purpletree-ad0ff43a.italynorth.azurecontainerapps.io`.
 - API temporanea:
@@ -102,6 +105,13 @@ Aggiornato il 16 maggio 2026.
 - Smoke remoto manuale: `REMOTE_SMOKE_OK` contro gli URL Azure generati.
 - Health API: `/health` HTTP 200; `/health/ready` HTTP 200 con database e
   Redis `ok`.
+- Luoghi dev-online: import Istat completo applicato nel workflow prima del
+  seed demo; tabelle attive con 20 regioni, 110 province/enti, 7.894 comuni e
+  `duplicateActivePlaceGroups=0`. Confini e centroidi importati da Istat 2026:
+  20/20 regioni, 110/110 province/enti e 7.893/7.894 comuni con geometria.
+- Verifica luoghi da API: autocomplete positivo per `Napoli`, `Palermo`,
+  `Aosta`, `Sicilia` e `Sardegna`; creazione bozza temporanea su `Palermo`
+  riuscita e poi eliminata.
 - Dati demo: seed applicato, 8 annunci pubblicati interrogabili da API.
 - Asset demo: 33 oggetti `demo/listings/*` caricati e verificati su R2; route
   web `/api/storage/demo/listings/artu-thumb.png` HTTP 200 `image/png`.
