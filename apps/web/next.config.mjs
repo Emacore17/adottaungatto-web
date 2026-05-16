@@ -24,9 +24,16 @@ const imageRemotePatterns = [
   createRemotePattern(process.env.S3_PUBLIC_ENDPOINT),
   createRemotePattern("http://localhost:9000"),
 ].filter(Boolean)
+const listingImageFormBodySizeLimit = "110mb"
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    proxyClientMaxBodySize: listingImageFormBodySizeLimit,
+    serverActions: {
+      bodySizeLimit: listingImageFormBodySizeLimit,
+    },
+  },
   images: {
     remotePatterns: imageRemotePatterns,
   },
