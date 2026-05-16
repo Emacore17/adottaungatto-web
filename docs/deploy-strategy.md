@@ -71,6 +71,62 @@ Uso: ambiente online per sviluppatori, molto vicino alla produzione.
 - Scopo: verificare flussi reali, domini, HTTPS, storage, mail, immagini,
   auth, moderazione e smoke post-deploy.
 
+#### Stato dev-online - primo deploy
+
+Aggiornato il 16 maggio 2026.
+
+- Commit deployato: `b774d14c5987c3e7ff362a261fbf15aa22845fae`.
+- CI: GitHub Actions `ci.yml` run `25960255733`, esito `success`.
+- Deploy: GitHub Actions `deploy-dev.yml` run `25960255717`, esito `success`.
+- Web temporaneo:
+  `https://ca-adotta-dev-web.purpletree-ad0ff43a.italynorth.azurecontainerapps.io`.
+- API temporanea:
+  `https://ca-adotta-dev-api.purpletree-ad0ff43a.italynorth.azurecontainerapps.io`.
+- Media temporaneo:
+  `https://pub-7e18477ae9734ea7b8f6cc21bee5810b.r2.dev`.
+- Resource group: `rg-adotta-dev-itn`, regione `italynorth`.
+- Risorse Azure create: `acradottadev`, `kv-adotta-dev-itn`,
+  `workspace-rgadottadevitnMMfW`, `cae-adotta-dev-itn`,
+  `psql-adotta-dev-itn`, `redis-adotta-dev-itn`, `id-adotta-dev-pull`,
+  `ca-adotta-dev-api`, `ca-adotta-dev-worker`, `ca-adotta-dev-web`.
+- Database: PostgreSQL Flexible Server 16, database `adottaungatto`,
+  estensioni allow-listed `postgis`, `pg_trgm`, `unaccent`,
+  `pg_stat_statements`, `pgcrypto`.
+- Redis: Azure Redis Basic C0 `redis-adotta-dev-itn`.
+- Storage: Cloudflare R2 bucket `adotta-dev-assets`, location `EEUR`, con
+  endpoint pubblico `r2.dev` temporaneo.
+- Segreti presenti in Key Vault, senza valori: `DATABASE-URL`, `REDIS-URL`,
+  `S3-ACCESS-KEY-ID`, `S3-SECRET-ACCESS-KEY`.
+- GitHub Environment `dev-online`: OIDC Azure configurato; variabili R2, mail
+  placeholder e `USE_CUSTOM_DOMAINS=false` configurate.
+- Smoke remoto manuale: `REMOTE_SMOKE_OK` contro gli URL Azure generati.
+- Health API: `/health` HTTP 200; `/health/ready` HTTP 200 con database e
+  Redis `ok`.
+- Dati demo: seed applicato, 8 annunci pubblicati interrogabili da API.
+- Asset demo: 33 oggetti `demo/listings/*` caricati e verificati su R2; route
+  web `/api/storage/demo/listings/artu-thumb.png` HTTP 200 `image/png`.
+- Moderazione: `/moderation` sul FQDN web Azure ritorna HTTP 404, come atteso
+  per host non admin.
+- Log: ultimi log API, web e worker senza errori ricorrenti; API mostra
+  richieste health/listings HTTP 200 e worker `status=ok`.
+- Budget: budget Azure mensile `budget-adotta-dev-online` configurato a 70 USD
+  con soglie 50%, 80% e 100%.
+
+Problemi aperti:
+
+- `adottaungatto.it` non e' ancora disponibile in Cloudflare: custom domain
+  dev, DNS, Cloudflare Access e `media-dev.adottaungatto.it` restano bloccati.
+- Gli URL Azure e `r2.dev` sono endpoint gratuiti/temporanei, non il perimetro
+  finale protetto da Cloudflare Access.
+- Email non pronta: `MAIL_HOST=smtp.invalid` e `MAIL_FROM` placeholder; i flussi
+  che inviano email falliscono finche non viene configurato un provider SMTP
+  reale supportato dall'app.
+- PostgreSQL dev-online ha accesso pubblico abilitato per permettere migrazioni
+  da GitHub Actions; da restringere quando sara disponibile una strategia di
+  networking o allowlist stabile.
+- GitHub Actions mostra warning non bloccante sulla deprecazione Node.js 20 per
+  alcune actions.
+
 ### production
 
 Uso: utenti reali.
@@ -394,6 +450,7 @@ Dimensionamento iniziale:
 
 Estensioni:
 
+- `pgcrypto`;
 - `postgis`;
 - `pg_trgm`;
 - `unaccent` se usata dalla ricerca;
@@ -740,12 +797,13 @@ az postgres flexible-server parameter set \
   --resource-group rg-adotta-dev-itn \
   --server-name psql-adotta-dev-itn \
   --name azure.extensions \
-  --value postgis,pg_trgm,unaccent,pg_stat_statements
+  --value postgis,pg_trgm,unaccent,pg_stat_statements,pgcrypto
 ```
 
 Poi eseguire nel DB:
 
 ```sql
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
@@ -927,13 +985,17 @@ specifico con backup/restore o migrazione correttiva.
 
 ## Rischi aperti prima del primo go-live
 
-- Mancano ancora Dockerfile e workflow reali nel repository.
-- La moderazione deve essere bloccata a livello host sul dominio pubblico.
-- Smoke remoto deve essere separato dallo smoke locale con dati demo.
-- Serve decisione finale tra Dynatrace immediato o Azure Monitor iniziale.
-- Serve provider reale per email e, se richiesto, SMS.
+- Serve dominio `adottaungatto.it` in Cloudflare per completare custom domain,
+  DNS, Cloudflare Access e protezione dev-only a livello edge.
+- Serve provider reale per email e, se richiesto, SMS; l'ambiente dev-online
+  usa ancora un placeholder SMTP.
+- Serve restringere l'accesso pubblico PostgreSQL dev-online o documentare
+  allowlist/networking compatibili con GitHub Actions.
+- Serve decisione finale tra Dynatrace immediato o Azure Monitor iniziale per
+  produzione; dev-online usa Azure Monitor iniziale.
 - Serve test restore backup database.
-- Serve budget alert Azure/Cloudflare/Dynatrace.
+- Serve budget alert Cloudflare/Dynatrace quando quei servizi diventano
+  billing-relevant oltre il free tier.
 
 ## Fonti
 
