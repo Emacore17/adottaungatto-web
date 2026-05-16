@@ -20,12 +20,16 @@ jobs:
       AZURE_ACR_NAME: acradottadev
       AZURE_KEY_VAULT_NAME: kv-adotta-dev-itn
       AZURE_CONTAINERAPP_ENV: cae-adotta-dev-itn
+      AZURE_PULL_IDENTITY_NAME: id-adotta-dev-pull
       API_APP_NAME: ca-adotta-dev-api
       WEB_APP_NAME: ca-adotta-dev-web
       WORKER_APP_NAME: ca-adotta-dev-worker
       API_PORT: "4000"
       WEB_PORT: "3000"
       DEV_ONLINE_SEED_DEMO: "true"
+      USE_CUSTOM_DOMAINS: ${{ vars.USE_CUSTOM_DOMAINS }}
+      CONFIGURED_API_URL: ${{ vars.API_URL }}
+      CONFIGURED_WEB_URL: ${{ vars.WEB_URL }}
 
     steps:
       - name: Checkout
@@ -57,10 +61,26 @@ jobs:
         shell: bash
         run: |
           ACR_LOGIN_SERVER="${AZURE_ACR_NAME}.azurecr.io"
-          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> "$GITHUB_ENV"
-          echo "API_IMAGE=${ACR_LOGIN_SERVER}/adotta/api:${GITHUB_SHA}" >> "$GITHUB_ENV"
-          echo "WEB_IMAGE=${ACR_LOGIN_SERVER}/adotta/web:${GITHUB_SHA}" >> "$GITHUB_ENV"
-          echo "WORKER_IMAGE=${ACR_LOGIN_SERVER}/adotta/worker:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          {
+            echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}"
+            echo "API_IMAGE=${ACR_LOGIN_SERVER}/adotta/api:${GITHUB_SHA}"
+            echo "WEB_IMAGE=${ACR_LOGIN_SERVER}/adotta/web:${GITHUB_SHA}"
+            echo "WORKER_IMAGE=${ACR_LOGIN_SERVER}/adotta/worker:${GITHUB_SHA}"
+          } >> "$GITHUB_ENV"
+
+      - name: Resolve pull identity
+        shell: bash
+        run: |
+          PULL_IDENTITY_ID="$(az identity show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --name "$AZURE_PULL_IDENTITY_NAME" \
+            --query id \
+            -o tsv)"
+          if [ -z "$PULL_IDENTITY_ID" ]; then
+            echo "::error::Missing Azure user-assigned identity $AZURE_PULL_IDENTITY_NAME"
+            exit 1
+          fi
+          echo "PULL_IDENTITY_ID=${PULL_IDENTITY_ID}" >> "$GITHUB_ENV"
 
       - name: ACR login
         run: az acr login --name "$AZURE_ACR_NAME"
@@ -134,103 +154,246 @@ jobs:
       - name: Deploy API
         shell: bash
         run: |
-          az containerapp up \
-            --name "$API_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --environment "$AZURE_CONTAINERAPP_ENV" \
-            --image "$API_IMAGE" \
-            --target-port "$API_PORT" \
-            --ingress external
-          az containerapp secret set \
-            --name "$API_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --secrets \
-              database-url="$DATABASE_URL" \
-              redis-url="$REDIS_URL" \
-              s3-access-key-id="$S3_ACCESS_KEY_ID" \
-              s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
-          az containerapp update \
-            --name "$API_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --min-replicas 0 \
-            --max-replicas 2 \
-            --set-env-vars \
-              APP_ENV=production \
-              APP_URL="${{ vars.WEB_URL }}" \
-              API_PORT="$API_PORT" \
-              API_TRUST_PROXY=true \
-              RATE_LIMIT_ENABLED=true \
+          WEB_BOOTSTRAP_URL="${CONFIGURED_WEB_URL:-https://dev.adottaungatto.it}"
+          if az containerapp show --name "$API_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp identity assign \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --user-assigned "$PULL_IDENTITY_ID"
+            az containerapp registry set \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --server "$ACR_LOGIN_SERVER" \
+              --identity "$PULL_IDENTITY_ID"
+            az containerapp secret set \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                s3-access-key-id="$S3_ACCESS_KEY_ID" \
+                s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
+            az containerapp update \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --image "$API_IMAGE" \
+              --min-replicas 0 \
+              --max-replicas 2 \
+              --set-env-vars \
+                APP_ENV=production \
+                APP_URL="$WEB_BOOTSTRAP_URL" \
+                API_PORT="$API_PORT" \
+                API_TRUST_PROXY=true \
+                RATE_LIMIT_ENABLED=true \
               DATABASE_URL=secretref:database-url \
               REDIS_URL=secretref:redis-url \
               S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
               S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
               S3_BUCKET="${{ vars.S3_BUCKET }}" \
               S3_REGION="${{ vars.S3_REGION }}" \
-              S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
-              S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key \
-              MAIL_HOST="${{ vars.MAIL_HOST }}" \
-              MAIL_PORT="${{ vars.MAIL_PORT }}" \
-              MAIL_FROM="${{ vars.MAIL_FROM }}"
+                S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+                S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key \
+                MAIL_HOST="${{ vars.MAIL_HOST }}" \
+                MAIL_PORT="${{ vars.MAIL_PORT }}" \
+                MAIL_FROM="${{ vars.MAIL_FROM }}"
+          else
+            az containerapp create \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --environment "$AZURE_CONTAINERAPP_ENV" \
+              --image "$API_IMAGE" \
+              --user-assigned "$PULL_IDENTITY_ID" \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-identity "$PULL_IDENTITY_ID" \
+              --target-port "$API_PORT" \
+              --ingress external \
+              --min-replicas 0 \
+              --max-replicas 2 \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                s3-access-key-id="$S3_ACCESS_KEY_ID" \
+                s3-secret-access-key="$S3_SECRET_ACCESS_KEY" \
+              --env-vars \
+                APP_ENV=production \
+                APP_URL="$WEB_BOOTSTRAP_URL" \
+                API_PORT="$API_PORT" \
+                API_TRUST_PROXY=true \
+                RATE_LIMIT_ENABLED=true \
+                DATABASE_URL=secretref:database-url \
+                REDIS_URL=secretref:redis-url \
+                S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+                S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+                S3_BUCKET="${{ vars.S3_BUCKET }}" \
+                S3_REGION="${{ vars.S3_REGION }}" \
+                S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+                S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key \
+                MAIL_HOST="${{ vars.MAIL_HOST }}" \
+                MAIL_PORT="${{ vars.MAIL_PORT }}" \
+                MAIL_FROM="${{ vars.MAIL_FROM }}"
+          fi
+          API_DEFAULT_URL="https://$(az containerapp show \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)"
+          API_RUNTIME_URL="$API_DEFAULT_URL"
+          if [ "${USE_CUSTOM_DOMAINS,,}" = "true" ]; then
+            if [ -z "$CONFIGURED_API_URL" ]; then
+              echo "::error::USE_CUSTOM_DOMAINS=true requires API_URL"
+              exit 1
+            fi
+            API_RUNTIME_URL="${CONFIGURED_API_URL%/}"
+          fi
+          echo "API_RUNTIME_URL=${API_RUNTIME_URL}" >> "$GITHUB_ENV"
 
       - name: Deploy worker
         shell: bash
         run: |
-          az containerapp up \
-            --name "$WORKER_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --environment "$AZURE_CONTAINERAPP_ENV" \
-            --image "$WORKER_IMAGE" \
-            --ingress disabled
-          az containerapp secret set \
-            --name "$WORKER_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --secrets \
-              database-url="$DATABASE_URL" \
-              redis-url="$REDIS_URL" \
-              s3-access-key-id="$S3_ACCESS_KEY_ID" \
-              s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
-          az containerapp update \
-            --name "$WORKER_APP_NAME" \
-            --resource-group "$AZURE_RESOURCE_GROUP" \
-            --min-replicas 0 \
-            --max-replicas 1 \
-            --set-env-vars \
-              APP_ENV=production \
-              DATABASE_URL=secretref:database-url \
-              REDIS_URL=secretref:redis-url \
+          if az containerapp show --name "$WORKER_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp identity assign \
+              --name "$WORKER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --user-assigned "$PULL_IDENTITY_ID"
+            az containerapp registry set \
+              --name "$WORKER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --server "$ACR_LOGIN_SERVER" \
+              --identity "$PULL_IDENTITY_ID"
+            az containerapp secret set \
+              --name "$WORKER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                s3-access-key-id="$S3_ACCESS_KEY_ID" \
+                s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
+            az containerapp update \
+              --name "$WORKER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --image "$WORKER_IMAGE" \
+              --min-replicas 0 \
+              --max-replicas 1 \
+              --set-env-vars \
+                APP_ENV=production \
+                DATABASE_URL=secretref:database-url \
+                REDIS_URL=secretref:redis-url \
               S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
               S3_BUCKET="${{ vars.S3_BUCKET }}" \
-              S3_REGION="${{ vars.S3_REGION }}" \
-              S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
-              S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key
+                S3_REGION="${{ vars.S3_REGION }}" \
+                S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+                S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key
+          else
+            az containerapp create \
+              --name "$WORKER_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --environment "$AZURE_CONTAINERAPP_ENV" \
+              --image "$WORKER_IMAGE" \
+              --user-assigned "$PULL_IDENTITY_ID" \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-identity "$PULL_IDENTITY_ID" \
+              --min-replicas 0 \
+              --max-replicas 1 \
+              --secrets \
+                database-url="$DATABASE_URL" \
+                redis-url="$REDIS_URL" \
+                s3-access-key-id="$S3_ACCESS_KEY_ID" \
+                s3-secret-access-key="$S3_SECRET_ACCESS_KEY" \
+              --env-vars \
+                APP_ENV=production \
+                DATABASE_URL=secretref:database-url \
+                REDIS_URL=secretref:redis-url \
+                S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+                S3_BUCKET="${{ vars.S3_BUCKET }}" \
+                S3_REGION="${{ vars.S3_REGION }}" \
+                S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+                S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key
+          fi
 
       - name: Deploy web
         shell: bash
         run: |
-          az containerapp up \
+          WEB_BOOTSTRAP_URL="${CONFIGURED_WEB_URL:-https://dev.adottaungatto.it}"
+          if az containerapp show --name "$WEB_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
+            az containerapp identity assign \
+              --name "$WEB_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --user-assigned "$PULL_IDENTITY_ID"
+            az containerapp registry set \
+              --name "$WEB_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --server "$ACR_LOGIN_SERVER" \
+              --identity "$PULL_IDENTITY_ID"
+            az containerapp update \
+              --name "$WEB_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --image "$WEB_IMAGE" \
+              --min-replicas 0 \
+              --max-replicas 2 \
+              --set-env-vars \
+                APP_ENV=production \
+                APP_URL="$WEB_BOOTSTRAP_URL" \
+                API_URL="$API_RUNTIME_URL" \
+                NEXT_PUBLIC_SITE_URL="$WEB_BOOTSTRAP_URL" \
+                NEXT_PUBLIC_API_URL="$API_RUNTIME_URL" \
+                NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+                NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
+                ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+          else
+            az containerapp create \
+              --name "$WEB_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --environment "$AZURE_CONTAINERAPP_ENV" \
+              --image "$WEB_IMAGE" \
+              --user-assigned "$PULL_IDENTITY_ID" \
+              --registry-server "$ACR_LOGIN_SERVER" \
+              --registry-identity "$PULL_IDENTITY_ID" \
+              --target-port "$WEB_PORT" \
+              --ingress external \
+              --min-replicas 0 \
+              --max-replicas 2 \
+              --env-vars \
+                APP_ENV=production \
+                APP_URL="$WEB_BOOTSTRAP_URL" \
+                API_URL="$API_RUNTIME_URL" \
+                NEXT_PUBLIC_SITE_URL="$WEB_BOOTSTRAP_URL" \
+                NEXT_PUBLIC_API_URL="$API_RUNTIME_URL" \
+                NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+                NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
+                ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+          fi
+          WEB_DEFAULT_URL="https://$(az containerapp show \
             --name "$WEB_APP_NAME" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --environment "$AZURE_CONTAINERAPP_ENV" \
-            --image "$WEB_IMAGE" \
-            --target-port "$WEB_PORT" \
-            --ingress external
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)"
+          WEB_RUNTIME_URL="$WEB_DEFAULT_URL"
+          if [ "${USE_CUSTOM_DOMAINS,,}" = "true" ]; then
+            if [ -z "$CONFIGURED_WEB_URL" ]; then
+              echo "::error::USE_CUSTOM_DOMAINS=true requires WEB_URL"
+              exit 1
+            fi
+            WEB_RUNTIME_URL="${CONFIGURED_WEB_URL%/}"
+          fi
+          echo "WEB_RUNTIME_URL=${WEB_RUNTIME_URL}" >> "$GITHUB_ENV"
+
+      - name: Finalize runtime URLs
+        shell: bash
+        run: |
+          az containerapp update \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --set-env-vars \
+              APP_URL="$WEB_RUNTIME_URL"
           az containerapp update \
             --name "$WEB_APP_NAME" \
             --resource-group "$AZURE_RESOURCE_GROUP" \
-            --min-replicas 0 \
-            --max-replicas 2 \
             --set-env-vars \
-              APP_ENV=production \
-              APP_URL="${{ vars.WEB_URL }}" \
-              API_URL="${{ vars.API_URL }}" \
-              NEXT_PUBLIC_SITE_URL="${{ vars.WEB_URL }}" \
-              NEXT_PUBLIC_API_URL="${{ vars.API_URL }}" \
-              NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
-              NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
-              ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+              APP_URL="$WEB_RUNTIME_URL" \
+              API_URL="$API_RUNTIME_URL" \
+              NEXT_PUBLIC_SITE_URL="$WEB_RUNTIME_URL" \
+              NEXT_PUBLIC_API_URL="$API_RUNTIME_URL"
 
       - name: Remote smoke
-        run: pnpm smoke:remote
-        env:
-          API_URL: ${{ vars.API_URL }}
-          WEB_URL: ${{ vars.WEB_URL }}
+        shell: bash
+        run: API_URL="$API_RUNTIME_URL" WEB_URL="$WEB_RUNTIME_URL" pnpm smoke:remote
