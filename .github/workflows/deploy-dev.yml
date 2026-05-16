@@ -128,6 +128,34 @@ jobs:
             "$API_IMAGE" \
             pnpm db:migrate
 
+      - name: Ensure Italian places
+        shell: bash
+        run: |
+          if docker run --rm \
+            -e DATABASE_URL="$DATABASE_URL" \
+            "$WORKER_IMAGE" \
+            pnpm --filter worker geo:verify; then
+            echo "Italian places already complete."
+          else
+            echo "Italian places incomplete; importing full Istat dataset."
+            docker run --rm \
+              -e DATABASE_URL="$DATABASE_URL" \
+              "$WORKER_IMAGE" \
+              pnpm --filter worker geo:import:apply
+            docker run --rm \
+              -e DATABASE_URL="$DATABASE_URL" \
+              "$WORKER_IMAGE" \
+              pnpm --filter worker geo:promote:apply
+            docker run --rm \
+              -e DATABASE_URL="$DATABASE_URL" \
+              "$WORKER_IMAGE" \
+              pnpm --filter worker geo:boundaries:apply
+            docker run --rm \
+              -e DATABASE_URL="$DATABASE_URL" \
+              "$WORKER_IMAGE" \
+              pnpm --filter worker geo:verify
+          fi
+
       - name: Seed demo data and assets
         if: env.DEV_ONLINE_SEED_DEMO == 'true'
         shell: bash
