@@ -12,6 +12,14 @@ function readUrl(value: string | undefined, fallback: string) {
   }
 }
 
+function readBoolean(value: string | undefined, fallback: boolean) {
+  if (value === undefined || value === null || value === "") {
+    return fallback
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase())
+}
+
 export const webEnv = {
   appEnv: process.env.APP_ENV ?? "local",
   apiBaseUrl: readUrl(
@@ -34,6 +42,11 @@ export const webEnv = {
     process.env.NEXT_PUBLIC_S3_PUBLIC_ENDPOINT ??
       process.env.S3_PUBLIC_ENDPOINT,
     "http://localhost:9000"
+  ),
+  storagePublicPathStyle: readBoolean(
+    process.env.NEXT_PUBLIC_S3_PUBLIC_PATH_STYLE ??
+      process.env.S3_PUBLIC_PATH_STYLE,
+    true
   ),
 }
 

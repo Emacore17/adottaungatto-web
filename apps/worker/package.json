@@ -18,6 +18,7 @@
     "media:process": "tsx src/media/process-listing-images-cli.ts",
     "search:benchmark": "tsx src/search/benchmark-search-cli.ts",
     "start": "node dist/main.js",
+    "start:container:dev": "tsx src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
