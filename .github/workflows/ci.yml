@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  release-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Release check
+        run: pnpm release:check
+
+      - name: Build API image
+        run: docker build -f apps/api/Dockerfile -t adotta-api-ci:${{ github.sha }} .
+
+      - name: Build worker image
+        run: docker build -f apps/worker/Dockerfile -t adotta-worker-ci:${{ github.sha }} .
+
+      - name: Build web image
+        run: docker build -f apps/web/Dockerfile -t adotta-web-ci:${{ github.sha }} .
