@@ -8,9 +8,11 @@ import sharp from "sharp"
 
 const bucket = process.env.S3_BUCKET ?? "adottaungatto-local"
 const endpoint = new URL(process.env.S3_ENDPOINT ?? "http://localhost:9000")
-const sourceImageDir =
+const localSourceImageDir =
   process.env.DEMO_CAT_IMAGES_DIR ||
   fileURLToPath(new URL("../../../../immagini-gattini/", import.meta.url))
+const bundledSourceImageDir = fileURLToPath(new URL("./assets/", import.meta.url))
+const sourceImageDir = localSourceImageDir
 
 const demoAssets = [
   {
@@ -149,7 +151,7 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
   let sourceImages = 0
 
   for (const asset of demoAssets) {
-    const sourcePath = resolveSourceImagePath(asset.sourceImage)
+    const sourcePath = resolveDemoSourceImagePath(asset.sourceImage)
 
     if (sourcePath) {
       sourceImages += 1
@@ -236,10 +238,20 @@ function isUnsupportedBucketPolicyError(error: unknown) {
   return code === "NotImplemented" || message.includes("PutBucketPolicy")
 }
 
-function resolveSourceImagePath(fileName: string) {
-  const imagePath = join(sourceImageDir, fileName)
+export function getDemoSourceImageDirs() {
+  return Array.from(new Set([sourceImageDir, bundledSourceImageDir]))
+}
 
-  return existsSync(imagePath) ? imagePath : null
+export function resolveDemoSourceImagePath(fileName: string) {
+  for (const directory of getDemoSourceImageDirs()) {
+    const imagePath = join(directory, fileName)
+
+    if (existsSync(imagePath)) {
+      return imagePath
+    }
+  }
+
+  return null
 }
 
 async function createAssetImage(

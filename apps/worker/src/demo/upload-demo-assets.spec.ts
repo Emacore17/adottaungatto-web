@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from "vitest"
 
-import { applyPublicReadPolicy } from "./upload-demo-assets.js"
+import {
+  applyPublicReadPolicy,
+  getDemoSourceImageDirs,
+  resolveDemoSourceImagePath,
+} from "./upload-demo-assets.js"
+
+describe("demo asset source images", () => {
+  it("falls back to source images bundled with the worker", () => {
+    expect(getDemoSourceImageDirs().at(-1)).toContain("assets")
+    expect(resolveDemoSourceImagePath("gatto-2.jpg")).not.toBeNull()
+  })
+})
 
 describe("demo asset bucket policy", () => {
   it("continues when the storage provider does not implement PutBucketPolicy", async () => {
