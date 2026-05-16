@@ -1,0 +1,236 @@
+name: deploy-dev
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev-online
+    env:
+      AZURE_RESOURCE_GROUP: rg-adotta-dev-itn
+      AZURE_LOCATION: italynorth
+      AZURE_ACR_NAME: acradottadev
+      AZURE_KEY_VAULT_NAME: kv-adotta-dev-itn
+      AZURE_CONTAINERAPP_ENV: cae-adotta-dev-itn
+      API_APP_NAME: ca-adotta-dev-api
+      WEB_APP_NAME: ca-adotta-dev-web
+      WORKER_APP_NAME: ca-adotta-dev-worker
+      API_PORT: "4000"
+      WEB_PORT: "3000"
+      DEV_ONLINE_SEED_DEMO: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Preflight
+        run: pnpm release:check
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve image names
+        shell: bash
+        run: |
+          ACR_LOGIN_SERVER="${AZURE_ACR_NAME}.azurecr.io"
+          echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}" >> "$GITHUB_ENV"
+          echo "API_IMAGE=${ACR_LOGIN_SERVER}/adotta/api:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "WEB_IMAGE=${ACR_LOGIN_SERVER}/adotta/web:${GITHUB_SHA}" >> "$GITHUB_ENV"
+          echo "WORKER_IMAGE=${ACR_LOGIN_SERVER}/adotta/worker:${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      - name: ACR login
+        run: az acr login --name "$AZURE_ACR_NAME"
+
+      - name: Build and push images
+        shell: bash
+        run: |
+          docker build -f apps/api/Dockerfile -t "$API_IMAGE" .
+          docker build -f apps/web/Dockerfile -t "$WEB_IMAGE" .
+          docker build -f apps/worker/Dockerfile -t "$WORKER_IMAGE" .
+          docker push "$API_IMAGE"
+          docker push "$WEB_IMAGE"
+          docker push "$WORKER_IMAGE"
+
+      - name: Read runtime secrets from Key Vault
+        shell: bash
+        run: |
+          read_secret() {
+            az keyvault secret show \
+              --vault-name "$AZURE_KEY_VAULT_NAME" \
+              --name "$1" \
+              --query value \
+              -o tsv
+          }
+          DATABASE_URL="$(read_secret DATABASE-URL)"
+          REDIS_URL="$(read_secret REDIS-URL)"
+          S3_ACCESS_KEY_ID="$(read_secret S3-ACCESS-KEY-ID)"
+          S3_SECRET_ACCESS_KEY="$(read_secret S3-SECRET-ACCESS-KEY)"
+          echo "::add-mask::$DATABASE_URL"
+          echo "::add-mask::$REDIS_URL"
+          echo "::add-mask::$S3_ACCESS_KEY_ID"
+          echo "::add-mask::$S3_SECRET_ACCESS_KEY"
+          {
+            echo "DATABASE_URL=$DATABASE_URL"
+            echo "REDIS_URL=$REDIS_URL"
+            echo "S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID"
+            echo "S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY"
+          } >> "$GITHUB_ENV"
+
+      - name: Run migrations
+        shell: bash
+        run: |
+          docker run --rm \
+            -e DATABASE_URL="$DATABASE_URL" \
+            "$API_IMAGE" \
+            pnpm db:migrate
+
+      - name: Seed demo data and assets
+        if: env.DEV_ONLINE_SEED_DEMO == 'true'
+        shell: bash
+        run: |
+          docker run --rm \
+            -e DATABASE_URL="$DATABASE_URL" \
+            "$API_IMAGE" \
+            pnpm db:seed
+          docker run --rm \
+            -e DATABASE_URL="$DATABASE_URL" \
+            "$API_IMAGE" \
+            pnpm db:seed:demo
+          docker run --rm \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -e S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+            -e S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+            -e S3_BUCKET="${{ vars.S3_BUCKET }}" \
+            -e S3_REGION="${{ vars.S3_REGION }}" \
+            -e S3_ACCESS_KEY_ID="$S3_ACCESS_KEY_ID" \
+            -e S3_SECRET_ACCESS_KEY="$S3_SECRET_ACCESS_KEY" \
+            "$WORKER_IMAGE" \
+            pnpm --filter worker demo:assets
+
+      - name: Deploy API
+        shell: bash
+        run: |
+          az containerapp up \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --environment "$AZURE_CONTAINERAPP_ENV" \
+            --image "$API_IMAGE" \
+            --target-port "$API_PORT" \
+            --ingress external
+          az containerapp secret set \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --secrets \
+              database-url="$DATABASE_URL" \
+              redis-url="$REDIS_URL" \
+              s3-access-key-id="$S3_ACCESS_KEY_ID" \
+              s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
+          az containerapp update \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --min-replicas 0 \
+            --max-replicas 2 \
+            --set-env-vars \
+              APP_ENV=production \
+              APP_URL="${{ vars.WEB_URL }}" \
+              API_PORT="$API_PORT" \
+              API_TRUST_PROXY=true \
+              RATE_LIMIT_ENABLED=true \
+              DATABASE_URL=secretref:database-url \
+              REDIS_URL=secretref:redis-url \
+              S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+              S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+              S3_BUCKET="${{ vars.S3_BUCKET }}" \
+              S3_REGION="${{ vars.S3_REGION }}" \
+              S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+              S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key \
+              MAIL_HOST="${{ vars.MAIL_HOST }}" \
+              MAIL_PORT="${{ vars.MAIL_PORT }}" \
+              MAIL_FROM="${{ vars.MAIL_FROM }}"
+
+      - name: Deploy worker
+        shell: bash
+        run: |
+          az containerapp up \
+            --name "$WORKER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --environment "$AZURE_CONTAINERAPP_ENV" \
+            --image "$WORKER_IMAGE" \
+            --ingress disabled
+          az containerapp secret set \
+            --name "$WORKER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --secrets \
+              database-url="$DATABASE_URL" \
+              redis-url="$REDIS_URL" \
+              s3-access-key-id="$S3_ACCESS_KEY_ID" \
+              s3-secret-access-key="$S3_SECRET_ACCESS_KEY"
+          az containerapp update \
+            --name "$WORKER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --min-replicas 0 \
+            --max-replicas 1 \
+            --set-env-vars \
+              APP_ENV=production \
+              DATABASE_URL=secretref:database-url \
+              REDIS_URL=secretref:redis-url \
+              S3_ENDPOINT="${{ vars.S3_ENDPOINT }}" \
+              S3_BUCKET="${{ vars.S3_BUCKET }}" \
+              S3_REGION="${{ vars.S3_REGION }}" \
+              S3_ACCESS_KEY_ID=secretref:s3-access-key-id \
+              S3_SECRET_ACCESS_KEY=secretref:s3-secret-access-key
+
+      - name: Deploy web
+        shell: bash
+        run: |
+          az containerapp up \
+            --name "$WEB_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --environment "$AZURE_CONTAINERAPP_ENV" \
+            --image "$WEB_IMAGE" \
+            --target-port "$WEB_PORT" \
+            --ingress external
+          az containerapp update \
+            --name "$WEB_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --min-replicas 0 \
+            --max-replicas 2 \
+            --set-env-vars \
+              APP_ENV=production \
+              APP_URL="${{ vars.WEB_URL }}" \
+              API_URL="${{ vars.API_URL }}" \
+              NEXT_PUBLIC_SITE_URL="${{ vars.WEB_URL }}" \
+              NEXT_PUBLIC_API_URL="${{ vars.API_URL }}" \
+              NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
+              NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
+              ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+
+      - name: Remote smoke
+        run: pnpm smoke:remote
+        env:
+          API_URL: ${{ vars.API_URL }}
+          WEB_URL: ${{ vars.WEB_URL }}
