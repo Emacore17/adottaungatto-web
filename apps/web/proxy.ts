@@ -13,7 +13,8 @@ const minimalContentSecurityPolicy = [
 ].join("; ")
 
 export function proxy(request: NextRequest) {
-  const response = protectRoutes(request) ?? NextResponse.next()
+  const response =
+    protectAdminHost(request) ?? protectRoutes(request) ?? NextResponse.next()
 
   applySecurityHeaders(request, response)
 
@@ -24,6 +25,42 @@ export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)",
   ],
+}
+
+function protectAdminHost(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (!pathname.startsWith("/moderation")) {
+    return null
+  }
+
+  if (!isProduction) {
+    return null
+  }
+
+  if (isAllowedAdminHost(request)) {
+    return null
+  }
+
+  return NextResponse.json({ status: 404 }, { status: 404 })
+}
+
+function isAllowedAdminHost(request: NextRequest) {
+  const host = request.headers.get("host")?.split(":")[0]?.toLowerCase()
+
+  if (!host) {
+    return false
+  }
+
+  const allowedHosts = (
+    process.env.ADMIN_ALLOWED_HOSTS ??
+    "admin.adottaungatto.it,admin-dev.adottaungatto.it"
+  )
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+
+  return allowedHosts.includes(host)
 }
 
 function protectRoutes(request: NextRequest) {
