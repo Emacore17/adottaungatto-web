@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 
 import { webEnv } from "@/lib/config/env"
 import { privateNoStoreCacheControl } from "@/lib/http/responses"
+import { createPublicObjectUrl } from "@/lib/storage/public-object-url"
 
 type StorageRouteContext = {
   params: Promise<{
@@ -12,10 +13,6 @@ type StorageRouteContext = {
 export const dynamic = "force-dynamic"
 
 const storageImageCacheControl = "public, max-age=31536000, immutable"
-
-function encodeObjectKey(objectKey: string) {
-  return objectKey.split("/").map(encodeURIComponent).join("/")
-}
 
 function readObjectKey(segments: string[]) {
   const objectKey = segments.join("/").replace(/^\/+/, "")
@@ -38,14 +35,11 @@ export async function GET(_request: Request, context: StorageRouteContext) {
   let response: Response
 
   try {
-    response = await fetch(
-      `${webEnv.storagePublicUrl}/${webEnv.storageBucket}/${encodeObjectKey(objectKey)}`,
-      {
-        next: {
-          revalidate: 86_400,
-        },
-      }
-    )
+    response = await fetch(createStorageObjectUrl(objectKey), {
+      next: {
+        revalidate: 86_400,
+      },
+    })
   } catch {
     return imageErrorResponse("Image storage is not reachable.", 502)
   }
@@ -74,6 +68,15 @@ export async function GET(_request: Request, context: StorageRouteContext) {
   return new Response(response.body, {
     headers,
     status: response.status,
+  })
+}
+
+function createStorageObjectUrl(objectKey: string) {
+  return createPublicObjectUrl({
+    bucket: webEnv.storageBucket,
+    objectKey,
+    pathStyle: webEnv.storagePublicPathStyle,
+    publicEndpoint: webEnv.storagePublicUrl,
   })
 }
 

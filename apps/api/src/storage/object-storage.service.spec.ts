@@ -4,6 +4,7 @@ import type { ApiEnv } from "../config/env.js"
 import {
   createClientOptions,
   createListingImageObjectKey,
+  createPublicUploadUrl,
   rewriteUrlOrigin,
 } from "./object-storage.service.js"
 
@@ -33,6 +34,17 @@ describe("ObjectStorageService helpers", () => {
       )
     ).toBe(
       "http://localhost:9000/adottaungatto-local/key.jpg?X-Amz-Signature=abc"
+    )
+  })
+
+  it("keeps presigned upload URLs on the storage endpoint", () => {
+    expect(
+      createPublicUploadUrl(
+        "https://account-id.r2.cloudflarestorage.com/adotta-dev-assets/key.jpg?X-Amz-Signature=abc",
+        "https://media-dev.adottaungatto.it"
+      )
+    ).toBe(
+      "https://account-id.r2.cloudflarestorage.com/adotta-dev-assets/key.jpg?X-Amz-Signature=abc"
     )
   })
 
