@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest"
+import path from "node:path"
 
 import {
   DEFAULT_SEARCH_BENCHMARK_OUTPUT_DIR,
@@ -58,8 +59,10 @@ describe("search benchmark options", () => {
   })
 
   it("resolves relative output directories from the invoking cwd", () => {
+    const baseDir = path.join(path.parse(process.cwd()).root, "repo")
+
     expect(
-      resolveSearchBenchmarkOutputDir("benchmark-results/search", "C:\\repo")
-    ).toBe("C:\\repo\\benchmark-results\\search")
+      resolveSearchBenchmarkOutputDir("benchmark-results/search", baseDir)
+    ).toBe(path.join(baseDir, "benchmark-results", "search"))
   })
 })
