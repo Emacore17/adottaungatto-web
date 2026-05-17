@@ -769,11 +769,68 @@ async function executeSqlBlock(
   }
 }
 
-function splitSqlStatements(sql: string) {
-  return sql
-    .split(";")
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0)
+export function splitSqlStatements(sql: string) {
+  const statements: string[] = []
+  let statementStart = 0
+  let inSingleQuote = false
+  let dollarQuoteTag: string | null = null
+
+  for (let index = 0; index < sql.length; index += 1) {
+    const character = sql[index]
+
+    if (dollarQuoteTag) {
+      if (sql.startsWith(dollarQuoteTag, index)) {
+        index += dollarQuoteTag.length - 1
+        dollarQuoteTag = null
+      }
+      continue
+    }
+
+    if (inSingleQuote) {
+      if (character === "'" && sql[index + 1] === "'") {
+        index += 1
+        continue
+      }
+
+      if (character === "'") {
+        inSingleQuote = false
+      }
+      continue
+    }
+
+    if (character === "'") {
+      inSingleQuote = true
+      continue
+    }
+
+    if (character === "$") {
+      const tagMatch = sql.slice(index).match(/^\$[A-Za-z_][A-Za-z_0-9]*\$|^\$\$/)
+
+      if (tagMatch?.[0]) {
+        dollarQuoteTag = tagMatch[0]
+        index += dollarQuoteTag.length - 1
+      }
+      continue
+    }
+
+    if (character === ";") {
+      const statement = sql.slice(statementStart, index).trim()
+
+      if (statement.length > 0) {
+        statements.push(statement)
+      }
+
+      statementStart = index + 1
+    }
+  }
+
+  const trailingStatement = sql.slice(statementStart).trim()
+
+  if (trailingStatement.length > 0) {
+    statements.push(trailingStatement)
+  }
+
+  return statements
 }
 
 async function hashPassword(password: string): Promise<string> {

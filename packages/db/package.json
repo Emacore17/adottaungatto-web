@@ -11,6 +11,7 @@
     "db:studio": "drizzle-kit studio",
     "format": "prettier --write \"src/**/*.ts\" \"drizzle.config.ts\"",
     "lint": "eslint .",
+    "test": "tsx --test src/seed-demo.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
