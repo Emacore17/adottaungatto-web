@@ -706,6 +706,8 @@ const publicListingGeoFilterSql = `
 `
 
 const publicListingFallbackParameterAnchorSql = `
+  and ($1::int is null or $1::int is not null)
+  and ($2::int is null or $2::int is not null)
   and ($3::uuid is null or $3::uuid is not null)
   and ($4::uuid is null or $4::uuid is not null)
   and ($5::uuid is null or $5::uuid is not null)

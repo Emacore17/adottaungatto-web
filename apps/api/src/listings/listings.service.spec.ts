@@ -290,6 +290,12 @@ describe("ListingsService", () => {
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
       "not (listing.id = any($23::uuid[]))"
     )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
+      "$1::int"
+    )
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
+      "$2::int"
+    )
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
       20,
       0,
