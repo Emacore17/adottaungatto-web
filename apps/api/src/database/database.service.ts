@@ -7,7 +7,7 @@ import { API_ENV } from "../config/config.module.js"
 import type { ApiEnv } from "../config/env.js"
 
 type DatabaseConnection = ReturnType<typeof createDatabase>
-type QueryParameter = string | number | boolean | null | Date
+type QueryParameter = string | number | boolean | null | Date | string[]
 
 @Injectable()
 export class DatabaseService implements OnApplicationShutdown {

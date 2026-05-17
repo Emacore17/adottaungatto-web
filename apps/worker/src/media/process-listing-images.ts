@@ -34,6 +34,7 @@ type ImageProcessingResult = {
 type ProcessedImage = {
   large: Buffer
   thumb: Buffer
+  blurDataUrl: string
   width: number
   height: number
 }
@@ -117,13 +118,30 @@ export async function processImageBuffer(buffer: Buffer): Promise<ProcessedImage
     })
     .webp({ quality: 78 })
     .toBuffer()
+  const blurDataUrl = await createBlurDataUrl(normalized)
 
   return {
     large,
     thumb,
+    blurDataUrl,
     width: metadata.width,
     height: metadata.height,
   }
+}
+
+async function createBlurDataUrl(image: sharp.Sharp) {
+  const buffer = await image
+    .clone()
+    .resize({
+      width: 16,
+      height: 16,
+      fit: "cover",
+    })
+    .blur(4)
+    .webp({ quality: 45 })
+    .toBuffer()
+
+  return `data:image/webp;base64,${buffer.toString("base64")}`
 }
 
 export function createVariantObjectKey(
@@ -200,6 +218,7 @@ async function processPendingImage(
           object_key_thumb = $3,
           width = $4::int,
           height = $5::int,
+          blur_data_url = $6,
           status = 'ready',
           rejection_reason = null,
           updated_at = now()
@@ -213,6 +232,7 @@ async function processPendingImage(
         thumbObjectKey,
         processed.width,
         processed.height,
+        processed.blurDataUrl,
       ]
     )
     await refreshListingSearchDocument(databaseClient, image.listing_id)

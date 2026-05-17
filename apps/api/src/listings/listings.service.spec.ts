@@ -99,6 +99,7 @@ describe("ListingsService", () => {
               width: 1200,
               height: 800,
               blurHash: "blurhash",
+              blurDataUrl: "data:image/webp;base64,AAAA",
               sortOrder: 0,
               isCover: true,
             },
@@ -110,6 +111,7 @@ describe("ListingsService", () => {
                 width: 1200,
                 height: 800,
                 blurHash: "blurhash",
+                blurDataUrl: "data:image/webp;base64,AAAA",
                 sortOrder: 0,
                 isCover: true,
               },
@@ -120,6 +122,7 @@ describe("ListingsService", () => {
                 width: 900,
                 height: 1200,
                 blurHash: null,
+                blurDataUrl: null,
                 sortOrder: 1,
                 isCover: false,
               },
@@ -137,6 +140,7 @@ describe("ListingsService", () => {
         rankingVersion: "postgres-v1",
         expansion: null,
       },
+      suggestions: null,
     })
     expect(databaseService.queryRows).toHaveBeenCalledWith(expect.any(String), [
       10,
@@ -242,7 +246,7 @@ describe("ListingsService", () => {
     )
   })
 
-  it("falls back to trigram text search when full-text returns no results", async () => {
+  it("returns suggestions when full-text search returns no exact results", async () => {
     const databaseService = {
       queryRows: vi
         .fn()
@@ -250,7 +254,7 @@ describe("ListingsService", () => {
         .mockResolvedValueOnce([
           {
             ...createPublicListingRow(),
-            total_count: "1",
+            id: "suggestion-id",
           },
         ]),
     } as unknown as DatabaseService
@@ -263,27 +267,28 @@ describe("ListingsService", () => {
         q: "siameze roma",
       })
     ).resolves.toMatchObject({
-      items: [
-        {
-          id: "listing-id",
-        },
-      ],
+      items: [],
       meta: {
-        total: 1,
+        total: 0,
         query: "siameze roma",
         sort: "relevance",
         rankingVersion: "postgres-v1",
-        expansion: {
-          type: "trigram_text",
-          reason: "empty_full_text",
-          originalQuery: "siameze roma",
-        },
+        expansion: null,
+      },
+      suggestions: {
+        title: "Potrebbero interessarti anche",
+        reason: "empty_exact",
+        items: [
+          {
+            id: "suggestion-id",
+          },
+        ],
       },
     })
 
     expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
-      "word_similarity"
+      "not (listing.id = any($23::uuid[]))"
     )
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
       20,
@@ -308,10 +313,12 @@ describe("ListingsService", () => {
       "relevance",
       null,
       null,
+      [],
+      20,
     ])
   })
 
-  it("expands the distance radius when nearby search returns no results", async () => {
+  it("returns distance-ordered suggestions when nearby search returns no exact results", async () => {
     const databaseService = {
       queryRows: vi
         .fn()
@@ -319,7 +326,7 @@ describe("ListingsService", () => {
         .mockResolvedValueOnce([
           {
             ...createPublicListingRow(),
-            total_count: "1",
+            id: "suggestion-id",
           },
         ]),
     } as unknown as DatabaseService
@@ -335,20 +342,19 @@ describe("ListingsService", () => {
         sort: "distance",
       })
     ).resolves.toMatchObject({
-      items: [
-        {
-          id: "listing-id",
-        },
-      ],
+      items: [],
       meta: {
-        total: 1,
+        total: 0,
         sort: "distance",
-        expansion: {
-          type: "expanded_radius",
-          reason: "empty_radius",
-          originalQuery: null,
-          originalRadiusKm: 1,
-        },
+        expansion: null,
+      },
+      suggestions: {
+        reason: "empty_exact",
+        items: [
+          {
+            id: "suggestion-id",
+          },
+        ],
       },
     })
 
@@ -356,21 +362,17 @@ describe("ListingsService", () => {
     expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]).toContain(
       "ST_Distance"
     )
-    expect(
-      vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]
-    ).not.toContain("ST_DWithin")
   })
 
-  it("relaxes filters when strict and fuzzy searches return no results", async () => {
+  it("returns relaxed suggestions when filters return no exact results", async () => {
     const databaseService = {
       queryRows: vi
         .fn()
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           {
             ...createPublicListingRow(),
-            total_count: "1",
+            id: "suggestion-id",
           },
         ]),
     } as unknown as DatabaseService
@@ -384,30 +386,117 @@ describe("ListingsService", () => {
         hasImages: true,
       })
     ).resolves.toMatchObject({
+      items: [],
+      meta: {
+        total: 0,
+        query: "zzzxqvnotfound",
+        expansion: null,
+      },
+      suggestions: {
+        reason: "empty_exact",
+        items: [
+          {
+            id: "suggestion-id",
+          },
+        ],
+      },
+    })
+
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
+    expect(
+      vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]
+    ).not.toContain("listing.breed_id = $3::uuid")
+    expect(
+      vi.mocked(databaseService.queryRows).mock.calls[1]?.[0]
+    ).not.toContain("ST_DWithin")
+  })
+
+  it("returns suggestions when exact results do not fill the page", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            ...createPublicListingRow(),
+            total_count: "1",
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            ...createPublicListingRow(),
+            id: "suggestion-id",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 20,
+        q: "roma",
+      })
+    ).resolves.toMatchObject({
       items: [
         {
           id: "listing-id",
         },
       ],
-      meta: {
-        total: 1,
-        query: "zzzxqvnotfound",
-        expansion: {
-          type: "relaxed_filters",
-          reason: "empty_filtered",
-          originalQuery: "zzzxqvnotfound",
-          originalRadiusKm: null,
-        },
+      suggestions: {
+        title: "Potrebbero interessarti anche",
+        reason: "not_enough_results",
+        items: [
+          {
+            id: "suggestion-id",
+          },
+        ],
       },
     })
 
-    expect(databaseService.queryRows).toHaveBeenCalledTimes(3)
-    expect(
-      vi.mocked(databaseService.queryRows).mock.calls[2]?.[0]
-    ).not.toContain("listing.breed_id = $3::uuid")
-    expect(
-      vi.mocked(databaseService.queryRows).mock.calls[2]?.[0]
-    ).not.toContain("ST_DWithin")
+    expect(vi.mocked(databaseService.queryRows).mock.calls[1]?.[1]).toEqual([
+      20,
+      0,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      "roma",
+      null,
+      null,
+      null,
+      "relevance",
+      null,
+      null,
+      ["listing-id"],
+      19,
+    ])
+  })
+
+  it("does not return suggestions when no public listings exist", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listPublic({
+        page: 1,
+        pageSize: 20,
+        q: "roma",
+      })
+    ).resolves.toMatchObject({
+      items: [],
+      suggestions: null,
+    })
   })
 
   it("loads a public listing detail with ready images", async () => {
@@ -423,6 +512,7 @@ describe("ListingsService", () => {
             width: 1200,
             height: 800,
             blur_hash: "blurhash",
+            blur_data_url: "data:image/webp;base64,AAAA",
             sort_order: 0,
             is_cover: true,
           },
@@ -442,6 +532,7 @@ describe("ListingsService", () => {
             width: 1200,
             height: 800,
             blurHash: "blurhash",
+            blurDataUrl: "data:image/webp;base64,AAAA",
             sortOrder: 0,
             isCover: true,
           },
@@ -944,6 +1035,7 @@ describe("ListingsService", () => {
         sizeBytes: 123_456,
         checksum: null,
         blurHash: null,
+        blurDataUrl: null,
         sortOrder: 0,
         isCover: true,
         status: "uploaded",
@@ -1394,6 +1486,7 @@ function createPublicListingRow() {
     cover_width: 1200,
     cover_height: 800,
     cover_blur_hash: "blurhash",
+    cover_blur_data_url: "data:image/webp;base64,AAAA",
     cover_sort_order: 0,
     cover_is_cover: true,
     preview_images: [
@@ -1404,6 +1497,7 @@ function createPublicListingRow() {
         width: 1200,
         height: 800,
         blur_hash: "blurhash",
+        blur_data_url: "data:image/webp;base64,AAAA",
         sort_order: 0,
         is_cover: true,
       },
@@ -1414,6 +1508,7 @@ function createPublicListingRow() {
         width: 900,
         height: 1200,
         blur_hash: null,
+        blur_data_url: null,
         sort_order: 1,
         is_cover: false,
       },
@@ -1437,6 +1532,7 @@ function createImageRow(
     size_bytes: number
     checksum: string | null
     blur_hash: string | null
+    blur_data_url: string | null
     sort_order: number
     is_cover: boolean
     status: string
@@ -1457,6 +1553,7 @@ function createImageRow(
     size_bytes: 123_456,
     checksum: null,
     blur_hash: null,
+    blur_data_url: null,
     sort_order: 0,
     is_cover: true,
     status: "uploaded",

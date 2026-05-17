@@ -529,6 +529,9 @@ const seedListingsSql = `
     ('44444444-4444-4444-8444-444444444415', '11111111-1111-4111-8111-111111111111', 'Menta, annuncio scaduto demo', 'menta-annuncio-scaduto-demo', 'Menta e un annuncio scaduto non visibile pubblicamente, usato per verificare filtri e stati della demo.', (select id from cat_breeds where slug = 'british-shorthair'), 'female', 27, 27, ${demoPlaceColumns("cuneo")}, ST_SetSRID(ST_MakePoint(7.5512, 44.3845), 4326), null, true, true, true, true, true, 'approved', 'expired', now() - interval '90 days', now() - interval '1 day');
 `
 
+const demoBlurDataUrl =
+  "data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AA/vuUAAA="
+
 const seedListingImagesSql = `
   insert into listing_images (
     id,
@@ -541,22 +544,23 @@ const seedListingImagesSql = `
     height,
     size_bytes,
     checksum,
+    blur_data_url,
     sort_order,
     is_cover,
     status
   )
   values
-    ('66666666-6666-4666-8666-666666666601', '44444444-4444-4444-8444-444444444401', 'demo/listings/luna.png', 'demo/listings/luna-large.png', 'demo/listings/luna-thumb.png', 'image/png', 1200, 900, 2048, 'demo-luna', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666602', '44444444-4444-4444-8444-444444444402', 'demo/listings/miro.png', 'demo/listings/miro-large.png', 'demo/listings/miro-thumb.png', 'image/png', 1200, 900, 2048, 'demo-miro', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666603', '44444444-4444-4444-8444-444444444403', 'demo/listings/nebbia.png', 'demo/listings/nebbia-large.png', 'demo/listings/nebbia-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nebbia', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666604', '44444444-4444-4444-8444-444444444404', 'demo/listings/pepe.png', 'demo/listings/pepe-large.png', 'demo/listings/pepe-thumb.png', 'image/png', 1200, 900, 2048, 'demo-pepe', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666605', '44444444-4444-4444-8444-444444444405', 'demo/listings/nina.png', 'demo/listings/nina-large.png', 'demo/listings/nina-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nina', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666606', '44444444-4444-4444-8444-444444444406', 'demo/listings/artu.png', 'demo/listings/artu-large.png', 'demo/listings/artu-thumb.png', 'image/png', 1200, 900, 2048, 'demo-artu', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666607', '44444444-4444-4444-8444-444444444407', 'demo/listings/sole.png', 'demo/listings/sole-large.png', 'demo/listings/sole-thumb.png', 'image/png', 1200, 900, 2048, 'demo-sole', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666608', '44444444-4444-4444-8444-444444444408', 'demo/listings/oliva.png', 'demo/listings/oliva-large.png', 'demo/listings/oliva-thumb.png', 'image/png', 1200, 900, 2048, 'demo-oliva', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666609', '44444444-4444-4444-8444-444444444409', 'demo/listings/leo.png', 'demo/listings/leo-large.png', 'demo/listings/leo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-leo', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666610', '44444444-4444-4444-8444-444444444410', 'demo/listings/zara.png', 'demo/listings/zara-large.png', 'demo/listings/zara-thumb.png', 'image/png', 1200, 900, 2048, 'demo-zara', 10, true, 'ready'),
-    ('66666666-6666-4666-8666-666666666611', '44444444-4444-4444-8444-444444444412', 'demo/listings/timo.png', 'demo/listings/timo-large.png', 'demo/listings/timo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-timo', 10, true, 'ready');
+    ('66666666-6666-4666-8666-666666666601', '44444444-4444-4444-8444-444444444401', 'demo/listings/luna.png', 'demo/listings/luna-large.png', 'demo/listings/luna-thumb.png', 'image/png', 1200, 900, 2048, 'demo-luna', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666602', '44444444-4444-4444-8444-444444444402', 'demo/listings/miro.png', 'demo/listings/miro-large.png', 'demo/listings/miro-thumb.png', 'image/png', 1200, 900, 2048, 'demo-miro', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666603', '44444444-4444-4444-8444-444444444403', 'demo/listings/nebbia.png', 'demo/listings/nebbia-large.png', 'demo/listings/nebbia-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nebbia', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666604', '44444444-4444-4444-8444-444444444404', 'demo/listings/pepe.png', 'demo/listings/pepe-large.png', 'demo/listings/pepe-thumb.png', 'image/png', 1200, 900, 2048, 'demo-pepe', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666605', '44444444-4444-4444-8444-444444444405', 'demo/listings/nina.png', 'demo/listings/nina-large.png', 'demo/listings/nina-thumb.png', 'image/png', 1200, 900, 2048, 'demo-nina', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666606', '44444444-4444-4444-8444-444444444406', 'demo/listings/artu.png', 'demo/listings/artu-large.png', 'demo/listings/artu-thumb.png', 'image/png', 1200, 900, 2048, 'demo-artu', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666607', '44444444-4444-4444-8444-444444444407', 'demo/listings/sole.png', 'demo/listings/sole-large.png', 'demo/listings/sole-thumb.png', 'image/png', 1200, 900, 2048, 'demo-sole', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666608', '44444444-4444-4444-8444-444444444408', 'demo/listings/oliva.png', 'demo/listings/oliva-large.png', 'demo/listings/oliva-thumb.png', 'image/png', 1200, 900, 2048, 'demo-oliva', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666609', '44444444-4444-4444-8444-444444444409', 'demo/listings/leo.png', 'demo/listings/leo-large.png', 'demo/listings/leo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-leo', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666610', '44444444-4444-4444-8444-444444444410', 'demo/listings/zara.png', 'demo/listings/zara-large.png', 'demo/listings/zara-thumb.png', 'image/png', 1200, 900, 2048, 'demo-zara', '${demoBlurDataUrl}', 10, true, 'ready'),
+    ('66666666-6666-4666-8666-666666666611', '44444444-4444-4444-8444-444444444412', 'demo/listings/timo.png', 'demo/listings/timo-large.png', 'demo/listings/timo-thumb.png', 'image/png', 1200, 900, 2048, 'demo-timo', '${demoBlurDataUrl}', 10, true, 'ready');
 `
 
 const seedPromotionsSql = `

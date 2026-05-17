@@ -7,14 +7,18 @@ import { ImageIcon } from "lucide-react"
 import { cn } from "@workspace/ui/lib/utils"
 
 type StorageImageProps = ImageProps & {
+  blurDataUrl?: string | null
   fallbackClassName?: string
 }
 
 function StorageImage({
   alt,
+  blurDataUrl,
+  blurDataURL,
   className,
   fallbackClassName,
   onError,
+  placeholder,
   unoptimized = true,
   ...props
 }: StorageImageProps) {
@@ -41,7 +45,9 @@ function StorageImage({
     <Image
       {...props}
       alt={alt}
+      blurDataURL={blurDataUrl ?? blurDataURL}
       className={className}
+      placeholder={blurDataUrl ? "blur" : placeholder}
       unoptimized={unoptimized}
       onError={(event: SyntheticEvent<HTMLImageElement, Event>) => {
         setFailed(true)

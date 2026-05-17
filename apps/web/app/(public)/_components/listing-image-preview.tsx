@@ -9,6 +9,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 type ListingPreviewImage = {
   alt: string
+  blurDataUrl: string | null
   id: string
   url: string
 }
@@ -67,6 +68,7 @@ function ListingImagePreview({
             key={image.id}
             src={image.url}
             alt={index === 0 ? image.alt : ""}
+            blurDataUrl={image.blurDataUrl}
             fill
             className={cn(
               "object-cover transition-opacity duration-500 ease-out",

@@ -1,0 +1,1 @@
+ALTER TABLE "listing_images" ADD COLUMN "blur_data_url" text;

@@ -676,7 +676,10 @@ Totale atteso: 120-300 USD/mese.
 Budget estremo:
 
 - Redis Basic C0 invece di Standard: risparmio circa 24 USD/mese, ma senza SLA.
-- Web/API min replica 0: risparmio compute, ma cold start percepibile.
+- Web/API min replica 0: non ammesso per produzione pubblica. Il risparmio
+  compute introduce cold start percepibile dagli utenti; `web` e `api` devono
+  restare almeno a `minReplicas=1`. `dev-online` puo' restare a zero repliche
+  minime per contenere i costi, accettando cold start dopo inattivita'.
 - Dynatrace rimandato: usare Azure Monitor con retention breve.
 
 Questa variante puo' scendere verso 80-150 USD/mese, ma va accettata come

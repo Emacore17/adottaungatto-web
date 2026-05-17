@@ -57,7 +57,6 @@ import type {
 const maxListingImages = 10
 const publicListingRankingVersion = "postgres-v1" as const
 const defaultPublicListingRadiusKm = 50
-const publicListingTrigramFallbackThreshold = 0.22
 
 type ListingsEnv = Pick<ApiEnv, "APP_ENV" | "PHONE_VERIFICATION_TTL_MINUTES">
 
@@ -139,6 +138,7 @@ type PublicListingRow = Omit<
   cover_width: number | null
   cover_height: number | null
   cover_blur_hash: string | null
+  cover_blur_data_url: string | null
   cover_sort_order: number | null
   cover_is_cover: boolean | null
   preview_images: unknown
@@ -155,7 +155,8 @@ type ResolvedPublicListingQuery = {
   sort: ListingPublicSort
 }
 
-type PublicListingExpansion = PublicListingListResponse["meta"]["expansion"]
+type PublicListingSuggestionReason =
+  NonNullable<PublicListingListResponse["suggestions"]>["reason"]
 
 type MunicipalityLocationRow = {
   municipality_id: string
@@ -190,6 +191,7 @@ type ListingImageRow = {
   size_bytes: number
   checksum: string | null
   blur_hash: string | null
+  blur_data_url: string | null
   sort_order: number
   is_cover: boolean
   status: ListingImage["status"]
@@ -215,6 +217,7 @@ type PublicListingImageRow = {
   width: number | null
   height: number | null
   blur_hash: string | null
+  blur_data_url: string | null
   sort_order: number
   is_cover: boolean
 }
@@ -356,6 +359,7 @@ const publicListingSelectFields = `
   cover_images.width as cover_width,
   cover_images.height as cover_height,
   cover_images.blur_hash as cover_blur_hash,
+  cover_images.blur_data_url as cover_blur_data_url,
   cover_images.sort_order as cover_sort_order,
   cover_images.is_cover as cover_is_cover,
   coalesce(preview_images.preview_images, '[]'::jsonb) as preview_images,
@@ -399,6 +403,7 @@ const publicListingJoins = `
       width,
       height,
       blur_hash,
+      blur_data_url,
       sort_order,
       is_cover
     from listing_images
@@ -417,6 +422,7 @@ const publicListingJoins = `
           'width', preview.width,
           'height', preview.height,
           'blur_hash', preview.blur_hash,
+          'blur_data_url', preview.blur_data_url,
           'sort_order', preview.sort_order,
           'is_cover', preview.is_cover
         )
@@ -432,6 +438,7 @@ const publicListingJoins = `
         width,
         height,
         blur_hash,
+        blur_data_url,
         sort_order,
         is_cover,
         created_at
@@ -739,28 +746,6 @@ const publicListingOrderSql = `
     listing.id
 `
 
-const publicListingTrigramFallbackOrderSql = `
-  order by
-    active_promotions.priority desc nulls last,
-    case
-      when $20::text = 'distance' then (${publicListingDistanceMetersSql})
-      else null
-    end asc nulls last,
-    case
-      when $20::text = 'relevance' then (${publicListingTrigramScoreSql})
-    end desc nulls last,
-    case
-      when $20::text = 'relevance' then (${publicListingRankingScoreSql})
-    end desc nulls last,
-    case
-      when $20::text = 'recent' then listing.published_at
-    end desc nulls last,
-    (${publicListingTrigramScoreSql}) desc nulls last,
-    listing.published_at desc nulls last,
-    listing.updated_at desc,
-    listing.id
-`
-
 const publicListingRequestedLocationRankSql = `
   case
     when $4::uuid is not null and listing.municipality_id = $4::uuid then 0
@@ -862,53 +847,16 @@ const listPublicListingsSql = `
   offset $2::int
 `
 
-const listPublicListingsTrigramFallbackSql = `
+const listPublicListingSuggestionsSql = `
   select
-    ${publicListingSelectFields},
-    count(*) over()::int as total_count
-  from listings listing
-  ${publicListingJoins}
-  where ${publicListingWhereSql}
-    ${publicListingExplicitFiltersSql}
-    and $16::text is not null
-    and (${publicListingTrigramScoreSql}) >= ${publicListingTrigramFallbackThreshold}
-    ${publicListingGeoFilterSql}
-  ${publicListingTrigramFallbackOrderSql}
-  limit $1::int
-  offset $2::int
-`
-
-const listPublicListingsExpandedRadiusFallbackSql = `
-  select
-    ${publicListingSelectFields},
-    count(*) over()::int as total_count
-  from listings listing
-  ${publicListingJoins}
-  where ${publicListingWhereSql}
-    ${publicListingExplicitFiltersSql}
-    ${publicListingFallbackParameterAnchorSql}
-    and (
-      $16::text is null
-      or (${publicListingSearchVectorSql})
-        @@ websearch_to_tsquery('italian', unaccent($16::text))
-      or (${publicListingTrigramScoreSql}) >= ${publicListingTrigramFallbackThreshold}
-    )
-  ${publicListingSuggestionOrderSql}
-  limit $1::int
-  offset $2::int
-`
-
-const listPublicListingsRelaxedFallbackSql = `
-  select
-    ${publicListingSelectFields},
-    count(*) over()::int as total_count
+    ${publicListingSelectFields}
   from listings listing
   ${publicListingJoins}
   where ${publicListingWhereSql}
     ${publicListingFallbackParameterAnchorSql}
+    and not (listing.id = any($23::uuid[]))
   ${publicListingSuggestionOrderSql}
-  limit $1::int
-  offset $2::int
+  limit $24::int
 `
 
 const getPublicListingSql = `
@@ -928,6 +876,7 @@ const listPublicListingImagesSql = `
     width,
     height,
     blur_hash,
+    blur_data_url,
     sort_order,
     is_cover
   from listing_images
@@ -1355,6 +1304,7 @@ const createDraftImageSql = `
     size_bytes,
     checksum,
     blur_hash,
+    blur_data_url,
     sort_order,
     is_cover,
     status,
@@ -1376,6 +1326,7 @@ const getDraftImageSql = `
     listing_image.size_bytes,
     listing_image.checksum,
     listing_image.blur_hash,
+    listing_image.blur_data_url,
     listing_image.sort_order,
     listing_image.is_cover,
     listing_image.status,
@@ -1407,6 +1358,7 @@ const listDraftImagesSql = `
     listing_image.size_bytes,
     listing_image.checksum,
     listing_image.blur_hash,
+    listing_image.blur_data_url,
     listing_image.sort_order,
     listing_image.is_cover,
     listing_image.status,
@@ -1457,6 +1409,7 @@ const confirmDraftImageSql = `
     size_bytes,
     checksum,
     blur_hash,
+    blur_data_url,
     sort_order,
     is_cover,
     status,
@@ -1573,6 +1526,7 @@ const setDraftImageCoverSql = `
     size_bytes,
     checksum,
     blur_hash,
+    blur_data_url,
     sort_order,
     is_cover,
     status,
@@ -1607,7 +1561,9 @@ export class ListingsService {
   ): Promise<PublicListingListResponse> {
     const startedAt = performance.now()
     const resolvedQuery = resolvePublicListingQuery(query)
-    const parameters = [
+    const parameters: NonNullable<
+      Parameters<DatabaseService["queryRows"]>[1]
+    > = [
       query.pageSize,
       (query.page - 1) * query.pageSize,
       query.breedId ?? null,
@@ -1631,71 +1587,21 @@ export class ListingsService {
       query.contributionCentsMin ?? null,
       query.contributionCentsMax ?? null,
     ]
-    let rows = await this.databaseService.queryRows<PublicListingRow>(
+    const rows = await this.databaseService.queryRows<PublicListingRow>(
       listPublicListingsSql,
       parameters
     )
-    let expansion: PublicListingExpansion = null
-
-    if (rows.length === 0 && query.page === 1 && query.q) {
-      rows = await this.databaseService.queryRows<PublicListingRow>(
-        listPublicListingsTrigramFallbackSql,
-        parameters
-      )
-
-      if (rows.length > 0) {
-        expansion = {
-          type: "trigram_text",
-          reason: "empty_full_text",
-          originalQuery: query.q,
-        }
-      }
-    }
-
-    if (
-      rows.length === 0 &&
-      query.page === 1 &&
-      hasDistanceFallbackIntent(resolvedQuery)
-    ) {
-      rows = await this.databaseService.queryRows<PublicListingRow>(
-        listPublicListingsExpandedRadiusFallbackSql,
-        parameters
-      )
-
-      if (rows.length > 0) {
-        expansion = {
-          type: "expanded_radius",
-          reason: "empty_radius",
-          originalQuery: query.q ?? null,
-          originalRadiusKm: resolvedQuery.radiusKm,
-        }
-      }
-    }
-
-    if (
-      rows.length === 0 &&
-      query.page === 1 &&
-      hasPublicListingFallbackIntent(query)
-    ) {
-      rows = await this.databaseService.queryRows<PublicListingRow>(
-        listPublicListingsRelaxedFallbackSql,
-        parameters
-      )
-
-      if (rows.length > 0) {
-        expansion = {
-          type: "relaxed_filters",
-          reason: "empty_filtered",
-          originalQuery: query.q ?? null,
-          originalRadiusKm: resolvedQuery.radiusKm,
-        }
-      }
-    }
-
     const total = rows[0]?.total_count ? Number(rows[0].total_count) : 0
+    const suggestions = await this.listPublicSuggestions(
+      query,
+      parameters,
+      rows,
+      total
+    )
 
     const response = {
       items: rows.map(mapPublicListingSummaryRow),
+      suggestions,
       meta: {
         page: query.page,
         pageSize: query.pageSize,
@@ -1704,13 +1610,13 @@ export class ListingsService {
         query: query.q ?? null,
         sort: resolvedQuery.sort,
         rankingVersion: publicListingRankingVersion,
-        expansion,
+        expansion: null,
       },
     }
 
     this.observabilityService?.recordPublicListingSearch({
       durationMs: Math.round(performance.now() - startedAt),
-      expansionType: expansion?.type ?? null,
+      expansionType: suggestions?.reason ?? null,
       hasGeo: hasDistanceFallbackIntent(resolvedQuery),
       queryPresent: Boolean(query.q),
       resultCount: response.items.length,
@@ -1718,6 +1624,48 @@ export class ListingsService {
     })
 
     return response
+  }
+
+  private async listPublicSuggestions(
+    query: ListingPublicListQuery,
+    parameters: NonNullable<Parameters<DatabaseService["queryRows"]>[1]>,
+    exactRows: PublicListingRow[],
+    exactTotal: number
+  ): Promise<PublicListingListResponse["suggestions"]> {
+    if (!hasPublicListingFallbackIntent(query)) {
+      return null
+    }
+
+    const reason = resolveSuggestionReason(query, exactTotal, exactRows.length)
+
+    if (!reason) {
+      return null
+    }
+
+    const suggestionLimit =
+      reason === "not_enough_results"
+        ? query.pageSize - exactRows.length
+        : query.pageSize
+
+    if (suggestionLimit <= 0) {
+      return null
+    }
+
+    const excludedIds = exactRows.map((row) => row.id)
+    const rows = await this.databaseService.queryRows<PublicListingRow>(
+      listPublicListingSuggestionsSql,
+      [...parameters, excludedIds, suggestionLimit]
+    )
+
+    if (rows.length === 0) {
+      return null
+    }
+
+    return {
+      title: "Potrebbero interessarti anche",
+      reason,
+      items: rows.map(mapPublicListingSummaryRow),
+    }
   }
 
   async listPublicCatBreeds(): Promise<PublicCatBreed[]> {
@@ -2510,6 +2458,32 @@ function hasPublicListingFallbackIntent(query: ListingPublicListQuery) {
   )
 }
 
+function resolveSuggestionReason(
+  query: ListingPublicListQuery,
+  exactTotal: number,
+  exactCount: number
+): PublicListingSuggestionReason | null {
+  const exactTotalPages = Math.ceil(exactTotal / query.pageSize)
+
+  if (exactTotal === 0 && query.page === 1) {
+    return "empty_exact"
+  }
+
+  if (exactCount === 0 && query.page > Math.max(exactTotalPages, 1)) {
+    return "end_of_results"
+  }
+
+  if (
+    exactCount > 0 &&
+    query.page === Math.max(exactTotalPages, 1) &&
+    exactCount < query.pageSize
+  ) {
+    return "not_enough_results"
+  }
+
+  return null
+}
+
 function mapListingSharedFields(
   row: EditableListingDraftRow | ListingReviewSubmissionRow | PublicListingRow
 ) {
@@ -2586,6 +2560,7 @@ function mapPublicListingImages(
           width: row.cover_width,
           height: row.cover_height,
           blurHash: row.cover_blur_hash,
+          blurDataUrl: row.cover_blur_data_url,
           sortOrder: row.cover_sort_order ?? 0,
           isCover: row.cover_is_cover ?? true,
         }
@@ -2607,6 +2582,7 @@ function mapPublicListingPreviewImages(value: unknown): PublicListingImage[] {
             width: readNullableNumber(item.width),
             height: readNullableNumber(item.height),
             blurHash: readNullableString(item.blur_hash),
+            blurDataUrl: readNullableString(item.blur_data_url),
             sortOrder: readNumber(item.sort_order),
             isCover: Boolean(item.is_cover),
           }
@@ -2723,6 +2699,7 @@ function mapListingImageRow(row: ListingImageRow): ListingImage {
     sizeBytes: row.size_bytes,
     checksum: row.checksum,
     blurHash: row.blur_hash,
+    blurDataUrl: row.blur_data_url,
     sortOrder: row.sort_order,
     isCover: row.is_cover,
     status: row.status,
@@ -2773,6 +2750,7 @@ function mapPublicListingImageRow(
     width: row.width,
     height: row.height,
     blurHash: row.blur_hash,
+    blurDataUrl: row.blur_data_url,
     sortOrder: row.sort_order,
     isCover: row.is_cover,
   }
