@@ -26,6 +26,8 @@ Il codice applicativo e' allineato per una release candidate tecnica:
 - ricerca PostgreSQL full-text/trigram/geografica con metriche aggregate;
 - admin/moderazione con code separate, claim casi, azioni batch, note interne,
   segnalazioni e attivita recenti;
+- lifecycle annunci con limiti per account, scadenza pubblicati e cleanup
+  worker di bozze stale;
 - health, readiness, metriche locali e alert locali API;
 - demo locale ripetibile con dati, immagini e smoke end-to-end.
 
@@ -81,6 +83,10 @@ Usare `.env.production.example` come riferimento. In produzione:
 - database, Redis, mail e object storage devono essere provider reali;
 - credenziali MinIO/locali non sono accettate;
 - segreti devono provenire da secret manager o variabili ambiente del provider.
+- `LISTING_LIMIT_DEFAULT_ACTIVE`, `LISTING_LIMIT_ORGANIZATION_ACTIVE`,
+  `LISTING_PUBLISHED_TTL_DAYS`, `LISTING_STALE_DRAFT_TTL_DAYS` e
+  `LISTING_LIFECYCLE_CLEANUP_INTERVAL_SECONDS` devono essere coerenti con la
+  policy business approvata.
 
 `loadApiEnv()` rifiuta configurazioni `production` che puntano a localhost o
 usano i default locali MinIO/bucket.

@@ -16,6 +16,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./listing-lifecycle": "./src/listing-lifecycle.ts",
     "./listings": "./src/listings.ts",
     "./moderation": "./src/moderation.ts",
     "./roles": "./src/roles.ts"

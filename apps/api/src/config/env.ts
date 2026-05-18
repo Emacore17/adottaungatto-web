@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { defaultListingLifecyclePolicy } from "@workspace/domain/listing-lifecycle"
 
 const booleanEnv = (defaultValue: boolean) =>
   z.preprocess((value) => {
@@ -44,6 +45,21 @@ const apiEnvBaseSchema = z.object({
     .int()
     .positive()
     .default(60),
+  LISTING_LIMIT_DEFAULT_ACTIVE: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.defaultActiveLimit),
+  LISTING_LIMIT_ORGANIZATION_ACTIVE: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.organizationActiveLimit),
+  LISTING_PUBLISHED_TTL_DAYS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.publishedTtlDays),
   MAIL_FROM: z.string().email().default("no-reply@adottaungatto.local"),
   MAIL_HOST: z.string().default("localhost"),
   MAIL_PORT: z.coerce.number().int().positive().default(1025),

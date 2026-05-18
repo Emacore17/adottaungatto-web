@@ -22,6 +22,8 @@ const errors = {
   "image-cover": "Copertina non aggiornata.",
   "image-delete": "Foto non eliminata.",
   "image-order": "Ordine foto non salvato.",
+  "listing-limit":
+    "Hai raggiunto il limite di annunci attivi. Bozze, annunci in revisione e pubblicati contano nel limite.",
   "not-ready":
     "Aggiungi i dati obbligatori, una foto pronta e verifica il telefono se lo mostri.",
   "phone-code-api": "Codice non inviato. Salva un numero e riprova.",

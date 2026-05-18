@@ -18,6 +18,7 @@
     "@nestjs/core": "^11.1.19",
     "@nestjs/platform-fastify": "^11.1.19",
     "@workspace/db": "workspace:*",
+    "@workspace/domain": "workspace:*",
     "@workspace/validation": "workspace:^",
     "minio": "^8.0.7",
     "nodemailer": "^8.0.7",

@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common"
 import type {
   ModerationCommentInput,
@@ -12,6 +13,8 @@ import type {
 } from "@workspace/validation"
 
 import { DatabaseService } from "../database/database.service.js"
+import { API_ENV } from "../config/config.module.js"
+import type { ApiEnv } from "../config/env.js"
 import { ListingSearchDocumentsService } from "../listing-search-documents/listing-search-documents.service.js"
 import { MailService } from "../mail/mail.service.js"
 import { NotificationsService } from "../notifications/notifications.service.js"
@@ -32,6 +35,12 @@ import type {
   ReportedListingQueueItem,
   ReportedListingQueueResponse,
 } from "./moderation.types.js"
+
+type ModerationEnv = Pick<ApiEnv, "LISTING_PUBLISHED_TTL_DAYS">
+
+const defaultModerationEnv: ModerationEnv = {
+  LISTING_PUBLISHED_TTL_DAYS: 60,
+}
 
 type PendingReviewQueueRow = {
   total_count: number | string
@@ -692,7 +701,7 @@ const decideListingCaseSql = `
     where moderation_case.id = $1::uuid
       and moderation_case.status = 'open'
       and (
-        $10::boolean
+        $11::boolean
         or
         moderation_case.assigned_to_user_id is null
         or moderation_case.assigned_to_user_id = $2::uuid
@@ -711,6 +720,11 @@ const decideListingCaseSql = `
       published_at = case
         when $3::text = 'approved' then coalesce(published_at, now())
         else published_at
+      end,
+      expires_at = case
+        when $3::text = 'approved'
+        then coalesce(expires_at, now() + ($10::int * interval '1 day'))
+        else expires_at
       end,
       updated_at = now()
     from target_case
@@ -764,7 +778,7 @@ const decideListingCaseSql = `
         'previousAssignedToUserId',
         target_case.previous_assigned_to_user_id,
         'assignmentOverride',
-        $10::boolean
+        $11::boolean
           and target_case.previous_assigned_to_user_id is not null
           and target_case.previous_assigned_to_user_id <> $2::text
       )
@@ -994,7 +1008,10 @@ export class ModerationService {
     @Inject(MailService)
     private readonly mailService: MailService,
     @Inject(NotificationsService)
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    @Optional()
+    @Inject(API_ENV)
+    private readonly env: ModerationEnv = defaultModerationEnv
   ) {}
 
   async pendingReviewQueue(
@@ -1144,6 +1161,7 @@ export class ModerationService {
         input.reasonCode ?? null,
         input.reasonText ?? null,
         config.reportStatus,
+        this.env.LISTING_PUBLISHED_TTL_DAYS,
         canOverrideAssignment,
       ]
     )

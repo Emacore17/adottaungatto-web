@@ -3,6 +3,7 @@ import { performance } from "node:perf_hooks"
 
 import {
   BadRequestException,
+  ConflictException,
   Inject,
   Injectable,
   Logger,
@@ -10,6 +11,7 @@ import {
   Optional,
   ServiceUnavailableException,
 } from "@nestjs/common"
+import { getActiveListingLimit } from "@workspace/domain/listing-lifecycle"
 import { listingImageMaxSizeBytes } from "@workspace/validation"
 import type {
   ListingContactPhoneMode,
@@ -58,10 +60,18 @@ const maxListingImages = 10
 const publicListingRankingVersion = "postgres-v1" as const
 const defaultPublicListingRadiusKm = 50
 
-type ListingsEnv = Pick<ApiEnv, "APP_ENV" | "PHONE_VERIFICATION_TTL_MINUTES">
+type ListingsEnv = Pick<
+  ApiEnv,
+  | "APP_ENV"
+  | "LISTING_LIMIT_DEFAULT_ACTIVE"
+  | "LISTING_LIMIT_ORGANIZATION_ACTIVE"
+  | "PHONE_VERIFICATION_TTL_MINUTES"
+>
 
 const defaultListingsEnv: ListingsEnv = {
   APP_ENV: "local",
+  LISTING_LIMIT_DEFAULT_ACTIVE: 5,
+  LISTING_LIMIT_ORGANIZATION_ACTIVE: 50,
   PHONE_VERIFICATION_TTL_MINUTES: 10,
 }
 
@@ -202,6 +212,11 @@ type ListingImageRow = {
 
 type ListingImageCountRow = {
   image_count: number | string
+}
+
+type ListingActiveLimitRow = {
+  active_count: number | string
+  profile_type: string
 }
 
 type ListingImageReadinessRow = {
@@ -896,6 +911,31 @@ const listPublicCatBreedsSql = `
   from cat_breeds
   where is_active = true
   order by sort_order asc, name asc, id asc
+`
+
+const countUserActiveListingsSql = `
+  select
+    owner.profile_type::text as profile_type,
+    count(listing.id)::int as active_count
+  from users owner
+  left join listings listing
+    on listing.owner_user_id = owner.id
+    and listing.deleted_at is null
+    and (
+      (
+        listing.lifecycle_status = 'draft'
+        and listing.moderation_status in ('draft', 'pending_review')
+      )
+      or (
+        listing.lifecycle_status = 'published'
+        and listing.moderation_status = 'approved'
+        and (listing.expires_at is null or listing.expires_at > now())
+      )
+    )
+  where owner.id = $1::uuid
+    and owner.deleted_at is null
+  group by owner.id, owner.profile_type
+  limit 1
 `
 
 const createUserDraftSql = `
@@ -1744,6 +1784,8 @@ export class ListingsService {
     const location = await this.resolveMunicipalityLocation(
       input.municipalityId
     )
+    await this.assertAccountCanCreateDraft(userId)
+
     const [row] = await this.databaseService.queryRows<ListingDraftRow>(
       createUserDraftSql,
       [
@@ -1777,6 +1819,32 @@ export class ListingsService {
     }
 
     return mapListingDraftRow(row)
+  }
+
+  private async assertAccountCanCreateDraft(userId: string) {
+    const [row] = await this.databaseService.queryRows<ListingActiveLimitRow>(
+      countUserActiveListingsSql,
+      [userId]
+    )
+
+    if (!row) {
+      throw new NotFoundException("User account not found.")
+    }
+
+    const limit = getActiveListingLimit(row.profile_type, {
+      defaultActiveLimit: this.env.LISTING_LIMIT_DEFAULT_ACTIVE,
+      organizationActiveLimit: this.env.LISTING_LIMIT_ORGANIZATION_ACTIVE,
+    })
+    const activeCount = Number(row.active_count)
+
+    if (activeCount >= limit) {
+      throw new ConflictException({
+        message: "Listing account active limit reached.",
+        reason: "listing_account_limit_reached",
+        limit,
+        activeCount,
+      })
+    }
   }
 
   async updateDraft(

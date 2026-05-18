@@ -371,6 +371,14 @@ export async function createDraftAction(formData: FormData) {
     redirect(routes.login(nextPath))
   }
 
+  if (
+    !result.ok &&
+    result.status === 409 &&
+    result.reason === "listing_account_limit_reached"
+  ) {
+    redirectWithStatus(nextPath, "error", "listing-limit")
+  }
+
   if (!result.ok) {
     redirectWithStatus(nextPath, "error", "api")
   }

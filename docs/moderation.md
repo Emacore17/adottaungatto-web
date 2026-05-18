@@ -140,9 +140,15 @@ Ogni decisione:
 Effetti sugli annunci:
 
 - approvazione: `moderation_status = approved`,
-  `lifecycle_status = published`, `published_at` valorizzato;
+  `lifecycle_status = published`, `published_at` valorizzato e `expires_at`
+  impostato a 60 giorni se non gia presente;
 - rifiuto: `moderation_status = rejected`, `lifecycle_status = draft`;
 - sospensione: `moderation_status = suspended`, `lifecycle_status = draft`.
+
+Il worker rende esplicita la scadenza degli annunci pubblicati: quando
+`expires_at <= now()`, l'annuncio passa a `lifecycle_status = expired` e il
+documento di ricerca viene rimosso. Le bozze e gli annunci in revisione non
+aggiornati da 30 giorni vengono soft-delete per liberare le quote account.
 
 ## Segnalazioni
 

@@ -544,6 +544,9 @@ const testEnv: ApiEnv = {
   DATABASE_URL:
     "postgresql://adottaungatto:adottaungatto@localhost:5432/adottaungatto",
   EMAIL_VERIFICATION_TTL_MINUTES: 60,
+  LISTING_LIMIT_DEFAULT_ACTIVE: 5,
+  LISTING_LIMIT_ORGANIZATION_ACTIVE: 50,
+  LISTING_PUBLISHED_TTL_DAYS: 60,
   MAIL_FROM: "no-reply@adottaungatto.local",
   MAIL_HOST: "localhost",
   MAIL_PORT: 1025,

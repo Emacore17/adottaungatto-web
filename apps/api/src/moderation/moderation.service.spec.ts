@@ -627,6 +627,7 @@ describe("ModerationService", () => {
       "policy_ok",
       null,
       "dismissed",
+      60,
       false,
     ])
   })
@@ -730,6 +731,7 @@ describe("ModerationService", () => {
         null,
         "Contenuto non conforme.",
         reportStatus,
+        60,
         false,
       ])
       expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
@@ -920,6 +922,7 @@ describe("ModerationService", () => {
       "policy_ok",
       null,
       "dismissed",
+      60,
       true,
     ])
   })

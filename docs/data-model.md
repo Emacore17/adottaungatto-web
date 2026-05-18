@@ -224,6 +224,19 @@ e separa gli elementi gia implementati da quelli pianificati.
 - `deleted_at`
 - `created_at`, `updated_at`
 
+Policy lifecycle:
+
+- gli account `private`, `breeder` e `professional` possono avere fino a 5
+  annunci attivi;
+- gli account `association` e `shelter` possono avere fino a 50 annunci attivi;
+- contano come attivi bozze, annunci in revisione e annunci pubblicati non
+  scaduti;
+- le bozze o revisioni non aggiornate da 30 giorni vengono soft-delete dal
+  worker;
+- gli annunci pubblicati scadono dopo 60 giorni e diventano `expired`;
+- gli annunci terminali restano conservati per audit/recupero prima della
+  pulizia fisica separata.
+
 Indici pubblici attuali:
 
 - `listings_location_point_gix`

@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { defaultListingLifecyclePolicy } from "@workspace/domain/listing-lifecycle"
 
 const workerEnvSchema = z.object({
   APP_ENV: z.string().default("local"),
@@ -8,6 +9,26 @@ const workerEnvSchema = z.object({
     .default(
       "postgresql://adottaungatto:adottaungatto@localhost:5432/adottaungatto"
     ),
+  LISTING_LIFECYCLE_CLEANUP_BATCH_SIZE: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.cleanupBatchSize),
+  LISTING_LIFECYCLE_CLEANUP_INTERVAL_SECONDS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.cleanupIntervalSeconds),
+  LISTING_RETAIN_TERMINAL_DAYS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.retainTerminalDays),
+  LISTING_STALE_DRAFT_TTL_DAYS: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(defaultListingLifecyclePolicy.staleDraftTtlDays),
   REDIS_URL: z.string().url().default("redis://localhost:6379"),
   S3_ACCESS_KEY_ID: z.string().min(1).default("minioadmin"),
   S3_BUCKET: z.string().min(3).default("adottaungatto-local"),

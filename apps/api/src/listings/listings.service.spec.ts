@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common"
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common"
 import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
@@ -616,18 +620,30 @@ describe("ListingsService", () => {
 
   it("creates a draft with derived location fields", async () => {
     const databaseService = {
-      queryRows: vi
-        .fn()
-        .mockResolvedValueOnce([
-          {
-            municipality_id: "municipality-id",
-            province_id: "province-id",
-            region_id: "region-id",
-            center_lat: "41.8931",
-            center_lng: "12.4828",
-          },
-        ])
-        .mockResolvedValueOnce([createDraftRow()]),
+      queryRows: vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes("from geo_municipalities")) {
+          return Promise.resolve([
+            {
+              municipality_id: "municipality-id",
+              province_id: "province-id",
+              region_id: "region-id",
+              center_lat: "41.8931",
+              center_lng: "12.4828",
+            },
+          ])
+        }
+
+        if (sql.includes("active_count")) {
+          return Promise.resolve([
+            {
+              active_count: "4",
+              profile_type: "private",
+            },
+          ])
+        }
+
+        return Promise.resolve([createDraftRow()])
+      }),
     } as unknown as DatabaseService
     const { service } = createService(databaseService)
 
@@ -647,8 +663,10 @@ describe("ListingsService", () => {
       id: "listing-id",
       sex: "female",
     })
-    const [, createParameters = []] = vi.mocked(databaseService.queryRows).mock
-      .calls[1]!
+    const createCall = vi
+      .mocked(databaseService.queryRows)
+      .mock.calls.find(([sql]) => String(sql).includes("insert into listings"))
+    const createParameters = createCall?.[1] ?? []
 
     expect(createParameters.slice(0, 15)).toEqual([
       "user-id",
@@ -668,6 +686,71 @@ describe("ListingsService", () => {
       false,
     ])
     expect(createParameters[19]).toBe(false)
+  })
+
+  it("rejects draft creation when the account active listing limit is reached", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes("active_count")) {
+          return Promise.resolve([
+            {
+              active_count: "5",
+              profile_type: "private",
+            },
+          ])
+        }
+
+        return Promise.resolve([createDraftRow()])
+      }),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.createDraft("user-id", {
+        title: "Gattino a Roma",
+        description: "Cerca una famiglia",
+        sex: "unknown",
+        isFree: true,
+        contactRequestsEnabled: true,
+        contactPhoneMode: "none",
+      })
+    ).rejects.toBeInstanceOf(ConflictException)
+    expect(
+      vi
+        .mocked(databaseService.queryRows)
+        .mock.calls.some(([sql]) => String(sql).includes("insert into listings"))
+    ).toBe(false)
+  })
+
+  it("allows organization accounts to create drafts below their higher active listing limit", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockImplementation((sql: string) => {
+        if (sql.includes("active_count")) {
+          return Promise.resolve([
+            {
+              active_count: "49",
+              profile_type: "shelter",
+            },
+          ])
+        }
+
+        return Promise.resolve([createDraftRow()])
+      }),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.createDraft("user-id", {
+        title: "Gattino a Roma",
+        description: "Cerca una famiglia",
+        sex: "unknown",
+        isFree: true,
+        contactRequestsEnabled: true,
+        contactPhoneMode: "none",
+      })
+    ).resolves.toMatchObject({
+      id: "listing-id",
+    })
   })
 
   it("rejects drafts with unknown municipalities", async () => {

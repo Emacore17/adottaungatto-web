@@ -1,4 +1,5 @@
 import { loadWorkerEnv } from "./config/env.js"
+import { cleanupListingLifecycle } from "./listings/listing-lifecycle-cleanup.js"
 import { createMediaProcessingLoop } from "./media/media-processing-loop.js"
 import { processPendingListingImages } from "./media/process-listing-images.js"
 import { createWorkerStatus } from "./worker-status.js"
@@ -19,12 +20,24 @@ const mediaProcessingLoop = createMediaProcessingLoop({
       },
     }),
 })
+const listingLifecycleCleanupLoop = createMediaProcessingLoop({
+  intervalMs: env.LISTING_LIFECYCLE_CLEANUP_INTERVAL_SECONDS * 1000,
+  jobName: "cleanup-listing-lifecycle",
+  processBatch: () =>
+    cleanupListingLifecycle({
+      batchSize: env.LISTING_LIFECYCLE_CLEANUP_BATCH_SIZE,
+      databaseUrl: env.DATABASE_URL,
+      staleDraftTtlDays: env.LISTING_STALE_DRAFT_TTL_DAYS,
+    }),
+})
 
 console.log(JSON.stringify(status))
 mediaProcessingLoop.start()
+listingLifecycleCleanupLoop.start()
 
 function shutdown() {
   mediaProcessingLoop.stop()
+  listingLifecycleCleanupLoop.stop()
   process.exit(0)
 }
 

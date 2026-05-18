@@ -1,11 +1,13 @@
 type MediaProcessingLoopOptions = {
   intervalMs: number
+  jobName?: string
   logger?: Pick<typeof console, "error" | "log">
   processBatch: () => Promise<{ processed: number }>
 }
 
 export function createMediaProcessingLoop({
   intervalMs,
+  jobName = "process-listing-images",
   logger = console,
   processBatch,
 }: MediaProcessingLoopOptions) {
@@ -25,7 +27,7 @@ export function createMediaProcessingLoop({
       if (result.processed > 0) {
         logger.log(
           JSON.stringify({
-            job: "process-listing-images",
+            job: jobName,
             processed: result.processed,
             status: "ok",
           })
@@ -34,7 +36,7 @@ export function createMediaProcessingLoop({
     } catch (error) {
       logger.error(
         JSON.stringify({
-          job: "process-listing-images",
+          job: jobName,
           message: error instanceof Error ? error.message : String(error),
           status: "error",
         })

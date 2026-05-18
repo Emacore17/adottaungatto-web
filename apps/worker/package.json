@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@workspace/db": "workspace:*",
+    "@workspace/domain": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "minio": "^8.0.7",
     "sharp": "^0.34.5",
