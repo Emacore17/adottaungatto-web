@@ -10,11 +10,11 @@ import { ListingReportCard } from "@/app/(public)/listings/[id]/_components/list
 import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
 import {
   ListingImageCarousel,
-  type ListingCarouselImage,
 } from "@/app/(public)/listings/[id]/_components/listing-image-carousel"
+import { createCarouselImages } from "@/app/(public)/listings/[id]/_components/listing-carousel-images"
 import { JsonLd } from "@/components/shared/json-ld"
 import { getPublicObjectUrl } from "@/lib/api/assets"
-import type { PublicListingDetail, PublicListingImage } from "@/lib/api/types"
+import type { PublicListingDetail } from "@/lib/api/types"
 import { listFavoriteListingIds } from "@/lib/api/favorites"
 import { getPublicListing } from "@/lib/api/listings"
 import { getCurrentUserProfile } from "@/lib/api/users"
@@ -340,44 +340,6 @@ function ListingOwnerSummary({
       </div>
     </div>
   )
-}
-
-function createCarouselImages(
-  listing: PublicListingDetail
-): ListingCarouselImage[] {
-  const detailImages =
-    listing.images.items.length > 0
-      ? listing.images.items
-      : listing.images.cover
-        ? [listing.images.cover]
-        : []
-
-  return detailImages
-    .map((image, index) => createCarouselImage(listing.title, image, index))
-    .filter((image): image is ListingCarouselImage => image !== null)
-}
-
-function createCarouselImage(
-  title: string,
-  image: PublicListingImage,
-  index: number
-): ListingCarouselImage | null {
-  const url = getPublicObjectUrl(image.objectKeyLarge ?? image.objectKeyThumb)
-  const thumbUrl = getPublicObjectUrl(
-    image.objectKeyThumb ?? image.objectKeyLarge
-  )
-
-  if (!url || !thumbUrl) {
-    return null
-  }
-
-  return {
-    alt: `${title} - foto ${index + 1}`,
-    id: image.id,
-    isCover: image.isCover,
-    thumbUrl,
-    url,
-  }
 }
 
 function readContactStatus(

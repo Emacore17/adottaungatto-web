@@ -21,6 +21,7 @@ import { cn } from "@workspace/ui/lib/utils"
 
 export type ListingCarouselImage = {
   alt: string
+  blurDataUrl: string | null
   id: string
   isCover: boolean
   thumbUrl: string
@@ -75,6 +76,7 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
                 key={currentImage.id}
                 src={currentImage.url}
                 alt={currentImage.alt}
+                blurDataUrl={currentImage.blurDataUrl}
                 fill
                 priority={safeIndex === 0}
                 className="object-cover"
@@ -133,6 +135,7 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
               key={`fullscreen-${currentImage.id}`}
               src={currentImage.url}
               alt={currentImage.alt}
+              blurDataUrl={currentImage.blurDataUrl}
               fill
               className="object-contain"
               sizes="100vw"
@@ -209,6 +212,7 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
               <StorageImage
                 src={image.thumbUrl}
                 alt=""
+                blurDataUrl={image.blurDataUrl}
                 fill
                 className="object-cover"
                 sizes="96px"
