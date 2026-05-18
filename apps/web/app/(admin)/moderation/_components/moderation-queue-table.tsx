@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { Fragment, useMemo, useState } from "react"
 import {
   AlertTriangleIcon,
   CheckIcon,
@@ -79,6 +79,10 @@ function ModerationQueueTable({
   queue,
 }: ModerationQueueTableProps) {
   const caseIds = useMemo(() => items.map((item) => item.case.id), [items])
+  const listingIdsByCaseId = useMemo(
+    () => new Map(items.map((item) => [item.case.id, item.listing.id])),
+    [items]
+  )
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const selectedCount = selectedIds.length
   const allSelected = items.length > 0 && selectedCount === items.length
@@ -106,7 +110,14 @@ function ModerationQueueTable({
       >
         <input type="hidden" name="nextPath" value={nextPath} />
         {selectedIds.map((caseId) => (
-          <input key={caseId} type="hidden" name="caseId" value={caseId} />
+          <Fragment key={caseId}>
+            <input type="hidden" name="caseId" value={caseId} />
+            <input
+              type="hidden"
+              name="listingId"
+              value={listingIdsByCaseId.get(caseId) ?? ""}
+            />
+          </Fragment>
         ))}
 
         <div className="grid gap-4 lg:grid-cols-[minmax(16rem,1fr)_minmax(28rem,1.35fr)_auto] lg:items-end">
@@ -281,9 +292,15 @@ function ModerationQueueRow({
                 {reportCount}
               </Badge>
             ) : null}
-            <AssignmentBadge assignedToUserId={item.case.assignedToUserId} />
+            <AssignmentBadge assignedTo={item.case.assignedTo} />
           </div>
           <span className="font-medium">{item.listing.title}</span>
+          <span className="font-mono text-[11px] leading-4 text-muted-foreground">
+            Annuncio {item.listing.id}
+          </span>
+          <span className="font-mono text-[11px] leading-4 text-muted-foreground">
+            Caso {item.case.id}
+          </span>
           <span className="line-clamp-2 text-xs leading-5 text-muted-foreground">
             {item.listing.description}
           </span>
@@ -335,16 +352,19 @@ function ModerationQueueRow({
           <QuickDecisionButton
             action="approve"
             caseId={item.case.id}
+            listingId={item.listing.id}
             nextPath={nextPath}
           />
           <QuickDecisionButton
             action="reject"
             caseId={item.case.id}
+            listingId={item.listing.id}
             nextPath={nextPath}
           />
           <QuickDecisionButton
             action="suspend"
             caseId={item.case.id}
+            listingId={item.listing.id}
             nextPath={nextPath}
           />
         </div>
@@ -399,11 +419,17 @@ function MobileModerationCard({
                   {reportCount}
                 </Badge>
               ) : null}
-              <AssignmentBadge assignedToUserId={item.case.assignedToUserId} />
+              <AssignmentBadge assignedTo={item.case.assignedTo} />
             </div>
             <h2 className="line-clamp-2 text-sm font-semibold">
               {item.listing.title}
             </h2>
+            <p className="font-mono text-[11px] leading-4 text-muted-foreground">
+              Annuncio {item.listing.id}
+            </p>
+            <p className="font-mono text-[11px] leading-4 text-muted-foreground">
+              Caso {item.case.id}
+            </p>
             <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
               {item.listing.description}
             </p>
@@ -463,6 +489,7 @@ function MobileModerationCard({
           action="approve"
           caseId={item.case.id}
           className="w-full"
+          listingId={item.listing.id}
           nextPath={nextPath}
           showLabel
         />
@@ -470,6 +497,7 @@ function MobileModerationCard({
           action="reject"
           caseId={item.case.id}
           className="w-full"
+          listingId={item.listing.id}
           nextPath={nextPath}
           showLabel
         />
@@ -478,6 +506,7 @@ function MobileModerationCard({
           caseId={item.case.id}
           className="w-full"
           formClassName="col-span-2"
+          listingId={item.listing.id}
           nextPath={nextPath}
           showLabel
         />
@@ -669,11 +698,11 @@ function getLatestComment(item: ModerationTableItem) {
 }
 
 function AssignmentBadge({
-  assignedToUserId,
+  assignedTo,
 }: {
-  assignedToUserId: string | null
+  assignedTo: ModerationTableItem["case"]["assignedTo"]
 }) {
-  if (!assignedToUserId) {
+  if (!assignedTo) {
     return null
   }
 
@@ -683,7 +712,7 @@ function AssignmentBadge({
       className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
     >
       <UserCheckIcon aria-hidden="true" data-icon="inline-start" />
-      In carico
+      In carico a {assignedTo.displayName}
     </Badge>
   )
 }
@@ -804,6 +833,7 @@ function QuickDecisionButton({
   caseId,
   className,
   formClassName,
+  listingId,
   nextPath,
   showLabel = false,
 }: {
@@ -811,6 +841,7 @@ function QuickDecisionButton({
   caseId: string
   className?: string
   formClassName?: string
+  listingId: string
   nextPath: string
   showLabel?: boolean
 }) {
@@ -821,6 +852,7 @@ function QuickDecisionButton({
   return (
     <form action={decideModerationBatchAction} className={formClassName}>
       <input type="hidden" name="caseId" value={caseId} />
+      <input type="hidden" name="listingId" value={listingId} />
       <input type="hidden" name="nextPath" value={nextPath} />
       <input
         type="hidden"

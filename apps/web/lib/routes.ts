@@ -66,5 +66,6 @@ export const routes = {
   accountSecurity: "/account/settings/security",
   accountDanger: "/account/settings/account",
   moderation: "/moderation",
+  moderationActivity: "/moderation/activity",
   moderationQueue: "/moderation/queue",
 }

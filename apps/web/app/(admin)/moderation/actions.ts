@@ -68,10 +68,10 @@ export async function decideModerationCaseAction(formData: FormData) {
       redirect(routes.login(routes.moderation))
     }
 
-    redirect(
-      `${routes.moderation}?decisionError=${encodeURIComponent(
-        response.status ? String(response.status) : "request"
-      )}`
+    redirectWithDecisionStatus(
+      routes.moderation,
+      formatDecisionFailure(response),
+      readListingId(formData)
     )
   }
 
@@ -97,6 +97,7 @@ export async function decideModerationBatchAction(formData: FormData) {
   }
 
   const caseIds = readCaseIds(formData)
+  const listingIdsByCaseId = readListingIdsByCaseId(formData)
 
   if (caseIds.length === 0) {
     redirectWithDecisionStatus(nextPath, "no_selection")
@@ -112,6 +113,8 @@ export async function decideModerationBatchAction(formData: FormData) {
   }
 
   const decidedListingIds = new Set<string>()
+  const decisionFailures: string[] = []
+  let firstFailedListingId: string | null = null
   let decidedCount = 0
 
   for (const caseId of caseIds) {
@@ -131,6 +134,9 @@ export async function decideModerationBatchAction(formData: FormData) {
     if (response.status === 401) {
       redirect(routes.login(nextPath))
     }
+
+    decisionFailures.push(formatDecisionFailure(response))
+    firstFailedListingId ??= listingIdsByCaseId.get(caseId) ?? null
   }
 
   revalidateModerationPages()
@@ -138,7 +144,11 @@ export async function decideModerationBatchAction(formData: FormData) {
   revalidatePublicListingCaches([...decidedListingIds])
 
   if (decidedCount === 0) {
-    redirectWithDecisionStatus(nextPath, "no_cases_updated")
+    redirectWithDecisionStatus(
+      nextPath,
+      pickDecisionError(decisionFailures),
+      firstFailedListingId
+    )
   }
 
   const params = new URLSearchParams({
@@ -285,6 +295,40 @@ function readCaseIds(formData: FormData) {
   return [...ids]
 }
 
+function readListingId(formData: FormData) {
+  const listingId = normalizeString(formData.get("listingId"))
+
+  return listingId && isUuid(listingId) ? listingId : null
+}
+
+function readListingIdsByCaseId(formData: FormData) {
+  const caseValues = formData.getAll("caseId")
+  const listingValues = formData.getAll("listingId")
+  const listingIdsByCaseId = new Map<string, string>()
+
+  caseValues.forEach((caseValue, index) => {
+    const parsedCase = moderationCaseIdParamSchema.safeParse({
+      caseId: caseValue,
+    })
+    const listingId =
+      typeof listingValues[index] === "string"
+        ? listingValues[index].trim()
+        : undefined
+
+    if (parsedCase.success && listingId && isUuid(listingId)) {
+      listingIdsByCaseId.set(parsedCase.data.caseId, listingId)
+    }
+  })
+
+  return listingIdsByCaseId
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  )
+}
+
 function readNextPath(formData: FormData, fallback: string) {
   const value = normalizeString(formData.get("nextPath"))
 
@@ -311,6 +355,7 @@ function requiresOtherReasonText(decision: {
 function revalidateModerationPages() {
   revalidatePath(routes.moderation)
   revalidatePath(routes.moderationQueue)
+  revalidatePath(routes.moderationActivity)
 }
 
 function revalidatePublicListingCaches(listingIds: string[]) {
@@ -323,10 +368,61 @@ function revalidatePublicListingCaches(listingIds: string[]) {
   }
 }
 
-function redirectWithDecisionStatus(path: string, error: string): never {
+function formatDecisionFailure(response: {
+  reason?: string
+  status: number | null
+}) {
+  if (response.reason === "moderation_case_assigned_elsewhere") {
+    return "assigned_elsewhere"
+  }
+
+  if (response.reason === "moderation_case_already_decided") {
+    return "already_decided"
+  }
+
+  if (response.status === 409) {
+    return "conflict"
+  }
+
+  if (response.status === 429) {
+    return "rate_limited"
+  }
+
+  return response.status ? String(response.status) : "request"
+}
+
+function pickDecisionError(errors: string[]) {
+  if (errors.includes("assigned_elsewhere")) {
+    return "assigned_elsewhere"
+  }
+
+  if (errors.includes("already_decided")) {
+    return "already_decided"
+  }
+
+  if (errors.includes("conflict")) {
+    return "conflict"
+  }
+
+  if (errors.includes("rate_limited")) {
+    return "rate_limited"
+  }
+
+  return errors[0] ?? "no_cases_updated"
+}
+
+function redirectWithDecisionStatus(
+  path: string,
+  error: string,
+  listingId?: string | null
+): never {
   const params = new URLSearchParams({
     decisionError: error,
   })
+
+  if (listingId) {
+    params.set("decisionListingId", listingId)
+  }
 
   redirect(withDecisionParams(path, params))
 }

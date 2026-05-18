@@ -6,6 +6,7 @@ import {
   ListingContactCard,
   type ContactStatus,
 } from "@/app/(public)/listings/[id]/_components/listing-contact-card"
+import { ListingReportCard } from "@/app/(public)/listings/[id]/_components/listing-report-card"
 import { ListingFavoriteToggle } from "@/app/(public)/_components/listing-favorite-toggle"
 import {
   ListingImageCarousel,
@@ -101,6 +102,9 @@ export default async function ListingDetailPage({
     ? `${listing.data.location.municipality.name}, ${listing.data.location.province.name}`
     : "Italia"
   const nextPath = routes.listing(listing.data.id)
+  const isOwner =
+    currentUserProfile?.ok === true &&
+    currentUserProfile.data.id === listing.data.owner.id
 
   return (
     <>
@@ -248,6 +252,12 @@ export default async function ListingDetailPage({
             listingId={listing.data.id}
             publicPhoneE164={listing.data.publicPhoneE164}
           />
+          <ListingReportCard
+            isAuthenticated={Boolean(sessionToken)}
+            isOwner={isOwner}
+            listingId={listing.data.id}
+            reportStatus={readReportStatus(query.report)}
+          />
         </aside>
       </main>
     </>
@@ -385,6 +395,10 @@ function readContactStatus(
   }
 
   return null
+}
+
+function readReportStatus(value: string | string[] | undefined) {
+  return typeof value === "string" ? value : null
 }
 
 function formatOwnerProfileType(profileType: string) {

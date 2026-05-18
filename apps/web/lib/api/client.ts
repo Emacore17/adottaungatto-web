@@ -34,6 +34,8 @@ export type ApiResult<T> =
   | {
       ok: false
       message: string
+      reason?: string
+      retryAfterSeconds?: number
       status: number | null
     }
 
@@ -76,6 +78,15 @@ export async function apiFetch<T>(
       return {
         ok: false,
         message: createUserFacingApiMessage(response.status, payload),
+        ...(readString(payload?.reason)
+          ? { reason: readString(payload?.reason) ?? undefined }
+          : {}),
+        ...(readNumber(payload?.retryAfterSeconds) !== null
+          ? {
+              retryAfterSeconds:
+                readNumber(payload?.retryAfterSeconds) ?? undefined,
+            }
+          : {}),
         status: response.status,
       }
     }

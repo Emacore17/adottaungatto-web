@@ -192,6 +192,42 @@ describe("ModerationController", () => {
       "approve",
       {
         reasonCode: "policy_ok",
+      },
+      {
+        canOverrideAssignment: false,
+      }
+    )
+  })
+
+  it("passes assignment override capability for admin decisions", async () => {
+    const moderationService = {
+      decideListingCase: vi.fn().mockResolvedValue({ decided: true }),
+    } as unknown as ModerationService
+    const controller = new ModerationController(
+      moderationService,
+      createRateLimitService()
+    )
+
+    await controller.approveListingCase(
+      createAuth({ roles: ["admin"] }),
+      {
+        caseId: "11111111-1111-4111-8111-111111111111",
+      },
+      {
+        reasonCode: "policy_ok",
+      },
+      createRequest()
+    )
+
+    expect(moderationService.decideListingCase).toHaveBeenCalledWith(
+      "moderator-id",
+      "11111111-1111-4111-8111-111111111111",
+      "approve",
+      {
+        reasonCode: "policy_ok",
+      },
+      {
+        canOverrideAssignment: true,
       }
     )
   })
@@ -304,6 +340,9 @@ describe("ModerationController", () => {
       "reject",
       {
         reasonText: "Descrizione non conforme.",
+      },
+      {
+        canOverrideAssignment: false,
       }
     )
   })
@@ -334,6 +373,9 @@ describe("ModerationController", () => {
       "suspend",
       {
         reasonCode: "risk_review",
+      },
+      {
+        canOverrideAssignment: false,
       }
     )
   })
@@ -385,13 +427,14 @@ describe("ModerationController", () => {
   })
 })
 
-function createAuth() {
+function createAuth(options: { roles?: string[] } = {}) {
   return {
     user: {
       id: "moderator-id",
       email: "moderator@example.com",
       displayName: "Moderator",
       profileType: "private",
+      ...(options.roles ? { roles: options.roles } : {}),
       status: "active",
     },
     session: {

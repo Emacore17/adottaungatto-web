@@ -97,6 +97,7 @@ describe("ModerationService", () => {
             reasonCode: "listing_submission",
             openedAt: "2026-04-01T10:00:00.000Z",
             assignedToUserId: null,
+            assignedTo: null,
           },
           listing: {
             id: "listing-id",
@@ -289,6 +290,8 @@ describe("ModerationService", () => {
           case_reason_code: "user_report",
           case_created_at: "2026-04-01T10:00:00.000Z",
           assigned_to_user_id: "moderator-id",
+          assigned_to_user_email: "moderator@example.com",
+          assigned_to_user_display_name: "Moderator",
           listing_id: "listing-id",
           listing_title: "Gatto adulto a Milano",
           listing_slug: "gatto-adulto-a-milano",
@@ -361,6 +364,11 @@ describe("ModerationService", () => {
             reasonCode: "user_report",
             openedAt: "2026-04-01T10:00:00.000Z",
             assignedToUserId: "moderator-id",
+            assignedTo: {
+              id: "moderator-id",
+              email: "moderator@example.com",
+              displayName: "Moderator",
+            },
           },
           listing: {
             id: "listing-id",
@@ -446,6 +454,8 @@ describe("ModerationService", () => {
           case_id: "case-id",
           case_status: "approved",
           assigned_to_user_id: "moderator-id",
+          assigned_to_user_email: "moderator@example.com",
+          assigned_to_user_display_name: "Moderator",
           listing_id: "listing-id",
           listing_title: "Gattino a Roma",
           listing_slug: "gattino-a-roma",
@@ -483,6 +493,11 @@ describe("ModerationService", () => {
             id: "case-id",
             status: "approved",
             assignedToUserId: "moderator-id",
+            assignedTo: {
+              id: "moderator-id",
+              email: "moderator@example.com",
+              displayName: "Moderator",
+            },
           },
           listing: {
             id: "listing-id",
@@ -612,6 +627,7 @@ describe("ModerationService", () => {
       "policy_ok",
       null,
       "dismissed",
+      false,
     ])
   })
 
@@ -714,6 +730,7 @@ describe("ModerationService", () => {
         null,
         "Contenuto non conforme.",
         reportStatus,
+        false,
       ])
       expect(listingSearchDocumentsService.refreshListing).toHaveBeenCalledWith(
         "listing-id"
@@ -814,6 +831,97 @@ describe("ModerationService", () => {
         reasonCode: "policy_ok",
       })
     ).rejects.toBeInstanceOf(NotFoundException)
+  })
+
+  it("rejects a moderator decision when another moderator owns the case", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          case_status: "open",
+          assigned_to_user_id: "other-moderator-id",
+          listing_id: "listing-id",
+          listing_moderation_status: "pending_review",
+          listing_lifecycle_status: "draft",
+          listing_deleted: false,
+          owner_deleted: false,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { listingSearchDocumentsService, service } =
+      createService(databaseService)
+
+    await expect(
+      service.decideListingCase("moderator-id", "case-id", "approve", {
+        reasonCode: "policy_ok",
+      })
+    ).rejects.toBeInstanceOf(ConflictException)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(2)
+    expect(listingSearchDocumentsService.refreshListing).not.toHaveBeenCalled()
+  })
+
+  it("allows admin decisions to override an existing case assignment", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          case_id: "case-id",
+          case_status: "approved",
+          case_closed_at: "2026-04-01T11:00:00.000Z",
+          action_id: "action-id",
+          listing_id: "listing-id",
+          listing_title: "Gattino a Roma",
+          listing_slug: "gattino-a-roma",
+          listing_moderation_status: "approved",
+          listing_lifecycle_status: "published",
+          listing_published_at: "2026-04-01T11:00:00.000Z",
+          listing_updated_at: "2026-04-01T11:00:00.000Z",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+          owner_listing_moderation_decision_email_enabled: true,
+          report_resolution_status: "dismissed",
+          report_resolution_count: "0",
+          report_notifications: [],
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.decideListingCase(
+        "admin-id",
+        "case-id",
+        "approve",
+        {
+          reasonCode: "policy_ok",
+        },
+        {
+          canOverrideAssignment: true,
+        }
+      )
+    ).resolves.toMatchObject({
+      decided: true,
+      case: {
+        id: "case-id",
+        status: "approved",
+      },
+      listing: {
+        id: "listing-id",
+        moderationStatus: "approved",
+      },
+    })
+    expect(vi.mocked(databaseService.queryRows).mock.calls[0]?.[1]).toEqual([
+      "case-id",
+      "admin-id",
+      "approved",
+      "published",
+      "approved",
+      "approved",
+      "policy_ok",
+      null,
+      "dismissed",
+      true,
+    ])
   })
 })
 

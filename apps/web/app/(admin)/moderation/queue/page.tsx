@@ -67,6 +67,7 @@ export default async function ModerationQueuePage({
   const decisionCount = readSingleParam(params.decisionCount)
   const decisionFailed = readSingleParam(params.decisionFailed)
   const decisionError = readSingleParam(params.decisionError)
+  const decisionListingId = readSingleParam(params.decisionListingId)
   const claim = readSingleParam(params.claim)
   const claimError = readSingleParam(params.claimError)
   const comment = readSingleParam(params.comment)
@@ -143,6 +144,7 @@ export default async function ModerationQueuePage({
         decision={decision}
         decisionCount={decisionCount}
         decisionFailed={decisionFailed}
+        decisionListingId={decisionListingId}
         error={decisionError}
       />
 
@@ -287,6 +289,7 @@ function DecisionFeedback({
   decision,
   decisionCount,
   decisionFailed,
+  decisionListingId,
   error,
 }: {
   claim: string | null
@@ -296,6 +299,7 @@ function DecisionFeedback({
   decision: string | null
   decisionCount: string | null
   decisionFailed: string | null
+  decisionListingId: string | null
   error: string | null
 }) {
   if (
@@ -362,7 +366,9 @@ function DecisionFeedback({
       <Card className="ring-destructive/35">
         <CardHeader>
           <CardTitle>Decisione non salvata</CardTitle>
-          <CardDescription>Codice errore: {error}.</CardDescription>
+          <CardDescription>
+            {formatDecisionError(error, decisionListingId)}
+          </CardDescription>
         </CardHeader>
       </Card>
     )
@@ -400,6 +406,44 @@ function formatCommentError(value: string) {
   }
 
   return `Codice errore: ${value}.`
+}
+
+function formatDecisionError(value: string, listingId: string | null) {
+  const listingSuffix = listingId ? ` Annuncio: ${listingId}.` : ""
+
+  if (value === "assigned_elsewhere") {
+    return `Il caso e' gia' in carico a un altro moderatore. Un admin puo applicare override, altrimenti chiedi il rilascio del caso.${listingSuffix}`
+  }
+
+  if (value === "already_decided") {
+    return `Il caso e' gia' stato deciso o non e' piu in coda.${listingSuffix}`
+  }
+
+  if (value === "conflict") {
+    return `Il caso e' cambiato mentre veniva salvata la decisione. Ricarica la coda e riprova.${listingSuffix}`
+  }
+
+  if (value === "rate_limited") {
+    return "Troppe decisioni in poco tempo. Attendi qualche minuto e riprova."
+  }
+
+  if (value === "no_selection") {
+    return "Seleziona almeno un caso prima di applicare una decisione."
+  }
+
+  if (value === "invalid_reason") {
+    return "Scegli un motivo valido o scrivi una nota per il caso."
+  }
+
+  if (value === "invalid_action") {
+    return "L'azione selezionata non e' valida."
+  }
+
+  if (value === "no_cases_updated") {
+    return `Nessun caso e' stato aggiornato: potrebbe essere gia stato deciso o non essere piu disponibile.${listingSuffix}`
+  }
+
+  return `Codice errore: ${value}.${listingSuffix}`
 }
 
 function isApiStatus<T>(result: QueueResult<T>, status: number) {

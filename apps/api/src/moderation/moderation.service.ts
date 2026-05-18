@@ -17,6 +17,7 @@ import { MailService } from "../mail/mail.service.js"
 import { NotificationsService } from "../notifications/notifications.service.js"
 import type {
   ListingLifecycleStatus,
+  ModerationCaseStatus,
   ModerationClaimResponse,
   ModerationCommentResponse,
   ListingModerationStatus,
@@ -39,6 +40,8 @@ type PendingReviewQueueRow = {
   case_reason_code: string | null
   case_created_at: Date | string
   assigned_to_user_id: string | null
+  assigned_to_user_email: string | null
+  assigned_to_user_display_name: string | null
   listing_id: string
   listing_title: string
   listing_slug: string
@@ -74,6 +77,8 @@ type ReportedListingQueueRow = {
   case_reason_code: string | null
   case_created_at: Date | string
   assigned_to_user_id: string | null
+  assigned_to_user_email: string | null
+  assigned_to_user_display_name: string | null
   listing_id: string
   listing_title: string
   listing_slug: string
@@ -126,6 +131,8 @@ type RecentModerationActionRow = {
   case_id: string
   case_status: ModerationRecentActionItem["case"]["status"]
   assigned_to_user_id: string | null
+  assigned_to_user_email: string | null
+  assigned_to_user_display_name: string | null
   listing_id: string
   listing_title: string
   listing_slug: string
@@ -151,6 +158,10 @@ type ModerationDecisionConfig = {
   reportStatus: ReportResolutionStatus
 }
 
+type ModerationDecisionOptions = {
+  canOverrideAssignment?: boolean
+}
+
 type ModerationDecisionRow = {
   case_id: string
   case_status: ModerationDecisionStatus
@@ -170,6 +181,17 @@ type ModerationDecisionRow = {
   report_resolution_status: ReportResolutionStatus
   report_resolution_count: number | string
   report_notifications: unknown
+}
+
+type ModerationDecisionStateRow = {
+  assigned_to_user_id: string | null
+  case_id: string
+  case_status: ModerationCaseStatus
+  listing_deleted: boolean
+  listing_id: string
+  listing_lifecycle_status: ListingLifecycleStatus
+  listing_moderation_status: ListingModerationStatus
+  owner_deleted: boolean
 }
 
 type ReportNotification = {
@@ -349,6 +371,8 @@ const pendingReviewQueueSql = `
     moderation_case.reason_code as case_reason_code,
     moderation_case.created_at as case_created_at,
     moderation_case.assigned_to_user_id::text as assigned_to_user_id,
+    assignee.email as assigned_to_user_email,
+    assignee.display_name as assigned_to_user_display_name,
     listing.id::text as listing_id,
     listing.title as listing_title,
     listing.slug as listing_slug,
@@ -381,6 +405,7 @@ const pendingReviewQueueSql = `
   from moderation_cases moderation_case
   join listings listing on listing.id = moderation_case.listing_id
   join users owner on owner.id = listing.owner_user_id
+  left join users assignee on assignee.id = moderation_case.assigned_to_user_id
   left join geo_municipalities municipality
     on municipality.id = listing.municipality_id
   left join geo_provinces province on province.id = listing.province_id
@@ -535,6 +560,8 @@ const reportedListingsQueueSql = `
     moderation_case.reason_code as case_reason_code,
     moderation_case.created_at as case_created_at,
     moderation_case.assigned_to_user_id::text as assigned_to_user_id,
+    assignee.email as assigned_to_user_email,
+    assignee.display_name as assigned_to_user_display_name,
     listing.id::text as listing_id,
     listing.title as listing_title,
     listing.slug as listing_slug,
@@ -581,6 +608,7 @@ const reportedListingsQueueSql = `
     on report_summaries.moderation_case_id = moderation_case.id
   join listings listing on listing.id = moderation_case.listing_id
   join users owner on owner.id = listing.owner_user_id
+  left join users assignee on assignee.id = moderation_case.assigned_to_user_id
   left join geo_municipalities municipality
     on municipality.id = listing.municipality_id
   left join geo_provinces province on province.id = listing.province_id
@@ -613,6 +641,8 @@ const recentModerationActionsSql = `
     moderation_case.id::text as case_id,
     moderation_case.status::text as case_status,
     moderation_case.assigned_to_user_id::text as assigned_to_user_id,
+    assignee.email as assigned_to_user_email,
+    assignee.display_name as assigned_to_user_display_name,
     listing.id::text as listing_id,
     listing.title as listing_title,
     listing.slug as listing_slug,
@@ -629,6 +659,7 @@ const recentModerationActionsSql = `
     on moderation_case.id = moderation_action.case_id
   join listings listing on listing.id = moderation_case.listing_id
   join users owner on owner.id = listing.owner_user_id
+  left join users assignee on assignee.id = moderation_case.assigned_to_user_id
   left join users actor on actor.id = moderation_action.actor_user_id
   where listing.deleted_at is null
     and owner.deleted_at is null
@@ -642,6 +673,7 @@ const decideListingCaseSql = `
     select
       moderation_case.id,
       moderation_case.listing_id,
+      moderation_case.assigned_to_user_id::text as previous_assigned_to_user_id,
       listing.title,
       listing.slug,
       listing.moderation_status::text as from_status,
@@ -660,6 +692,8 @@ const decideListingCaseSql = `
     where moderation_case.id = $1::uuid
       and moderation_case.status = 'open'
       and (
+        $10::boolean
+        or
         moderation_case.assigned_to_user_id is null
         or moderation_case.assigned_to_user_id = $2::uuid
       )
@@ -726,7 +760,13 @@ const decideListingCaseSql = `
         'listingLifecycleStatus',
         $4::text,
         'linkedReportStatus',
-        $9::text
+        $9::text,
+        'previousAssignedToUserId',
+        target_case.previous_assigned_to_user_id,
+        'assignmentOverride',
+        $10::boolean
+          and target_case.previous_assigned_to_user_id is not null
+          and target_case.previous_assigned_to_user_id <> $2::text
       )
     from target_case
     returning id::text
@@ -813,6 +853,23 @@ const decideListingCaseSql = `
   join updated_listing on updated_listing.id = updated_case.listing_id
   join inserted_action on true
   join report_resolution on true
+`
+
+const moderationDecisionStateSql = `
+  select
+    moderation_case.id::text as case_id,
+    moderation_case.status::text as case_status,
+    moderation_case.assigned_to_user_id::text as assigned_to_user_id,
+    listing.id::text as listing_id,
+    listing.moderation_status::text as listing_moderation_status,
+    listing.lifecycle_status::text as listing_lifecycle_status,
+    listing.deleted_at is not null as listing_deleted,
+    owner.deleted_at is not null as owner_deleted
+  from moderation_cases moderation_case
+  join listings listing on listing.id = moderation_case.listing_id
+  join users owner on owner.id = listing.owner_user_id
+  where moderation_case.id = $1::uuid
+  limit 1
 `
 
 const claimListingCaseSql = `
@@ -1068,11 +1125,13 @@ export class ModerationService {
     moderatorUserId: string,
     caseId: string,
     decision: ModerationDecisionAction,
-    input: ModerationDecisionInput
+    input: ModerationDecisionInput,
+    options: ModerationDecisionOptions = {}
   ): Promise<ModerationDecisionResponse> {
     assertDecisionReason(input)
 
     const config = moderationDecisionConfigs[decision]
+    const canOverrideAssignment = options.canOverrideAssignment ?? false
     const [row] = await this.databaseService.queryRows<ModerationDecisionRow>(
       decideListingCaseSql,
       [
@@ -1085,11 +1144,16 @@ export class ModerationService {
         input.reasonCode ?? null,
         input.reasonText ?? null,
         config.reportStatus,
+        canOverrideAssignment,
       ]
     )
 
     if (!row) {
-      throw new NotFoundException("Moderation case not found or not decidable.")
+      return await this.throwDecisionNotAvailable(
+        moderatorUserId,
+        caseId,
+        canOverrideAssignment
+      )
     }
 
     await this.listingSearchDocumentsService.refreshListing(row.listing_id)
@@ -1099,6 +1163,40 @@ export class ModerationService {
     await this.sendDecisionNotifications(row, config.action, input)
 
     return response
+  }
+
+  private async throwDecisionNotAvailable(
+    moderatorUserId: string,
+    caseId: string,
+    canOverrideAssignment: boolean
+  ): Promise<never> {
+    const rows =
+      (await this.databaseService.queryRows<ModerationDecisionStateRow>(
+        moderationDecisionStateSql,
+        [caseId]
+      )) ?? []
+    const state = rows[0]
+
+    if (
+      state?.case_status === "open" &&
+      state.assigned_to_user_id &&
+      state.assigned_to_user_id !== moderatorUserId &&
+      !canOverrideAssignment
+    ) {
+      throw new ConflictException({
+        message: "Moderation case is assigned to another moderator.",
+        reason: "moderation_case_assigned_elsewhere",
+      })
+    }
+
+    if (state && state.case_status !== "open") {
+      throw new ConflictException({
+        message: "Moderation case has already been decided.",
+        reason: "moderation_case_already_decided",
+      })
+    }
+
+    throw new NotFoundException("Moderation case not found or not decidable.")
   }
 
   private async sendDecisionNotifications(
@@ -1178,6 +1276,7 @@ function mapQueueRow(row: PendingReviewQueueRow): ModerationQueueItem {
       reasonCode: row.case_reason_code,
       openedAt: toIsoString(row.case_created_at),
       assignedToUserId: row.assigned_to_user_id,
+      assignedTo: mapAssignedUser(row),
     },
     listing: {
       id: row.listing_id,
@@ -1222,6 +1321,7 @@ function mapReportedListingRow(
       reasonCode: row.case_reason_code,
       openedAt: toIsoString(row.case_created_at),
       assignedToUserId: row.assigned_to_user_id,
+      assignedTo: mapAssignedUser(row),
     },
     listing: {
       id: row.listing_id,
@@ -1294,6 +1394,7 @@ function mapRecentActionRow(
       id: row.case_id,
       status: row.case_status,
       assignedToUserId: row.assigned_to_user_id,
+      assignedTo: mapAssignedUser(row),
     },
     listing: {
       id: row.listing_id,
@@ -1315,6 +1416,27 @@ function mapRecentActionRow(
             displayName: row.actor_display_name,
           }
         : null,
+  }
+}
+
+function mapAssignedUser(
+  row:
+    | PendingReviewQueueRow
+    | ReportedListingQueueRow
+    | RecentModerationActionRow
+) {
+  if (
+    !row.assigned_to_user_id ||
+    !row.assigned_to_user_email ||
+    !row.assigned_to_user_display_name
+  ) {
+    return null
+  }
+
+  return {
+    id: row.assigned_to_user_id,
+    email: row.assigned_to_user_email,
+    displayName: row.assigned_to_user_display_name,
   }
 }
 

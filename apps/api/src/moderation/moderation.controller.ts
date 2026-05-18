@@ -133,7 +133,10 @@ export class ModerationController {
         auth.user.id,
         caseId,
         "approve",
-        input
+        input,
+        {
+          canOverrideAssignment: canOverrideModerationAssignment(auth),
+        }
       )
     } catch (error) {
       throwValidationError(error, "Invalid moderation decision payload.")
@@ -208,7 +211,10 @@ export class ModerationController {
         auth.user.id,
         caseId,
         "reject",
-        input
+        input,
+        {
+          canOverrideAssignment: canOverrideModerationAssignment(auth),
+        }
       )
     } catch (error) {
       throwValidationError(error, "Invalid moderation decision payload.")
@@ -239,12 +245,19 @@ export class ModerationController {
         auth.user.id,
         caseId,
         "suspend",
-        input
+        input,
+        {
+          canOverrideAssignment: canOverrideModerationAssignment(auth),
+        }
       )
     } catch (error) {
       throwValidationError(error, "Invalid moderation decision payload.")
     }
   }
+}
+
+function canOverrideModerationAssignment(auth: CurrentAuthSessionResponse) {
+  return auth.user.roles?.includes("admin") ?? false
 }
 
 function throwValidationError(error: unknown, message: string): never {

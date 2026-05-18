@@ -63,6 +63,7 @@ export type ModerationQueueItem = {
     reasonCode: string | null
     openedAt: string
     assignedToUserId: string | null
+    assignedTo: ModerationAssignedUser | null
   }
   listing: {
     id: string
@@ -125,6 +126,7 @@ export type ReportedListingQueueItem = {
     reasonCode: string | null
     openedAt: string
     assignedToUserId: string | null
+    assignedTo: ModerationAssignedUser | null
   }
   listing: {
     id: string
@@ -186,6 +188,7 @@ export type ModerationRecentActionItem = {
     id: string
     status: ModerationCaseStatus
     assignedToUserId: string | null
+    assignedTo: ModerationAssignedUser | null
   }
   listing: {
     id: string
@@ -204,6 +207,12 @@ export type ModerationRecentActionItem = {
     email: string
     displayName: string
   } | null
+}
+
+export type ModerationAssignedUser = {
+  id: string
+  email: string
+  displayName: string
 }
 
 export type ModerationRecentActionsResponse = {

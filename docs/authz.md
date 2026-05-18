@@ -183,6 +183,8 @@ Policy iniziale per moderazione:
 
 - la pagina frontend `/moderation` vive nel route group admin, usa un layout
   interno separato dal sito pubblico e resta `noindex`;
+- `/moderation/activity` espone l'audit recente con paginazione e identificativi
+  tecnici di caso e annuncio;
 - per utenti autenticati senza ruolo interno, la UI mostra accesso non
   consentito ma non sostituisce il controllo API;
 - la coda moderazione richiede bearer token valido;
@@ -200,6 +202,9 @@ Policy iniziale per moderazione:
   segnalazione, ultima segnalazione e dati del reporter piu recente;
 - ogni decisione richiede una motivazione, chiude il caso, aggiorna lo stato
   dell'annuncio e crea audit log in `moderation_actions`.
+- i moderatori possono decidere solo casi liberi o assegnati a se stessi; gli
+  admin possono applicare override su casi assegnati ad altri, registrandolo nel
+  metadata dell'audit.
 - le code di moderazione espongono un audit recente del caso dalla tabella
   `moderation_actions`; l'audit completo non modificabile resta requisito di
   produzione.
@@ -222,6 +227,7 @@ Policy iniziale per segnalazioni:
   `moderation_status = approved`, `lifecycle_status = published`,
   `deleted_at is null` e non scaduti;
 - il proprietario non puo segnalare il proprio annuncio;
+- l'endpoint applica rate limit per IP, reporter e annuncio;
 - lo stesso utente non puo creare duplicati mentre esiste gia una
   segnalazione `linked` verso un caso `open` per lo stesso annuncio;
 - una nuova segnalazione riusa un caso `open` esistente per l'annuncio oppure

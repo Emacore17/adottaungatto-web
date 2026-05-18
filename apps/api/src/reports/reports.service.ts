@@ -206,7 +206,10 @@ export class ReportsService {
     }
 
     if (listing.owner_user_id === reporterUserId) {
-      throw new BadRequestException("Users cannot report their own listing.")
+      throw new BadRequestException({
+        message: "Users cannot report their own listing.",
+        reason: "listing_report_own_listing",
+      })
     }
 
     const [existingReport] =

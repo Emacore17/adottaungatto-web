@@ -47,6 +47,12 @@ type ModerationQueueMeta = {
   totalPages: number
 }
 
+type ModerationAssignedUser = {
+  id: string
+  email: string
+  displayName: string
+}
+
 type ModerationAudit = {
   actions: Array<{
     id: string
@@ -91,6 +97,7 @@ export type ModerationQueueItem = {
     reasonCode: string | null
     openedAt: string
     assignedToUserId: string | null
+    assignedTo: ModerationAssignedUser | null
   }
   listing: {
     id: string
@@ -195,6 +202,7 @@ export type ModerationRecentActionItem = {
     id: string
     status: "open" | "approved" | "rejected" | "suspended" | "closed"
     assignedToUserId: string | null
+    assignedTo: ModerationAssignedUser | null
   }
   listing: {
     id: string

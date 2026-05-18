@@ -62,12 +62,15 @@ Un annuncio e' pubblico solo se:
 - La pagina supporta il filtro query `queue=all|pending|reported`, usato solo
   per scegliere quali sezioni operative mostrare. Le API restano la fonte per
   autorizzazioni, paginazione e dati.
+- La pagina `/moderation/activity` espone una tabella paginata delle attivita
+  recenti con UUID annuncio, UUID caso, attore, proprietario e motivazione.
 - Ogni item di coda include dati operativi essenziali: annuncio, proprietario,
   luogo, immagini pronte, data apertura e conteggio segnalazioni dove presente.
   Le ultime azioni `moderation_actions` restano disponibili dalla risposta API.
 - I casi possono essere presi in carico tramite claim per ridurre doppie
   decisioni concorrenti. Una decisione su caso assegnato e' accettata solo dal
-  moderatore assegnato.
+  moderatore assegnato. Gli utenti `admin` possono applicare override su un
+  caso assegnato ad altri, registrando l'override nel metadata dell'audit.
 - La coda permette note interne per caso; ogni nota crea una azione
   `commented` in `moderation_actions` e resta visibile nella timeline del
   caso.
@@ -161,6 +164,9 @@ nuova segnalazione apre un caso `open` con `reason_code = user_report` oppure
 riusa un caso `open` gia presente per lo stesso annuncio. Il record `reports`
 viene salvato in stato `linked`, collegato al caso, e genera un'azione
 `reported` in `moderation_actions`.
+
+L'invio e' disponibile dal dettaglio annuncio e applica rate limit per IP,
+reporter e annuncio, oltre alla protezione anti-duplicato per utente.
 
 Per evitare duplicati rumorosi, se lo stesso utente ha gia una segnalazione
 `linked` verso un caso `open` per lo stesso annuncio, l'API restituisce la
