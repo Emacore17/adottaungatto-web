@@ -1,3 +1,4 @@
+import { applyCloudflareAccessHeaders } from "@/lib/api/cloudflare-access"
 import { webEnv } from "@/lib/config/env"
 
 type NextFetchInit = RequestInit & {
@@ -112,6 +113,8 @@ function createHeaders(options: ApiFetchOptions) {
   if (options.bearerToken) {
     headers.set("Authorization", `Bearer ${options.bearerToken}`)
   }
+
+  applyCloudflareAccessHeaders(headers)
 
   return headers
 }

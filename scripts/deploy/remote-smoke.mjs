@@ -1,5 +1,6 @@
 const apiBaseUrl = readRequiredUrl("API_URL")
 const webBaseUrl = readRequiredUrl("WEB_URL")
+const cloudflareAccessHeaders = createCloudflareAccessHeaders()
 
 await expectJson("api health", `${apiBaseUrl}/health`, (data) => {
   return data?.service === "api" && data?.status === "ok"
@@ -22,7 +23,11 @@ await expectText("web home", `${webBaseUrl}/`, (text) => {
 })
 
 await expectText("web listings", `${webBaseUrl}/listings`, (text) => {
-  return text.includes("data-listing") || text.includes("Nessun annuncio")
+  return (
+    text.includes("data-listing") ||
+    text.includes("Nessun annuncio") ||
+    text.includes("Nessun risultato")
+  )
 })
 
 console.log(`REMOTE_SMOKE_OK api=${apiBaseUrl} web=${webBaseUrl}`)
@@ -31,6 +36,7 @@ async function expectJson(label, url, predicate) {
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
+      ...cloudflareAccessHeaders,
     },
   })
   const text = await response.text()
@@ -40,7 +46,9 @@ async function expectJson(label, url, predicate) {
 }
 
 async function expectText(label, url, predicate) {
-  const response = await fetch(url)
+  const response = await fetch(url, {
+    headers: cloudflareAccessHeaders,
+  })
   const text = await response.text()
 
   check(label, response.ok && predicate(text), `status=${response.status}`)
@@ -62,4 +70,30 @@ function readRequiredUrl(name) {
   }
 
   return value.replace(/\/+$/, "")
+}
+
+function createCloudflareAccessHeaders() {
+  const clientId = readOptionalEnv("CLOUDFLARE_ACCESS_CLIENT_ID")
+  const clientSecret = readOptionalEnv("CLOUDFLARE_ACCESS_CLIENT_SECRET")
+
+  if (!clientId && !clientSecret) {
+    return {}
+  }
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "Configure both CLOUDFLARE_ACCESS_CLIENT_ID and CLOUDFLARE_ACCESS_CLIENT_SECRET."
+    )
+  }
+
+  return {
+    "CF-Access-Client-Id": clientId,
+    "CF-Access-Client-Secret": clientSecret,
+  }
+}
+
+function readOptionalEnv(name) {
+  const value = process.env[name]?.trim()
+
+  return value ? value : null
 }

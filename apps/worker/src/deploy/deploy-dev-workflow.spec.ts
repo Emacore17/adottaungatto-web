@@ -17,25 +17,37 @@ describe("deploy-dev workflow", () => {
     expect(workflow).toContain("geo:promote:apply")
     expect(workflow).toContain("geo:boundaries:apply")
   })
+
+  it("keeps dev online private while allowing secure smoke tests", () => {
+    const workflow = readDeployDevWorkflow()
+    const remoteSmoke = readRepoFile("scripts", "deploy", "remote-smoke.mjs")
+
+    expect(workflow).toContain("SEARCH_INDEXING_ENABLED=false")
+    expect(workflow).toContain("TRUSTED_ACTION_ORIGINS")
+    expect(workflow).toContain("CLOUDFLARE_ACCESS_CLIENT_ID")
+    expect(workflow).toContain("CLOUDFLARE_ACCESS_CLIENT_SECRET")
+    expect(workflow).toContain("name: Restrict API ingress to Cloudflare")
+    expect(workflow).toContain("https://www.cloudflare.com/ips-v4")
+    expect(remoteSmoke).toContain("CF-Access-Client-Id")
+  })
 })
 
 function readDeployDevWorkflow() {
+  return readRepoFile(".github", "workflows", "deploy-dev.yml")
+}
+
+function readRepoFile(...segments: string[]) {
   let currentDirectory = process.cwd()
 
   while (currentDirectory !== dirname(currentDirectory)) {
-    const workflowPath = join(
-      currentDirectory,
-      ".github",
-      "workflows",
-      "deploy-dev.yml"
-    )
+    const filePath = join(currentDirectory, ...segments)
 
-    if (existsSync(workflowPath)) {
-      return readFileSync(workflowPath, "utf8")
+    if (existsSync(filePath)) {
+      return readFileSync(filePath, "utf8")
     }
 
     currentDirectory = dirname(currentDirectory)
   }
 
-  throw new Error("Unable to locate .github/workflows/deploy-dev.yml")
+  throw new Error(`Unable to locate ${segments.join("/")}`)
 }

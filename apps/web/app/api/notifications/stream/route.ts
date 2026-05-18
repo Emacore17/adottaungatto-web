@@ -1,4 +1,5 @@
 import { getSessionToken } from "@/lib/auth/session"
+import { applyCloudflareAccessHeaders } from "@/lib/api/cloudflare-access"
 import { webEnv } from "@/lib/config/env"
 
 export const dynamic = "force-dynamic"
@@ -33,12 +34,16 @@ export async function GET(request: Request) {
 
 async function fetchStream(request: Request, token: string) {
   try {
-    return await fetch(`${webEnv.apiBaseUrl}/notifications/stream`, {
-      cache: "no-store",
-      headers: {
+    const headers = applyCloudflareAccessHeaders(
+      new Headers({
         Accept: "text/event-stream",
         Authorization: `Bearer ${token}`,
-      },
+      })
+    )
+
+    return await fetch(`${webEnv.apiBaseUrl}/notifications/stream`, {
+      cache: "no-store",
+      headers,
       signal: request.signal,
     })
   } catch {

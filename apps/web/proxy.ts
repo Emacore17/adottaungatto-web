@@ -5,6 +5,10 @@ import { sessionCookieName } from "@/lib/auth/constants"
 
 const protectedPrefixes = ["/account", "/moderation"]
 const isProduction = process.env.APP_ENV === "production"
+const searchIndexingEnabled = readBoolean(
+  process.env.SEARCH_INDEXING_ENABLED,
+  isProduction
+)
 const minimalContentSecurityPolicy = [
   "base-uri 'self'",
   "object-src 'none'",
@@ -92,6 +96,10 @@ function applySecurityHeaders(request: NextRequest, response: NextResponse) {
   response.headers.set("x-content-type-options", "nosniff")
   response.headers.set("x-frame-options", "DENY")
 
+  if (!searchIndexingEnabled) {
+    response.headers.set("x-robots-tag", "noindex, nofollow, noarchive")
+  }
+
   if (isProduction && isHttpsRequest(request)) {
     response.headers.set(
       "strict-transport-security",
@@ -105,4 +113,12 @@ function isHttpsRequest(request: NextRequest) {
     request.nextUrl.protocol === "https:" ||
     request.headers.get("x-forwarded-proto") === "https"
   )
+}
+
+function readBoolean(value: string | undefined, fallback: boolean) {
+  if (value === undefined || value === "") {
+    return fallback
+  }
+
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase())
 }

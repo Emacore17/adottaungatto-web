@@ -8,6 +8,7 @@ const trustedActionOrigins = [
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean),
+  ...readAdminHostOrigins(),
 ]
   .map(normalizeOrigin)
   .filter((origin): origin is string => origin !== null)
@@ -81,6 +82,21 @@ function normalizeOrigin(value: string | null | undefined) {
   } catch {
     return null
   }
+}
+
+function readAdminHostOrigins() {
+  return (
+    process.env.ADMIN_ALLOWED_HOSTS ??
+    "admin.adottaungatto.it,admin-dev.adottaungatto.it"
+  )
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean)
+    .map((hostOrOrigin) =>
+      /^https?:\/\//.test(hostOrOrigin)
+        ? hostOrOrigin
+        : `https://${hostOrOrigin}`
+    )
 }
 
 function isLocalDevelopmentOrigin(origin: string) {

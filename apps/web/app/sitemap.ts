@@ -1,12 +1,17 @@
 import type { MetadataRoute } from "next"
 
 import { listPublicListings } from "@/lib/api/listings"
+import { webEnv } from "@/lib/config/env"
 import { routes } from "@/lib/routes"
 import { absoluteUrl } from "@/lib/seo/metadata"
 
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (!webEnv.searchIndexingEnabled) {
+    return []
+  }
+
   const now = new Date()
   const listings = await listPublicListings({
     page: 1,

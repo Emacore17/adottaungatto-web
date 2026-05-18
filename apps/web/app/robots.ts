@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next"
 
-import { isProduction } from "@/lib/config/env"
+import { webEnv } from "@/lib/config/env"
 import { routes } from "@/lib/routes"
 import { absoluteUrl } from "@/lib/seo/metadata"
 
 export default function robots(): MetadataRoute.Robots {
-  if (!isProduction) {
+  if (!webEnv.searchIndexingEnabled) {
     return {
       rules: {
         userAgent: "*",

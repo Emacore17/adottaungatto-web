@@ -30,6 +30,9 @@ jobs:
       USE_CUSTOM_DOMAINS: ${{ vars.USE_CUSTOM_DOMAINS }}
       CONFIGURED_API_URL: ${{ vars.API_URL }}
       CONFIGURED_WEB_URL: ${{ vars.WEB_URL }}
+      TRUSTED_ACTION_ORIGINS: "https://dev.adottaungatto.it,https://admin-dev.adottaungatto.it"
+      CLOUDFLARE_ACCESS_CLIENT_ID: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_ID }}
+      CLOUDFLARE_ACCESS_CLIENT_SECRET: ${{ secrets.CLOUDFLARE_ACCESS_CLIENT_SECRET }}
 
     steps:
       - name: Checkout
@@ -119,6 +122,20 @@ jobs:
             echo "S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID"
             echo "S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY"
           } >> "$GITHUB_ENV"
+
+      - name: Resolve Cloudflare Access service token
+        shell: bash
+        run: |
+          if [ -n "$CLOUDFLARE_ACCESS_CLIENT_ID" ] && [ -n "$CLOUDFLARE_ACCESS_CLIENT_SECRET" ]; then
+            echo "::add-mask::$CLOUDFLARE_ACCESS_CLIENT_ID"
+            echo "::add-mask::$CLOUDFLARE_ACCESS_CLIENT_SECRET"
+            echo "HAS_CLOUDFLARE_ACCESS_SERVICE_TOKEN=true" >> "$GITHUB_ENV"
+          elif [ -n "$CLOUDFLARE_ACCESS_CLIENT_ID" ] || [ -n "$CLOUDFLARE_ACCESS_CLIENT_SECRET" ]; then
+            echo "::error::Configure both CLOUDFLARE_ACCESS_CLIENT_ID and CLOUDFLARE_ACCESS_CLIENT_SECRET."
+            exit 1
+          else
+            echo "HAS_CLOUDFLARE_ACCESS_SERVICE_TOKEN=false" >> "$GITHUB_ENV"
+          fi
 
       - name: Run migrations
         shell: bash
@@ -275,6 +292,35 @@ jobs:
           fi
           echo "API_RUNTIME_URL=${API_RUNTIME_URL}" >> "$GITHUB_ENV"
 
+      - name: Restrict API ingress to Cloudflare
+        if: env.USE_CUSTOM_DOMAINS == 'true'
+        shell: bash
+        run: |
+          EXISTING_RANGES="$(az containerapp ingress access-restriction list \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query "[].ipAddressRange" \
+            -o tsv)"
+          index=1
+          while IFS= read -r range; do
+            if [ -z "$range" ]; then
+              continue
+            fi
+            if grep -Fxq "$range" <<< "$EXISTING_RANGES"; then
+              index=$((index + 1))
+              continue
+            fi
+            az containerapp ingress access-restriction set \
+              --name "$API_APP_NAME" \
+              --resource-group "$AZURE_RESOURCE_GROUP" \
+              --rule-name "cloudflare-ipv4-${index}" \
+              --ip-address "$range" \
+              --action Allow \
+              --description "Cloudflare IPv4 ${range}" \
+              -o none
+            index=$((index + 1))
+          done < <(curl -fsSL https://www.cloudflare.com/ips-v4)
+
       - name: Deploy worker
         shell: bash
         run: |
@@ -342,6 +388,31 @@ jobs:
         shell: bash
         run: |
           WEB_BOOTSTRAP_URL="${CONFIGURED_WEB_URL:-https://dev.adottaungatto.it}"
+          WEB_ENV_VARS=(
+            APP_ENV=production
+            APP_URL="$WEB_BOOTSTRAP_URL"
+            API_URL="$API_RUNTIME_URL"
+            NEXT_PUBLIC_SITE_URL="$WEB_BOOTSTRAP_URL"
+            NEXT_PUBLIC_API_URL="$API_RUNTIME_URL"
+            NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}"
+            NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}"
+            NEXT_PUBLIC_S3_PUBLIC_PATH_STYLE="${{ vars.S3_PUBLIC_PATH_STYLE }}"
+            ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+            TRUSTED_ACTION_ORIGINS="$TRUSTED_ACTION_ORIGINS"
+            SEARCH_INDEXING_ENABLED=false
+          )
+          WEB_CREATE_SECRETS=()
+          if [ "$HAS_CLOUDFLARE_ACCESS_SERVICE_TOKEN" = "true" ]; then
+            WEB_ENV_VARS+=(
+              CLOUDFLARE_ACCESS_CLIENT_ID=secretref:cloudflare-access-client-id
+              CLOUDFLARE_ACCESS_CLIENT_SECRET=secretref:cloudflare-access-client-secret
+            )
+            WEB_CREATE_SECRETS=(
+              --secrets
+              cloudflare-access-client-id="$CLOUDFLARE_ACCESS_CLIENT_ID"
+              cloudflare-access-client-secret="$CLOUDFLARE_ACCESS_CLIENT_SECRET"
+            )
+          fi
           if az containerapp show --name "$WEB_APP_NAME" --resource-group "$AZURE_RESOURCE_GROUP" >/dev/null 2>&1; then
             az containerapp identity assign \
               --name "$WEB_APP_NAME" \
@@ -352,6 +423,14 @@ jobs:
               --resource-group "$AZURE_RESOURCE_GROUP" \
               --server "$ACR_LOGIN_SERVER" \
               --identity "$PULL_IDENTITY_ID"
+            if [ "$HAS_CLOUDFLARE_ACCESS_SERVICE_TOKEN" = "true" ]; then
+              az containerapp secret set \
+                --name "$WEB_APP_NAME" \
+                --resource-group "$AZURE_RESOURCE_GROUP" \
+                --secrets \
+                  cloudflare-access-client-id="$CLOUDFLARE_ACCESS_CLIENT_ID" \
+                  cloudflare-access-client-secret="$CLOUDFLARE_ACCESS_CLIENT_SECRET"
+            fi
             az containerapp update \
               --name "$WEB_APP_NAME" \
               --resource-group "$AZURE_RESOURCE_GROUP" \
@@ -359,15 +438,7 @@ jobs:
               --min-replicas 0 \
               --max-replicas 2 \
               --set-env-vars \
-                APP_ENV=production \
-                APP_URL="$WEB_BOOTSTRAP_URL" \
-                API_URL="$API_RUNTIME_URL" \
-                NEXT_PUBLIC_SITE_URL="$WEB_BOOTSTRAP_URL" \
-                NEXT_PUBLIC_API_URL="$API_RUNTIME_URL" \
-                NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
-                NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
-                NEXT_PUBLIC_S3_PUBLIC_PATH_STYLE="${{ vars.S3_PUBLIC_PATH_STYLE }}" \
-                ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+                "${WEB_ENV_VARS[@]}"
           else
             az containerapp create \
               --name "$WEB_APP_NAME" \
@@ -381,16 +452,9 @@ jobs:
               --ingress external \
               --min-replicas 0 \
               --max-replicas 2 \
+              "${WEB_CREATE_SECRETS[@]}" \
               --env-vars \
-                APP_ENV=production \
-                APP_URL="$WEB_BOOTSTRAP_URL" \
-                API_URL="$API_RUNTIME_URL" \
-                NEXT_PUBLIC_SITE_URL="$WEB_BOOTSTRAP_URL" \
-                NEXT_PUBLIC_API_URL="$API_RUNTIME_URL" \
-                NEXT_PUBLIC_S3_PUBLIC_ENDPOINT="${{ vars.S3_PUBLIC_ENDPOINT }}" \
-                NEXT_PUBLIC_S3_BUCKET="${{ vars.S3_BUCKET }}" \
-                NEXT_PUBLIC_S3_PUBLIC_PATH_STYLE="${{ vars.S3_PUBLIC_PATH_STYLE }}" \
-                ADMIN_ALLOWED_HOSTS="admin-dev.adottaungatto.it"
+                "${WEB_ENV_VARS[@]}"
           fi
           WEB_DEFAULT_URL="https://$(az containerapp show \
             --name "$WEB_APP_NAME" \
@@ -426,4 +490,9 @@ jobs:
 
       - name: Remote smoke
         shell: bash
-        run: API_URL="$API_RUNTIME_URL" WEB_URL="$WEB_RUNTIME_URL" pnpm smoke:remote
+        run: |
+          API_URL="$API_RUNTIME_URL" \
+            WEB_URL="$WEB_RUNTIME_URL" \
+            CLOUDFLARE_ACCESS_CLIENT_ID="$CLOUDFLARE_ACCESS_CLIENT_ID" \
+            CLOUDFLARE_ACCESS_CLIENT_SECRET="$CLOUDFLARE_ACCESS_CLIENT_SECRET" \
+            pnpm smoke:remote

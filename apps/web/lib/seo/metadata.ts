@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { siteConfig } from "@/lib/config/site"
+import { webEnv } from "@/lib/config/env"
 
 type PageMetadataInput = {
   title?: string
@@ -53,12 +54,13 @@ export function createPageMetadata({
         },
       ],
     },
-    robots: noIndex
-      ? {
-          index: false,
-          follow: false,
-        }
-      : undefined,
+    robots:
+      noIndex || !webEnv.searchIndexingEnabled
+        ? {
+            index: false,
+            follow: false,
+          }
+        : undefined,
     twitter: {
       card: "summary_large_image",
       title: pageTitle,
