@@ -1,9 +1,16 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { KeyRoundIcon, LogInIcon } from "lucide-react"
 
 import { AuthShell } from "@/app/(auth)/_components/auth-shell"
 import { resetPasswordAction } from "@/app/(auth)/reset-password/actions"
 import { routes } from "@/lib/routes"
+import { createPageMetadata } from "@/lib/seo/metadata"
+
+export const metadata: Metadata = createPageMetadata({
+  title: "Reimposta password",
+  path: routes.resetPassword(),
+})
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,

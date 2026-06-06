@@ -77,11 +77,7 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
         <CardDescription>Resta privato fino alla revisione.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form
-          action={action}
-          className="grid gap-8"
-          encType="multipart/form-data"
-        >
+        <form action={action} className="grid gap-8">
           <input name="nextPath" type="hidden" value={currentPath} />
           {draft ? (
             <input name="draftId" type="hidden" value={draft.id} />

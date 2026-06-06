@@ -28,6 +28,7 @@ type ListingCardProps = {
   isFavorite: boolean
   listing: PublicListingSummary
   nextPath: string
+  priority?: boolean
 }
 
 function ListingCard({
@@ -35,6 +36,7 @@ function ListingCard({
   isFavorite,
   listing,
   nextPath,
+  priority,
 }: ListingCardProps) {
   const previewImages = createPreviewImages(listing)
   const locationLabel = listing.location
@@ -69,6 +71,7 @@ function ListingCard({
             href={routes.listing(listing.id)}
             images={previewImages}
             title={listing.title}
+            priority={priority}
           />
           <ListingFavoriteToggle
             className="absolute top-3 right-3 z-10"

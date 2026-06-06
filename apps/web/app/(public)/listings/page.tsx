@@ -129,13 +129,14 @@ export default async function ListingsPage({
 
       {items.length > 0 ? (
         <section className="flex flex-col gap-4">
-          {items.map((listing) => (
+          {items.map((listing, index) => (
             <ListingCard
               key={listing.id}
               isAuthenticated={Boolean(sessionToken)}
               isFavorite={favoriteListingIds.has(listing.id)}
               listing={listing}
               nextPath={nextPath}
+              priority={index === 0}
             />
           ))}
         </section>

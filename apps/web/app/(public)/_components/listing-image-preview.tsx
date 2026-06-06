@@ -18,6 +18,7 @@ type ListingImagePreviewProps = {
   href: string
   images: ListingPreviewImage[]
   title: string
+  priority?: boolean
 }
 
 function ListingImagePreview({
@@ -25,6 +26,7 @@ function ListingImagePreview({
   href,
   images,
   title,
+  priority,
 }: ListingImagePreviewProps) {
   const [isHovering, setIsHovering] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -73,6 +75,7 @@ function ListingImagePreview({
               index === currentIndex ? "opacity-100" : "opacity-0"
             )}
             sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
+            priority={priority && index === 0}
           />
         ))
       ) : (

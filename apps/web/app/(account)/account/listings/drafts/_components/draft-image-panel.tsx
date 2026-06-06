@@ -83,7 +83,6 @@ function DraftImagePanel({ draftId, images, nextPath }: DraftImagePanelProps) {
         <form
           action={uploadDraftImageAction}
           className="flex flex-col gap-5"
-          encType="multipart/form-data"
         >
           <input name="draftId" type="hidden" value={draftId} />
           <input name="nextPath" type="hidden" value={nextPath} />

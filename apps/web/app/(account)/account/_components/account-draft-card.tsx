@@ -32,7 +32,7 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
             <Badge className="bg-brand-amber-soft text-brand-teal-ink">
               {isPendingReview ? "In revisione" : "In lavorazione"}
             </Badge>
-            <Badge variant="outline">{draft.sex}</Badge>
+            <Badge variant="outline">{formatSex(draft.sex)}</Badge>
             {draft.breed ? (
               <Badge variant="outline">{draft.breed.name}</Badge>
             ) : null}
@@ -82,6 +82,17 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat("it-IT", {
     dateStyle: "medium",
   }).format(new Date(value))
+}
+
+function formatSex(sex: ListingDraft["sex"]) {
+  switch (sex) {
+    case "female":
+      return "Femmina"
+    case "male":
+      return "Maschio"
+    default:
+      return "Non indicato"
+  }
 }
 
 export { AccountDraftCard }

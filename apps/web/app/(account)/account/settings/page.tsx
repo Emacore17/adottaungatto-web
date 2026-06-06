@@ -388,7 +388,7 @@ function ProfileSummary({ profile }: { profile: CurrentUserProfile }) {
         <InfoRow
           icon={UserIcon}
           label="Tipo profilo"
-          value={profile.profileType}
+          value={formatProfileType(profile.profileType)}
         />
         <InfoRow icon={MailIcon} label="Email" value={profile.email} />
         <InfoRow
@@ -396,7 +396,7 @@ function ProfileSummary({ profile }: { profile: CurrentUserProfile }) {
           label="Telefono"
           value={profile.phoneE164 ?? "Non impostato"}
         />
-        <InfoRow label="Stato" value={profile.status} />
+        <InfoRow label="Stato" value={formatProfileStatus(profile.status)} />
       </CardContent>
     </Card>
   )
@@ -522,6 +522,36 @@ function SettingsFeedback({
       </CardHeader>
     </Card>
   )
+}
+
+function formatProfileType(value: string) {
+  switch (value) {
+    case "private":
+      return "Privato"
+    case "shelter":
+      return "Gattile"
+    case "association":
+      return "Associazione"
+    case "breeder":
+      return "Allevatore"
+    default:
+      return value
+  }
+}
+
+function formatProfileStatus(value: string) {
+  switch (value) {
+    case "active":
+      return "Attivo"
+    case "pending":
+      return "In attesa"
+    case "suspended":
+      return "Sospeso"
+    case "banned":
+      return "Bannato"
+    default:
+      return value
+  }
 }
 
 function readSettingsStatus(value: string | string[] | undefined) {
