@@ -1,4 +1,4 @@
-import { Geist_Mono, Inter } from "next/font/google"
+import { Fraunces, Geist_Mono, Inter } from "next/font/google"
 import type { Viewport } from "next"
 
 import "@workspace/ui/globals.css"
@@ -11,6 +11,13 @@ import { Toaster } from "@workspace/ui/components/sonner"
 import { cn } from "@workspace/ui/lib/utils"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+
+const fontHeading = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-brand-heading",
+  axes: ["opsz", "SOFT"],
+  display: "swap",
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -50,7 +57,8 @@ export default async function RootLayout({
         "antialiased",
         fontMono.variable,
         "font-sans",
-        inter.variable
+        inter.variable,
+        fontHeading.variable
       )}
     >
       <body className="min-h-svh">

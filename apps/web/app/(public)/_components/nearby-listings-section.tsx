@@ -17,7 +17,6 @@ import type {
   PublicListingSummary,
 } from "@/lib/api/types"
 import { routes } from "@/lib/routes"
-import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
 
 type NearbyStatus =
@@ -63,26 +62,32 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
   return (
     <Link
       href={routes.listing(listing.id)}
-      className="group overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md"
+      className="group relative flex flex-col overflow-hidden rounded-2xl bg-card text-card-foreground shadow-[0_18px_40px_-32px_rgba(60,30,10,0.5)] ring-1 ring-brand-border/70 transition-[transform,box-shadow,ring-color] hover:-translate-y-1 hover:shadow-[0_28px_56px_-30px_rgba(60,30,10,0.45)] hover:ring-brand-coral/40"
     >
-      <div className="relative aspect-[4/3] bg-muted">
+      <div className="relative aspect-[5/4] overflow-hidden bg-muted">
         {coverUrl ? (
           <StorageImage
             src={coverUrl}
             alt={listing.title}
             fill
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            sizes="(min-width: 1024px) 20rem, (min-width: 640px) 50vw, 100vw"
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+            sizes="(min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <ImageIcon aria-hidden="true" className="size-6" />
           </div>
         )}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+        />
       </div>
-      <div className="grid gap-2 p-3.5">
-        <h3 className="line-clamp-1 text-sm font-semibold">{listing.title}</h3>
-        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+      <div className="grid gap-2 px-4 py-4">
+        <h3 className="font-heading line-clamp-2 text-lg leading-tight font-medium tracking-[-0.01em] text-brand-teal-ink transition-colors group-hover:text-brand-coral-strong">
+          {listing.title}
+        </h3>
+        <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
           <MapPinIcon
             aria-hidden="true"
             className="size-3.5 shrink-0 text-brand-coral-strong"
@@ -342,18 +347,19 @@ function NearbyListingsSection() {
       id="annunci-vicino-a-te"
       className="border-t border-brand-teal/10 bg-[linear-gradient(180deg,var(--color-brand-cream)_0%,color-mix(in_oklab,var(--color-brand-teal-soft)_64%,var(--color-brand-cream))_100%)]"
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div className="flex flex-col gap-2">
-            <Badge
-              variant="secondary"
-              className="w-fit border border-brand-olive/25 bg-brand-olive-soft text-brand-teal-ink"
-            >
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-16 sm:gap-10 sm:px-6 sm:py-20 lg:px-8">
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-3">
+            <span className="text-[11px] font-semibold tracking-[0.28em] text-brand-coral-strong uppercase">
               Esplora
-            </Badge>
-            <h2 className="font-heading text-2xl font-semibold tracking-normal">
-              Annunci vicino a te
+            </span>
+            <h2 className="font-heading text-3xl leading-[1.05] font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl lg:text-5xl">
+              Annunci <em className="italic text-brand-coral-strong">vicino a te</em>
             </h2>
+            <p className="max-w-md text-sm text-muted-foreground sm:text-base">
+              Le schede piu fresche, ordinate per distanza. Attiva la posizione
+              per restringere il raggio.
+            </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button

@@ -77,25 +77,22 @@ export default async function ListingsPage({
     : null
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:px-8">
-      <section className="flex flex-col gap-4">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 pt-28 pb-12 sm:gap-10 sm:px-6 sm:pt-32 lg:px-8">
+      <section className="flex flex-col gap-6">
         <div className="flex flex-col gap-3">
-          <Badge
-            variant="outline"
-            className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
-          >
+          <span className="text-[11px] font-semibold tracking-[0.28em] text-brand-coral-strong uppercase">
             Annunci
-          </Badge>
+          </span>
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-            <div>
-              <h1 className="text-3xl font-medium text-balance">
-                Gatti disponibili
+            <div className="flex flex-col gap-2">
+              <h1 className="font-heading text-4xl leading-[1.05] font-normal tracking-[-0.02em] text-brand-teal-ink text-balance sm:text-5xl lg:text-6xl">
+                Gatti <em className="italic text-brand-coral-strong">disponibili</em>
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground sm:text-base">
                 {meta
                   ? meta.expansion
-                    ? `${meta.total} suggerimenti`
-                    : `${meta.total} risultati`
+                    ? `${meta.total} suggerimenti curati per la tua ricerca`
+                    : `${meta.total} schede pronte da esplorare`
                   : "Risultati non disponibili"}
               </p>
             </div>
