@@ -66,7 +66,7 @@ export default async function AccountPage() {
               Area personale
             </Badge>
             <div className="grid gap-2">
-              <h1 className="text-3xl font-semibold tracking-normal">
+              <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
                 Dashboard account
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -486,7 +486,7 @@ function SectionHeader({
   return (
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
       <div className="grid gap-1">
-        <h2 className="text-2xl font-semibold tracking-normal">{title}</h2>
+        <h2 className="font-heading text-2xl font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-[1.75rem]">{title}</h2>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Button

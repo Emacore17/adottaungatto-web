@@ -74,7 +74,7 @@ export default async function AccountSettingsPage({
             Impostazioni
           </Badge>
           <div className="grid gap-2">
-            <h1 className="text-3xl font-semibold tracking-normal">
+            <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
               Profilo e preferenze
             </h1>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">

@@ -105,62 +105,66 @@ export default async function ListingDetailPage({
   return (
     <>
       <JsonLd data={createListingJsonLd(listing.data)} />
-      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-6 px-4 pt-28 pb-8 sm:px-6 sm:pt-32 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8">
-        <article className="flex min-w-0 flex-col gap-7">
+      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-10 px-4 pt-28 pb-12 sm:px-6 sm:pt-32 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12 lg:px-8">
+        <article className="flex min-w-0 flex-col gap-10">
           <ListingImageCarousel
             images={carouselImages}
             title={listing.data.title}
           />
 
-          <section className="flex flex-col gap-5">
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  listing.data.isFree
-                    ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
-                    : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
-                )}
-              >
-                {formatListingPrice(listing.data)}
-              </Badge>
-              {listing.data.breed ? (
-                <Badge
-                  variant="outline"
-                  className="border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
-                >
-                  {listing.data.breed.name}
-                </Badge>
+          <section className="flex flex-col gap-6">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-semibold tracking-[0.28em] text-brand-coral-strong uppercase">
+                {locationLabel}
+              </span>
+              {listing.data.publishedAt ? (
+                <>
+                  <span aria-hidden="true" className="text-brand-border">·</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                    <CalendarIcon aria-hidden="true" className="size-3" />
+                    {new Intl.DateTimeFormat("it-IT", {
+                      dateStyle: "medium",
+                    }).format(new Date(listing.data.publishedAt))}
+                  </span>
+                </>
               ) : null}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
-              <div className="flex min-w-0 flex-col gap-3">
-                <h1 className="text-3xl font-medium text-balance sm:text-4xl">
+            <div className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+              <div className="flex min-w-0 flex-col gap-4">
+                <h1 className="font-heading text-4xl leading-[1.04] font-normal tracking-[-0.02em] text-balance text-brand-teal-ink sm:text-5xl lg:text-[3.5rem]">
                   {listing.data.title}
                 </h1>
-                <div className="flex flex-wrap items-center gap-2 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
                   <Badge
                     variant="outline"
-                    className="h-auto border-brand-teal/20 bg-brand-teal-soft px-3 py-1 text-brand-teal-ink"
+                    className={cn(
+                      "rounded-full px-3 py-1 text-[11px] font-medium",
+                      listing.data.isFree
+                        ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                        : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                    )}
                   >
-                    <MapPinIcon data-icon="inline-start" aria-hidden="true" />
-                    {locationLabel}
+                    {formatListingPrice(listing.data)}
                   </Badge>
-                  {listing.data.publishedAt ? (
+                  {listing.data.breed ? (
                     <Badge
                       variant="outline"
-                      className="h-auto border-brand-amber/25 bg-brand-amber-soft px-3 py-1 text-brand-teal-ink"
+                      className="rounded-full border-brand-teal/25 bg-brand-teal-soft px-3 py-1 text-[11px] font-medium text-brand-teal-ink"
                     >
-                      <CalendarIcon
-                        data-icon="inline-start"
-                        aria-hidden="true"
-                      />
-                      {new Intl.DateTimeFormat("it-IT", {
-                        dateStyle: "medium",
-                      }).format(new Date(listing.data.publishedAt))}
+                      {listing.data.breed.name}
                     </Badge>
                   ) : null}
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-brand-amber/25 bg-brand-amber-soft px-3 py-1 text-[11px] font-medium text-brand-teal-ink"
+                  >
+                    <MapPinIcon
+                      data-icon="inline-start"
+                      aria-hidden="true"
+                    />
+                    {locationLabel}
+                  </Badge>
                 </div>
               </div>
               <ListingFavoriteToggle
@@ -178,20 +182,24 @@ export default async function ListingDetailPage({
             <ListingOwnerSummary owner={listing.data.owner} />
           </section>
 
-          <Separator />
+          <Separator className="bg-brand-border/60" />
 
-          <section className="flex flex-col gap-3">
-            <h2 className="text-lg font-medium">Descrizione</h2>
-            <div className="max-w-none text-base leading-8 text-foreground">
+          <section className="flex flex-col gap-4">
+            <h2 className="font-heading text-2xl leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-3xl">
+              Descrizione
+            </h2>
+            <div className="max-w-prose text-base leading-8 text-foreground/85 sm:text-[17px] sm:leading-[1.85]">
               <p>{listing.data.description}</p>
             </div>
           </section>
 
-          <Separator />
+          <Separator className="bg-brand-border/60" />
 
-          <section className="grid gap-6 md:grid-cols-2">
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-medium">Informazioni</h2>
+          <section className="grid gap-8 md:grid-cols-2">
+            <div className="flex flex-col gap-4">
+              <h2 className="font-heading text-2xl leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-3xl">
+                Informazioni
+              </h2>
               <dl className="grid gap-3 sm:grid-cols-3 md:grid-cols-1 xl:grid-cols-3">
                 <ListingFact
                   label="Eta"
@@ -211,8 +219,10 @@ export default async function ListingDetailPage({
               </dl>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-medium">Salute e cura</h2>
+            <div className="flex flex-col gap-4">
+              <h2 className="font-heading text-2xl leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-3xl">
+                Salute e cura
+              </h2>
               <div className="flex flex-wrap gap-2">
                 <HealthBadge
                   label="Vaccinato"
@@ -239,7 +249,7 @@ export default async function ListingDetailPage({
           </section>
         </article>
 
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-28 lg:self-start">
+        <aside className="flex flex-col gap-4 lg:sticky lg:top-32 lg:self-start">
           <ListingContactCard
             contactStatus={readContactStatus(query.contact)}
             hasShareablePhone={hasShareablePhone}
@@ -268,13 +278,17 @@ function ListingFact({
   return (
     <div
       className={cn(
-        "flex min-h-24 flex-col justify-between gap-3 rounded-lg border p-3",
+        "flex min-h-28 flex-col justify-between gap-3 rounded-2xl border p-4",
         getToneSurfaceClassName(tone),
         className
       )}
     >
-      <dt className="text-xs font-medium opacity-75">{label}</dt>
-      <dd className="text-sm font-medium">{value}</dd>
+      <dt className="text-[10px] font-semibold tracking-[0.22em] uppercase opacity-70">
+        {label}
+      </dt>
+      <dd className="font-heading text-xl leading-tight font-normal tracking-[-0.01em]">
+        {value}
+      </dd>
     </div>
   )
 }
@@ -292,7 +306,7 @@ function HealthBadge({
     <Badge
       variant="outline"
       className={cn(
-        "h-auto px-3 py-1.5",
+        "h-auto rounded-full px-3.5 py-1.5 text-[11px] font-medium",
         value === true && getToneSurfaceClassName(tone),
         value === false &&
           "border-brand-coral/20 bg-brand-coral-soft text-brand-coral-strong",
@@ -311,22 +325,22 @@ function ListingOwnerSummary({
   owner: PublicListingDetail["owner"]
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 rounded-lg border border-brand-teal/15 bg-card p-3 shadow-xs">
+    <div className="flex min-w-0 items-center gap-4 rounded-2xl border border-brand-teal/15 bg-card px-4 py-3 shadow-[0_12px_30px_-22px_rgba(60,30,10,0.45)]">
       <Avatar size="lg" className="bg-brand-teal-soft">
         <AvatarFallback className="bg-brand-teal-soft text-brand-teal-ink">
           {getOwnerInitials(owner.displayName)}
         </AvatarFallback>
       </Avatar>
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="truncate text-sm font-medium text-foreground">
+        <p className="text-[10px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+          Pubblicato da
+        </p>
+        <p className="font-heading truncate text-lg leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink">
           {owner.displayName}
         </p>
-        <Badge
-          variant="outline"
-          className="h-auto w-fit border-brand-teal/20 bg-brand-teal-soft px-2.5 py-0.5 text-brand-teal-ink"
-        >
+        <span className="text-xs font-medium text-brand-coral-strong">
           {formatOwnerProfileType(owner.profileType)}
-        </Badge>
+        </span>
       </div>
     </div>
   )
