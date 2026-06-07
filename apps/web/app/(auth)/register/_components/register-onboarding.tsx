@@ -36,9 +36,12 @@ import {
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { Checkbox } from "@workspace/ui/components/checkbox"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -251,21 +254,18 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   Telefono facoltativo
                 </FieldLabel>
                 <div className="grid gap-2 sm:grid-cols-[8rem_minmax(0,1fr)]">
-                  <NativeSelect
-                    name="phoneCountryCode"
-                    aria-label="Prefisso internazionale"
-                    className="w-full"
-                    defaultValue="+39"
-                  >
-                    {phoneCountryCodes.map((country) => (
-                      <NativeSelectOption
-                        key={country.code}
-                        value={country.code}
-                      >
-                        {country.label}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                  <Select name="phoneCountryCode" defaultValue="+39">
+                    <SelectTrigger aria-label="Prefisso internazionale">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {phoneCountryCodes.map((country) => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <Input
                     id="phoneNationalNumber"
                     name="phoneNationalNumber"

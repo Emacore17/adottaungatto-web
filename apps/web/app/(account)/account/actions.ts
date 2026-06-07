@@ -900,7 +900,11 @@ function readPhoneE164FormValue(formData: FormData) {
 function readNullableFormString(formData: FormData, key: string) {
   const value = readFormString(formData, key).trim()
 
-  return value ? value : null
+  if (!value || value === "__none__") {
+    return null
+  }
+
+  return value
 }
 
 function readNullableFormNumber(formData: FormData, key: string) {

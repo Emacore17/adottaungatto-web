@@ -36,9 +36,12 @@ import {
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { Textarea } from "@workspace/ui/components/textarea"
 
 type DraftEditorFormProps = {
@@ -122,41 +125,36 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
               <div className="grid gap-4 md:grid-cols-2">
                 <Field>
                   <FieldLabel htmlFor="sex">Sesso</FieldLabel>
-                  <NativeSelect
-                    id="sex"
-                    name="sex"
-                    defaultValue={draft?.sex ?? "unknown"}
-                    className="w-full"
-                  >
-                    <NativeSelectOption value="unknown">
-                      Non indicato
-                    </NativeSelectOption>
-                    <NativeSelectOption value="female">
-                      Femmina
-                    </NativeSelectOption>
-                    <NativeSelectOption value="male">
-                      Maschio
-                    </NativeSelectOption>
-                  </NativeSelect>
+                  <Select name="sex" defaultValue={draft?.sex ?? "unknown"}>
+                    <SelectTrigger id="sex" aria-label="Sesso">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unknown">Non indicato</SelectItem>
+                      <SelectItem value="female">Femmina</SelectItem>
+                      <SelectItem value="male">Maschio</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </Field>
 
                 <Field>
                   <FieldLabel htmlFor="breedId">Razza</FieldLabel>
-                  <NativeSelect
-                    id="breedId"
+                  <Select
                     name="breedId"
-                    defaultValue={draft?.breed?.id ?? ""}
-                    className="w-full"
+                    defaultValue={draft?.breed?.id ?? "__none__"}
                   >
-                    <NativeSelectOption value="">
-                      Non indicata
-                    </NativeSelectOption>
-                    {breeds.map((breed) => (
-                      <NativeSelectOption key={breed.id} value={breed.id}>
-                        {breed.name}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                    <SelectTrigger id="breedId" aria-label="Razza">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">Non indicata</SelectItem>
+                      {breeds.map((breed) => (
+                        <SelectItem key={breed.id} value={breed.id}>
+                          {breed.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </Field>
 
                 <DraftAgeField defaultAgeMonths={draft?.ageMonths} />
@@ -237,25 +235,31 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
                       <FieldLabel htmlFor="contactPhoneMode">
                         Telefono nell&apos;annuncio
                       </FieldLabel>
-                      <NativeSelect
-                        id="contactPhoneMode"
+                      <Select
                         name="contactPhoneMode"
                         defaultValue={defaultContactPhoneMode}
-                        className="w-full"
                       >
-                        <NativeSelectOption value="none">
-                          Non mostrare telefono
-                        </NativeSelectOption>
-                        <NativeSelectOption
-                          value="account"
-                          disabled={!accountPhoneReady}
+                        <SelectTrigger
+                          id="contactPhoneMode"
+                          aria-label="Telefono annuncio"
                         >
-                          Usa telefono account
-                        </NativeSelectOption>
-                        <NativeSelectOption value="listing">
-                          Usa telefono solo per questo annuncio
-                        </NativeSelectOption>
-                      </NativeSelect>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">
+                            Non mostrare telefono
+                          </SelectItem>
+                          <SelectItem
+                            value="account"
+                            disabled={!accountPhoneReady}
+                          >
+                            Usa telefono account
+                          </SelectItem>
+                          <SelectItem value="listing">
+                            Usa telefono solo per questo annuncio
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FieldDescription>
                         Il numero diventa pubblico solo dopo la verifica.
                       </FieldDescription>
@@ -273,21 +277,27 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
                         <FieldLabel htmlFor="listingPhoneCountryCode">
                           Prefisso
                         </FieldLabel>
-                        <NativeSelect
-                          id="listingPhoneCountryCode"
+                        <Select
                           name="listingPhoneCountryCode"
                           defaultValue={listingPhone.countryCode}
-                          className="w-full"
                         >
-                          {phoneCountryCodes.map((country) => (
-                            <NativeSelectOption
-                              key={country.code}
-                              value={country.code}
-                            >
-                              {country.label}
-                            </NativeSelectOption>
-                          ))}
-                        </NativeSelect>
+                          <SelectTrigger
+                            id="listingPhoneCountryCode"
+                            aria-label="Prefisso"
+                          >
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {phoneCountryCodes.map((country) => (
+                              <SelectItem
+                                key={country.code}
+                                value={country.code}
+                              >
+                                {country.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </Field>
                       <Field>
                         <FieldLabel htmlFor="listingPhoneNationalNumber">
@@ -355,18 +365,18 @@ function BooleanSelectField({
   return (
     <Field>
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <NativeSelect
-        id={id}
-        name={id}
-        defaultValue={formatNullableBoolean(value)}
-        className="w-full"
-      >
-        {booleanSelectOptions.map((option) => (
-          <NativeSelectOption key={option.value} value={option.value}>
-            {option.label}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+      <Select name={id} defaultValue={formatNullableBoolean(value)}>
+        <SelectTrigger id={id} aria-label={label}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {booleanSelectOptions.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </Field>
   )
 }

@@ -43,9 +43,12 @@ import {
 } from "@workspace/ui/components/dialog"
 import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { Textarea } from "@workspace/ui/components/textarea"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -125,18 +128,21 @@ function ModerationQueueTable({
           <FieldGroup className="gap-4 sm:grid sm:grid-cols-[minmax(12rem,15rem)_minmax(18rem,1fr)]">
             <Field className="gap-1.5">
               <FieldLabel htmlFor="moderation-batch-reason">Motivo</FieldLabel>
-              <NativeSelect
-                id="moderation-batch-reason"
-                name="reasonCode"
-                defaultValue="auto"
-                className="w-full"
-              >
-                {batchReasonOptions.map((option) => (
-                  <NativeSelectOption key={option.value} value={option.value}>
-                    {option.label}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+              <Select name="reasonCode" defaultValue="auto">
+                <SelectTrigger
+                  id="moderation-batch-reason"
+                  aria-label="Motivo"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {batchReasonOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
 
             <Field className="gap-1.5">

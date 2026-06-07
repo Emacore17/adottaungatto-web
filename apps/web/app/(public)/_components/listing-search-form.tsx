@@ -23,9 +23,12 @@ import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { cn } from "@workspace/ui/lib/utils"
 
 type ListingSearchDefaults = Partial<ListingPublicListQuery> & {
@@ -69,8 +72,6 @@ const maxContributionEuros = 500
 const compactFieldClassName = "grid gap-2"
 const compactInputClassName =
   "h-11 rounded-xl border-brand-border/70 bg-card text-sm shadow-none focus-visible:border-brand-coral/60 focus-visible:ring-brand-coral/15"
-const compactSelectClassName =
-  "w-full [&>select]:h-11 [&>select]:rounded-xl [&>select]:border-brand-border/70 [&>select]:bg-card [&>select]:text-sm [&>select]:font-medium [&>select]:text-brand-teal-ink [&>select]:shadow-none [&>select]:transition-colors [&>select]:focus-visible:border-brand-coral/60 [&>select]:focus-visible:ring-brand-coral/15"
 const filterLabelClassName =
   "text-[10px] font-semibold tracking-[0.24em] text-brand-coral-strong uppercase"
 
@@ -489,47 +490,59 @@ function ListingSearchForm({
   const filterControls = (
     <div className="grid gap-4 text-left">
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
-        <label className={cn(compactFieldClassName, "xl:col-span-3")}>
+        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
           <span className={filterLabelClassName}>Razza</span>
-          <NativeSelect
-            className={compactSelectClassName}
-            value={filters.breedId}
+          <Select
+            value={filters.breedId || "__all__"}
             disabled={breeds.length === 0}
-            onChange={(event) => updateFilter("breedId", event.target.value)}
+            onValueChange={(value) =>
+              updateFilter("breedId", value === "__all__" ? "" : value)
+            }
           >
-            <NativeSelectOption value="">
-              {breeds.length > 0 ? "Tutte le razze" : "Razze non disponibili"}
-            </NativeSelectOption>
-            {filters.breedId && !selectedBreedIsKnown ? (
-              <NativeSelectOption value={filters.breedId}>
-                Razza selezionata
-              </NativeSelectOption>
-            ) : null}
-            {breeds.map((breed) => (
-              <NativeSelectOption key={breed.id} value={breed.id}>
-                {breed.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
+            <SelectTrigger aria-label="Razza">
+              <SelectValue placeholder="Tutte le razze" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">
+                {breeds.length > 0 ? "Tutte le razze" : "Razze non disponibili"}
+              </SelectItem>
+              {filters.breedId && !selectedBreedIsKnown ? (
+                <SelectItem value={filters.breedId}>
+                  Razza selezionata
+                </SelectItem>
+              ) : null}
+              {breeds.map((breed) => (
+                <SelectItem key={breed.id} value={breed.id}>
+                  {breed.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <label className={cn(compactFieldClassName, "xl:col-span-2")}>
+        <div className={cn(compactFieldClassName, "xl:col-span-2")}>
           <span className={filterLabelClassName}>Sesso</span>
-          <NativeSelect
-            className={compactSelectClassName}
-            value={filters.sex}
-            onChange={(event) => updateFilter("sex", event.target.value)}
+          <Select
+            value={filters.sex || "__any__"}
+            onValueChange={(value) =>
+              updateFilter("sex", value === "__any__" ? "" : value)
+            }
           >
-            {sexOptions.map((option) => (
-              <NativeSelectOption
-                key={option.value || "any-sex"}
-                value={option.value}
-              >
-                {option.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
+            <SelectTrigger aria-label="Sesso">
+              <SelectValue placeholder="Qualsiasi" />
+            </SelectTrigger>
+            <SelectContent>
+              {sexOptions.map((option) => (
+                <SelectItem
+                  key={option.value || "any-sex"}
+                  value={option.value || "__any__"}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className={cn(compactFieldClassName, "xl:col-span-3")}>
           <div className="flex min-h-5 items-center justify-between gap-2">
@@ -603,19 +616,21 @@ function ListingSearchForm({
                 "sm:grid-cols-[minmax(7rem,0.9fr)_minmax(0,1fr)_minmax(0,1fr)]"
             )}
           >
-            <NativeSelect
-              className={compactSelectClassName}
+            <Select
               value={filters.priceMode}
-              onChange={(event) =>
-                handlePriceModeChange(
-                  event.target.value as SearchFilters["priceMode"]
-                )
+              onValueChange={(value) =>
+                handlePriceModeChange(value as SearchFilters["priceMode"])
               }
             >
-              <NativeSelectOption value="all">Qualsiasi</NativeSelectOption>
-              <NativeSelectOption value="free">Gratis</NativeSelectOption>
-              <NativeSelectOption value="range">Fascia</NativeSelectOption>
-            </NativeSelect>
+              <SelectTrigger aria-label="Modalita prezzo">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Qualsiasi</SelectItem>
+                <SelectItem value="free">Gratis</SelectItem>
+                <SelectItem value="range">Fascia</SelectItem>
+              </SelectContent>
+            </Select>
 
             {filters.priceMode === "range" ? (
               <>
@@ -669,45 +684,50 @@ function ListingSearchForm({
           </div>
         </div>
 
-        <label className={cn(compactFieldClassName, "xl:col-span-3")}>
+        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
           <span className={filterLabelClassName}>Ordina</span>
-          <NativeSelect
-            className={compactSelectClassName}
+          <Select
             value={effectiveSort}
-            onChange={(event) =>
-              updateFilter(
-                "sort",
-                event.target.value as ListingPublicListQuery["sort"]
-              )
+            onValueChange={(value) =>
+              updateFilter("sort", value as ListingPublicListQuery["sort"])
             }
           >
-            {sortOptions.map((option) => (
-              <NativeSelectOption
-                key={option.value}
-                value={option.value}
-                disabled={option.value === "distance" && !position}
-              >
-                {option.label}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
+            <SelectTrigger aria-label="Ordina">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  disabled={option.value === "distance" && !position}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <div className={cn(compactFieldClassName, "xl:col-span-5")}>
           <span className={filterLabelClassName}>Distanza</span>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-            <NativeSelect
-              className={compactSelectClassName}
+            <Select
               value={filters.radiusKm}
               disabled={!position}
-              onChange={(event) => updateFilter("radiusKm", event.target.value)}
+              onValueChange={(value) => updateFilter("radiusKm", value)}
             >
-              {radiusOptions.map((option) => (
-                <NativeSelectOption key={option.value} value={option.value}>
-                  {option.label}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              <SelectTrigger aria-label="Raggio">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {radiusOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
             <Button
               type="button"

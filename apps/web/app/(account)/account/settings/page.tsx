@@ -41,9 +41,12 @@ import {
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 import { Separator } from "@workspace/ui/components/separator"
 import { phoneCountryCodes, splitPhoneNumber } from "@/lib/phone"
 
@@ -182,18 +185,21 @@ function ProfileForm({ profile }: { profile: CurrentUserProfile }) {
                 ) : null}
               </div>
               <div className="grid gap-2 sm:grid-cols-[9rem_minmax(0,1fr)]">
-                <NativeSelect
+                <Select
                   name="phoneCountryCode"
-                  aria-label="Prefisso internazionale"
-                  className="w-full"
                   defaultValue={phoneParts.countryCode}
                 >
-                  {phoneCountryCodes.map((country) => (
-                    <NativeSelectOption key={country.code} value={country.code}>
-                      {country.label}
-                    </NativeSelectOption>
-                  ))}
-                </NativeSelect>
+                  <SelectTrigger aria-label="Prefisso internazionale">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {phoneCountryCodes.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   id="phoneNationalNumber"
                   name="phoneNationalNumber"

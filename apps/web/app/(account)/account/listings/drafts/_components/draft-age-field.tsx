@@ -9,9 +9,12 @@ import {
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@workspace/ui/components/native-select"
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select"
 
 type AgeUnit = "months" | "years"
 
@@ -37,16 +40,19 @@ function DraftAgeField({ defaultAgeMonths }: DraftAgeFieldProps) {
           inputMode="decimal"
           defaultValue={initial.value}
         />
-        <NativeSelect
+        <Select
           name="ageUnit"
           value={unit}
-          onChange={(event) => setUnit(event.target.value as AgeUnit)}
-          className="w-full"
-          aria-label="Unita eta"
+          onValueChange={(value) => setUnit(value as AgeUnit)}
         >
-          <NativeSelectOption value="months">Mesi</NativeSelectOption>
-          <NativeSelectOption value="years">Anni</NativeSelectOption>
-        </NativeSelect>
+          <SelectTrigger aria-label="Unita eta">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="months">Mesi</SelectItem>
+            <SelectItem value="years">Anni</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <FieldDescription>
         Indica una sola eta; scegli mesi per cuccioli o mezzi anni.
