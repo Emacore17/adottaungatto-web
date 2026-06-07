@@ -204,7 +204,7 @@ export default async function ListingDetailPage({
                 <h2 className="flex items-baseline gap-3 font-heading text-3xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
                   <em className="italic text-brand-coral-strong">Descrizione</em>
                 </h2>
-                <div className="max-w-prose text-[17px] leading-[1.9] text-foreground/85 first-letter:font-heading first-letter:mr-2 first-letter:float-left first-letter:text-[4rem] first-letter:leading-[0.9] first-letter:font-normal first-letter:text-brand-coral-strong">
+                <div className="max-w-prose text-[17px] leading-[1.9] text-foreground/85">
                   <p>{listing.data.description}</p>
                 </div>
               </section>
@@ -213,10 +213,9 @@ export default async function ListingDetailPage({
 
               <section className="flex flex-col gap-6">
                 <h2 className="flex items-baseline gap-3 font-heading text-3xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
-                  <em className="italic text-brand-coral-strong">A colpo</em>{" "}
-                  d&apos;occhio
+                  <em className="italic text-brand-coral-strong">Identikit</em>
                 </h2>
-                <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <ListingFact
                     icon="age"
                     label="Eta"
