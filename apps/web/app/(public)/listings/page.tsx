@@ -133,7 +133,7 @@ export default async function ListingsPage({
               isFavorite={favoriteListingIds.has(listing.id)}
               listing={listing}
               nextPath={nextPath}
-              priority={index === 0}
+              priority={index < 2}
             />
           ))}
         </section>

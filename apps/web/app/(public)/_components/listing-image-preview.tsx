@@ -74,14 +74,23 @@ function ListingImagePreview({
               "object-cover transition-opacity duration-500 ease-out",
               index === currentIndex ? "opacity-100" : "opacity-0"
             )}
-            sizes="(min-width: 768px) 18rem, (min-width: 640px) 16rem, 100vw"
+            sizes="(min-width: 1024px) 32rem, (min-width: 640px) 50vw, 100vw"
             priority={priority && index === 0}
           />
         ))
       ) : (
-        <div className="flex size-full flex-col items-center justify-center gap-2 px-4 text-center text-sm text-muted-foreground">
-          <ImageIcon aria-hidden="true" />
-          Foto in preparazione
+        <div
+          className={cn(
+            "flex size-full flex-col items-center justify-center gap-3 px-4 text-center",
+            "bg-[linear-gradient(135deg,var(--color-brand-cream)_0%,color-mix(in_oklab,var(--color-brand-teal-soft)_72%,var(--color-brand-cream))_100%)]"
+          )}
+        >
+          <span className="flex size-14 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong shadow-[0_8px_18px_-12px_rgba(0,0,0,0.25)]">
+            <ImageIcon aria-hidden="true" className="size-6" />
+          </span>
+          <span className="text-[10px] font-semibold tracking-[0.24em] text-brand-teal-ink uppercase">
+            Foto in arrivo
+          </span>
         </div>
       )}
 
