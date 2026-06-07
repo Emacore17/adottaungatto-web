@@ -47,7 +47,7 @@ export default async function ForgotPasswordPage({
       eyebrow="Recupero"
       title="Password dimenticata"
     >
-      <Card className="w-full max-w-md border-brand-teal/18 bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-brand-teal/18 supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
+      <Card className="w-full max-w-md border-border bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-border supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
         {sent ? (
           <PasswordResetSent />
         ) : (
@@ -111,7 +111,7 @@ function PasswordResetSent() {
   return (
     <>
       <CardHeader className="items-center gap-3 px-5 pt-8 pb-2 text-center sm:px-6">
-        <span className="flex size-16 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-ink motion-safe:animate-[auth-mail-pop_520ms_ease-out]">
+        <span className="flex size-16 items-center justify-center rounded-full bg-secondary text-foreground motion-safe:animate-[auth-mail-pop_520ms_ease-out]">
           <MailCheckIcon aria-hidden="true" className="size-8" />
         </span>
         <CardTitle className="text-2xl">Controlla la mail</CardTitle>

@@ -1,9 +1,12 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import {
   CalendarIcon,
-  HeartHandshakeIcon,
+  CheckIcon,
+  ChevronRightIcon,
   MapPinIcon,
+  MinusIcon,
   ShieldCheckIcon,
 } from "lucide-react"
 
@@ -28,7 +31,6 @@ import { routes } from "@/lib/routes"
 import { createListingJsonLd } from "@/lib/seo/json-ld"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
-import { Badge } from "@workspace/ui/components/badge"
 import { Separator } from "@workspace/ui/components/separator"
 import { cn } from "@workspace/ui/lib/utils"
 
@@ -38,8 +40,6 @@ type ListingDetailPageProps = {
   }>
   searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
-
-type ListingFactIcon = "age" | "sex" | "price" | "breed"
 
 export const dynamic = "force-dynamic"
 
@@ -106,309 +106,197 @@ export default async function ListingDetailPage({
     ? `${listing.data.location.municipality.name}, ${listing.data.location.province.name}`
     : "Italia"
   const nextPath = routes.listing(listing.data.id)
+  const publishedDate = listing.data.publishedAt
+    ? new Intl.DateTimeFormat("it-IT", { dateStyle: "long" }).format(
+        new Date(listing.data.publishedAt)
+      )
+    : null
 
   return (
     <>
       <JsonLd data={createListingJsonLd(listing.data)} />
-      <main className="relative flex-1 pb-16">
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 -z-10 h-[80svh] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--color-brand-teal-soft)_60%,var(--color-brand-cream))_0%,var(--color-brand-cream)_72%)]"
-        />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex items-center gap-1.5 text-xs text-muted-foreground"
+        >
+          <Link
+            href={routes.listings()}
+            className="transition-colors hover:text-foreground"
+          >
+            Annunci
+          </Link>
+          <ChevronRightIcon className="size-3" aria-hidden="true" />
+          <span className="truncate text-foreground">{listing.data.title}</span>
+        </nav>
 
-        <div className="mx-auto w-full max-w-6xl px-4 pt-28 sm:px-6 sm:pt-32 lg:px-8">
-          <header className="flex flex-col gap-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.28em] text-brand-coral-strong uppercase">
-                <MapPinIcon aria-hidden="true" className="size-3.5" />
+        <header className="mt-6 flex flex-col gap-4">
+          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground sm:text-4xl">
+            {listing.data.title}
+          </h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPinIcon className="size-4" aria-hidden="true" />
                 {locationLabel}
               </span>
-              {listing.data.publishedAt ? (
-                <>
-                  <span aria-hidden="true" className="text-brand-border">
-                    ·
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                    <CalendarIcon aria-hidden="true" className="size-3" />
-                    {new Intl.DateTimeFormat("it-IT", {
-                      dateStyle: "medium",
-                    }).format(new Date(listing.data.publishedAt))}
-                  </span>
-                </>
+              {publishedDate ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarIcon className="size-4" aria-hidden="true" />
+                  {publishedDate}
+                </span>
               ) : null}
             </div>
-
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-              <h1 className="font-heading text-5xl leading-[0.95] font-normal tracking-[-0.025em] text-balance text-brand-teal-ink sm:text-6xl lg:text-[5rem]">
-                {listing.data.title}
-              </h1>
-              <ListingFavoriteToggle
-                className="self-start lg:self-end"
-                emphasis="prominent"
-                initialFavoriteCount={listing.data.stats.favoriteCount}
-                isAuthenticated={Boolean(sessionToken)}
-                isFavorite={favoriteListingIds.has(listing.data.id)}
-                listingId={listing.data.id}
-                nextPath={nextPath}
-                syncOnMount
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "rounded-full border-0 px-3.5 py-1.5 text-xs font-semibold tracking-wide",
-                  listing.data.isFree
-                    ? "bg-brand-olive-soft text-brand-olive-strong"
-                    : "bg-brand-coral-soft text-brand-coral-strong"
-                )}
-              >
-                {formatListingPrice(listing.data)}
-              </Badge>
-              {listing.data.breed ? (
-                <Badge
-                  variant="outline"
-                  className="rounded-full border-0 bg-brand-teal-soft px-3.5 py-1.5 text-xs font-semibold tracking-wide text-brand-teal-ink"
-                >
-                  {listing.data.breed.name}
-                </Badge>
-              ) : null}
-              <Badge
-                variant="outline"
-                className="rounded-full border-0 bg-brand-amber-soft px-3.5 py-1.5 text-xs font-semibold tracking-wide text-brand-teal-ink"
-              >
-                {formatSex(listing.data.sex)}
-              </Badge>
-              <Badge
-                variant="outline"
-                className="rounded-full border-0 bg-brand-cream px-3.5 py-1.5 text-xs font-semibold tracking-wide text-brand-teal-ink shadow-[0_2px_8px_-4px_rgba(0,0,0,0.1)]"
-              >
-                {formatAgeMonths(listing.data.ageMonths)}
-              </Badge>
-            </div>
-          </header>
-
-          <div className="mt-10 overflow-hidden rounded-[36px] shadow-[0_40px_100px_-48px_rgba(60,30,10,0.5)] ring-1 ring-brand-border/40">
-            <ListingImageCarousel
-              images={carouselImages}
-              title={listing.data.title}
+            <ListingFavoriteToggle
+              initialFavoriteCount={listing.data.stats.favoriteCount}
+              isAuthenticated={Boolean(sessionToken)}
+              isFavorite={favoriteListingIds.has(listing.data.id)}
+              listingId={listing.data.id}
+              nextPath={nextPath}
+              syncOnMount
             />
           </div>
+        </header>
 
-          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-14">
-            <article className="flex min-w-0 flex-col gap-12">
-              <ListingOwnerSummary owner={listing.data.owner} />
+        <div className="mt-8 overflow-hidden rounded-2xl">
+          <ListingImageCarousel
+            images={carouselImages}
+            title={listing.data.title}
+          />
+        </div>
 
-              <section className="flex flex-col gap-5">
-                <h2 className="flex items-baseline gap-3 font-heading text-3xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
-                  <em className="italic text-brand-coral-strong">Descrizione</em>
-                </h2>
-                <div className="max-w-prose text-[17px] leading-[1.9] text-foreground/85">
-                  <p>{listing.data.description}</p>
-                </div>
-              </section>
+        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
+          <article className="flex min-w-0 flex-col gap-10">
+            <ListingOwnerSummary owner={listing.data.owner} />
 
-              <Separator className="bg-brand-border/50" />
+            <Separator />
 
-              <section className="flex flex-col gap-6">
-                <h2 className="flex items-baseline gap-3 font-heading text-3xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
-                  <em className="italic text-brand-coral-strong">Identikit</em>
-                </h2>
-                <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <ListingFact
-                    icon="age"
-                    label="Eta"
-                    value={formatAgeMonths(listing.data.ageMonths)}
-                  />
-                  <ListingFact
-                    icon="sex"
-                    label="Sesso"
-                    value={formatSex(listing.data.sex)}
-                  />
-                  <ListingFact
-                    icon="price"
-                    label="Prezzo"
-                    value={formatListingPrice(listing.data)}
-                  />
-                  <ListingFact
-                    icon="breed"
-                    label="Razza"
-                    value={listing.data.breed?.name ?? "Non indicata"}
-                  />
-                </dl>
-              </section>
+            <section className="flex flex-col gap-4">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Su questo gatto
+              </h2>
+              <p className="text-base leading-relaxed text-foreground/90">
+                {listing.data.description}
+              </p>
+            </section>
 
-              <Separator className="bg-brand-border/50" />
+            <Separator />
 
-              <section className="flex flex-col gap-6">
-                <h2 className="flex items-baseline gap-3 font-heading text-3xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
-                  <em className="italic text-brand-coral-strong">Salute</em> e
-                  cura
-                </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <HealthRow
-                    label="Vaccinato"
-                    value={listing.data.isVaccinated}
-                  />
-                  <HealthRow
-                    label="Sterilizzato"
-                    value={listing.data.isSterilized}
-                  />
-                  <HealthRow
-                    label="Sverminato"
-                    value={listing.data.isDewormed}
-                  />
-                  <HealthRow
-                    label="Microchip"
-                    value={listing.data.hasMicrochip}
-                  />
-                </div>
-              </section>
-
-              <Separator className="bg-brand-border/50" />
-
-              <section className="rounded-3xl bg-brand-teal-soft/65 p-7 sm:p-9">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-                  <span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-brand-coral-soft text-brand-coral-strong">
-                    <HeartHandshakeIcon
-                      aria-hidden="true"
-                      className="size-6"
-                    />
-                  </span>
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.22em] text-brand-coral-strong uppercase">
-                      Adozione responsabile
-                    </p>
-                    <p className="font-heading text-xl leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-2xl">
-                      Ogni richiesta parte da una conversazione vera con chi se
-                      ne occupa.
-                    </p>
-                  </div>
-                </div>
-              </section>
-            </article>
-
-            <aside className="flex flex-col gap-4 lg:sticky lg:top-32 lg:self-start">
-              <ListingContactCard
-                contactStatus={readContactStatus(query.contact)}
-                hasShareablePhone={hasShareablePhone}
-                isAuthenticated={Boolean(sessionToken)}
-                isEnabled={listing.data.contactRequestsEnabled}
-                listingId={listing.data.id}
-                publicPhoneE164={listing.data.publicPhoneE164}
-              />
-              <div className="flex items-start gap-3 rounded-2xl border border-brand-border/60 bg-card/80 px-4 py-3 text-xs text-muted-foreground">
-                <ShieldCheckIcon
-                  aria-hidden="true"
-                  className="size-4 shrink-0 text-brand-teal-strong"
+            <section className="flex flex-col gap-5">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Identikit
+              </h2>
+              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <Fact label="Eta" value={formatAgeMonths(listing.data.ageMonths)} />
+                <Fact label="Sesso" value={formatSex(listing.data.sex)} />
+                <Fact label="Prezzo" value={formatListingPrice(listing.data)} />
+                <Fact
+                  label="Razza"
+                  value={listing.data.breed?.name ?? "Non indicata"}
                 />
-                <span>
-                  I dati personali restano riservati. Il contatto avviene
-                  tramite la piattaforma.
+              </dl>
+            </section>
+
+            <Separator />
+
+            <section className="flex flex-col gap-5">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Salute e cura
+              </h2>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                <HealthRow label="Vaccinato" value={listing.data.isVaccinated} />
+                <HealthRow
+                  label="Sterilizzato"
+                  value={listing.data.isSterilized}
+                />
+                <HealthRow label="Sverminato" value={listing.data.isDewormed} />
+                <HealthRow label="Microchip" value={listing.data.hasMicrochip} />
+              </ul>
+            </section>
+
+            <Separator />
+
+            <section className="rounded-xl border border-border bg-secondary/40 p-5 sm:p-6">
+              <div className="flex items-start gap-4">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-accent">
+                  <ShieldCheckIcon className="size-5" aria-hidden="true" />
                 </span>
+                <div>
+                  <h3 className="text-base font-semibold tracking-tight text-foreground">
+                    Adozione responsabile
+                  </h3>
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Ogni richiesta parte da una conversazione con chi se ne
+                    occupa. Niente intermediari, niente compravendita.
+                  </p>
+                </div>
               </div>
-            </aside>
-          </div>
+            </section>
+          </article>
+
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <ListingContactCard
+              contactStatus={readContactStatus(query.contact)}
+              hasShareablePhone={hasShareablePhone}
+              isAuthenticated={Boolean(sessionToken)}
+              isEnabled={listing.data.contactRequestsEnabled}
+              listingId={listing.data.id}
+              publicPhoneE164={listing.data.publicPhoneE164}
+            />
+          </aside>
         </div>
       </main>
     </>
   )
 }
 
-function ListingFact({
-  className,
-  icon,
-  label,
-  value,
-}: {
-  className?: string
-  icon: ListingFactIcon
-  label: string
-  value: string
-}) {
+function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-3 rounded-2xl border border-brand-border/60 bg-card p-5 shadow-[0_12px_28px_-22px_rgba(60,30,10,0.35)]",
-        className
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] font-semibold tracking-[0.22em] text-brand-coral-strong uppercase">
-          {label}
-        </span>
-        <span className="inline-flex size-7 items-center justify-center rounded-full bg-brand-teal-soft text-[14px] text-brand-teal-strong">
-          {iconForFact(icon)}
-        </span>
-      </div>
-      <p className="font-heading text-xl leading-tight font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-2xl">
-        {value}
-      </p>
+    <div className="flex flex-col gap-1 rounded-xl border border-border bg-background p-4">
+      <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        {label}
+      </dt>
+      <dd className="text-base font-semibold text-foreground">{value}</dd>
     </div>
   )
 }
 
-function HealthRow({
-  label,
-  value,
-}: {
-  label: string
-  value: boolean | null
-}) {
+function HealthRow({ label, value }: { label: string; value: boolean | null }) {
   const status =
     value === true ? "confirmed" : value === false ? "missing" : "unknown"
 
   return (
-    <div
+    <li
       className={cn(
-        "flex items-center gap-3 rounded-2xl border px-4 py-3.5 transition-colors",
-        status === "confirmed" &&
-          "border-brand-olive/30 bg-brand-olive-soft/50",
-        status === "missing" &&
-          "border-brand-coral/25 bg-brand-coral-soft/50",
-        status === "unknown" && "border-brand-border/60 bg-card/70"
+        "flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3"
       )}
     >
       <span
         className={cn(
-          "flex size-9 shrink-0 items-center justify-center rounded-full text-base font-semibold",
-          status === "confirmed" &&
-            "bg-brand-olive-strong text-brand-cream",
-          status === "missing" &&
-            "bg-brand-coral-strong text-brand-cream",
-          status === "unknown" && "bg-brand-border/60 text-brand-teal-ink"
+          "flex size-7 shrink-0 items-center justify-center rounded-full",
+          status === "confirmed" && "bg-emerald-50 text-emerald-700",
+          status === "missing" && "bg-red-50 text-red-700",
+          status === "unknown" && "bg-secondary text-muted-foreground"
         )}
       >
-        {status === "confirmed" ? "✓" : status === "missing" ? "✕" : "?"}
+        {status === "confirmed" ? (
+          <CheckIcon className="size-3.5" aria-hidden="true" />
+        ) : (
+          <MinusIcon className="size-3.5" aria-hidden="true" />
+        )}
       </span>
-      <div className="flex flex-1 flex-col">
-        <span className="font-heading text-base font-normal tracking-tight text-brand-teal-ink">
-          {label}
-        </span>
+      <div className="flex flex-1 items-center justify-between gap-3">
+        <span className="text-sm font-medium text-foreground">{label}</span>
         <span className="text-xs text-muted-foreground">
           {status === "confirmed"
-            ? "Confermato"
+            ? "Sì"
             : status === "missing"
-              ? "Assente"
+              ? "No"
               : "Non indicato"}
         </span>
       </div>
-    </div>
+    </li>
   )
-}
-
-function iconForFact(icon: ListingFactIcon) {
-  switch (icon) {
-    case "age":
-      return "⏳"
-    case "sex":
-      return "⚥"
-    case "price":
-      return "€"
-    case "breed":
-      return "✦"
-  }
 }
 
 function ListingOwnerSummary({
@@ -417,30 +305,26 @@ function ListingOwnerSummary({
   owner: PublicListingDetail["owner"]
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-5 rounded-3xl border border-brand-border/60 bg-card px-5 py-4 shadow-[0_18px_36px_-28px_rgba(60,30,10,0.45)] sm:px-6">
+    <div className="flex min-w-0 items-center gap-4 rounded-xl border border-border bg-background p-4">
       <Avatar
         size="lg"
-        className="size-16 bg-brand-coral-soft text-lg text-brand-coral-strong"
+        className="size-12 bg-secondary text-base font-semibold text-foreground"
       >
-        <AvatarFallback className="bg-brand-coral-soft text-brand-coral-strong">
+        <AvatarFallback className="bg-secondary text-foreground">
           {getOwnerInitials(owner.displayName)}
         </AvatarFallback>
       </Avatar>
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="text-[10px] font-semibold tracking-[0.22em] text-muted-foreground uppercase">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Pubblicato da
         </p>
-        <p className="font-heading truncate text-xl leading-tight font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-[1.4rem]">
+        <p className="truncate text-base font-semibold text-foreground">
           {owner.displayName}
         </p>
-        <span className="text-xs font-medium text-brand-coral-strong">
+        <span className="text-xs text-muted-foreground">
           {formatOwnerProfileType(owner.profileType)}
         </span>
       </div>
-      <ShieldCheckIcon
-        aria-hidden="true"
-        className="hidden size-6 text-brand-teal-strong sm:block"
-      />
     </div>
   )
 }

@@ -45,7 +45,7 @@ function ListingContactCard({
   return (
     <Card
       id="contact-owner"
-      className="border-brand-teal/20 ring-brand-teal/20"
+      className="border-border ring-border"
     >
       <CardHeader>
         <CardTitle>Scrivi un messaggio</CardTitle>
@@ -64,7 +64,7 @@ function ListingContactCard({
         ) : null}
         <ContactFeedback status={contactStatus} />
         {!isEnabled ? (
-          <p className="rounded-md border border-brand-amber/30 bg-brand-amber-soft px-3 py-2 text-sm text-brand-teal-ink">
+          <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
             Il proprietario non riceve richieste per questo annuncio.
           </p>
         ) : isAuthenticated ? (
@@ -173,7 +173,7 @@ function ContactFeedback({ status }: { status: ContactStatus }) {
           : "Non e' stato possibile inviare la richiesta. Riprova piu tardi."
 
   return (
-    <p className="rounded-md border border-brand-teal/20 bg-brand-teal-soft px-3 py-2 text-sm text-brand-teal-ink">
+    <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
       {message}
     </p>
   )

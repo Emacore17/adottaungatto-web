@@ -61,12 +61,12 @@ export default async function AccountPage() {
           <div className="flex flex-col gap-3">
             <Badge
               variant="outline"
-              className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+              className="w-fit border-border bg-secondary text-foreground"
             >
               Area personale
             </Badge>
             <div className="grid gap-2">
-              <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
+              <h1 className="text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-4xl">
                 Dashboard account
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -247,14 +247,14 @@ function DashboardMetricCard({
 }) {
   const Icon = icon
   const toneClassName = {
-    amber: "bg-brand-amber-soft text-brand-teal-ink",
-    coral: "bg-brand-coral-soft text-brand-coral-strong",
-    olive: "bg-brand-olive-soft text-brand-teal-ink",
-    teal: "bg-brand-teal-soft text-brand-teal-ink",
+    amber: "bg-secondary text-foreground",
+    coral: "bg-accent/10 text-accent",
+    olive: "bg-emerald-50 text-foreground",
+    teal: "bg-secondary text-foreground",
   }[tone]
 
   return (
-    <Card size="sm" className="hover:ring-brand-teal/30">
+    <Card size="sm" className="hover:ring-border">
       <CardHeader>
         <div className="grid gap-1">
           <CardTitle>{title}</CardTitle>
@@ -295,7 +295,7 @@ function OperationalFocus({
     unreadNotifications !== null && unreadNotifications > 0
 
   return (
-    <Card className="ring-brand-teal/15">
+    <Card className="ring-border">
       <CardHeader>
         <CardTitle>Attivita operative</CardTitle>
         <CardDescription>Le priorita correnti del tuo account.</CardDescription>
@@ -387,7 +387,7 @@ function PriorityRow({
         asChild
         variant="outline"
         size="sm"
-        className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+        className="hover:border-accent hover:bg-accent/10 hover:text-accent"
       >
         <Link href={href}>{actionLabel}</Link>
       </Button>
@@ -412,7 +412,7 @@ function ProfileCard({
         <CardTitle>Profilo</CardTitle>
         <CardDescription>{displayName}</CardDescription>
         <CardAction>
-          <Badge className="bg-brand-olive-soft text-brand-teal-ink">
+          <Badge className="bg-emerald-50 text-foreground">
             {formatUserStatus(status)}
           </Badge>
         </CardAction>
@@ -486,14 +486,14 @@ function SectionHeader({
   return (
     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
       <div className="grid gap-1">
-        <h2 className="font-heading text-2xl font-normal tracking-[-0.01em] text-brand-teal-ink sm:text-[1.75rem]">{title}</h2>
+        <h2 className="text-2xl font-normal tracking-[-0.01em] text-foreground sm:text-[1.75rem]">{title}</h2>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
       <Button
         asChild
         variant="outline"
         size="sm"
-        className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+        className="hover:border-accent hover:bg-accent/10 hover:text-accent"
       >
         <Link href={href}>Vedi tutto</Link>
       </Button>

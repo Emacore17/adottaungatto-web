@@ -1,4 +1,4 @@
-import { Fraunces, Geist_Mono, Inter } from "next/font/google"
+import { Inter } from "next/font/google"
 import type { Viewport } from "next"
 
 import "@workspace/ui/globals.css"
@@ -10,18 +10,10 @@ import { createPageMetadata } from "@/lib/seo/metadata"
 import { Toaster } from "@workspace/ui/components/sonner"
 import { cn } from "@workspace/ui/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
-
-const fontHeading = Fraunces({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-brand-heading",
-  axes: ["opsz", "SOFT"],
+  variable: "--font-sans",
   display: "swap",
-})
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
 })
 
 export const metadata = {
@@ -33,11 +25,11 @@ export const viewport: Viewport = {
   themeColor: [
     {
       media: "(prefers-color-scheme: light)",
-      color: "#fffbf5",
+      color: "#ffffff",
     },
     {
       media: "(prefers-color-scheme: dark)",
-      color: "#123f43",
+      color: "#18181b",
     },
   ],
 }
@@ -53,15 +45,9 @@ export default async function RootLayout({
     <html
       lang="it"
       suppressHydrationWarning
-      className={cn(
-        "antialiased",
-        fontMono.variable,
-        "font-sans",
-        inter.variable,
-        fontHeading.variable
-      )}
+      className={cn("antialiased font-sans", inter.variable)}
     >
-      <body className="min-h-svh">
+      <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider>
           <RealtimeNotificationsProvider
             key={token ? "authenticated" : "anonymous"}

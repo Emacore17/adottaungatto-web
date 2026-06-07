@@ -39,7 +39,7 @@ export default async function AccountContactsPage() {
             Account
           </Badge>
           <div className="grid gap-2">
-            <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
+            <h1 className="text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-4xl">
               Contatti ricevuti
             </h1>
             <p className="max-w-2xl text-sm text-muted-foreground">

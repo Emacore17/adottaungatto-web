@@ -71,9 +71,9 @@ const maxContributionEuros = 500
 
 const compactFieldClassName = "grid gap-2"
 const compactInputClassName =
-  "h-11 rounded-xl border-brand-border/70 bg-card text-sm shadow-none focus-visible:border-brand-coral/60 focus-visible:ring-brand-coral/15"
+  "h-11 rounded-xl border-border/70 bg-card text-sm shadow-none focus-visible:border-accent focus-visible:ring-accent/30"
 const filterLabelClassName =
-  "text-[10px] font-semibold tracking-[0.24em] text-brand-coral-strong uppercase"
+  "text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"
 
 function createInitialPriceMode(
   defaultValues: ListingSearchDefaults
@@ -762,7 +762,7 @@ function ListingSearchForm({
         </div>
       ) : null}
 
-      <fieldset className="rounded-2xl border border-brand-border/60 bg-brand-cream/40 px-4 pt-3 pb-4">
+      <fieldset className="rounded-2xl border border-border/60 bg-background/40 px-4 pt-3 pb-4">
         <legend className={cn(filterLabelClassName, "px-2")}>
           Cure e caratteristiche
         </legend>
@@ -771,10 +771,10 @@ function ListingSearchForm({
             <label
               key={option.key}
               className={cn(
-                "inline-flex min-h-9 cursor-pointer items-center rounded-full border px-4 py-1.5 text-xs font-semibold tracking-wide transition-[border-color,background-color,color] focus-within:ring-2 focus-within:ring-brand-coral/30",
+                "inline-flex min-h-9 cursor-pointer items-center rounded-full border px-4 py-1.5 text-xs font-medium transition-colors focus-within:ring-2 focus-within:ring-ring/30",
                 filters[option.key]
-                  ? "border-brand-teal-ink bg-brand-teal-ink text-brand-cream"
-                  : "border-brand-border/70 bg-card text-brand-teal-ink hover:border-brand-coral/40 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground hover:bg-secondary"
               )}
             >
               <input
@@ -804,13 +804,11 @@ function ListingSearchForm({
         />
       ))}
 
-      <div className="relative overflow-hidden rounded-[28px] border border-brand-border/60 bg-card/95 p-3 shadow-[0_36px_72px_-44px_rgba(60,30,10,0.4)] backdrop-blur-2xl sm:p-4">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-background p-2 shadow-sm sm:p-2.5">
         <div className="relative">
           <div className="grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.9fr)_auto]">
-            <label className="group/search-field flex h-14 items-center gap-3 rounded-2xl border border-brand-border/70 bg-brand-cream/60 px-4 transition-[border-color,background-color,box-shadow] focus-within:border-brand-coral/55 focus-within:bg-card focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-coral-soft text-brand-coral-strong">
-                <SearchIcon className="size-4" />
-              </span>
+            <label className="flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-3.5 transition-colors focus-within:border-foreground">
+              <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
               <input
                 name="q"
                 aria-label="Cerca annunci"
@@ -819,7 +817,7 @@ function ListingSearchForm({
                 maxLength={120}
                 placeholder="Nome, carattere o parola chiave"
                 autoComplete="off"
-                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/65"
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
               />
             </label>
 
@@ -834,7 +832,7 @@ function ListingSearchForm({
                 variant="outline"
                 size="lg"
                 onClick={() => setFiltersOpen((current) => !current)}
-                className="h-14 rounded-2xl border-brand-border/70 bg-brand-cream/60 px-5 text-sm font-semibold text-brand-teal-ink hover:border-brand-coral/40 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+                className="h-12 px-4 text-sm"
                 aria-expanded={filtersOpen}
               >
                 <SlidersHorizontalIcon
@@ -843,7 +841,7 @@ function ListingSearchForm({
                 />
                 Filtri
                 {activeFilterCount > 0 ? (
-                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-coral-strong px-1.5 text-[10px] font-bold text-brand-cream">
+                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-semibold text-accent-foreground">
                     {activeFilterCount}
                   </span>
                 ) : null}
@@ -851,8 +849,9 @@ function ListingSearchForm({
 
               <Button
                 type="submit"
+                variant="accent"
                 size="lg"
-                className="h-14 rounded-2xl bg-brand-teal-ink px-6 text-sm font-semibold text-brand-cream shadow-[0_24px_36px_-22px_rgba(0,0,0,0.45)] hover:bg-brand-coral-strong"
+                className="h-12 px-5 text-sm"
               >
                 <SearchIcon aria-hidden="true" data-icon="inline-start" />
                 Cerca
@@ -861,10 +860,10 @@ function ListingSearchForm({
           </div>
 
           {position ? (
-            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-brand-teal/16 bg-brand-teal-soft px-3 py-2 text-xs text-brand-teal-ink">
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-xs text-foreground">
               <LocateFixedIcon
                 aria-hidden="true"
-                className="size-3.5 text-primary"
+                className="size-3.5 text-muted-foreground"
               />
               <span>La tua posizione, entro {filters.radiusKm} km</span>
             </div>
@@ -879,7 +878,7 @@ function ListingSearchForm({
             )}
           >
             <div className="overflow-hidden">
-              <div className="mt-3 rounded-2xl border border-brand-border/50 bg-brand-cream/55 p-4 sm:p-5">
+              <div className="mt-3 rounded-xl border border-border bg-secondary/40 p-4 sm:p-5">
                 {filterControls}
               </div>
             </div>

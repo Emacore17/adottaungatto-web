@@ -40,7 +40,7 @@ export default async function AccountSecurityPage({
             Sicurezza
           </Badge>
           <div className="grid gap-2">
-            <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
+            <h1 className="text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-4xl">
               Cambia password
             </h1>
             <p className="text-sm leading-6 text-muted-foreground">

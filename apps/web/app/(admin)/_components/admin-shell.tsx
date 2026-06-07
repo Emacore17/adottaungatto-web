@@ -46,12 +46,12 @@ function AdminShell({ children }: AdminShellProps) {
           <div className="flex flex-col gap-4">
             <SiteLogoLink logoClassName="w-52" />
             <div className="flex flex-wrap gap-2">
-              <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+              <Badge className="bg-secondary text-foreground">
                 Admin
               </Badge>
               <Badge
                 variant="outline"
-                className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                className="border-border bg-emerald-50 text-foreground"
               >
                 <ShieldCheckIcon aria-hidden="true" data-icon="inline-start" />
                 Protetto
@@ -111,13 +111,13 @@ function AdminShell({ children }: AdminShellProps) {
             </div>
 
             <div className="flex items-center justify-between gap-3">
-              <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+              <Badge className="bg-secondary text-foreground">
                 <GaugeIcon aria-hidden="true" data-icon="inline-start" />
                 Area admin
               </Badge>
               <Badge
                 variant="outline"
-                className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+                className="border-border bg-emerald-50 text-foreground"
               >
                 Protetto
               </Badge>

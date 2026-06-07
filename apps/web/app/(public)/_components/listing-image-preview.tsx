@@ -79,16 +79,11 @@ function ListingImagePreview({
           />
         ))
       ) : (
-        <div
-          className={cn(
-            "flex size-full flex-col items-center justify-center gap-3 px-4 text-center",
-            "bg-[linear-gradient(135deg,var(--color-brand-cream)_0%,color-mix(in_oklab,var(--color-brand-teal-soft)_72%,var(--color-brand-cream))_100%)]"
-          )}
-        >
-          <span className="flex size-14 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong shadow-[0_8px_18px_-12px_rgba(0,0,0,0.25)]">
-            <ImageIcon aria-hidden="true" className="size-6" />
+        <div className="flex size-full flex-col items-center justify-center gap-3 bg-secondary px-4 text-center">
+          <span className="flex size-12 items-center justify-center rounded-full bg-background text-muted-foreground">
+            <ImageIcon aria-hidden="true" className="size-5" />
           </span>
-          <span className="text-[10px] font-semibold tracking-[0.24em] text-brand-teal-ink uppercase">
+          <span className="text-xs font-medium text-muted-foreground">
             Foto in arrivo
           </span>
         </div>

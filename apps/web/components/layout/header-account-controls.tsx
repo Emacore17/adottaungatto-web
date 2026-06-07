@@ -166,12 +166,12 @@ function HeaderNotificationsMenu() {
               ? `${displayedUnreadCount} notifiche non lette`
               : "Apri notifiche"
           }
-          className="relative rounded-full border border-border/70 bg-card/78 text-brand-teal-ink shadow-sm hover:bg-brand-teal-soft hover:text-brand-teal-strong"
+          className="relative rounded-full border border-border/70 bg-card/78 text-foreground shadow-sm hover:bg-secondary hover:text-foreground"
         >
           <BellIcon aria-hidden="true" />
           {hasUnread ? (
             <span
-              className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-coral-strong px-1.5 text-[0.65rem] leading-none font-semibold text-brand-cream ring-2 ring-brand-cream"
+              className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[0.65rem] leading-none font-semibold text-background ring-2 ring-brand-cream"
               data-notification-badge
               data-unread-count={displayedUnreadCount}
             >
@@ -305,7 +305,7 @@ function NotificationPreviewItem({
       >
         <span className="flex min-w-0 items-center gap-2">
           {!notification.readAt ? (
-            <span className="size-2 shrink-0 rounded-full bg-brand-coral-strong" />
+            <span className="size-2 shrink-0 rounded-full bg-accent" />
           ) : null}
           <span className="truncate text-sm font-semibold">{title}</span>
         </span>
@@ -359,10 +359,10 @@ function HeaderUserMenu({ user }: { user: AuthUser }) {
           variant="ghost"
           size="icon"
           aria-label="Apri menu account"
-          className="rounded-full border border-border/70 bg-card/78 p-0 shadow-sm hover:bg-brand-teal-soft"
+          className="rounded-full border border-border/70 bg-card/78 p-0 shadow-sm hover:bg-secondary"
         >
           <Avatar size="default">
-            <AvatarFallback className="bg-brand-teal-soft text-xs font-semibold text-brand-teal-ink">
+            <AvatarFallback className="bg-secondary text-xs font-semibold text-foreground">
               {getUserInitials(user.displayName)}
             </AvatarFallback>
           </Avatar>

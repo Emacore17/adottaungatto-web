@@ -62,15 +62,15 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
   return (
     <Link
       href={routes.listing(listing.id)}
-      className="group relative flex flex-col overflow-hidden rounded-2xl bg-card text-card-foreground shadow-[0_18px_40px_-32px_rgba(60,30,10,0.5)] ring-1 ring-brand-border/70 transition-[transform,box-shadow,ring-color] hover:-translate-y-1 hover:shadow-[0_28px_56px_-30px_rgba(60,30,10,0.45)] hover:ring-brand-coral/40"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background transition-shadow hover:shadow-md"
     >
-      <div className="relative aspect-[5/4] overflow-hidden bg-muted">
+      <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         {coverUrl ? (
           <StorageImage
             src={coverUrl}
             alt={listing.title}
             fill
-            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             sizes="(min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
           />
         ) : (
@@ -78,19 +78,15 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
             <ImageIcon aria-hidden="true" className="size-6" />
           </div>
         )}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/35 via-black/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        />
       </div>
-      <div className="grid gap-2 px-4 py-4">
-        <h3 className="font-heading line-clamp-2 text-lg leading-tight font-medium tracking-[-0.01em] text-brand-teal-ink transition-colors group-hover:text-brand-coral-strong">
+      <div className="flex flex-col gap-1 p-4">
+        <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-foreground">
           {listing.title}
         </h3>
-        <p className="flex items-center gap-1.5 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon
             aria-hidden="true"
-            className="size-3.5 shrink-0 text-brand-coral-strong"
+            className="size-3.5 shrink-0 text-muted-foreground"
           />
           <span className="truncate">{locationLabel}</span>
         </p>
@@ -107,8 +103,8 @@ function NearbyState({
   children: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg border bg-card/88 px-4 py-5 text-card-foreground shadow-sm">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-muted-foreground">{children}</p>
         {action}
       </div>
@@ -345,23 +341,23 @@ function NearbyListingsSection() {
   return (
     <section
       id="annunci-vicino-a-te"
-      className="border-t border-brand-teal/10 bg-[linear-gradient(180deg,var(--color-brand-cream)_0%,color-mix(in_oklab,var(--color-brand-teal-soft)_64%,var(--color-brand-cream))_100%)]"
+      className="border-t border-border bg-background"
     >
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-16 sm:gap-10 sm:px-6 sm:py-20 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-16 sm:gap-10 sm:px-6 sm:py-20 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-          <div className="flex flex-col gap-3">
-            <span className="text-[11px] font-semibold tracking-[0.28em] text-brand-coral-strong uppercase">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
               Esplora
-            </span>
-            <h2 className="font-heading text-3xl leading-[1.05] font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl lg:text-5xl">
-              Annunci <em className="italic text-brand-coral-strong">vicino a te</em>
             </h2>
-            <p className="max-w-md text-sm text-muted-foreground sm:text-base">
+            <p className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Annunci vicino a te
+            </p>
+            <p className="max-w-md text-sm text-muted-foreground">
               Le schede piu fresche, ordinate per distanza. Attiva la posizione
               per restringere il raggio.
             </p>
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
@@ -380,13 +376,8 @@ function NearbyListingsSection() {
                   ? "Aggiorna"
                   : "Usa posizione"}
             </Button>
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-brand-coral-strong hover:bg-brand-coral-soft hover:text-brand-coral-strong"
-            >
-              <Link href={allNearbyHref}>Vedi tutti</Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href={allNearbyHref}>Vedi tutti →</Link>
             </Button>
           </div>
         </div>
@@ -396,7 +387,7 @@ function NearbyListingsSection() {
             {fallbackMessage ? (
               <NearbyState>{fallbackMessage}</NearbyState>
             ) : null}
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map((listing) => (
                 <NearbyListingCard key={listing.id} listing={listing} />
               ))}

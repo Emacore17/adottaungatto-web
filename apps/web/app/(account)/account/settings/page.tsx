@@ -72,12 +72,12 @@ export default async function AccountSettingsPage({
         <div className="flex flex-col gap-3">
           <Badge
             variant="outline"
-            className="w-fit border-brand-teal/25 bg-brand-teal-soft text-brand-teal-ink"
+            className="w-fit border-border bg-secondary text-foreground"
           >
             Impostazioni
           </Badge>
           <div className="grid gap-2">
-            <h1 className="font-heading text-3xl font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-4xl">
+            <h1 className="text-3xl font-normal tracking-[-0.015em] text-foreground sm:text-4xl">
               Profilo e preferenze
             </h1>
             <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -165,7 +165,7 @@ function ProfileForm({ profile }: { profile: CurrentUserProfile }) {
                     variant={phoneVerified ? "secondary" : "outline"}
                     className={
                       phoneVerified
-                        ? "w-fit bg-brand-teal-soft text-brand-teal-ink"
+                        ? "w-fit bg-secondary text-foreground"
                         : "w-fit"
                     }
                   >
@@ -250,9 +250,9 @@ function ProfileForm({ profile }: { profile: CurrentUserProfile }) {
           </div>
         </form>
         {profile.phoneE164 && !phoneVerified ? (
-          <div className="mt-6 grid gap-3 rounded-md border border-brand-teal/18 bg-brand-teal-soft/55 p-4">
+          <div className="mt-6 grid gap-3 rounded-md border border-border bg-secondary/55 p-4">
             <div className="flex flex-col gap-1">
-              <p className="text-sm font-medium text-brand-teal-ink">
+              <p className="text-sm font-medium text-foreground">
                 Verifica telefono
               </p>
               <p className="text-sm text-muted-foreground">

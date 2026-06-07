@@ -51,7 +51,7 @@ type DraftEditorFormProps = {
 }
 
 const booleanSelectOptions = [
-  { label: "Non indicato", value: "" },
+  { label: "Non indicato", value: "__none__" },
   { label: "Si", value: "true" },
   { label: "No", value: "false" },
 ] as const
@@ -229,7 +229,7 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
                   </FieldContent>
                 </Field>
 
-                <div className="rounded-md border border-brand-teal/15 bg-brand-teal-soft/40 p-4">
+                <div className="rounded-md border border-border bg-secondary/40 p-4">
                   <div className="grid gap-4">
                     <Field>
                       <FieldLabel htmlFor="contactPhoneMode">
@@ -266,7 +266,7 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
                     </Field>
 
                     {!accountPhoneReady ? (
-                      <p className="rounded-md border border-brand-amber/25 bg-brand-amber-soft px-3 py-2 text-sm text-brand-teal-ink">
+                      <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
                         Per usare il telefono account devi prima aggiungerlo e
                         verificarlo nel profilo.
                       </p>
@@ -391,9 +391,9 @@ function ListingPhoneVerificationPanel({
   const isVerified = Boolean(draft.contactPhone.phoneVerifiedAt)
 
   return (
-    <div className="mt-6 grid gap-4 rounded-md border border-brand-olive/25 bg-brand-olive-soft p-4">
+    <div className="mt-6 grid gap-4 rounded-md border border-border bg-emerald-50 p-4">
       <div className="flex items-start gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-brand-teal-ink">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground">
           {isVerified ? (
             <ShieldCheckIcon className="size-4" aria-hidden="true" />
           ) : (
@@ -401,7 +401,7 @@ function ListingPhoneVerificationPanel({
           )}
         </span>
         <div className="grid gap-1 text-sm">
-          <p className="font-medium text-brand-teal-ink">
+          <p className="font-medium text-foreground">
             {isVerified ? "Telefono verificato" : "Verifica telefono annuncio"}
           </p>
           <p className="text-muted-foreground">
@@ -475,7 +475,7 @@ function formatNullableBoolean(value: boolean | null | undefined) {
     return "false"
   }
 
-  return ""
+  return "__none__"
 }
 
 export { DraftEditorForm }

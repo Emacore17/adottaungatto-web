@@ -102,13 +102,13 @@ export default async function ModerationQueuePage({
         <div className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
           <div className="grid gap-3">
             <div className="flex flex-wrap gap-2">
-              <Badge className="w-fit bg-brand-teal-soft text-brand-teal-ink">
+              <Badge className="w-fit bg-secondary text-foreground">
                 <ListChecksIcon aria-hidden="true" data-icon="inline-start" />
                 Coda rapida
               </Badge>
               <Badge
                 variant="outline"
-                className="w-fit border-brand-amber/30 bg-brand-amber-soft text-brand-teal-ink"
+                className="w-fit border-border bg-secondary text-foreground"
               >
                 Vista tabellare
               </Badge>

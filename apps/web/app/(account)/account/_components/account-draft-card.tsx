@@ -25,11 +25,11 @@ function AccountDraftCard({ draft, returnPath }: AccountDraftCardProps) {
   const isPendingReview = draft.moderationStatus === "pending_review"
 
   return (
-    <Card className="ring-brand-amber/20 hover:ring-brand-amber/40">
+    <Card className="ring-border hover:ring-border">
       <CardContent className="flex flex-col gap-4 p-4">
         <div className="grid gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="bg-brand-amber-soft text-brand-teal-ink">
+            <Badge className="bg-secondary text-foreground">
               {isPendingReview ? "In revisione" : "In lavorazione"}
             </Badge>
             <Badge variant="outline">{formatSex(draft.sex)}</Badge>

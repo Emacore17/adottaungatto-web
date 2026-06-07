@@ -272,13 +272,13 @@ function ModerationQueueRow({
       <td className="max-w-[24rem] px-3 py-3 align-top">
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-wrap gap-1.5">
-            <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+            <Badge className="bg-secondary text-foreground">
               {formatModerationStatus(item.listing.moderationStatus)}
             </Badge>
             {reportCount !== null ? (
               <Badge
                 variant="outline"
-                className="border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                className="border-accent bg-accent/10 text-accent"
               >
                 <AlertTriangleIcon
                   aria-hidden="true"
@@ -294,7 +294,7 @@ function ModerationQueueRow({
             {item.listing.description}
           </span>
           {latestReport?.description ? (
-            <span className="line-clamp-1 text-xs text-brand-coral-strong">
+            <span className="line-clamp-1 text-xs text-accent">
               Report: {latestReport.description}
             </span>
           ) : null}
@@ -390,13 +390,13 @@ function MobileModerationCard({
           />
           <div className="grid min-w-0 flex-1 gap-1.5">
             <div className="flex flex-wrap gap-1.5">
-              <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+              <Badge className="bg-secondary text-foreground">
                 {formatModerationStatus(item.listing.moderationStatus)}
               </Badge>
               {reportCount !== null ? (
                 <Badge
                   variant="outline"
-                  className="border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                  className="border-accent bg-accent/10 text-accent"
                 >
                   <AlertTriangleIcon
                     aria-hidden="true"
@@ -509,7 +509,7 @@ function InfoBlock({
       <span
         className={cn(
           "truncate font-medium",
-          tone === "danger" ? "text-brand-coral-strong" : undefined
+          tone === "danger" ? "text-accent" : undefined
         )}
       >
         {value}
@@ -599,7 +599,7 @@ function ImagePreviewButton({
                 <figcaption className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
                   <span>Foto {index + 1}</span>
                   {image.isCover ? (
-                    <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+                    <Badge className="bg-secondary text-foreground">
                       Cover
                     </Badge>
                   ) : null}
@@ -686,7 +686,7 @@ function AssignmentBadge({
   return (
     <Badge
       variant="outline"
-      className="border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+      className="border-border bg-emerald-50 text-foreground"
     >
       <UserCheckIcon aria-hidden="true" data-icon="inline-start" />
       In carico

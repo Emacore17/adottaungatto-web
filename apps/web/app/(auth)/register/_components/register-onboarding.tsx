@@ -61,25 +61,25 @@ const profileOptions: Array<{
   {
     icon: UserRoundIcon,
     label: "Privato",
-    tone: "bg-brand-teal-soft text-brand-teal-ink",
+    tone: "bg-secondary text-foreground",
     value: "private",
   },
   {
     icon: HomeIcon,
     label: "Rifugio",
-    tone: "bg-brand-amber-soft text-brand-ink",
+    tone: "bg-secondary text-foreground",
     value: "shelter",
   },
   {
     icon: HeartHandshakeIcon,
     label: "Associazione",
-    tone: "bg-brand-coral-soft text-brand-ink",
+    tone: "bg-accent/10 text-foreground",
     value: "association",
   },
   {
     icon: Building2Icon,
     label: "Allevatore",
-    tone: "bg-brand-olive-soft text-brand-teal-ink",
+    tone: "bg-emerald-50 text-foreground",
     value: "breeder",
   },
 ]
@@ -93,7 +93,7 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
   )
 
   return (
-    <Card className="w-full max-w-md border-brand-teal/18 bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-brand-teal/18 supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
+    <Card className="w-full max-w-md border-border bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-border supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
       <CardHeader className="gap-3 px-5 pt-6 pb-2 sm:px-6 sm:pt-7">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-2xl">
@@ -138,7 +138,7 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                       className={cn(
                         "group relative flex min-h-32 cursor-pointer flex-col justify-between overflow-hidden rounded-lg border bg-card/76 p-3 shadow-sm transition-[border-color,box-shadow,transform,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 hover:-translate-y-0.5 hover:border-primary/35 sm:min-h-36",
                         selected &&
-                          "border-primary bg-brand-teal-soft/70 shadow-[0_20px_52px_-42px_color-mix(in_oklab,var(--color-primary)_82%,transparent)]"
+                          "border-primary bg-secondary/70 shadow-[0_20px_52px_-42px_color-mix(in_oklab,var(--color-primary)_82%,transparent)]"
                       )}
                     >
                       <input

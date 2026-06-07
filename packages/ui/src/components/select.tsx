@@ -37,17 +37,17 @@ function SelectTrigger({
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group/select-trigger flex w-full items-center justify-between gap-2 rounded-xl border border-brand-border/70 bg-card px-3.5 text-sm font-medium text-brand-teal-ink shadow-none transition-[border-color,background-color,box-shadow] outline-none",
-        "placeholder:text-muted-foreground/65",
-        "hover:border-brand-coral/35 hover:bg-brand-cream/60",
-        "focus-visible:border-brand-coral/55 focus-visible:bg-card focus-visible:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]",
-        "data-[state=open]:border-brand-coral/55 data-[state=open]:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]",
-        "data-[placeholder]:text-muted-foreground",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        "aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20",
+        "group/select-trigger flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-background px-3.5 text-sm text-foreground transition-colors outline-none",
+        "placeholder:text-muted-foreground/70",
+        "hover:border-foreground/40",
+        "focus-visible:border-foreground",
+        "data-[state=open]:border-foreground",
+        "data-[placeholder]:text-muted-foreground/70",
+        "disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground",
+        "aria-invalid:border-destructive",
         "data-[size=sm]:h-9 data-[size=sm]:text-[13px]",
         "data-[size=default]:h-11",
-        "data-[size=lg]:h-14 data-[size=lg]:text-base",
+        "data-[size=lg]:h-12 data-[size=lg]:text-base",
         className
       )}
       {...props}
@@ -56,7 +56,7 @@ function SelectTrigger({
       <SelectPrimitive.Icon asChild>
         <ChevronDownIcon
           aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/select-trigger:rotate-180 group-data-[state=open]/select-trigger:text-brand-coral-strong"
+          className="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-data-[state=open]/select-trigger:rotate-180"
         />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
@@ -74,7 +74,7 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          "relative z-[100] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] overflow-hidden rounded-2xl border border-brand-border/60 bg-popover p-1.5 text-popover-foreground shadow-[0_36px_72px_-32px_rgba(60,30,10,0.45)]",
+          "relative z-[100] max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] overflow-hidden rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg shadow-zinc-900/5",
           "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           "data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2",
           position === "popper" &&
@@ -109,7 +109,7 @@ function SelectLabel({
     <SelectPrimitive.Label
       data-slot="select-label"
       className={cn(
-        "px-3 py-1.5 text-[10px] font-semibold tracking-[0.22em] text-brand-coral-strong uppercase",
+        "px-3 py-1.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase",
         className
       )}
       {...props}
@@ -126,9 +126,9 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-2 pr-9 pl-3 text-sm text-brand-teal-ink outline-none select-none",
-        "focus:bg-brand-coral-soft focus:text-brand-coral-strong",
-        "data-[state=checked]:bg-brand-teal-soft data-[state=checked]:text-brand-teal-ink",
+        "relative flex w-full cursor-pointer items-center gap-2 rounded-md py-2 pr-9 pl-3 text-sm text-foreground outline-none select-none",
+        "focus:bg-secondary",
+        "data-[state=checked]:bg-secondary data-[state=checked]:font-medium",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className
       )}
@@ -136,10 +136,7 @@ function SelectItem({
     >
       <span className="absolute right-2.5 flex size-4 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <CheckIcon
-            aria-hidden="true"
-            className="size-4 text-brand-coral-strong"
-          />
+          <CheckIcon aria-hidden="true" className="size-4 text-foreground" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -154,7 +151,7 @@ function SelectSeparator({
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
-      className={cn("-mx-1 my-1 h-px bg-brand-border/60", className)}
+      className={cn("-mx-1 my-1 h-px bg-border", className)}
       {...props}
     />
   )

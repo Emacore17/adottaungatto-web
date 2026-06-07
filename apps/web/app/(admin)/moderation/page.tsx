@@ -130,12 +130,12 @@ export default async function ModerationPage({
       <section className="grid gap-4 rounded-lg border bg-card p-4 shadow-sm sm:p-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
         <div className="grid gap-3">
           <div className="flex flex-wrap gap-2">
-            <Badge className="w-fit bg-brand-teal-soft text-brand-teal-ink">
+            <Badge className="w-fit bg-secondary text-foreground">
               Dashboard moderazione
             </Badge>
             <Badge
               variant="outline"
-              className="w-fit border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
+              className="w-fit border-border bg-emerald-50 text-foreground"
             >
               Area interna
             </Badge>
@@ -256,8 +256,8 @@ function MetricCard({
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-md",
             icon === "reported"
-              ? "bg-brand-coral-soft text-brand-coral-strong"
-              : "bg-brand-teal-soft text-brand-teal-ink"
+              ? "bg-accent/10 text-accent"
+              : "bg-secondary text-foreground"
           )}
         >
           <Icon aria-hidden="true" />
@@ -472,13 +472,13 @@ function QueuePreviewRow({ item }: { item: ModerationPreviewItem }) {
 
       <div className="grid min-w-0 gap-1">
         <div className="flex flex-wrap gap-1.5">
-          <Badge className="bg-brand-teal-soft text-brand-teal-ink">
+          <Badge className="bg-secondary text-foreground">
             {formatModerationStatus(item.listing.moderationStatus)}
           </Badge>
           {reportCount !== null ? (
             <Badge
               variant="outline"
-              className="border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+              className="border-accent bg-accent/10 text-accent"
             >
               {reportCount} report
             </Badge>
@@ -658,18 +658,18 @@ function getRecentActionBadgeClass(
   value: ModerationRecentActionItem["action"]["type"]
 ) {
   if (value === "approved") {
-    return "bg-brand-teal-soft text-brand-teal-ink"
+    return "bg-secondary text-foreground"
   }
 
   if (value === "rejected" || value === "reported") {
-    return "bg-brand-coral-soft text-brand-coral-strong"
+    return "bg-accent/10 text-accent"
   }
 
   if (value === "suspended") {
-    return "bg-brand-amber-soft text-brand-teal-ink"
+    return "bg-secondary text-foreground"
   }
 
-  return "bg-brand-olive-soft text-brand-teal-ink"
+  return "bg-emerald-50 text-foreground"
 }
 
 function isApiStatus<T>(result: QueueResult<T>, status: number) {

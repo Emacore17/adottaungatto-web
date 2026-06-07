@@ -25,7 +25,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
     : "Italia"
 
   return (
-    <Card className="ring-brand-coral/15 hover:ring-brand-coral/30">
+    <Card className="ring-accent/30 hover:ring-accent/30">
       <CardContent className="grid gap-4 p-4 sm:grid-cols-[8rem_minmax(0,1fr)]">
         <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-muted sm:aspect-square">
           {coverUrl ? (
@@ -46,7 +46,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
         <div className="flex min-w-0 flex-col gap-3">
           <div className="grid gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-brand-coral-soft text-brand-coral-strong">
+              <Badge className="bg-accent/10 text-accent">
                 Preferito
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -71,7 +71,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
                 asChild
                 variant="outline"
                 size="sm"
-                className="hover:border-brand-coral/35 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
+                className="hover:border-accent hover:bg-accent/10 hover:text-accent"
               >
                 <Link href={routes.listing(listing.id)}>Apri annuncio</Link>
               </Button>

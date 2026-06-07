@@ -198,15 +198,13 @@ function PlaceAutocompleteInput({
     <div className="relative min-w-0" ref={rootRef}>
       <label
         className={cn(
-          "flex h-14 items-center gap-3 rounded-2xl border border-brand-border/70 bg-brand-cream/60 px-4 transition-[border-color,background-color,box-shadow]",
-          "focus-within:border-brand-coral/55 focus-within:bg-card focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]",
-          loading && "border-brand-teal/40 bg-card"
+          "flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-3.5 transition-colors",
+          "focus-within:border-foreground",
+          loading && "border-foreground"
         )}
         htmlFor={inputId}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong">
-          <MapPinIcon className="size-4" />
-        </span>
+        <MapPinIcon className="size-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1">
           <input
             id={inputId}
@@ -263,7 +261,7 @@ function PlaceAutocompleteInput({
                 setActiveIndex(-1)
               }
             }}
-            className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/65"
+            className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/70"
           />
         </span>
 
@@ -305,7 +303,7 @@ function PlaceAutocompleteInput({
                 top: listboxPosition.top,
                 width: listboxPosition.width,
               }}
-              className="fixed z-50 overflow-y-auto rounded-2xl border border-brand-border/60 bg-popover p-2 text-popover-foreground shadow-[0_32px_72px_-32px_rgba(60,30,10,0.45)]"
+              className="fixed z-[100] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg shadow-zinc-900/5"
             >
               {loading ? (
                 <div
