@@ -198,13 +198,13 @@ function PlaceAutocompleteInput({
     <div className="relative min-w-0" ref={rootRef}>
       <label
         className={cn(
-          "flex h-14 items-center gap-3 rounded-lg border border-brand-coral/20 bg-card/88 px-3 shadow-xs transition-[border-color,box-shadow,background-color]",
-          "focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]",
+          "flex h-14 items-center gap-3 rounded-2xl border border-brand-border/70 bg-brand-cream/60 px-4 transition-[border-color,background-color,box-shadow]",
+          "focus-within:border-brand-coral/55 focus-within:bg-card focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]",
           loading && "border-brand-teal/40 bg-card"
         )}
         htmlFor={inputId}
       >
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-coral-soft text-brand-coral-strong">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong">
           <MapPinIcon className="size-4" />
         </span>
         <span className="min-w-0 flex-1">
@@ -263,7 +263,7 @@ function PlaceAutocompleteInput({
                 setActiveIndex(-1)
               }
             }}
-            className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
+            className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/65"
           />
         </span>
 
@@ -305,7 +305,7 @@ function PlaceAutocompleteInput({
                 top: listboxPosition.top,
                 width: listboxPosition.width,
               }}
-              className="fixed z-50 overflow-y-auto rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-[0_24px_70px_-46px_color-mix(in_oklab,var(--color-brand-teal-ink)_56%,transparent)]"
+              className="fixed z-50 overflow-y-auto rounded-2xl border border-brand-border/60 bg-popover p-2 text-popover-foreground shadow-[0_32px_72px_-32px_rgba(60,30,10,0.45)]"
             >
               {loading ? (
                 <div

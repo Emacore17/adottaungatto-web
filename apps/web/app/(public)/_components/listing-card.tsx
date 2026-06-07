@@ -12,15 +12,6 @@ import { formatAgeMonths, formatListingPrice } from "@/lib/listings/format"
 import { routes } from "@/lib/routes"
 import { Badge } from "@workspace/ui/components/badge"
 import { Button } from "@workspace/ui/components/button"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
 import { cn } from "@workspace/ui/lib/utils"
 
 type ListingCardProps = {
@@ -45,109 +36,118 @@ function ListingCard({
   const isSponsored = listing.sponsorship.isSponsored
 
   return (
-    <Card
-      size="sm"
+    <article
       className={cn(
-        "group relative gap-0 overflow-hidden rounded-3xl border-0 p-0 shadow-[0_18px_44px_-32px_rgba(60,30,10,0.55)] ring-1 ring-brand-border/70 transition-[transform,box-shadow,ring-color] hover:-translate-y-1 hover:shadow-[0_36px_70px_-32px_rgba(60,30,10,0.55)] hover:ring-brand-coral/45",
-        isSponsored
-          ? "bg-gradient-to-br from-brand-amber-soft/70 via-card to-card ring-brand-amber/55"
-          : "bg-card"
+        "group relative flex flex-col overflow-hidden rounded-[28px] bg-card ring-1 ring-brand-border/60 shadow-[0_24px_48px_-36px_rgba(60,30,10,0.45)] transition-[transform,box-shadow,ring-color] hover:-translate-y-1 hover:shadow-[0_44px_80px_-32px_rgba(60,30,10,0.4)] hover:ring-brand-coral/45 md:flex-row",
+        isSponsored && "ring-brand-amber/55"
       )}
     >
-      <div className="flex flex-col sm:grid sm:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)]">
+      <div
+        className={cn(
+          "relative isolate flex aspect-[5/4] w-full overflow-hidden md:aspect-auto md:w-[44%] md:min-h-[22rem]",
+          isSponsored ? "bg-brand-amber-soft/70" : "bg-secondary"
+        )}
+      >
+        <ListingImagePreview
+          href={routes.listing(listing.id)}
+          images={previewImages}
+          title={listing.title}
+          priority={priority}
+        />
+
         <div
-          className={cn(
-            "relative aspect-[4/3] overflow-hidden sm:aspect-auto sm:min-h-72",
-            isSponsored ? "bg-brand-amber-soft/70" : "bg-secondary"
-          )}
-        >
-          <ListingImagePreview
-            href={routes.listing(listing.id)}
-            images={previewImages}
-            title={listing.title}
-            priority={priority}
-          />
-          {isSponsored ? (
-            <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-brand-amber px-3 py-1 text-[10px] font-semibold tracking-[0.18em] text-brand-teal-ink uppercase shadow-sm">
-              {listing.sponsorship.label ?? "Sponsorizzato"}
-            </span>
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-2/3 bg-gradient-to-t from-black/55 via-black/15 to-transparent"
+        />
+
+        {isSponsored ? (
+          <span className="absolute top-4 left-4 z-10 inline-flex items-center gap-1 rounded-full bg-brand-amber px-3 py-1 text-[10px] font-semibold tracking-[0.2em] text-brand-teal-ink uppercase shadow-[0_4px_14px_-4px_rgba(0,0,0,0.25)]">
+            {listing.sponsorship.label ?? "Sponsorizzato"}
+          </span>
+        ) : null}
+
+        <ListingFavoriteToggle
+          className="absolute top-4 right-4 z-10"
+          initialFavoriteCount={listing.stats.favoriteCount}
+          isAuthenticated={isAuthenticated}
+          isFavorite={isFavorite}
+          listingId={listing.id}
+          nextPath={nextPath}
+        />
+
+        <div className="absolute inset-x-5 bottom-5 z-[2] flex items-center gap-2 text-brand-cream">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[10px] font-semibold tracking-[0.22em] text-white uppercase backdrop-blur">
+            <MapPinIcon aria-hidden="true" className="size-3" />
+            <span className="truncate">{locationLabel}</span>
+          </span>
+        </div>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-5 px-6 py-6 sm:px-8 sm:py-8">
+        <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-semibold tracking-[0.22em] text-brand-coral-strong uppercase">
+          <span>{formatAgeMonths(listing.ageMonths)}</span>
+          <span aria-hidden="true" className="text-brand-border">·</span>
+          <span
+            className={cn(
+              listing.isFree ? "text-brand-olive-strong" : "text-brand-coral-strong"
+            )}
+          >
+            {formatListingPrice(listing)}
+          </span>
+          {listing.breed ? (
+            <>
+              <span aria-hidden="true" className="text-brand-border">·</span>
+              <span className="text-brand-teal-ink">{listing.breed.name}</span>
+            </>
           ) : null}
-          <ListingFavoriteToggle
-            className="absolute top-3 right-3 z-10"
-            initialFavoriteCount={listing.stats.favoriteCount}
-            isAuthenticated={isAuthenticated}
-            isFavorite={isFavorite}
-            listingId={listing.id}
-            nextPath={nextPath}
-          />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col gap-5 px-5 py-6 sm:px-7 sm:py-7">
-          <CardHeader className="p-0">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-[0.22em] text-brand-coral-strong uppercase">
-              <MapPinIcon
-                data-icon="inline-start"
-                aria-hidden="true"
-                className="size-3.5"
-              />
-              <span className="truncate">{locationLabel}</span>
-            </p>
-            <CardTitle className="font-heading text-2xl leading-[1.1] font-normal tracking-[-0.015em] text-brand-teal-ink sm:text-[1.65rem]">
-              <Link
-                href={routes.listing(listing.id)}
-                className="transition-colors group-hover:text-brand-coral-strong"
-              >
-                {listing.title}
-              </Link>
-            </CardTitle>
-            <CardDescription className="sr-only">
-              {locationLabel}
-            </CardDescription>
-            <CardAction className="hidden" />
-          </CardHeader>
+        <h3 className="font-heading text-[1.75rem] leading-[1.05] font-normal tracking-[-0.02em] text-brand-teal-ink sm:text-3xl">
+          <Link
+            href={routes.listing(listing.id)}
+            className="transition-colors group-hover:text-brand-coral-strong"
+          >
+            {listing.title}
+          </Link>
+        </h3>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge
-              variant="outline"
-              className="rounded-full border-brand-teal/25 bg-brand-teal-soft px-3 py-1 text-[11px] font-medium text-brand-teal-ink"
-            >
-              {formatAgeMonths(listing.ageMonths)}
-            </Badge>
+        <p className="line-clamp-3 text-[15px] leading-7 text-muted-foreground sm:text-base sm:leading-[1.8]">
+          {listing.description}
+        </p>
+
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div className="flex items-center gap-2">
             <Badge
               variant="outline"
               className={cn(
-                "rounded-full px-3 py-1 text-[11px] font-medium",
+                "rounded-full border-0 px-3 py-1 text-[11px] font-medium",
                 listing.isFree
-                  ? "border-brand-olive/30 bg-brand-olive-soft text-brand-teal-ink"
-                  : "border-brand-coral/25 bg-brand-coral-soft text-brand-coral-strong"
+                  ? "bg-brand-olive-soft text-brand-olive-strong"
+                  : "bg-brand-coral-soft text-brand-coral-strong"
               )}
             >
-              {formatListingPrice(listing)}
+              {listing.isFree ? "Adozione gratuita" : "Contributo"}
             </Badge>
           </div>
 
-          <CardContent className="p-0">
-            <p className="line-clamp-3 text-sm leading-6 text-muted-foreground sm:text-[15px] sm:leading-7">
-              {listing.description}
-            </p>
-          </CardContent>
-
-          <CardFooter className="mt-auto justify-end gap-3 p-0">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="font-medium text-brand-coral-strong hover:bg-brand-coral-soft hover:text-brand-coral-strong"
-            >
-              <Link href={routes.listing(listing.id)}>
-                Apri scheda
-                <span aria-hidden="true" className="ml-0.5 transition-transform group-hover:translate-x-0.5">→</span>
-              </Link>
-            </Button>
-          </CardFooter>
+          <Button
+            asChild
+            size="sm"
+            className="rounded-full bg-brand-teal-ink px-5 text-brand-cream shadow-[0_18px_28px_-20px_rgba(0,0,0,0.35)] hover:bg-brand-coral-strong hover:text-brand-cream"
+          >
+            <Link href={routes.listing(listing.id)}>
+              Apri scheda
+              <span
+                aria-hidden="true"
+                className="ml-1 transition-transform group-hover:translate-x-0.5"
+              >
+                →
+              </span>
+            </Link>
+          </Button>
         </div>
       </div>
-    </Card>
+    </article>
   )
 }
 

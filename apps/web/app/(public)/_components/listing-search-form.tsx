@@ -66,11 +66,13 @@ type RangeKey =
 const maxCatAgeMonths = 360
 const maxContributionEuros = 500
 
-const compactFieldClassName = "grid gap-1.5"
-const compactInputClassName = "h-9 bg-card/88"
-const compactSelectClassName = "w-full"
+const compactFieldClassName = "grid gap-2"
+const compactInputClassName =
+  "h-11 rounded-xl border-brand-border/70 bg-card text-sm shadow-none focus-visible:border-brand-coral/60 focus-visible:ring-brand-coral/15"
+const compactSelectClassName =
+  "w-full [&>select]:h-11 [&>select]:rounded-xl [&>select]:border-brand-border/70 [&>select]:bg-card [&>select]:text-sm [&>select]:font-medium [&>select]:text-brand-teal-ink [&>select]:shadow-none [&>select]:transition-colors [&>select]:focus-visible:border-brand-coral/60 [&>select]:focus-visible:ring-brand-coral/15"
 const filterLabelClassName =
-  "text-xs font-semibold tracking-normal text-muted-foreground uppercase"
+  "text-[10px] font-semibold tracking-[0.24em] text-brand-coral-strong uppercase"
 
 function createInitialPriceMode(
   defaultValues: ListingSearchDefaults
@@ -740,8 +742,8 @@ function ListingSearchForm({
         </div>
       ) : null}
 
-      <fieldset className="rounded-lg border border-brand-olive/20 bg-brand-olive-soft/64 px-3 pt-2 pb-3">
-        <legend className={cn(filterLabelClassName, "px-1")}>
+      <fieldset className="rounded-2xl border border-brand-border/60 bg-brand-cream/40 px-4 pt-3 pb-4">
+        <legend className={cn(filterLabelClassName, "px-2")}>
           Cure e caratteristiche
         </legend>
         <div className="flex flex-wrap gap-2">
@@ -749,10 +751,10 @@ function ListingSearchForm({
             <label
               key={option.key}
               className={cn(
-                "flex min-h-9 cursor-pointer items-center rounded-full border px-3 py-1.5 text-sm font-semibold transition-[border-color,background-color,color,box-shadow] focus-within:border-ring focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_20%,transparent)]",
+                "inline-flex min-h-9 cursor-pointer items-center rounded-full border px-4 py-1.5 text-xs font-semibold tracking-wide transition-[border-color,background-color,color] focus-within:ring-2 focus-within:ring-brand-coral/30",
                 filters[option.key]
-                  ? "border-primary bg-primary text-primary-foreground shadow-[0_10px_24px_-18px_color-mix(in_oklab,var(--color-primary)_72%,transparent)]"
-                  : "border-border bg-card/82 text-muted-foreground hover:border-primary/30 hover:bg-brand-teal-soft hover:text-brand-teal-ink"
+                  ? "border-brand-teal-ink bg-brand-teal-ink text-brand-cream"
+                  : "border-brand-border/70 bg-card text-brand-teal-ink hover:border-brand-coral/40 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
               )}
             >
               <input
@@ -782,25 +784,23 @@ function ListingSearchForm({
         />
       ))}
 
-      <div className="relative overflow-hidden rounded-lg border border-brand-teal/20 bg-[linear-gradient(135deg,color-mix(in_oklab,var(--color-brand-teal-soft)_82%,var(--color-brand-cream))_0%,color-mix(in_oklab,var(--color-brand-coral-soft)_58%,var(--color-brand-cream))_54%,color-mix(in_oklab,var(--color-brand-amber-soft)_78%,var(--color-brand-cream))_100%)] p-2.5 shadow-[0_30px_88px_-56px_color-mix(in_oklab,var(--color-brand-teal-ink)_62%,transparent)] backdrop-blur-2xl">
+      <div className="relative overflow-hidden rounded-[28px] border border-brand-border/60 bg-card/95 p-3 shadow-[0_36px_72px_-44px_rgba(60,30,10,0.4)] backdrop-blur-2xl sm:p-4">
         <div className="relative">
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.08fr)_minmax(16rem,0.92fr)_auto]">
-            <label className="flex h-14 items-center gap-3 rounded-lg border border-brand-teal/22 bg-card/88 px-3 shadow-xs transition-[border-color,box-shadow,background-color] focus-within:border-ring focus-within:bg-card focus-within:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-ring)_22%,transparent)]">
-              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-teal-soft text-brand-teal-strong">
+          <div className="grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.9fr)_auto]">
+            <label className="group/search-field flex h-14 items-center gap-3 rounded-2xl border border-brand-border/70 bg-brand-cream/60 px-4 transition-[border-color,background-color,box-shadow] focus-within:border-brand-coral/55 focus-within:bg-card focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--color-brand-coral)_14%,transparent)]">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-coral-soft text-brand-coral-strong">
                 <SearchIcon className="size-4" />
               </span>
-              <span className="min-w-0 flex-1">
-                <input
-                  name="q"
-                  aria-label="Cerca annunci"
-                  defaultValue={defaultValues.q ?? ""}
-                  minLength={2}
-                  maxLength={120}
-                  placeholder="Nome, carattere o parola chiave"
-                  autoComplete="off"
-                  className="w-full bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/72"
-                />
-              </span>
+              <input
+                name="q"
+                aria-label="Cerca annunci"
+                defaultValue={defaultValues.q ?? ""}
+                minLength={2}
+                maxLength={120}
+                placeholder="Nome, carattere o parola chiave"
+                autoComplete="off"
+                className="min-w-0 flex-1 bg-transparent text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground/65"
+              />
             </label>
 
             <PlaceAutocompleteInput
@@ -814,7 +814,7 @@ function ListingSearchForm({
                 variant="outline"
                 size="lg"
                 onClick={() => setFiltersOpen((current) => !current)}
-                className="h-14 rounded-lg border-brand-amber/30 bg-brand-amber-soft/72 px-4 text-brand-teal-ink hover:bg-brand-amber-soft hover:text-brand-teal-ink"
+                className="h-14 rounded-2xl border-brand-border/70 bg-brand-cream/60 px-5 text-sm font-semibold text-brand-teal-ink hover:border-brand-coral/40 hover:bg-brand-coral-soft hover:text-brand-coral-strong"
                 aria-expanded={filtersOpen}
               >
                 <SlidersHorizontalIcon
@@ -823,7 +823,7 @@ function ListingSearchForm({
                 />
                 Filtri
                 {activeFilterCount > 0 ? (
-                  <span className="ml-1 rounded-full bg-brand-coral-strong px-1.5 py-0.5 text-[0.68rem] leading-none text-brand-cream">
+                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-coral-strong px-1.5 text-[10px] font-bold text-brand-cream">
                     {activeFilterCount}
                   </span>
                 ) : null}
@@ -832,7 +832,7 @@ function ListingSearchForm({
               <Button
                 type="submit"
                 size="lg"
-                className="h-14 rounded-lg px-5 shadow-[0_18px_34px_-26px_color-mix(in_oklab,var(--color-primary)_82%,transparent)]"
+                className="h-14 rounded-2xl bg-brand-teal-ink px-6 text-sm font-semibold text-brand-cream shadow-[0_24px_36px_-22px_rgba(0,0,0,0.45)] hover:bg-brand-coral-strong"
               >
                 <SearchIcon aria-hidden="true" data-icon="inline-start" />
                 Cerca
@@ -859,7 +859,7 @@ function ListingSearchForm({
             )}
           >
             <div className="overflow-hidden">
-              <div className="mt-3 rounded-lg border border-brand-amber/20 bg-card/64 p-3">
+              <div className="mt-3 rounded-2xl border border-brand-border/50 bg-brand-cream/55 p-4 sm:p-5">
                 {filterControls}
               </div>
             </div>
