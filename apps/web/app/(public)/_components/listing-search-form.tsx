@@ -71,7 +71,7 @@ const maxContributionEuros = 500
 
 const compactFieldClassName = "grid gap-2"
 const compactInputClassName =
-  "h-11 rounded-xl border-border/70 bg-card text-sm shadow-none focus-visible:border-accent focus-visible:ring-accent/30"
+  "h-11 rounded-xl border-border bg-background text-sm shadow-none focus-visible:border-primary focus-visible:ring-primary/25"
 const filterLabelClassName =
   "text-[11px] font-semibold tracking-wide text-muted-foreground uppercase"
 
@@ -804,10 +804,10 @@ function ListingSearchForm({
         />
       ))}
 
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-background p-2 shadow-sm sm:p-2.5">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-2 shadow-lg shadow-foreground/5 sm:p-2.5">
         <div className="relative">
           <div className="grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.9fr)_auto]">
-            <label className="flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-3.5 transition-colors focus-within:border-foreground">
+            <label className="flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-4 transition-colors duration-200 focus-within:border-foreground">
               <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
               <input
                 name="q"
@@ -841,7 +841,7 @@ function ListingSearchForm({
                 />
                 Filtri
                 {activeFilterCount > 0 ? (
-                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[10px] font-semibold text-accent-foreground">
+                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
                     {activeFilterCount}
                   </span>
                 ) : null}

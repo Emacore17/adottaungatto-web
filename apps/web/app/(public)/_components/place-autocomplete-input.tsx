@@ -198,7 +198,7 @@ function PlaceAutocompleteInput({
     <div className="relative min-w-0" ref={rootRef}>
       <label
         className={cn(
-          "flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-3.5 transition-colors",
+          "flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-4 transition-colors duration-200",
           "focus-within:border-foreground",
           loading && "border-foreground"
         )}
@@ -303,7 +303,7 @@ function PlaceAutocompleteInput({
                 top: listboxPosition.top,
                 width: listboxPosition.width,
               }}
-              className="fixed z-[100] overflow-y-auto rounded-xl border border-border bg-popover p-1.5 text-popover-foreground shadow-lg shadow-zinc-900/5"
+              className="fixed z-[100] overflow-y-auto rounded-2xl border border-border/70 bg-popover p-1.5 text-popover-foreground shadow-xl shadow-foreground/10"
             >
               {loading ? (
                 <div

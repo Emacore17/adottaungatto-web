@@ -9,20 +9,18 @@ function SiteFooter() {
 
   return (
     <footer className="border-t border-border bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-4 lg:col-span-2">
             <SiteLogoLink logoClassName="h-7 w-auto" />
-            <p className="max-w-sm text-sm leading-6 text-muted-foreground">
-              Marketplace italiano per adozioni responsabili di gatti. Annunci
-              verificati da rifugi, associazioni e famiglie.
+            <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+              Adozioni responsabili di gatti, da rifugi, associazioni e
+              famiglie italiane.
             </p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-xs font-semibold tracking-wide text-foreground uppercase">
-              Esplora
-            </h2>
+            <h2 className="text-sm font-bold text-foreground">Esplora</h2>
             <nav aria-label="Esplora" className="flex flex-col gap-2">
               <Link
                 href={routes.listings()}
@@ -46,9 +44,7 @@ function SiteFooter() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <h2 className="text-xs font-semibold tracking-wide text-foreground uppercase">
-              Legale
-            </h2>
+            <h2 className="text-sm font-bold text-foreground">Legale</h2>
             <nav aria-label="Legale" className="flex flex-col gap-2">
               <span className="text-sm text-muted-foreground">Privacy</span>
               <span className="text-sm text-muted-foreground">Termini</span>

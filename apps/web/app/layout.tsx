@@ -1,16 +1,16 @@
-import { Inter } from "next/font/google"
+import { Plus_Jakarta_Sans } from "next/font/google"
 import type { Viewport } from "next"
 
 import "@workspace/ui/globals.css"
 import { RealtimeNotificationsProvider } from "@/components/providers/realtime-notifications-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
-import { getSessionToken } from "@/lib/auth/session"
+import { resolveAuthenticatedUser } from "@/lib/auth/resolve-user"
 import { siteConfig } from "@/lib/config/site"
 import { createPageMetadata } from "@/lib/seo/metadata"
 import { Toaster } from "@workspace/ui/components/sonner"
 import { cn } from "@workspace/ui/lib/utils"
 
-const inter = Inter({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
@@ -39,19 +39,19 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const token = await getSessionToken()
+  const user = await resolveAuthenticatedUser()
 
   return (
     <html
       lang="it"
       suppressHydrationWarning
-      className={cn("antialiased font-sans", inter.variable)}
+      className={cn("antialiased font-sans", jakarta.variable)}
     >
       <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider>
           <RealtimeNotificationsProvider
-            key={token ? "authenticated" : "anonymous"}
-            enabled={Boolean(token)}
+            key={user ? "authenticated" : "anonymous"}
+            enabled={Boolean(user)}
           >
             {children}
           </RealtimeNotificationsProvider>

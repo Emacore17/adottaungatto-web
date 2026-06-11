@@ -37,8 +37,7 @@ function ListingCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background transition-shadow hover:shadow-md",
-        isSponsored && "ring-1 ring-accent/30"
+        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 ease-fluid hover:shadow-md"
       )}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
@@ -50,7 +49,7 @@ function ListingCard({
         />
 
         {isSponsored ? (
-          <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-full bg-background px-2.5 py-1 text-[10px] font-medium tracking-wide text-foreground shadow-sm">
+          <span className="absolute top-3 left-3 z-10 inline-flex items-center rounded-full bg-brand-amber-soft px-2.5 py-1 text-[11px] font-bold text-brand-amber-ink shadow-sm">
             Sponsorizzato
           </span>
         ) : null}
@@ -65,9 +64,9 @@ function ListingCard({
         />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-foreground">
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground">
             <Link
               href={detailHref}
               className="after:absolute after:inset-0 after:content-['']"
@@ -75,14 +74,20 @@ function ListingCard({
               {listing.title}
             </Link>
           </h3>
-          <span className="shrink-0 text-base font-semibold text-foreground">
-            {formatListingPrice(listing)}
+          <span
+            className={cn(
+              "shrink-0 text-[15px] font-bold",
+              listing.isFree ? "text-brand-olive" : "text-foreground"
+            )}
+          >
+            {listing.isFree ? "Gratis" : formatListingPrice(listing)}
           </span>
         </div>
 
         <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon
             aria-hidden="true"
+            strokeWidth={1.5}
             className="size-3.5 shrink-0 text-muted-foreground"
           />
           <span className="truncate">{locationLabel}</span>

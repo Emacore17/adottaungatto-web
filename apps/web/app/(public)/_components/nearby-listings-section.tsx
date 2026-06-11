@@ -11,6 +11,7 @@ import {
 
 import { StorageImage } from "@/components/shared/storage-image"
 import { getPublicObjectUrl } from "@/lib/api/assets"
+import { formatAgeMonths, formatListingPrice } from "@/lib/listings/format"
 import type {
   PublicListingExpansion,
   PublicListingListResponse,
@@ -80,15 +81,30 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
         )}
       </div>
       <div className="flex flex-col gap-1 p-4">
-        <h3 className="line-clamp-1 text-base font-semibold tracking-tight text-foreground">
-          {listing.title}
-        </h3>
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground">
+            {listing.title}
+          </h3>
+          <span
+            className={
+              listing.isFree
+                ? "shrink-0 text-[15px] font-bold text-brand-olive"
+                : "shrink-0 text-[15px] font-bold text-foreground"
+            }
+          >
+            {listing.isFree ? "Gratis" : formatListingPrice(listing)}
+          </span>
+        </div>
         <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon
             aria-hidden="true"
             className="size-3.5 shrink-0 text-muted-foreground"
           />
           <span className="truncate">{locationLabel}</span>
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {formatAgeMonths(listing.ageMonths)}
+          {listing.breed ? ` · ${listing.breed.name}` : ""}
         </p>
       </div>
     </Link>
@@ -346,18 +362,15 @@ function NearbyListingsSection() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-16 sm:gap-10 sm:px-6 sm:py-20 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              Esplora
+            <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+              Vicino a te
             </h2>
-            <p className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Annunci vicino a te
-            </p>
             <p className="max-w-md text-sm text-muted-foreground">
-              Le schede piu fresche, ordinate per distanza. Attiva la posizione
+              Le schede più fresche, ordinate per distanza. Attiva la posizione
               per restringere il raggio.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
@@ -376,9 +389,12 @@ function NearbyListingsSection() {
                   ? "Aggiorna"
                   : "Usa posizione"}
             </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link href={allNearbyHref}>Vedi tutti →</Link>
-            </Button>
+            <Link
+              href={allNearbyHref}
+              className="inline-flex h-9 items-center rounded-xl px-3 text-sm font-semibold text-brand-teal transition-colors hover:bg-brand-teal-soft"
+            >
+              Vedi tutti →
+            </Link>
           </div>
         </div>
 

@@ -43,12 +43,12 @@ function DesktopNavigation({ align = "start", items }: DesktopNavigationProps) {
                   !isAccent &&
                     "text-foreground/78 hover:bg-secondary hover:text-foreground",
                   !isAccent &&
-                    "after:absolute after:right-3 after:bottom-1 after:left-3 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-accent after:transition-transform after:duration-200",
+                    "after:absolute after:right-3 after:bottom-1 after:left-3 after:h-0.5 after:origin-center after:scale-x-0 after:rounded-full after:bg-primary after:transition-transform after:duration-200",
                   !isAccent &&
                     isActive &&
                     "text-foreground after:scale-x-100",
                   isAccent &&
-                    "border border-primary/20 bg-primary px-4 text-primary-foreground shadow-[0_18px_36px_-28px_color-mix(in_oklab,var(--color-primary)_78%,transparent)] hover:bg-primary/92 hover:shadow-[0_20px_42px_-30px_color-mix(in_oklab,var(--color-primary)_78%,transparent)]",
+                    "rounded-xl bg-primary px-4 text-primary-foreground hover:bg-primary/90",
                   isAccent && isActive && "ring-1 ring-primary/30",
                   "active:opacity-90"
                 )}
