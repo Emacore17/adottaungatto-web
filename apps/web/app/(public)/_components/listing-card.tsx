@@ -130,6 +130,7 @@ function createPreviewImage(
 
   return {
     alt: `${title} - foto ${index + 1}`,
+    blurDataUrl: image.blurDataUrl,
     id: image.id,
     url,
   }

@@ -61,5 +61,12 @@ describe("process-listing-images", () => {
     expect(thumbMetadata.format).toBe("webp")
     expect(thumbMetadata.width).toBe(512)
     expect(thumbMetadata.height).toBe(512)
+    expect(processed.blurDataUrl).toMatch(
+      /^data:image\/webp;base64,[A-Za-z0-9+/=]+$/
+    )
+    expect(
+      Buffer.from(processed.blurDataUrl.split(",")[1] ?? "", "base64")
+        .byteLength
+    ).toBeGreaterThan(0)
   })
 })

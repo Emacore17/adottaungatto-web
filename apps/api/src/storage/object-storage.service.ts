@@ -32,7 +32,7 @@ export class ObjectStorageService {
 
     return {
       expiresInSeconds: presignedPutExpiresSeconds,
-      url: rewriteUrlOrigin(url, this.env.S3_PUBLIC_ENDPOINT),
+      url: createPublicUploadUrl(url, this.env.S3_PUBLIC_ENDPOINT),
     }
   }
 
@@ -135,4 +135,10 @@ export function rewriteUrlOrigin(url: string, publicEndpoint: string): string {
   signedUrl.host = publicUrl.host
 
   return signedUrl.toString()
+}
+
+export function createPublicUploadUrl(url: string, publicEndpoint: string) {
+  void publicEndpoint
+
+  return url
 }

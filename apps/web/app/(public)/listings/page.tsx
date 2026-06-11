@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import Link from "next/link"
 import type { PlaceAutocompleteType } from "@workspace/validation/places"
 import { SearchIcon } from "lucide-react"
 
@@ -14,6 +15,8 @@ import type { PublicListingExpansion } from "@/lib/api/types"
 import { getSessionToken } from "@/lib/auth/session"
 import { routes } from "@/lib/routes"
 import { createPageMetadata } from "@/lib/seo/metadata"
+import { Badge } from "@workspace/ui/components/badge"
+import { Button } from "@workspace/ui/components/button"
 import {
   Empty,
   EmptyDescription,
@@ -25,6 +28,7 @@ import {
 type ListingsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }
+type ListingQuery = ReturnType<typeof parseListingSearchParams>["query"]
 
 export const dynamic = "force-dynamic"
 
@@ -53,6 +57,8 @@ export default async function ListingsPage({
     getSessionToken(),
   ])
   const items = listings.ok ? listings.data.items : []
+  const suggestions = listings.ok ? listings.data.suggestions : null
+  const suggestionItems = suggestions?.items ?? []
   const meta = listings.ok ? listings.data.meta : null
   const breeds = breedsResult.ok ? breedsResult.data : []
   const placeLabel =
@@ -68,7 +74,11 @@ export default async function ListingsPage({
   const favoriteListingIds = sessionToken
     ? await listFavoriteListingIds(
         sessionToken,
-        items.map((item) => item.id)
+        Array.from(
+          new Set(
+            [...items, ...suggestionItems].map((item) => item.id)
+          )
+        )
       )
     : new Set<string>()
   const expansionMessage = meta?.expansion
@@ -118,18 +128,50 @@ export default async function ListingsPage({
       </section>
 
       {items.length > 0 ? (
-        <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((listing, index) => (
-            <ListingCard
-              key={listing.id}
-              isAuthenticated={Boolean(sessionToken)}
-              isFavorite={favoriteListingIds.has(listing.id)}
-              listing={listing}
-              nextPath={nextPath}
-              priority={index < 3}
+        <>
+          <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((listing, index) => (
+              <ListingCard
+                key={listing.id}
+                isAuthenticated={Boolean(sessionToken)}
+                isFavorite={favoriteListingIds.has(listing.id)}
+                listing={listing}
+                nextPath={nextPath}
+                priority={index < 3}
+              />
+            ))}
+          </section>
+          {meta && meta.totalPages > 1 ? (
+            <PaginationFooter
+              page={meta.page}
+              totalPages={meta.totalPages}
+              previousHref={createListingsPagePath(
+                parsed.query,
+                Math.max(meta.page - 1, 1),
+                placeLabel,
+                placeType
+              )}
+              nextHref={createListingsPagePath(
+                parsed.query,
+                Math.min(meta.page + 1, Math.max(meta.totalPages, 1)),
+                placeLabel,
+                placeType
+              )}
             />
-          ))}
-        </section>
+          ) : null}
+        </>
+      ) : suggestionItems.length > 0 ? (
+        <Empty className="border">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <SearchIcon aria-hidden="true" />
+            </EmptyMedia>
+            <EmptyTitle>Nessun risultato esatto</EmptyTitle>
+            <EmptyDescription>
+              Ti mostro alternative ordinate per pertinenza.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <Empty>
           <EmptyHeader>
@@ -143,8 +185,99 @@ export default async function ListingsPage({
           </EmptyHeader>
         </Empty>
       )}
+
+      {suggestions && suggestionItems.length > 0 ? (
+        <section className="flex flex-col gap-4 border-t pt-6">
+          <div className="flex flex-col gap-2">
+            <Badge className="w-fit bg-brand-amber-soft text-brand-amber-ink">
+              Suggerimenti
+            </Badge>
+            <div className="grid gap-1">
+              <h2 className="text-2xl font-bold tracking-tight">
+                {suggestions.title}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {formatSuggestionsMessage(suggestions.reason)}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {suggestionItems.map((listing) => (
+              <ListingCard
+                key={listing.id}
+                isAuthenticated={Boolean(sessionToken)}
+                isFavorite={favoriteListingIds.has(listing.id)}
+                listing={listing}
+                nextPath={nextPath}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   )
+}
+
+function PaginationFooter({
+  nextHref,
+  page,
+  previousHref,
+  totalPages,
+}: {
+  nextHref: string
+  page: number
+  previousHref: string
+  totalPages: number
+}) {
+  const safeTotalPages = Math.max(totalPages, 1)
+
+  return (
+    <div className="flex flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
+      <span>
+        Pagina {page} di {safeTotalPages}
+      </span>
+      <div className="flex gap-2">
+        <Button asChild variant="outline" size="sm">
+          <Link aria-disabled={page <= 1} href={previousHref}>
+            Precedente
+          </Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
+          <Link aria-disabled={page >= safeTotalPages} href={nextHref}>
+            Successiva
+          </Link>
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function createListingsPagePath(
+  query: ListingQuery,
+  page: number,
+  placeLabel: string | null,
+  placeType: PlaceAutocompleteType | "position" | null
+) {
+  return routes.listings({
+    ...query,
+    page,
+    placeLabel: placeLabel ?? undefined,
+    placeType: placeType ?? undefined,
+  })
+}
+
+function formatSuggestionsMessage(
+  reason: "empty_exact" | "end_of_results" | "not_enough_results"
+) {
+  if (reason === "empty_exact") {
+    return "Non ci sono corrispondenze esatte: questi annunci sono i piu vicini alla ricerca."
+  }
+
+  if (reason === "end_of_results") {
+    return "Hai visto tutti i risultati richiesti: qui trovi altri annunci pertinenti."
+  }
+
+  return "I risultati richiesti sono pochi: completo la pagina con annunci pertinenti."
 }
 
 function formatExpansionMessage(expansion: PublicListingExpansion) {

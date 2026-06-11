@@ -25,6 +25,7 @@
     "media:process": "pnpm --filter worker media:process",
     "search:benchmark": "pnpm --filter worker search:benchmark",
     "smoke:e2e": "node scripts/local/e2e-smoke.mjs",
+    "smoke:remote": "node scripts/deploy/remote-smoke.mjs",
     "lint": "turbo lint",
     "release:check": "pnpm lint && pnpm typecheck && pnpm test && pnpm build",
     "release:smoke": "pnpm db:migrate && pnpm smoke:e2e",

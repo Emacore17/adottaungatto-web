@@ -676,6 +676,7 @@ export const listingImages = pgTable(
     sizeBytes: integer("size_bytes"),
     checksum: text("checksum"),
     blurHash: text("blur_hash"),
+    blurDataUrl: text("blur_data_url"),
     sortOrder: integer("sort_order").notNull().default(0),
     isCover: boolean("is_cover").notNull().default(false),
     status: listingImageStatus("status").notNull().default("uploaded"),

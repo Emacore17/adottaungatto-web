@@ -20,11 +20,11 @@ export async function registerAction(formData: FormData) {
   )
 
   if (password !== passwordConfirm) {
-    redirect(`${routes.register}?error=invalid`)
+    redirect(`${routes.register}?error=password`)
   }
 
   if (phoneE164 && !phoneE164Pattern.test(phoneE164)) {
-    redirect(`${routes.register}?error=invalid`)
+    redirect(`${routes.register}?error=phone`)
   }
 
   const parsed = authRegisterSchema.safeParse({

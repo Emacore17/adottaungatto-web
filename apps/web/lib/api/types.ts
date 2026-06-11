@@ -10,6 +10,7 @@ export type PublicListingImage = {
   width: number | null
   height: number | null
   blurHash: string | null
+  blurDataUrl: string | null
   sortOrder: number
   isCover: boolean
 }
@@ -111,8 +112,15 @@ export type PublicListingExpansion =
       originalRadiusKm: number | null
     }
 
+export type PublicListingSuggestions = {
+  title: "Potrebbero interessarti anche"
+  reason: "empty_exact" | "end_of_results" | "not_enough_results"
+  items: PublicListingSummary[]
+}
+
 export type PublicListingListResponse = {
   items: PublicListingSummary[]
+  suggestions: PublicListingSuggestions | null
   meta: {
     page: number
     pageSize: number

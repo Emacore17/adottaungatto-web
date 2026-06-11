@@ -9,6 +9,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint .",
     "start": "node dist/main.js",
+    "start:container:dev": "tsx src/main.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

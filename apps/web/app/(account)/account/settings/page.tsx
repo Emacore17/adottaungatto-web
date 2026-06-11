@@ -549,12 +549,12 @@ function formatProfileStatus(value: string) {
   switch (value) {
     case "active":
       return "Attivo"
-    case "pending":
-      return "In attesa"
+    case "pending_verification":
+      return "In attesa di verifica"
     case "suspended":
       return "Sospeso"
-    case "banned":
-      return "Bannato"
+    case "deleted":
+      return "Eliminato"
     default:
       return value
   }

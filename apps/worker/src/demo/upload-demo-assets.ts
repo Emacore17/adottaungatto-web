@@ -8,9 +8,11 @@ import sharp from "sharp"
 
 const bucket = process.env.S3_BUCKET ?? "adottaungatto-local"
 const endpoint = new URL(process.env.S3_ENDPOINT ?? "http://localhost:9000")
-const sourceImageDir =
+const localSourceImageDir =
   process.env.DEMO_CAT_IMAGES_DIR ||
   fileURLToPath(new URL("../../../../immagini-gattini/", import.meta.url))
+const bundledSourceImageDir = fileURLToPath(new URL("./assets/", import.meta.url))
+const sourceImageDir = localSourceImageDir
 
 const demoAssets = [
   {
@@ -142,14 +144,14 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
     await client.makeBucket(bucket, process.env.S3_REGION ?? "local")
   }
 
-  await client.setBucketPolicy(bucket, createPublicReadPolicy(bucket))
+  await applyPublicReadPolicy(client, bucket)
 
   let objects = 0
   let placeholderImages = 0
   let sourceImages = 0
 
   for (const asset of demoAssets) {
-    const sourcePath = resolveSourceImagePath(asset.sourceImage)
+    const sourcePath = resolveDemoSourceImagePath(asset.sourceImage)
 
     if (sourcePath) {
       sourceImages += 1
@@ -192,6 +194,23 @@ async function uploadDemoAssets(): Promise<DemoAssetSummary> {
   }
 }
 
+type BucketPolicyClient = Pick<Minio.Client, "setBucketPolicy">
+
+export async function applyPublicReadPolicy(
+  client: BucketPolicyClient,
+  targetBucket: string
+) {
+  try {
+    await client.setBucketPolicy(targetBucket, createPublicReadPolicy(targetBucket))
+  } catch (error) {
+    if (isUnsupportedBucketPolicyError(error)) {
+      return
+    }
+
+    throw error
+  }
+}
+
 function createPublicReadPolicy(targetBucket: string) {
   return JSON.stringify({
     Statement: [
@@ -206,10 +225,33 @@ function createPublicReadPolicy(targetBucket: string) {
   })
 }
 
-function resolveSourceImagePath(fileName: string) {
-  const imagePath = join(sourceImageDir, fileName)
+function isUnsupportedBucketPolicyError(error: unknown) {
+  const code =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    typeof error.code === "string"
+      ? error.code
+      : undefined
+  const message = error instanceof Error ? error.message : String(error)
 
-  return existsSync(imagePath) ? imagePath : null
+  return code === "NotImplemented" || message.includes("PutBucketPolicy")
+}
+
+export function getDemoSourceImageDirs() {
+  return Array.from(new Set([sourceImageDir, bundledSourceImageDir]))
+}
+
+export function resolveDemoSourceImagePath(fileName: string) {
+  for (const directory of getDemoSourceImageDirs()) {
+    const imagePath = join(directory, fileName)
+
+    if (existsSync(imagePath)) {
+      return imagePath
+    }
+  }
+
+  return null
 }
 
 async function createAssetImage(

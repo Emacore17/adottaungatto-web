@@ -19,7 +19,7 @@ export default async function RegisterPage({
   searchParams,
 }: RegisterPageProps) {
   const params = await searchParams
-  const hasError = typeof params.error === "string"
+  const errorCode = typeof params.error === "string" ? params.error : null
 
   return (
     <AuthShell
@@ -29,7 +29,7 @@ export default async function RegisterPage({
       eyebrow="Prima volta"
       title="Crea il tuo spazio"
     >
-      <RegisterOnboarding action={registerAction} hasError={hasError} />
+      <RegisterOnboarding action={registerAction} errorCode={errorCode} />
     </AuthShell>
   )
 }

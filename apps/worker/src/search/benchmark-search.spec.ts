@@ -60,7 +60,7 @@ describe("search benchmark options", () => {
   })
 
   it("resolves relative output directories from the invoking cwd", () => {
-    const baseDir = path.resolve("/repo")
+    const baseDir = path.join(path.parse(process.cwd()).root, "repo")
 
     expect(
       resolveSearchBenchmarkOutputDir("benchmark-results/search", baseDir)

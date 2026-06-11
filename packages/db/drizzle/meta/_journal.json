@@ -155,6 +155,13 @@
       "when": 1778758364994,
       "tag": "0021_glorious_slyde",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1779009567195,
+      "tag": "0022_wooden_satana",
+      "breakpoints": true
     }
   ]
 }
