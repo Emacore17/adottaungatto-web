@@ -56,7 +56,7 @@ function AdminAccessDenied() {
     <main className="flex min-h-[calc(100svh-4rem)] items-center justify-center bg-background px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="gap-3 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-50 text-foreground">
+          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand-olive-soft text-brand-olive">
             <LockKeyholeIcon className="size-5" aria-hidden="true" />
           </div>
           <div className="grid gap-2">

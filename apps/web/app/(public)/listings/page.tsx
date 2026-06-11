@@ -14,7 +14,6 @@ import type { PublicListingExpansion } from "@/lib/api/types"
 import { getSessionToken } from "@/lib/auth/session"
 import { routes } from "@/lib/routes"
 import { createPageMetadata } from "@/lib/seo/metadata"
-import { Badge } from "@workspace/ui/components/badge"
 import {
   Empty,
   EmptyDescription,
@@ -82,7 +81,7 @@ export default async function ListingsPage({
         <div className="flex flex-col gap-2">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
                 Annunci di gatti in adozione
               </h1>
               <p className="text-sm text-muted-foreground sm:text-base">
@@ -94,7 +93,9 @@ export default async function ListingsPage({
               </p>
             </div>
             {meta?.expansion ? (
-              <Badge variant="outline">Risultati simili</Badge>
+              <span className="inline-flex items-center rounded-full bg-brand-teal-soft px-3 py-1 text-xs font-bold text-brand-teal">
+                Risultati simili
+              </span>
             ) : null}
           </div>
         </div>

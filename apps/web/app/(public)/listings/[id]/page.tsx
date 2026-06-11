@@ -131,7 +131,7 @@ export default async function ListingDetailPage({
         </nav>
 
         <header className="mt-6 flex flex-col gap-4">
-          <h1 className="text-3xl font-semibold tracking-tight text-balance text-foreground sm:text-4xl">
+          <h1 className="text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
             {listing.data.title}
           </h1>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -172,7 +172,7 @@ export default async function ListingDetailPage({
             <Separator />
 
             <section className="flex flex-col gap-4">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Su questo gatto
               </h2>
               <p className="text-base leading-relaxed text-foreground/90">
@@ -183,7 +183,7 @@ export default async function ListingDetailPage({
             <Separator />
 
             <section className="flex flex-col gap-5">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Identikit
               </h2>
               <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -200,7 +200,7 @@ export default async function ListingDetailPage({
             <Separator />
 
             <section className="flex flex-col gap-5">
-              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Salute e cura
               </h2>
               <ul className="grid gap-2 sm:grid-cols-2">
@@ -216,9 +216,9 @@ export default async function ListingDetailPage({
 
             <Separator />
 
-            <section className="rounded-xl border border-border bg-secondary/40 p-5 sm:p-6">
+            <section className="rounded-xl bg-brand-teal-soft p-5 sm:p-6">
               <div className="flex items-start gap-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-accent">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-brand-teal">
                   <ShieldCheckIcon className="size-5" aria-hidden="true" />
                 </span>
                 <div>
@@ -274,8 +274,8 @@ function HealthRow({ label, value }: { label: string; value: boolean | null }) {
       <span
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-full",
-          status === "confirmed" && "bg-emerald-50 text-emerald-700",
-          status === "missing" && "bg-red-50 text-red-700",
+          status === "confirmed" && "bg-brand-olive-soft text-brand-olive",
+          status === "missing" && "bg-brand-coral-soft text-primary",
           status === "unknown" && "bg-secondary text-muted-foreground"
         )}
       >

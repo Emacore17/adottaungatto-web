@@ -48,7 +48,7 @@ export default async function ResetPasswordPage({
       eyebrow="Sicurezza"
       title="Reimposta password"
     >
-      <Card className="w-full max-w-md border-border bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-border supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
+      <Card className="w-full max-w-md">
         <CardHeader className="gap-2 px-5 pt-6 pb-2 sm:px-6 sm:pt-7">
           <CardTitle className="text-2xl">Nuova password</CardTitle>
           <CardDescription>

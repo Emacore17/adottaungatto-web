@@ -171,7 +171,7 @@ function HeaderNotificationsMenu() {
           <BellIcon aria-hidden="true" />
           {hasUnread ? (
             <span
-              className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-[0.65rem] leading-none font-semibold text-background ring-2 ring-brand-cream"
+              className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[0.65rem] leading-none font-semibold text-primary-foreground ring-2 ring-background"
               data-notification-badge
               data-unread-count={displayedUnreadCount}
             >
@@ -305,7 +305,7 @@ function NotificationPreviewItem({
       >
         <span className="flex min-w-0 items-center gap-2">
           {!notification.readAt ? (
-            <span className="size-2 shrink-0 rounded-full bg-accent" />
+            <span className="size-2 shrink-0 rounded-full bg-primary" />
           ) : null}
           <span className="truncate text-sm font-semibold">{title}</span>
         </span>

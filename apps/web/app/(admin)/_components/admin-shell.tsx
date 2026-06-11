@@ -51,7 +51,7 @@ function AdminShell({ children }: AdminShellProps) {
               </Badge>
               <Badge
                 variant="outline"
-                className="border-border bg-emerald-50 text-foreground"
+                className="border-border bg-brand-olive-soft text-brand-olive"
               >
                 <ShieldCheckIcon aria-hidden="true" data-icon="inline-start" />
                 Protetto
@@ -117,7 +117,7 @@ function AdminShell({ children }: AdminShellProps) {
               </Badge>
               <Badge
                 variant="outline"
-                className="border-border bg-emerald-50 text-foreground"
+                className="border-border bg-brand-olive-soft text-brand-olive"
               >
                 Protetto
               </Badge>

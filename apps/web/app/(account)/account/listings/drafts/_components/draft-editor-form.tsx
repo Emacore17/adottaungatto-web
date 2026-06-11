@@ -391,7 +391,7 @@ function ListingPhoneVerificationPanel({
   const isVerified = Boolean(draft.contactPhone.phoneVerifiedAt)
 
   return (
-    <div className="mt-6 grid gap-4 rounded-md border border-border bg-emerald-50 p-4">
+    <div className="mt-6 grid gap-4 rounded-md border border-border bg-brand-olive-soft p-4">
       <div className="flex items-start gap-3">
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-foreground">
           {isVerified ? (

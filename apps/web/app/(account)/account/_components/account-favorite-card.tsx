@@ -46,7 +46,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
         <div className="flex min-w-0 flex-col gap-3">
           <div className="grid gap-1">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-accent/10 text-accent">
+              <Badge className="bg-brand-coral-soft text-primary">
                 Preferito
               </Badge>
               <span className="text-xs text-muted-foreground">
@@ -71,7 +71,7 @@ function AccountFavoriteCard({ item, returnPath }: AccountFavoriteCardProps) {
                 asChild
                 variant="outline"
                 size="sm"
-                className="hover:border-accent hover:bg-accent/10 hover:text-accent"
+                className="hover:border-primary/40 hover:bg-brand-coral-soft hover:text-primary"
               >
                 <Link href={routes.listing(listing.id)}>Apri annuncio</Link>
               </Button>

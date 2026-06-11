@@ -47,7 +47,14 @@ import { cn } from "@workspace/ui/lib/utils"
 
 type RegisterOnboardingProps = {
   action: (formData: FormData) => Promise<void> | void
-  hasError: boolean
+  errorCode: string | null
+}
+
+const serverErrorMessages: Record<string, string> = {
+  account: "Email gia in uso o non valida: cambia email e riprova.",
+  invalid: "Controlla i dati inseriti.",
+  password: "Le password non coincidono.",
+  phone: "Controlla il numero di telefono.",
 }
 
 type ProfileType = AuthRegisterInput["profileType"]
@@ -73,27 +80,34 @@ const profileOptions: Array<{
   {
     icon: HeartHandshakeIcon,
     label: "Associazione",
-    tone: "bg-accent/10 text-foreground",
+    tone: "bg-brand-coral-soft text-foreground",
     value: "association",
   },
   {
     icon: Building2Icon,
     label: "Allevatore",
-    tone: "bg-emerald-50 text-foreground",
+    tone: "bg-brand-olive-soft text-brand-olive",
     value: "breeder",
   },
 ]
 
-function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
-  const [step, setStep] = useState<0 | 1>(hasError ? 1 : 0)
+function RegisterOnboarding({ action, errorCode }: RegisterOnboardingProps) {
+  const [step, setStep] = useState<0 | 1>(errorCode ? 1 : 0)
   const [profileType, setProfileType] = useState<ProfileType>("private")
   const [phoneNationalNumber, setPhoneNationalNumber] = useState("")
+  const [clientError, setClientError] = useState<string | null>(null)
   const selectedProfile = profileOptions.find(
     (option) => option.value === profileType
   )
+  const errorMessage =
+    clientError ??
+    (errorCode ? (serverErrorMessages[errorCode] ?? "Controlla i dati.") : null)
+  const passwordError =
+    clientError !== null || errorCode === "password" || errorCode === "invalid"
+  const genericError = errorCode === "invalid" || errorCode === "account"
 
   return (
-    <Card className="w-full max-w-md border-border bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-border supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
+    <Card className="w-full max-w-md">
       <CardHeader className="gap-3 px-5 pt-6 pb-2 sm:px-6 sm:pt-7">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-2xl">
@@ -138,7 +152,7 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                       className={cn(
                         "group relative flex min-h-32 cursor-pointer flex-col justify-between overflow-hidden rounded-lg border bg-card/76 p-3 shadow-sm transition-[border-color,box-shadow,transform,background-color] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 hover:-translate-y-0.5 hover:border-primary/35 sm:min-h-36",
                         selected &&
-                          "border-primary bg-secondary/70 shadow-[0_20px_52px_-42px_color-mix(in_oklab,var(--color-primary)_82%,transparent)]"
+                          "border-primary bg-brand-coral-soft/60"
                       )}
                     >
                       <input
@@ -190,11 +204,40 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
           </CardFooter>
         </>
       ) : (
-        <form action={action}>
+        <form
+          action={action}
+          onSubmit={(event) => {
+            const form = event.currentTarget
+            const password = form.elements.namedItem(
+              "password"
+            ) as HTMLInputElement | null
+            const passwordConfirm = form.elements.namedItem(
+              "passwordConfirm"
+            ) as HTMLInputElement | null
+
+            if (
+              password &&
+              passwordConfirm &&
+              password.value !== passwordConfirm.value
+            ) {
+              event.preventDefault()
+              setClientError("Le password non coincidono.")
+              passwordConfirm.focus()
+              return
+            }
+
+            setClientError(null)
+          }}
+        >
           <input type="hidden" name="profileType" value={profileType} />
           <CardContent className="px-5 py-5 motion-safe:animate-[auth-step-in_320ms_ease-out] sm:px-6">
             <FieldGroup className="gap-4">
-              <Field data-invalid={hasError || undefined}>
+              {errorMessage ? (
+                <p role="alert" className="text-sm text-destructive">
+                  {errorMessage}
+                </p>
+              ) : null}
+              <Field data-invalid={genericError || undefined}>
                 <FieldLabel htmlFor="displayName">Nome</FieldLabel>
                 <Input
                   id="displayName"
@@ -203,11 +246,11 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   required
                   minLength={2}
                   maxLength={80}
-                  aria-invalid={hasError || undefined}
+                  aria-invalid={genericError || undefined}
                   placeholder="Come vuoi apparire"
                 />
               </Field>
-              <Field data-invalid={hasError || undefined}>
+              <Field data-invalid={genericError || undefined}>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
@@ -215,11 +258,11 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   type="email"
                   autoComplete="email"
                   required
-                  aria-invalid={hasError || undefined}
+                  aria-invalid={genericError || undefined}
                   placeholder="nome@email.it"
                 />
               </Field>
-              <Field data-invalid={hasError || undefined}>
+              <Field data-invalid={passwordError || undefined}>
                 <FieldLabel htmlFor="password">Password</FieldLabel>
                 <Input
                   id="password"
@@ -229,11 +272,11 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   required
                   minLength={10}
                   maxLength={128}
-                  aria-invalid={hasError || undefined}
+                  aria-invalid={passwordError || undefined}
                   placeholder="Almeno 10 caratteri"
                 />
               </Field>
-              <Field data-invalid={hasError || undefined}>
+              <Field data-invalid={passwordError || undefined}>
                 <FieldLabel htmlFor="passwordConfirm">
                   Conferma password
                 </FieldLabel>
@@ -245,7 +288,7 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   required
                   minLength={10}
                   maxLength={128}
-                  aria-invalid={hasError || undefined}
+                  aria-invalid={passwordError || undefined}
                   placeholder="Ripeti la password"
                 />
               </Field>
@@ -298,11 +341,6 @@ function RegisterOnboarding({ action, hasError }: RegisterOnboardingProps) {
                   </p>
                 </FieldContent>
               </Field>
-              {hasError ? (
-                <p className="text-sm text-destructive">
-                  Controlla i dati o cambia email.
-                </p>
-              ) : null}
             </FieldGroup>
           </CardContent>
           <CardFooter className="flex-col-reverse items-stretch gap-3 px-5 pb-6 sm:px-6 sm:pb-7">

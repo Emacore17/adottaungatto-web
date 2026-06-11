@@ -278,7 +278,7 @@ function ModerationQueueRow({
             {reportCount !== null ? (
               <Badge
                 variant="outline"
-                className="border-accent bg-accent/10 text-accent"
+                className="border-primary/30 bg-brand-coral-soft text-primary"
               >
                 <AlertTriangleIcon
                   aria-hidden="true"
@@ -294,7 +294,7 @@ function ModerationQueueRow({
             {item.listing.description}
           </span>
           {latestReport?.description ? (
-            <span className="line-clamp-1 text-xs text-accent">
+            <span className="line-clamp-1 text-xs text-primary">
               Report: {latestReport.description}
             </span>
           ) : null}
@@ -396,7 +396,7 @@ function MobileModerationCard({
               {reportCount !== null ? (
                 <Badge
                   variant="outline"
-                  className="border-accent bg-accent/10 text-accent"
+                  className="border-primary/30 bg-brand-coral-soft text-primary"
                 >
                   <AlertTriangleIcon
                     aria-hidden="true"
@@ -509,7 +509,7 @@ function InfoBlock({
       <span
         className={cn(
           "truncate font-medium",
-          tone === "danger" ? "text-accent" : undefined
+          tone === "danger" ? "text-primary" : undefined
         )}
       >
         {value}
@@ -686,7 +686,7 @@ function AssignmentBadge({
   return (
     <Badge
       variant="outline"
-      className="border-border bg-emerald-50 text-foreground"
+      className="border-border bg-brand-olive-soft text-brand-olive"
     >
       <UserCheckIcon aria-hidden="true" data-icon="inline-start" />
       In carico

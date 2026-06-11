@@ -135,7 +135,7 @@ export default async function ModerationPage({
             </Badge>
             <Badge
               variant="outline"
-              className="w-fit border-border bg-emerald-50 text-foreground"
+              className="w-fit border-border bg-brand-olive-soft text-brand-olive"
             >
               Area interna
             </Badge>
@@ -256,7 +256,7 @@ function MetricCard({
           className={cn(
             "flex size-9 shrink-0 items-center justify-center rounded-md",
             icon === "reported"
-              ? "bg-accent/10 text-accent"
+              ? "bg-brand-coral-soft text-primary"
               : "bg-secondary text-foreground"
           )}
         >
@@ -478,7 +478,7 @@ function QueuePreviewRow({ item }: { item: ModerationPreviewItem }) {
           {reportCount !== null ? (
             <Badge
               variant="outline"
-              className="border-accent bg-accent/10 text-accent"
+              className="border-primary/30 bg-brand-coral-soft text-primary"
             >
               {reportCount} report
             </Badge>
@@ -662,14 +662,14 @@ function getRecentActionBadgeClass(
   }
 
   if (value === "rejected" || value === "reported") {
-    return "bg-accent/10 text-accent"
+    return "bg-brand-coral-soft text-primary"
   }
 
   if (value === "suspended") {
     return "bg-secondary text-foreground"
   }
 
-  return "bg-emerald-50 text-foreground"
+  return "bg-brand-olive-soft text-brand-olive"
 }
 
 function isApiStatus<T>(result: QueueResult<T>, status: number) {

@@ -248,8 +248,8 @@ function DashboardMetricCard({
   const Icon = icon
   const toneClassName = {
     amber: "bg-secondary text-foreground",
-    coral: "bg-accent/10 text-accent",
-    olive: "bg-emerald-50 text-foreground",
+    coral: "bg-brand-coral-soft text-primary",
+    olive: "bg-brand-olive-soft text-brand-olive",
     teal: "bg-secondary text-foreground",
   }[tone]
 
@@ -387,7 +387,7 @@ function PriorityRow({
         asChild
         variant="outline"
         size="sm"
-        className="hover:border-accent hover:bg-accent/10 hover:text-accent"
+        className="hover:border-primary/40 hover:bg-brand-coral-soft hover:text-primary"
       >
         <Link href={href}>{actionLabel}</Link>
       </Button>
@@ -412,7 +412,7 @@ function ProfileCard({
         <CardTitle>Profilo</CardTitle>
         <CardDescription>{displayName}</CardDescription>
         <CardAction>
-          <Badge className="bg-emerald-50 text-foreground">
+          <Badge className="bg-brand-olive-soft text-brand-olive">
             {formatUserStatus(status)}
           </Badge>
         </CardAction>
@@ -493,7 +493,7 @@ function SectionHeader({
         asChild
         variant="outline"
         size="sm"
-        className="hover:border-accent hover:bg-accent/10 hover:text-accent"
+        className="hover:border-primary/40 hover:bg-brand-coral-soft hover:text-primary"
       >
         <Link href={href}>Vedi tutto</Link>
       </Button>
@@ -535,8 +535,16 @@ function formatUserStatus(value: string) {
     return "Attivo"
   }
 
+  if (value === "pending_verification") {
+    return "In attesa di verifica"
+  }
+
   if (value === "suspended") {
     return "Sospeso"
+  }
+
+  if (value === "deleted") {
+    return "Eliminato"
   }
 
   return value

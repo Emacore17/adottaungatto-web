@@ -47,7 +47,7 @@ export default async function ForgotPasswordPage({
       eyebrow="Recupero"
       title="Password dimenticata"
     >
-      <Card className="w-full max-w-md border-border bg-card/92 shadow-[0_28px_84px_-60px_color-mix(in_oklab,var(--color-brand-teal-ink)_70%,transparent)] ring-border supports-backdrop-filter:bg-card/88 supports-backdrop-filter:backdrop-blur-xl">
+      <Card className="w-full max-w-md">
         {sent ? (
           <PasswordResetSent />
         ) : (
