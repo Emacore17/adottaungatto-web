@@ -47,3 +47,7 @@ npm-debug.log*
 .DS_Store
 *.pem
 .screenshots/
+/.agents
+/.claude/
+/.mockups/
+/.impeccable/
