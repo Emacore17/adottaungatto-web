@@ -103,7 +103,7 @@ export default async function ListingsPage({
               </p>
             </div>
             {meta?.expansion ? (
-              <span className="inline-flex items-center rounded-full bg-brand-teal-soft px-3 py-1 text-xs font-bold text-brand-teal">
+              <span className="inline-flex items-center rounded-full bg-brand-coral-soft px-3 py-1 text-xs font-bold text-primary">
                 Risultati simili
               </span>
             ) : null}

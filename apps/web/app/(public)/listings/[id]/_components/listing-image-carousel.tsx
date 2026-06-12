@@ -77,7 +77,7 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
                 alt={currentImage.alt}
                 fill
                 priority={safeIndex === 0}
-                className="object-cover"
+                className="animate-in fade-in object-cover duration-300 motion-reduce:animate-none"
                 sizes="(min-width: 1024px) 768px, 100vw"
               />
             </button>
@@ -134,7 +134,7 @@ function ListingImageCarousel({ images, title }: ListingImageCarouselProps) {
               src={currentImage.url}
               alt={currentImage.alt}
               fill
-              className="object-contain"
+              className="animate-in fade-in object-contain duration-300 motion-reduce:animate-none"
               sizes="100vw"
             />
 

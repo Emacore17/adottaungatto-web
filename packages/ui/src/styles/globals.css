@@ -174,3 +174,77 @@
     opacity 0.5s var(--ease-fluid),
     transform 0.5s var(--ease-fluid);
 }
+
+/* Entrata in cascata per il contenuto above-the-fold (hero).
+   Sotto prefers-reduced-motion il contenuto resta statico e visibile. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility rise-in {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: rise-in 0.7s var(--ease-fluid) both;
+    animation-delay: var(--rise-delay, 0ms);
+  }
+}
+
+/* Deriva lenta per i blob decorativi dell'hero. Solo transform,
+   nessun repaint; statici sotto prefers-reduced-motion. */
+@keyframes drift-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4rem, -1.5rem, 0) scale(1.12);
+  }
+}
+
+@keyframes drift-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1.08);
+  }
+  50% {
+    transform: translate3d(-3rem, 2rem, 0) scale(1);
+  }
+}
+
+@utility drift-slow {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: drift-a 26s ease-in-out infinite;
+  }
+}
+
+@utility drift-slower {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: drift-b 34s ease-in-out infinite;
+  }
+}
+
+/* Ombra dell'header legata allo scroll: niente listener JS,
+   solo scroll-driven animation con fallback invariato. */
+@keyframes scroll-elevate {
+  from {
+    box-shadow: 0 8px 24px -18px transparent;
+  }
+  to {
+    box-shadow: 0 8px 24px -18px
+      color-mix(in oklab, var(--foreground) 45%, transparent);
+  }
+}
+
+@utility scroll-elevate {
+  @supports (animation-timeline: scroll()) {
+    animation: scroll-elevate linear both;
+    animation-timeline: scroll();
+    animation-range: 0 120px;
+  }
+}

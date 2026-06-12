@@ -30,21 +30,33 @@ export const metadata = createPageMetadata({
 const howItWorksSteps = [
   {
     icon: SearchIcon,
-    iconClassName: "bg-brand-coral-soft text-primary",
     title: "Cerca",
     body: "Filtra per luogo, razza, età e caratteristiche. Vedi solo annunci pubblicati dopo una revisione reale.",
   },
   {
     icon: MessageCircleIcon,
-    iconClassName: "bg-brand-teal-soft text-brand-teal",
     title: "Contatta",
     body: "Scrivi a chi si occupa del gatto, senza intermediari. I tuoi dati restano protetti finché non decidi tu.",
   },
   {
     icon: HeartHandshakeIcon,
-    iconClassName: "bg-brand-olive-soft text-brand-olive",
     title: "Adotta",
     body: "Conosci il gatto, valuta gli spazi, decidi con calma. L'adozione è una scelta, non un acquisto.",
+  },
+]
+
+const trustHighlights = [
+  {
+    icon: ShieldCheckIcon,
+    label: "Annunci verificati",
+  },
+  {
+    icon: MessageCircleIcon,
+    label: "Contatto diretto",
+  },
+  {
+    icon: GiftIcon,
+    label: "100% gratuito",
   },
 ]
 
@@ -57,35 +69,48 @@ export default async function HomePage() {
       <JsonLd data={createOrganizationJsonLd()} />
       <JsonLd data={createWebsiteJsonLd()} />
       <main className="flex flex-1 flex-col">
-        <section className="border-b border-border bg-muted/60">
-          <div className="mx-auto w-full max-w-7xl px-4 pt-14 pb-12 text-center sm:px-6 sm:pt-20 sm:pb-16 lg:px-8">
-            <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-balance text-foreground sm:text-5xl">
+        <section className="relative overflow-hidden border-b border-border bg-muted/60">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--brand-coral-soft)_0%,_transparent_60%)] opacity-70 dark:opacity-40" />
+            <div className="drift-slow absolute -top-32 left-[12%] size-[26rem] rounded-full bg-brand-coral-soft blur-3xl will-change-transform" />
+            <div className="drift-slower absolute top-[20%] -right-24 size-[22rem] rounded-full bg-brand-amber-soft opacity-70 blur-3xl will-change-transform dark:opacity-50" />
+          </div>
+          <div className="relative mx-auto w-full max-w-7xl px-4 pt-14 pb-12 text-center sm:px-6 sm:pt-20 sm:pb-16 lg:px-8">
+            <h1 className="rise-in mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-balance text-foreground sm:text-5xl">
               Trova il gatto giusto,{" "}
               <span className="text-primary">vicino a te</span>.
             </h1>
-            <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
+            <p className="rise-in mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground [--rise-delay:120ms] sm:text-lg">
               Annunci verificati da rifugi, associazioni e famiglie in tutta
               Italia. Contatto diretto, senza intermediari.
             </p>
 
-            <div className="mx-auto mt-8 max-w-4xl text-left sm:mt-10">
+            <div className="rise-in mx-auto mt-8 max-w-4xl text-left [--rise-delay:240ms] sm:mt-10">
               <ListingSearchForm breeds={breeds} />
             </div>
+          </div>
+        </section>
 
-            <div className="mt-7 flex flex-wrap items-center justify-center gap-x-7 gap-y-2">
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-teal">
-                <ShieldCheckIcon strokeWidth={2} className="size-4" />
-                Annunci verificati
+        <section
+          aria-label="Garanzie del servizio"
+          className="border-b border-border bg-background"
+        >
+          <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-2 px-4 py-4 sm:px-6 lg:px-8">
+            {trustHighlights.map((highlight) => (
+              <span
+                key={highlight.label}
+                className="inline-flex items-center gap-2 text-[13px] font-semibold text-muted-foreground"
+              >
+                <highlight.icon
+                  aria-hidden="true"
+                  className="size-4 text-primary"
+                />
+                {highlight.label}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-teal">
-                <MessageCircleIcon strokeWidth={2} className="size-4" />
-                Contatto diretto
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-teal">
-                <GiftIcon strokeWidth={2} className="size-4" />
-                100% gratuito
-              </span>
-            </div>
+            ))}
           </div>
         </section>
 
@@ -93,36 +118,44 @@ export default async function HomePage() {
 
         <section className="border-t border-border bg-muted/60">
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <Reveal>
-              <h2 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
-                Come funziona
-              </h2>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                Tre passi, nessun intermediario.
-              </p>
-            </Reveal>
-            <div className="mt-10 grid gap-8 sm:grid-cols-3 sm:gap-6">
-              {howItWorksSteps.map((step, index) => (
-                <Reveal key={step.title} delay={index * 100}>
-                  <div className="flex h-full flex-col">
-                    <span
-                      className={`inline-flex size-11 items-center justify-center rounded-xl ${step.iconClassName}`}
-                    >
-                      <step.icon
-                        aria-hidden="true"
-                        strokeWidth={2}
-                        className="size-5"
-                      />
-                    </span>
-                    <h3 className="mt-4 text-lg font-bold tracking-tight">
-                      {step.title}
-                    </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                      {step.body}
-                    </p>
-                  </div>
-                </Reveal>
-              ))}
+            <div className="grid gap-10 lg:grid-cols-[2fr_3fr] lg:gap-16">
+              <Reveal>
+                <div className="flex h-full flex-col items-start gap-4 lg:sticky lg:top-24">
+                  <h2 className="text-2xl font-bold tracking-tight text-balance sm:text-3xl">
+                    Come funziona
+                  </h2>
+                  <p className="max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+                    Tre passi, nessun intermediario. Ogni annuncio passa da una
+                    revisione reale prima di andare online.
+                  </p>
+                  <Button asChild variant="outline" className="mt-2">
+                    <Link href={routes.listings()}>Guarda gli annunci</Link>
+                  </Button>
+                </div>
+              </Reveal>
+              <div className="flex flex-col divide-y divide-border">
+                {howItWorksSteps.map((step, index) => (
+                  <Reveal
+                    key={step.title}
+                    delay={index * 100}
+                    className="py-7 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-start gap-5">
+                      <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-coral-soft text-primary">
+                        <step.icon aria-hidden="true" className="size-5" />
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold tracking-tight">
+                          {step.title}
+                        </h3>
+                        <p className="mt-1.5 max-w-prose text-sm leading-relaxed text-muted-foreground">
+                          {step.body}
+                        </p>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
             </div>
           </div>
         </section>

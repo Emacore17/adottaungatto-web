@@ -87,7 +87,6 @@ function ListingCard({
         <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon
             aria-hidden="true"
-            strokeWidth={1.5}
             className="size-3.5 shrink-0 text-muted-foreground"
           />
           <span className="truncate">{locationLabel}</span>

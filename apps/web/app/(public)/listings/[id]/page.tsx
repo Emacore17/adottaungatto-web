@@ -131,9 +131,19 @@ export default async function ListingDetailPage({
         </nav>
 
         <header className="mt-6 flex flex-col gap-4">
-          <h1 className="text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
-            {listing.data.title}
-          </h1>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+            <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
+              {listing.data.title}
+            </h1>
+            <p
+              className={cn(
+                "text-2xl font-extrabold tracking-tight sm:text-3xl",
+                listing.data.isFree ? "text-brand-olive" : "text-foreground"
+              )}
+            >
+              {formatListingPrice(listing.data)}
+            </p>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
@@ -167,10 +177,6 @@ export default async function ListingDetailPage({
 
         <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
           <article className="flex min-w-0 flex-col gap-10">
-            <ListingOwnerSummary owner={listing.data.owner} />
-
-            <Separator />
-
             <section className="flex flex-col gap-4">
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Su questo gatto
@@ -186,10 +192,9 @@ export default async function ListingDetailPage({
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Identikit
               </h2>
-              <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Fact label="Eta" value={formatAgeMonths(listing.data.ageMonths)} />
+              <dl className="grid grid-cols-3 gap-x-8 gap-y-5">
+                <Fact label="Età" value={formatAgeMonths(listing.data.ageMonths)} />
                 <Fact label="Sesso" value={formatSex(listing.data.sex)} />
-                <Fact label="Prezzo" value={formatListingPrice(listing.data)} />
                 <Fact
                   label="Razza"
                   value={listing.data.breed?.name ?? "Non indicata"}
@@ -203,22 +208,47 @@ export default async function ListingDetailPage({
               <h2 className="text-2xl font-bold tracking-tight text-foreground">
                 Salute e cura
               </h2>
-              <ul className="grid gap-2 sm:grid-cols-2">
-                <HealthRow label="Vaccinato" value={listing.data.isVaccinated} />
-                <HealthRow
-                  label="Sterilizzato"
+              <ul className="flex flex-wrap gap-2.5">
+                <HealthPill
+                  labels={{
+                    confirmed: "Vaccinato",
+                    missing: "Non vaccinato",
+                    unknown: "Vaccinazione non indicata",
+                  }}
+                  value={listing.data.isVaccinated}
+                />
+                <HealthPill
+                  labels={{
+                    confirmed: "Sterilizzato",
+                    missing: "Non sterilizzato",
+                    unknown: "Sterilizzazione non indicata",
+                  }}
                   value={listing.data.isSterilized}
                 />
-                <HealthRow label="Sverminato" value={listing.data.isDewormed} />
-                <HealthRow label="Microchip" value={listing.data.hasMicrochip} />
+                <HealthPill
+                  labels={{
+                    confirmed: "Sverminato",
+                    missing: "Non sverminato",
+                    unknown: "Sverminazione non indicata",
+                  }}
+                  value={listing.data.isDewormed}
+                />
+                <HealthPill
+                  labels={{
+                    confirmed: "Microchip",
+                    missing: "Senza microchip",
+                    unknown: "Microchip non indicato",
+                  }}
+                  value={listing.data.hasMicrochip}
+                />
               </ul>
             </section>
 
             <Separator />
 
-            <section className="rounded-xl bg-brand-teal-soft p-5 sm:p-6">
+            <section className="rounded-xl bg-brand-coral-soft p-5 sm:p-6">
               <div className="flex items-start gap-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-brand-teal">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-primary">
                   <ShieldCheckIcon className="size-5" aria-hidden="true" />
                 </span>
                 <div>
@@ -234,7 +264,8 @@ export default async function ListingDetailPage({
             </section>
           </article>
 
-          <aside className="lg:sticky lg:top-24 lg:self-start">
+          <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+            <ListingOwnerSummary owner={listing.data.owner} />
             <ListingContactCard
               contactStatus={readContactStatus(query.contact)}
               hasShareablePhone={hasShareablePhone}
@@ -252,7 +283,7 @@ export default async function ListingDetailPage({
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-border bg-background p-4">
+    <div className="flex flex-col gap-1">
       <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
         {label}
       </dt>
@@ -261,40 +292,31 @@ function Fact({ label, value }: { label: string; value: string }) {
   )
 }
 
-function HealthRow({ label, value }: { label: string; value: boolean | null }) {
+function HealthPill({
+  labels,
+  value,
+}: {
+  labels: { confirmed: string; missing: string; unknown: string }
+  value: boolean | null
+}) {
   const status =
     value === true ? "confirmed" : value === false ? "missing" : "unknown"
 
   return (
     <li
       className={cn(
-        "flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-3"
+        "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium",
+        status === "confirmed" && "bg-brand-olive-soft text-brand-olive",
+        status === "missing" && "bg-brand-coral-soft text-primary",
+        status === "unknown" && "bg-secondary text-muted-foreground"
       )}
     >
-      <span
-        className={cn(
-          "flex size-7 shrink-0 items-center justify-center rounded-full",
-          status === "confirmed" && "bg-brand-olive-soft text-brand-olive",
-          status === "missing" && "bg-brand-coral-soft text-primary",
-          status === "unknown" && "bg-secondary text-muted-foreground"
-        )}
-      >
-        {status === "confirmed" ? (
-          <CheckIcon className="size-3.5" aria-hidden="true" />
-        ) : (
-          <MinusIcon className="size-3.5" aria-hidden="true" />
-        )}
-      </span>
-      <div className="flex flex-1 items-center justify-between gap-3">
-        <span className="text-sm font-medium text-foreground">{label}</span>
-        <span className="text-xs text-muted-foreground">
-          {status === "confirmed"
-            ? "Sì"
-            : status === "missing"
-              ? "No"
-              : "Non indicato"}
-        </span>
-      </div>
+      {status === "confirmed" ? (
+        <CheckIcon className="size-4" aria-hidden="true" />
+      ) : (
+        <MinusIcon className="size-4" aria-hidden="true" />
+      )}
+      {labels[status]}
     </li>
   )
 }

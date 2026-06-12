@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import {
+  ArrowRightIcon,
   ImageIcon,
   LocateFixedIcon,
   MapPinIcon,
@@ -393,9 +394,10 @@ function NearbyListingsSection() {
             </Button>
             <Link
               href={allNearbyHref}
-              className="inline-flex h-9 items-center rounded-xl px-3 text-sm font-semibold text-brand-teal transition-colors hover:bg-brand-teal-soft"
+              className="inline-flex h-9 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-primary transition-colors hover:bg-brand-coral-soft"
             >
-              Vedi tutti →
+              Vedi tutti
+              <ArrowRightIcon aria-hidden="true" className="size-4" />
             </Link>
           </div>
         </div>

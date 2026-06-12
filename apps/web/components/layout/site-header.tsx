@@ -10,7 +10,7 @@ async function SiteHeader() {
   const navigation = createSiteHeaderNavigation(Boolean(user))
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
+    <header className="scroll-elevate sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-10">
           <SiteLogoLink logoClassName="h-7 w-auto" />
