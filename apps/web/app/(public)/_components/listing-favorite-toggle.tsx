@@ -217,7 +217,7 @@ function ListingFavoriteToggle({
       if (data.favorited) {
         toast.success("Aggiunto ai preferiti")
       } else {
-        toast.error("Rimosso dai preferiti")
+        toast("Rimosso dai preferiti")
       }
     } catch {
       publishFavoriteState({
@@ -226,7 +226,7 @@ function ListingFavoriteToggle({
         listingId,
       })
       setHasError(true)
-      toast.error("Non e' stato possibile aggiornare i preferiti.")
+      toast.error("Non è stato possibile aggiornare i preferiti.")
     } finally {
       setIsPending(false)
     }
