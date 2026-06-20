@@ -82,23 +82,18 @@ jobs:
           fi
           echo "PULL_IDENTITY_ID=${PULL_IDENTITY_ID}" >> "$GITHUB_ENV"
 
-      - name: Build and push images (ACR Tasks)
+      - name: ACR login
+        run: az acr login --name "$AZURE_ACR_NAME"
+
+      - name: Build and push images
         shell: bash
         run: |
-          # Il runner GitHub non raggiunge l'endpoint dati dell'ACR (HTTP 403 su
-          # /v2/), quindi `az acr login`, `docker push` e lo scambio token
-          # falliscono. `az acr build` esegue build+push lato server (ACR Tasks):
-          # il runner usa solo il control-plane ARM (raggiungibile) e carica il
-          # context su blob, senza toccare l'endpoint dati bloccato.
-          az acr build --registry "$AZURE_ACR_NAME" \
-            --image "adotta/api:${GITHUB_SHA}" \
-            --file apps/api/Dockerfile .
-          az acr build --registry "$AZURE_ACR_NAME" \
-            --image "adotta/web:${GITHUB_SHA}" \
-            --file apps/web/Dockerfile .
-          az acr build --registry "$AZURE_ACR_NAME" \
-            --image "adotta/worker:${GITHUB_SHA}" \
-            --file apps/worker/Dockerfile .
+          docker build -f apps/api/Dockerfile -t "$API_IMAGE" .
+          docker build -f apps/web/Dockerfile -t "$WEB_IMAGE" .
+          docker build -f apps/worker/Dockerfile -t "$WORKER_IMAGE" .
+          docker push "$API_IMAGE"
+          docker push "$WEB_IMAGE"
+          docker push "$WORKER_IMAGE"
 
       - name: Read runtime secrets from Key Vault
         shell: bash
