@@ -100,6 +100,12 @@ function createApiUrl(path: string) {
   return `${webEnv.apiBaseUrl}${normalizedPath}`
 }
 
+// Service token Cloudflare Access: presente solo lato server (non NEXT_PUBLIC,
+// quindi undefined nel bundle client). Permette alle chiamate server->API di
+// attraversare Cloudflare Access quando l'API e' protetta da Zero Trust.
+const cloudflareAccessClientId = process.env.CLOUDFLARE_ACCESS_CLIENT_ID
+const cloudflareAccessClientSecret = process.env.CLOUDFLARE_ACCESS_CLIENT_SECRET
+
 function createHeaders(options: ApiFetchOptions) {
   const headers = new Headers(options.headers)
 
@@ -111,6 +117,11 @@ function createHeaders(options: ApiFetchOptions) {
 
   if (options.bearerToken) {
     headers.set("Authorization", `Bearer ${options.bearerToken}`)
+  }
+
+  if (cloudflareAccessClientId && cloudflareAccessClientSecret) {
+    headers.set("CF-Access-Client-Id", cloudflareAccessClientId)
+    headers.set("CF-Access-Client-Secret", cloudflareAccessClientSecret)
   }
 
   return headers
