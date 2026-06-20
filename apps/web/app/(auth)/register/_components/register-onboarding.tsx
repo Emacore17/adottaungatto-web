@@ -107,7 +107,7 @@ function RegisterOnboarding({ action, errorCode }: RegisterOnboardingProps) {
   const genericError = errorCode === "invalid" || errorCode === "account"
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-xl lg:border-transparent lg:bg-transparent lg:shadow-none">
       <CardHeader className="gap-3 px-5 pt-6 pb-2 sm:px-6 sm:pt-7">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-2xl">

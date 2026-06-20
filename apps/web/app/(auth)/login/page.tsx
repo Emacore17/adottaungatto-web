@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <AuthShell>
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-xl lg:border-transparent lg:bg-transparent lg:shadow-none">
         <CardHeader className="gap-2 px-6 pt-8 pb-2">
           <CardTitle className="text-2xl font-semibold tracking-tight">
             Bentornato

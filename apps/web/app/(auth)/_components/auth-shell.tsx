@@ -9,7 +9,7 @@ type AuthShellProps = {
 
 function AuthShell({ children }: AuthShellProps) {
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-xl">
       <section className="flex min-w-0 justify-center">{children}</section>
     </div>
   )
