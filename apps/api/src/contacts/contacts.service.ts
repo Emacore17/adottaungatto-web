@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Inject,
@@ -254,6 +255,15 @@ export class ContactsService {
 
     if (listing.owner_user_id === requester.id) {
       throw new BadRequestException("Users cannot contact their own listing.")
+    }
+
+    // Anti-abuso: solo gli account con email verificata (status 'active')
+    // possono inviare richieste di contatto, che recapitano l'email del
+    // richiedente al proprietario.
+    if (requester.status !== "active") {
+      throw new ForbiddenException(
+        "Verify your email address before contacting a listing owner."
+      )
     }
 
     await this.enforceContactRateLimits(requester.id, listing)

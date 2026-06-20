@@ -37,11 +37,15 @@ import type {
 } from "./auth.types.js"
 
 const passwordKeyLength = 64
+// scrypt N=2^16 (65536): sopra il minimo OWASP (2^14) per aumentare il costo
+// del brute-force offline. maxmem deve coprire ~132*N*r byte (~66MB). Gli hash
+// esistenti restano verificabili: i parametri sono memorizzati nell'hash e
+// riletti da parsePasswordHash.
 const scryptOptions = {
-  N: 16384,
+  N: 65536,
   r: 8,
   p: 1,
-  maxmem: 64 * 1024 * 1024,
+  maxmem: 128 * 1024 * 1024,
 }
 const sessionTtlMs = 30 * 24 * 60 * 60 * 1000
 

@@ -199,6 +199,43 @@ describe("ContactsService", () => {
     })
   })
 
+  it("rejects contact requests from unverified accounts", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          id: "listing-id",
+          title: "Micia cerca casa",
+          owner_user_id: "owner-id",
+          owner_email: "owner@example.com",
+          owner_display_name: "Owner",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const mailService = {
+      sendListingContactRequest: vi.fn().mockResolvedValue(undefined),
+    } as unknown as MailService
+    const service = new ContactsService(databaseService, mailService)
+
+    await expect(
+      service.contactListingOwner(
+        {
+          id: "requester-id",
+          email: "requester@example.com",
+          displayName: "Requester",
+          profileType: "private",
+          status: "pending_verification",
+        },
+        "listing-id",
+        {
+          message: "Ciao, vorrei avere informazioni sulla gatta.",
+          shareEmail: true,
+          sharePhone: false,
+        }
+      )
+    ).rejects.toThrow()
+    expect(mailService.sendListingContactRequest).not.toHaveBeenCalled()
+  })
+
   it("stores and sends requester phone only after explicit consent", async () => {
     const databaseService = {
       queryRows: vi

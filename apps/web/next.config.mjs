@@ -19,10 +19,12 @@ function createRemotePattern(url) {
   }
 }
 
+const isProduction = process.env.NODE_ENV === "production"
 const imageRemotePatterns = [
   createRemotePattern(process.env.NEXT_PUBLIC_S3_PUBLIC_ENDPOINT),
   createRemotePattern(process.env.S3_PUBLIC_ENDPOINT),
-  createRemotePattern("http://localhost:9000"),
+  // Sorgente di sviluppo locale: esclusa in produzione.
+  isProduction ? null : createRemotePattern("http://localhost:9000"),
 ].filter(Boolean)
 const listingImageFormBodySizeLimit = "110mb"
 
