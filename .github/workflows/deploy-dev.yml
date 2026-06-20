@@ -82,65 +82,23 @@ jobs:
           fi
           echo "PULL_IDENTITY_ID=${PULL_IDENTITY_ID}" >> "$GITHUB_ENV"
 
-      - name: ACR login
+      - name: Build and push images (ACR Tasks)
         shell: bash
         run: |
-          # `az acr login` fallisce con CONNECTIVITY_CHALLENGE_ERROR su alcune
-          # versioni della CLI; usiamo lo scambio token AAD -> ACR + docker
-          # login. L'audience del token AAD accettata dall'exchange varia, quindi
-          # proviamo piu' resource e procediamo con la prima che funziona.
-          TENANT_ID="$(az account show --query tenantId -o tsv)"
-          echo "v2 challenge http: $(curl -s -o /dev/null -w '%{http_code}' "https://${ACR_LOGIN_SERVER}/v2/")"
-
-          get_refresh_token() {
-            local resource="$1" token response http body rt
-            token="$(az account get-access-token --resource "$resource" --query accessToken -o tsv 2>/dev/null || true)"
-            if [ -z "$token" ]; then
-              echo "resource=${resource} token=unavailable"
-              return 0
-            fi
-            response="$(curl -s -w $'\n%{http_code}' -X POST \
-              "https://${ACR_LOGIN_SERVER}/oauth2/exchange" \
-              -H "Content-Type: application/x-www-form-urlencoded" \
-              --data-urlencode "grant_type=access_token" \
-              --data-urlencode "service=${ACR_LOGIN_SERVER}" \
-              --data-urlencode "tenant=${TENANT_ID}" \
-              --data-urlencode "access_token=${token}")"
-            http="$(printf '%s' "$response" | tail -n1)"
-            body="$(printf '%s' "$response" | sed '$d')"
-            rt="$(printf '%s' "$body" | jq -r '.refresh_token // empty' 2>/dev/null || true)"
-            echo "resource=${resource} exchange_http=${http} refresh_token=$([ -n "$rt" ] && echo present || echo absent)"
-            printf '%s' "$rt" > /tmp/acr_rt
-          }
-
-          : > /tmp/acr_rt
-          for resource in \
-            "https://management.core.windows.net/" \
-            "https://management.azure.com/" \
-            "https://containerregistry.azure.net/"; do
-            get_refresh_token "$resource"
-            [ -s /tmp/acr_rt ] && break
-          done
-
-          ACR_REFRESH_TOKEN="$(cat /tmp/acr_rt)"
-          rm -f /tmp/acr_rt
-          if [ -z "$ACR_REFRESH_TOKEN" ]; then
-            echo "::error::Unable to obtain an ACR refresh token from oauth2/exchange (see http codes above)"
-            exit 1
-          fi
-          echo "$ACR_REFRESH_TOKEN" | docker login "${ACR_LOGIN_SERVER}" \
-            --username 00000000-0000-0000-0000-000000000000 \
-            --password-stdin
-
-      - name: Build and push images
-        shell: bash
-        run: |
-          docker build -f apps/api/Dockerfile -t "$API_IMAGE" .
-          docker build -f apps/web/Dockerfile -t "$WEB_IMAGE" .
-          docker build -f apps/worker/Dockerfile -t "$WORKER_IMAGE" .
-          docker push "$API_IMAGE"
-          docker push "$WEB_IMAGE"
-          docker push "$WORKER_IMAGE"
+          # Il runner GitHub non raggiunge l'endpoint dati dell'ACR (HTTP 403 su
+          # /v2/), quindi `az acr login`, `docker push` e lo scambio token
+          # falliscono. `az acr build` esegue build+push lato server (ACR Tasks):
+          # il runner usa solo il control-plane ARM (raggiungibile) e carica il
+          # context su blob, senza toccare l'endpoint dati bloccato.
+          az acr build --registry "$AZURE_ACR_NAME" \
+            --image "adotta/api:${GITHUB_SHA}" \
+            --file apps/api/Dockerfile .
+          az acr build --registry "$AZURE_ACR_NAME" \
+            --image "adotta/web:${GITHUB_SHA}" \
+            --file apps/web/Dockerfile .
+          az acr build --registry "$AZURE_ACR_NAME" \
+            --image "adotta/worker:${GITHUB_SHA}" \
+            --file apps/worker/Dockerfile .
 
       - name: Read runtime secrets from Key Vault
         shell: bash
