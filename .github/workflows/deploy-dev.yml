@@ -86,23 +86,46 @@ jobs:
         shell: bash
         run: |
           # `az acr login` fallisce con CONNECTIVITY_CHALLENGE_ERROR su alcune
-          # versioni della CLI anche quando la registry e' raggiungibile e
-          # l'identita' ha AcrPush. Usiamo lo scambio token AAD -> ACR seguito
-          # da docker login (workaround ufficiale, indipendente dalla versione).
-          AAD_TOKEN="$(az account get-access-token --query accessToken -o tsv)"
+          # versioni della CLI; usiamo lo scambio token AAD -> ACR + docker
+          # login. L'audience del token AAD accettata dall'exchange varia, quindi
+          # proviamo piu' resource e procediamo con la prima che funziona.
           TENANT_ID="$(az account show --query tenantId -o tsv)"
-          EXCHANGE_RESPONSE="$(curl -s -w $'\n%{http_code}' -X POST \
-            "https://${ACR_LOGIN_SERVER}/oauth2/exchange" \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            --data-urlencode "grant_type=access_token" \
-            --data-urlencode "service=${ACR_LOGIN_SERVER}" \
-            --data-urlencode "tenant=${TENANT_ID}" \
-            --data-urlencode "access_token=${AAD_TOKEN}")"
-          HTTP_CODE="$(printf '%s' "$EXCHANGE_RESPONSE" | tail -n1)"
-          BODY="$(printf '%s' "$EXCHANGE_RESPONSE" | sed '$d')"
-          ACR_REFRESH_TOKEN="$(printf '%s' "$BODY" | jq -r '.refresh_token // empty')"
+          echo "v2 challenge http: $(curl -s -o /dev/null -w '%{http_code}' "https://${ACR_LOGIN_SERVER}/v2/")"
+
+          get_refresh_token() {
+            local resource="$1" token response http body rt
+            token="$(az account get-access-token --resource "$resource" --query accessToken -o tsv 2>/dev/null || true)"
+            if [ -z "$token" ]; then
+              echo "resource=${resource} token=unavailable"
+              return 0
+            fi
+            response="$(curl -s -w $'\n%{http_code}' -X POST \
+              "https://${ACR_LOGIN_SERVER}/oauth2/exchange" \
+              -H "Content-Type: application/x-www-form-urlencoded" \
+              --data-urlencode "grant_type=access_token" \
+              --data-urlencode "service=${ACR_LOGIN_SERVER}" \
+              --data-urlencode "tenant=${TENANT_ID}" \
+              --data-urlencode "access_token=${token}")"
+            http="$(printf '%s' "$response" | tail -n1)"
+            body="$(printf '%s' "$response" | sed '$d')"
+            rt="$(printf '%s' "$body" | jq -r '.refresh_token // empty' 2>/dev/null || true)"
+            echo "resource=${resource} exchange_http=${http} refresh_token=$([ -n "$rt" ] && echo present || echo absent)"
+            printf '%s' "$rt" > /tmp/acr_rt
+          }
+
+          : > /tmp/acr_rt
+          for resource in \
+            "https://management.core.windows.net/" \
+            "https://management.azure.com/" \
+            "https://containerregistry.azure.net/"; do
+            get_refresh_token "$resource"
+            [ -s /tmp/acr_rt ] && break
+          done
+
+          ACR_REFRESH_TOKEN="$(cat /tmp/acr_rt)"
+          rm -f /tmp/acr_rt
           if [ -z "$ACR_REFRESH_TOKEN" ]; then
-            echo "::error::oauth2/exchange failed (HTTP ${HTTP_CODE}): $(printf '%s' "$BODY" | head -c 600)"
+            echo "::error::Unable to obtain an ACR refresh token from oauth2/exchange (see http codes above)"
             exit 1
           fi
           echo "$ACR_REFRESH_TOKEN" | docker login "${ACR_LOGIN_SERVER}" \
