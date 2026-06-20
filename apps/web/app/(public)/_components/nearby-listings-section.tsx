@@ -65,7 +65,7 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
   return (
     <Link
       href={routes.listing(listing.id)}
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background transition-shadow hover:shadow-md"
+      className="card-lift group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card hover:border-foreground/15 hover:shadow-xl hover:shadow-foreground/10"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
         {coverUrl ? (
@@ -74,7 +74,7 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
             alt={listing.title}
             blurDataUrl={coverBlurDataUrl}
             fill
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
             sizes="(min-width: 1024px) 22rem, (min-width: 640px) 50vw, 100vw"
           />
         ) : (
@@ -84,19 +84,19 @@ function NearbyListingCard({ listing }: { listing: PublicListingSummary }) {
         )}
       </div>
       <div className="flex flex-col gap-1 p-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
             {listing.title}
           </h3>
-          <span
-            className={
-              listing.isFree
-                ? "shrink-0 text-[15px] font-bold text-brand-olive"
-                : "shrink-0 text-[15px] font-bold text-foreground"
-            }
-          >
-            {listing.isFree ? "Gratis" : formatListingPrice(listing)}
-          </span>
+          {listing.isFree ? (
+            <span className="shrink-0 rounded-full bg-brand-olive-soft px-2.5 py-1 text-xs font-bold text-brand-olive">
+              Gratis
+            </span>
+          ) : (
+            <span className="shrink-0 text-[15px] font-bold tabular-nums text-foreground">
+              {formatListingPrice(listing)}
+            </span>
+          )}
         </div>
         <p className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPinIcon

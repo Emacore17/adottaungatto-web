@@ -73,7 +73,7 @@ function ListingImagePreview({
             blurDataUrl={image.blurDataUrl}
             fill
             className={cn(
-              "object-cover transition-opacity duration-500 ease-out",
+              "object-cover transition-[opacity,transform] duration-500 ease-out group-hover:scale-[1.04]",
               index === currentIndex ? "opacity-100" : "opacity-0"
             )}
             sizes="(min-width: 1024px) 32rem, (min-width: 640px) 50vw, 100vw"

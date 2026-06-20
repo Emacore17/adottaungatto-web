@@ -229,6 +229,56 @@
   }
 }
 
+/* Sollevamento morbido per le card cliccabili: solo transform/ombra,
+   nessun reflow. Disattivato sotto prefers-reduced-motion. */
+@utility card-lift {
+  transition:
+    box-shadow 0.25s var(--ease-fluid),
+    transform 0.25s var(--ease-fluid),
+    border-color 0.25s var(--ease-fluid);
+  @media (prefers-reduced-motion: no-preference) {
+    &:hover {
+      transform: translateY(-3px);
+    }
+  }
+}
+
+/* Accento di brand sul testo dei titoli: corallo→ambra, misurato.
+   Fallback al colore primary se background-clip non è supportato. */
+@utility text-brand-gradient {
+  color: var(--brand-coral);
+  @supports (background-clip: text) or (-webkit-background-clip: text) {
+    background-image: linear-gradient(
+      105deg,
+      var(--brand-coral) 0%,
+      var(--brand-amber-ink) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* Entrata fotografica scaglionata per il mosaico hero. */
+@keyframes photo-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@utility photo-in {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: photo-in 0.8s var(--ease-fluid) both;
+    animation-delay: var(--photo-delay, 0ms);
+  }
+}
+
 /* Ombra dell'header legata allo scroll: niente listener JS,
    solo scroll-driven animation con fallback invariato. */
 @keyframes scroll-elevate {

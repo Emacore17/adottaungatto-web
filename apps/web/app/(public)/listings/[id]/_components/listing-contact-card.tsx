@@ -45,8 +45,12 @@ function ListingContactCard({
   return (
     <Card
       id="contact-owner"
-      className="border-border ring-border"
+      className="overflow-hidden border-border pt-0 shadow-lg shadow-foreground/5 ring-1 ring-primary/10"
     >
+      <div
+        aria-hidden="true"
+        className="h-1.5 w-full bg-gradient-to-r from-brand-coral via-primary to-brand-amber-ink"
+      />
       <CardHeader>
         <CardTitle>Scrivi un messaggio</CardTitle>
         <CardDescription>

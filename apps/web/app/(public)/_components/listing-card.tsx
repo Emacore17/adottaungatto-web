@@ -37,7 +37,7 @@ function ListingCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-shadow duration-200 ease-fluid hover:shadow-md"
+        "card-lift group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card hover:border-foreground/15 hover:shadow-xl hover:shadow-foreground/10"
       )}
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
@@ -46,6 +46,11 @@ function ListingCard({
           images={previewImages}
           title={listing.title}
           priority={priority}
+        />
+
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[5] h-20 bg-gradient-to-b from-black/25 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
         />
 
         {isSponsored ? (
@@ -65,8 +70,8 @@ function ListingCard({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 p-4">
-        <div className="flex items-baseline justify-between gap-3">
-          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground">
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="line-clamp-1 text-base font-bold tracking-tight text-foreground transition-colors group-hover:text-primary">
             <Link
               href={detailHref}
               className="after:absolute after:inset-0 after:content-['']"
@@ -74,14 +79,15 @@ function ListingCard({
               {listing.title}
             </Link>
           </h3>
-          <span
-            className={cn(
-              "shrink-0 text-[15px] font-bold",
-              listing.isFree ? "text-brand-olive" : "text-foreground"
-            )}
-          >
-            {listing.isFree ? "Gratis" : formatListingPrice(listing)}
-          </span>
+          {listing.isFree ? (
+            <span className="shrink-0 rounded-full bg-brand-olive-soft px-2.5 py-1 text-xs font-bold text-brand-olive">
+              Gratis
+            </span>
+          ) : (
+            <span className="shrink-0 text-[15px] font-bold tabular-nums text-foreground">
+              {formatListingPrice(listing)}
+            </span>
+          )}
         </div>
 
         <p className="flex items-center gap-1 text-sm text-muted-foreground">

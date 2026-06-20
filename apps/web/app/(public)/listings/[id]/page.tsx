@@ -3,11 +3,14 @@ import Link from "next/link"
 import { notFound } from "next/navigation"
 import {
   CalendarIcon,
+  CatIcon,
   CheckIcon,
   ChevronRightIcon,
+  type LucideIcon,
   MapPinIcon,
   MinusIcon,
   ShieldCheckIcon,
+  VenusAndMarsIcon,
 } from "lucide-react"
 
 import {
@@ -130,55 +133,91 @@ export default async function ListingDetailPage({
           <span className="truncate text-foreground">{listing.data.title}</span>
         </nav>
 
-        <header className="mt-6 flex flex-col gap-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-            <h1 className="max-w-3xl text-3xl font-extrabold tracking-tight text-balance text-foreground sm:text-4xl">
-              {listing.data.title}
-            </h1>
-            <p
-              className={cn(
-                "text-2xl font-extrabold tracking-tight sm:text-3xl",
-                listing.data.isFree ? "text-brand-olive" : "text-foreground"
-              )}
-            >
-              {formatListingPrice(listing.data)}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <MapPinIcon className="size-4" aria-hidden="true" />
-                {locationLabel}
-              </span>
-              {publishedDate ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarIcon className="size-4" aria-hidden="true" />
-                  {publishedDate}
-                </span>
-              ) : null}
-            </div>
-            <ListingFavoriteToggle
-              initialFavoriteCount={listing.data.stats.favoriteCount}
-              isAuthenticated={Boolean(sessionToken)}
-              isFavorite={favoriteListingIds.has(listing.data.id)}
-              listingId={listing.data.id}
-              nextPath={nextPath}
-              syncOnMount
+        <div className="mt-5 grid gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.6fr)_25rem] lg:items-start">
+          <div className="order-1 min-w-0 overflow-hidden rounded-3xl border border-border lg:col-start-1 lg:row-start-1">
+            <ListingImageCarousel
+              images={carouselImages}
+              title={listing.data.title}
             />
           </div>
-        </header>
 
-        <div className="mt-8 overflow-hidden rounded-2xl">
-          <ListingImageCarousel
-            images={carouselImages}
-            title={listing.data.title}
-          />
-        </div>
+          <aside className="order-2 flex flex-col gap-4 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:sticky lg:top-24">
+            <div className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
+              <div className="flex items-start justify-between gap-3">
+                <h1 className="text-2xl font-extrabold tracking-tight text-balance text-foreground">
+                  {listing.data.title}
+                </h1>
+                <ListingFavoriteToggle
+                  initialFavoriteCount={listing.data.stats.favoriteCount}
+                  isAuthenticated={Boolean(sessionToken)}
+                  isFavorite={favoriteListingIds.has(listing.data.id)}
+                  listingId={listing.data.id}
+                  nextPath={nextPath}
+                  syncOnMount
+                />
+              </div>
 
-        <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-12">
-          <article className="flex min-w-0 flex-col gap-10">
+              <div className="mt-3">
+                {listing.data.isFree ? (
+                  <span className="inline-flex items-center rounded-full bg-brand-olive-soft px-3.5 py-1.5 text-base font-bold text-brand-olive">
+                    Gratis
+                  </span>
+                ) : (
+                  <p className="text-3xl font-extrabold tracking-tight tabular-nums text-foreground">
+                    {formatListingPrice(listing.data)}
+                  </p>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPinIcon className="size-4" aria-hidden="true" />
+                  {locationLabel}
+                </span>
+                {publishedDate ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <CalendarIcon className="size-4" aria-hidden="true" />
+                    {publishedDate}
+                  </span>
+                ) : null}
+              </div>
+
+              <dl className="mt-5 grid grid-cols-3 gap-2">
+                <QuickFact
+                  icon={CalendarIcon}
+                  label="Età"
+                  value={formatAgeMonths(listing.data.ageMonths)}
+                />
+                <QuickFact
+                  icon={VenusAndMarsIcon}
+                  label="Sesso"
+                  value={formatSex(listing.data.sex)}
+                />
+                <QuickFact
+                  icon={CatIcon}
+                  label="Razza"
+                  value={listing.data.breed?.name ?? "—"}
+                />
+              </dl>
+
+              <Separator className="my-5" />
+
+              <ListingOwnerSummary owner={listing.data.owner} />
+            </div>
+
+            <ListingContactCard
+              contactStatus={readContactStatus(query.contact)}
+              hasShareablePhone={hasShareablePhone}
+              isAuthenticated={Boolean(sessionToken)}
+              isEnabled={listing.data.contactRequestsEnabled}
+              listingId={listing.data.id}
+              publicPhoneE164={listing.data.publicPhoneE164}
+            />
+          </aside>
+
+          <article className="order-3 flex min-w-0 flex-col gap-8 lg:col-start-1 lg:row-start-2 lg:mt-2">
             <section className="flex flex-col gap-4">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
                 Su questo gatto
               </h2>
               <p className="text-base leading-relaxed text-foreground/90">
@@ -189,23 +228,7 @@ export default async function ListingDetailPage({
             <Separator />
 
             <section className="flex flex-col gap-5">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                Identikit
-              </h2>
-              <dl className="grid grid-cols-3 gap-x-8 gap-y-5">
-                <Fact label="Età" value={formatAgeMonths(listing.data.ageMonths)} />
-                <Fact label="Sesso" value={formatSex(listing.data.sex)} />
-                <Fact
-                  label="Razza"
-                  value={listing.data.breed?.name ?? "Non indicata"}
-                />
-              </dl>
-            </section>
-
-            <Separator />
-
-            <section className="flex flex-col gap-5">
-              <h2 className="text-2xl font-bold tracking-tight text-foreground">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
                 Salute e cura
               </h2>
               <ul className="flex flex-wrap gap-2.5">
@@ -244,50 +267,45 @@ export default async function ListingDetailPage({
               </ul>
             </section>
 
-            <Separator />
-
-            <section className="rounded-xl bg-brand-coral-soft p-5 sm:p-6">
-              <div className="flex items-start gap-4">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-background text-primary">
-                  <ShieldCheckIcon className="size-5" aria-hidden="true" />
-                </span>
-                <div>
-                  <h3 className="text-base font-semibold tracking-tight text-foreground">
-                    Adozione responsabile
-                  </h3>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Ogni richiesta parte da una conversazione con chi se ne
-                    occupa. Niente intermediari, niente compravendita.
-                  </p>
-                </div>
+            <section className="flex items-start gap-4 rounded-2xl border border-brand-teal/20 bg-brand-teal-soft p-5 sm:p-6">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-background text-brand-teal">
+                <ShieldCheckIcon className="size-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-base font-bold tracking-tight text-foreground">
+                  Adozione responsabile
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Ogni richiesta parte da una conversazione con chi se ne
+                  occupa. Niente intermediari, niente compravendita.
+                </p>
               </div>
             </section>
           </article>
-
-          <aside className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
-            <ListingOwnerSummary owner={listing.data.owner} />
-            <ListingContactCard
-              contactStatus={readContactStatus(query.contact)}
-              hasShareablePhone={hasShareablePhone}
-              isAuthenticated={Boolean(sessionToken)}
-              isEnabled={listing.data.contactRequestsEnabled}
-              listingId={listing.data.id}
-              publicPhoneE164={listing.data.publicPhoneE164}
-            />
-          </aside>
         </div>
       </main>
     </>
   )
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+function QuickFact({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon
+  label: string
+  value: string
+}) {
   return (
-    <div className="flex flex-col gap-1">
-      <dt className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+    <div className="flex flex-col items-center gap-1 rounded-2xl bg-secondary/60 px-1.5 py-3 text-center">
+      <Icon className="size-4 text-primary" aria-hidden="true" />
+      <dt className="text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
         {label}
       </dt>
-      <dd className="text-base font-semibold text-foreground">{value}</dd>
+      <dd className="text-sm leading-tight font-bold text-balance text-foreground">
+        {value}
+      </dd>
     </div>
   )
 }
@@ -327,12 +345,12 @@ function ListingOwnerSummary({
   owner: PublicListingDetail["owner"]
 }) {
   return (
-    <div className="flex min-w-0 items-center gap-4 rounded-xl border border-border bg-background p-4">
+    <div className="flex min-w-0 items-center gap-4 rounded-2xl border border-border bg-card p-4">
       <Avatar
         size="lg"
-        className="size-12 bg-secondary text-base font-semibold text-foreground"
+        className="size-12 bg-brand-coral-soft text-base font-semibold text-primary"
       >
-        <AvatarFallback className="bg-secondary text-foreground">
+        <AvatarFallback className="bg-brand-coral-soft text-primary">
           {getOwnerInitials(owner.displayName)}
         </AvatarFallback>
       </Avatar>
@@ -343,7 +361,8 @@ function ListingOwnerSummary({
         <p className="truncate text-base font-semibold text-foreground">
           {owner.displayName}
         </p>
-        <span className="text-xs text-muted-foreground">
+        <span className="mt-1 inline-flex w-fit items-center gap-1 rounded-full bg-brand-teal-soft px-2 py-0.5 text-xs font-semibold text-brand-teal">
+          <ShieldCheckIcon className="size-3" aria-hidden="true" />
           {formatOwnerProfileType(owner.profileType)}
         </span>
       </div>
