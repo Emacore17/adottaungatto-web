@@ -90,15 +90,20 @@ jobs:
           # l'identita' ha AcrPush. Usiamo lo scambio token AAD -> ACR seguito
           # da docker login (workaround ufficiale, indipendente dalla versione).
           AAD_TOKEN="$(az account get-access-token --query accessToken -o tsv)"
-          ACR_REFRESH_TOKEN="$(curl -s -X POST \
+          TENANT_ID="$(az account show --query tenantId -o tsv)"
+          EXCHANGE_RESPONSE="$(curl -s -w $'\n%{http_code}' -X POST \
             "https://${ACR_LOGIN_SERVER}/oauth2/exchange" \
             -H "Content-Type: application/x-www-form-urlencoded" \
             --data-urlencode "grant_type=access_token" \
             --data-urlencode "service=${ACR_LOGIN_SERVER}" \
-            --data-urlencode "access_token=${AAD_TOKEN}" \
-            | jq -r '.refresh_token')"
-          if [ -z "$ACR_REFRESH_TOKEN" ] || [ "$ACR_REFRESH_TOKEN" = "null" ]; then
-            echo "::error::Failed to obtain an ACR refresh token from oauth2/exchange"
+            --data-urlencode "tenant=${TENANT_ID}" \
+            --data-urlencode "access_token=${AAD_TOKEN}")"
+          HTTP_CODE="$(printf '%s' "$EXCHANGE_RESPONSE" | tail -n1)"
+          BODY="$(printf '%s' "$EXCHANGE_RESPONSE" | sed '$d')"
+          ACR_REFRESH_TOKEN="$(printf '%s' "$BODY" | jq -r '.refresh_token // empty')"
+          if [ -z "$ACR_REFRESH_TOKEN" ]; then
+            ERR="$(printf '%s' "$BODY" | jq -rc '{errors, error, error_description, message}' 2>/dev/null || printf '%s' "$BODY")"
+            echo "::error::oauth2/exchange failed (HTTP ${HTTP_CODE}): ${ERR}"
             exit 1
           fi
           echo "$ACR_REFRESH_TOKEN" | docker login "${ACR_LOGIN_SERVER}" \
