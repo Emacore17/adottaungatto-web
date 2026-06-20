@@ -102,8 +102,7 @@ jobs:
           BODY="$(printf '%s' "$EXCHANGE_RESPONSE" | sed '$d')"
           ACR_REFRESH_TOKEN="$(printf '%s' "$BODY" | jq -r '.refresh_token // empty')"
           if [ -z "$ACR_REFRESH_TOKEN" ]; then
-            ERR="$(printf '%s' "$BODY" | jq -rc '{errors, error, error_description, message}' 2>/dev/null || printf '%s' "$BODY")"
-            echo "::error::oauth2/exchange failed (HTTP ${HTTP_CODE}): ${ERR}"
+            echo "::error::oauth2/exchange failed (HTTP ${HTTP_CODE}): $(printf '%s' "$BODY" | head -c 600)"
             exit 1
           fi
           echo "$ACR_REFRESH_TOKEN" | docker login "${ACR_LOGIN_SERVER}" \
