@@ -83,7 +83,27 @@ jobs:
           echo "PULL_IDENTITY_ID=${PULL_IDENTITY_ID}" >> "$GITHUB_ENV"
 
       - name: ACR login
-        run: az acr login --name "$AZURE_ACR_NAME"
+        shell: bash
+        run: |
+          # `az acr login` fallisce con CONNECTIVITY_CHALLENGE_ERROR su alcune
+          # versioni della CLI anche quando la registry e' raggiungibile e
+          # l'identita' ha AcrPush. Usiamo lo scambio token AAD -> ACR seguito
+          # da docker login (workaround ufficiale, indipendente dalla versione).
+          AAD_TOKEN="$(az account get-access-token --query accessToken -o tsv)"
+          ACR_REFRESH_TOKEN="$(curl -s -X POST \
+            "https://${ACR_LOGIN_SERVER}/oauth2/exchange" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            --data-urlencode "grant_type=access_token" \
+            --data-urlencode "service=${ACR_LOGIN_SERVER}" \
+            --data-urlencode "access_token=${AAD_TOKEN}" \
+            | jq -r '.refresh_token')"
+          if [ -z "$ACR_REFRESH_TOKEN" ] || [ "$ACR_REFRESH_TOKEN" = "null" ]; then
+            echo "::error::Failed to obtain an ACR refresh token from oauth2/exchange"
+            exit 1
+          fi
+          echo "$ACR_REFRESH_TOKEN" | docker login "${ACR_LOGIN_SERVER}" \
+            --username 00000000-0000-0000-0000-000000000000 \
+            --password-stdin
 
       - name: Build and push images
         shell: bash
