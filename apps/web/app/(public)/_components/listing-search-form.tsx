@@ -488,9 +488,9 @@ function ListingSearchForm({
   }
 
   const filterControls = (
-    <div className="grid gap-4 text-left">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-12">
-        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
+    <div className="@container grid gap-4 text-left">
+      <div className="grid gap-3 @md:grid-cols-2 @5xl:grid-cols-12">
+        <div className={cn(compactFieldClassName, "@5xl:col-span-3")}>
           <span className={filterLabelClassName}>Razza</span>
           <Select
             value={filters.breedId || "__all__"}
@@ -520,7 +520,7 @@ function ListingSearchForm({
           </Select>
         </div>
 
-        <div className={cn(compactFieldClassName, "xl:col-span-2")}>
+        <div className={cn(compactFieldClassName, "@5xl:col-span-2")}>
           <span className={filterLabelClassName}>Sesso</span>
           <Select
             value={filters.sex || "__any__"}
@@ -544,7 +544,7 @@ function ListingSearchForm({
           </Select>
         </div>
 
-        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
+        <div className={cn(compactFieldClassName, "@5xl:col-span-3")}>
           <div className="flex min-h-5 items-center justify-between gap-2">
             <span className={filterLabelClassName}>Eta</span>
             <span className="truncate text-right text-xs font-medium text-muted-foreground">
@@ -601,7 +601,7 @@ function ListingSearchForm({
           </div>
         </div>
 
-        <div className={cn(compactFieldClassName, "xl:col-span-4")}>
+        <div className={cn(compactFieldClassName, "@5xl:col-span-4")}>
           <div className="flex min-h-5 items-center justify-between gap-2">
             <span className={filterLabelClassName}>Prezzo</span>
             <span className="truncate text-right text-xs font-medium text-muted-foreground">
@@ -613,7 +613,7 @@ function ListingSearchForm({
             className={cn(
               "grid gap-2",
               filters.priceMode === "range" &&
-                "sm:grid-cols-[minmax(7rem,0.9fr)_minmax(0,1fr)_minmax(0,1fr)]"
+                "@5xl:grid-cols-[minmax(7rem,0.9fr)_minmax(0,1fr)_minmax(0,1fr)]"
             )}
           >
             <Select
@@ -684,7 +684,7 @@ function ListingSearchForm({
           </div>
         </div>
 
-        <div className={cn(compactFieldClassName, "xl:col-span-3")}>
+        <div className={cn(compactFieldClassName, "@5xl:col-span-3")}>
           <span className={filterLabelClassName}>Ordina</span>
           <Select
             value={effectiveSort}
@@ -709,7 +709,7 @@ function ListingSearchForm({
           </Select>
         </div>
 
-        <div className={cn(compactFieldClassName, "xl:col-span-5")}>
+        <div className={cn(compactFieldClassName, "@5xl:col-span-5")}>
           <span className={filterLabelClassName}>Distanza</span>
           <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
             <Select
