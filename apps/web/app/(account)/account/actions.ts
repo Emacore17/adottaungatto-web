@@ -49,6 +49,7 @@ import { clearSessionCookie, setSessionCookie } from "@/lib/auth/cookies"
 import { getSessionToken } from "@/lib/auth/session"
 import { normalizePhoneE164, phoneE164Pattern } from "@/lib/phone"
 import { routes } from "@/lib/routes"
+import { hasAllowedImageSignature } from "@/lib/security/image-signature"
 import { assertTrustedActionOrigin } from "@/lib/security/server-action-origin"
 
 export async function updateProfileAction(formData: FormData) {
@@ -585,6 +586,12 @@ async function uploadDraftImageFile(
   })
 
   if (!input.success) {
+    return { error: "invalid-image", ok: false }
+  }
+
+  // Il mimeType dichiarato dal client è spoofabile: confermalo sui byte reali
+  // prima di caricare in storage.
+  if (!(await hasAllowedImageSignature(file, input.data.mimeType))) {
     return { error: "invalid-image", ok: false }
   }
 

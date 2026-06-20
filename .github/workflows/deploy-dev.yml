@@ -211,7 +211,7 @@ jobs:
                 APP_ENV=production \
                 APP_URL="$WEB_BOOTSTRAP_URL" \
                 API_PORT="$API_PORT" \
-                API_TRUST_PROXY=true \
+                API_TRUST_PROXY=1 \
                 RATE_LIMIT_ENABLED=true \
               DATABASE_URL=secretref:database-url \
               REDIS_URL=secretref:redis-url \
@@ -246,7 +246,7 @@ jobs:
                 APP_ENV=production \
                 APP_URL="$WEB_BOOTSTRAP_URL" \
                 API_PORT="$API_PORT" \
-                API_TRUST_PROXY=true \
+                API_TRUST_PROXY=1 \
                 RATE_LIMIT_ENABLED=true \
                 DATABASE_URL=secretref:database-url \
                 REDIS_URL=secretref:redis-url \

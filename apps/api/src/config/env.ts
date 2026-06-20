@@ -21,6 +21,39 @@ const booleanEnv = (defaultValue: boolean) =>
     return value
   }, z.boolean())
 
+// trustProxy: accetta un booleano, un numero di hop fidati (es. "1" dietro un
+// solo reverse-proxy/ingress) oppure una lista di IP/CIDR. Evita di impostare
+// `true` dietro un proxy: Fastify si fiderebbe dell'intera catena
+// X-Forwarded-For, rendendo l'IP client falsificabile (bypass dei rate limit
+// per-IP). Preferire il numero di hop o i CIDR dei proxy fidati.
+const trustProxyEnv = z.preprocess((value) => {
+  if (value === undefined || value === null || value === "") {
+    return false
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase()
+
+    if (["true", "yes", "on"].includes(normalized)) {
+      return true
+    }
+
+    if (["false", "no", "off"].includes(normalized)) {
+      return false
+    }
+
+    const hops = Number(normalized)
+
+    if (Number.isInteger(hops) && hops >= 0) {
+      return hops
+    }
+
+    return value.trim()
+  }
+
+  return value
+}, z.union([z.boolean(), z.number().int().nonnegative(), z.string().min(1)]))
+
 const appEnvSchema = z.enum(["local", "test", "staging", "production"])
 
 const apiEnvBaseSchema = z.object({
@@ -30,7 +63,7 @@ const apiEnvBaseSchema = z.object({
     .positive()
     .default(1200),
   API_PORT: z.coerce.number().int().positive().default(4000),
-  API_TRUST_PROXY: booleanEnv(false),
+  API_TRUST_PROXY: trustProxyEnv,
   APP_ENV: appEnvSchema.default("local"),
   APP_URL: z.string().url().default("http://localhost:3000"),
   DATABASE_URL: z

@@ -49,6 +49,18 @@ describe("loadApiEnv", () => {
     expect(env.API_TRUST_PROXY).toBe(true)
   })
 
+  it("parses a trusted-proxy hop count from the environment", () => {
+    expect(loadApiEnv({ API_TRUST_PROXY: "1" }).API_TRUST_PROXY).toBe(1)
+    expect(loadApiEnv({ API_TRUST_PROXY: "2" }).API_TRUST_PROXY).toBe(2)
+    expect(loadApiEnv({ API_TRUST_PROXY: "false" }).API_TRUST_PROXY).toBe(false)
+  })
+
+  it("accepts a trusted-proxy CIDR list from the environment", () => {
+    const env = loadApiEnv({ API_TRUST_PROXY: "10.0.0.0/8,127.0.0.1" })
+
+    expect(env.API_TRUST_PROXY).toBe("10.0.0.0/8,127.0.0.1")
+  })
+
   it("parses observability alert tuning from environment strings", () => {
     const env = loadApiEnv({
       OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: "0.1",
