@@ -5,12 +5,39 @@ import { sessionCookieName } from "@/lib/auth/constants"
 
 const protectedPrefixes = ["/account", "/moderation"]
 const isProduction = process.env.APP_ENV === "production"
+
+// CSP minima per lo sviluppo: Turbopack e React Refresh richiedono
+// 'unsafe-eval' e connessioni HMR che una policy stretta bloccherebbe.
 const minimalContentSecurityPolicy = [
   "base-uri 'self'",
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
 ].join("; ")
+
+// CSP stretta per la produzione. Restringe le sorgenti per default e blocca
+// script/oggetti/frame esterni. Gli script inline di Next richiedono
+// 'unsafe-inline' finché non si introduce una CSP con nonce per-richiesta
+// (follow-up consigliato). Da validare su un deploy di preview.
+const strictContentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "img-src 'self' data: blob:",
+  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline'",
+  "connect-src 'self'",
+  "worker-src 'self' blob:",
+  "manifest-src 'self'",
+  "upgrade-insecure-requests",
+].join("; ")
+
+const contentSecurityPolicy = isProduction
+  ? strictContentSecurityPolicy
+  : minimalContentSecurityPolicy
 
 export function proxy(request: NextRequest) {
   const response =
@@ -81,7 +108,7 @@ function protectRoutes(request: NextRequest) {
 }
 
 function applySecurityHeaders(request: NextRequest, response: NextResponse) {
-  response.headers.set("content-security-policy", minimalContentSecurityPolicy)
+  response.headers.set("content-security-policy", contentSecurityPolicy)
   response.headers.set("cross-origin-opener-policy", "same-origin")
   response.headers.set("origin-agent-cluster", "?1")
   response.headers.set(
