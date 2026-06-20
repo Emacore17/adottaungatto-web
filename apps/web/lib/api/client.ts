@@ -103,8 +103,12 @@ function createApiUrl(path: string) {
 // Service token Cloudflare Access: presente solo lato server (non NEXT_PUBLIC,
 // quindi undefined nel bundle client). Permette alle chiamate server->API di
 // attraversare Cloudflare Access quando l'API e' protetta da Zero Trust.
-const cloudflareAccessClientId = process.env.CLOUDFLARE_ACCESS_CLIENT_ID
-const cloudflareAccessClientSecret = process.env.CLOUDFLARE_ACCESS_CLIENT_SECRET
+// trim() rimuove BOM (U+FEFF), spazi e newline: gli header HTTP devono essere
+// Latin1, e un secret salvato con BOM/newline farebbe crashare la richiesta.
+const cloudflareAccessClientId =
+  process.env.CLOUDFLARE_ACCESS_CLIENT_ID?.trim()
+const cloudflareAccessClientSecret =
+  process.env.CLOUDFLARE_ACCESS_CLIENT_SECRET?.trim()
 
 function createHeaders(options: ApiFetchOptions) {
   const headers = new Headers(options.headers)
