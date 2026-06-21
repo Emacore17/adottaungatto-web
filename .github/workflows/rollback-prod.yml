@@ -1,0 +1,146 @@
+name: rollback-prod
+
+# Rollback applicativo di produzione: riporta web/api/worker a un'immagine
+# precedente gia' presente in ACR (tag = SHA del commit precedente).
+#
+# IMPORTANTE: questo workflow NON esegue rollback di migrazioni database. Se la
+# release da annullare conteneva migrazioni distruttive, fermarsi e seguire un
+# runbook dedicato (backup/restore o migrazione correttiva) prima di procedere.
+# Funziona solo con migrazioni additive e retro-compatibili.
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "SHA immagine a cui tornare (tag gia' presente in ACR)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      AZURE_RESOURCE_GROUP: rg-adotta-prod-itn
+      AZURE_ACR_NAME: acradottaprod
+      AZURE_PULL_IDENTITY_NAME: id-adotta-prod-pull
+      API_APP_NAME: ca-adotta-prod-api
+      WEB_APP_NAME: ca-adotta-prod-web
+      WORKER_APP_NAME: ca-adotta-prod-worker
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      USE_CUSTOM_DOMAINS: ${{ vars.USE_CUSTOM_DOMAINS }}
+      CONFIGURED_API_URL: ${{ vars.API_URL }}
+      CONFIGURED_WEB_URL: ${{ vars.WEB_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate input
+        shell: bash
+        run: |
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "::error::image_tag mancante"
+            exit 1
+          fi
+          echo "Rollback verso tag: $IMAGE_TAG"
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve image names
+        shell: bash
+        run: |
+          ACR_LOGIN_SERVER="${AZURE_ACR_NAME}.azurecr.io"
+          {
+            echo "ACR_LOGIN_SERVER=${ACR_LOGIN_SERVER}"
+            echo "API_IMAGE=${ACR_LOGIN_SERVER}/adotta/api:${IMAGE_TAG}"
+            echo "WEB_IMAGE=${ACR_LOGIN_SERVER}/adotta/web:${IMAGE_TAG}"
+            echo "WORKER_IMAGE=${ACR_LOGIN_SERVER}/adotta/worker:${IMAGE_TAG}"
+          } >> "$GITHUB_ENV"
+
+      - name: Verify images exist in ACR
+        shell: bash
+        run: |
+          for repo in api web worker; do
+            if ! az acr repository show \
+              --name "$AZURE_ACR_NAME" \
+              --image "adotta/${repo}:${IMAGE_TAG}" >/dev/null 2>&1; then
+              echo "::error::Immagine adotta/${repo}:${IMAGE_TAG} non trovata in $AZURE_ACR_NAME"
+              exit 1
+            fi
+          done
+          echo "Immagini presenti per il tag ${IMAGE_TAG}."
+
+      - name: Roll back container apps
+        shell: bash
+        run: |
+          # Solo swap immagine: segreti, identita' ed env restano quelli correnti.
+          az containerapp update \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --image "$API_IMAGE"
+          az containerapp update \
+            --name "$WORKER_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --image "$WORKER_IMAGE"
+          az containerapp update \
+            --name "$WEB_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --image "$WEB_IMAGE"
+
+      - name: Resolve runtime URLs
+        shell: bash
+        run: |
+          API_DEFAULT_URL="https://$(az containerapp show \
+            --name "$API_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)"
+          WEB_DEFAULT_URL="https://$(az containerapp show \
+            --name "$WEB_APP_NAME" \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --query properties.configuration.ingress.fqdn \
+            -o tsv)"
+          API_RUNTIME_URL="$API_DEFAULT_URL"
+          WEB_RUNTIME_URL="$WEB_DEFAULT_URL"
+          if [ "${USE_CUSTOM_DOMAINS,,}" = "true" ]; then
+            if [ -z "$CONFIGURED_API_URL" ] || [ -z "$CONFIGURED_WEB_URL" ]; then
+              echo "::error::USE_CUSTOM_DOMAINS=true requires API_URL and WEB_URL"
+              exit 1
+            fi
+            API_RUNTIME_URL="${CONFIGURED_API_URL%/}"
+            WEB_RUNTIME_URL="${CONFIGURED_WEB_URL%/}"
+          fi
+          {
+            echo "API_RUNTIME_URL=${API_RUNTIME_URL}"
+            echo "WEB_RUNTIME_URL=${WEB_RUNTIME_URL}"
+          } >> "$GITHUB_ENV"
+
+      - name: Remote smoke
+        shell: bash
+        run: API_URL="$API_RUNTIME_URL" WEB_URL="$WEB_RUNTIME_URL" pnpm smoke:remote
