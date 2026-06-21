@@ -1,0 +1,39 @@
+name: codeql
+
+# SAST con CodeQL. Repo pubblico => GitHub Advanced Security gratuito, i
+# risultati finiscono nel tab Security > Code scanning. Le finding non fanno
+# fallire la CI: per renderle bloccanti aggiungere il check alla branch
+# protection di `master`.
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+  schedule:
+    - cron: "30 2 * * 1" # lunedi 02:30 UTC
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          queries: security-extended
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"

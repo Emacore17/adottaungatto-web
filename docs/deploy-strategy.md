@@ -141,7 +141,7 @@ Problemi aperti:
 
 Uso: utenti reali.
 
-- Trigger: PR `develop -> main` e approvazione manuale su GitHub Environment
+- Trigger: PR `develop -> master` e approvazione manuale su GitHub Environment
   `production`.
 - Dati reali isolati da dev-online.
 - Backup, restore testato, alert e logging attivi.
@@ -158,9 +158,9 @@ Flusso standard:
 5. Opzionale: la PR puo' creare una preview online protetta.
 6. Merge su `develop` deploya automaticamente `dev-online`.
 7. Verifica su `dev-online`.
-8. PR da `develop` verso `main`.
+8. PR da `develop` verso `master`.
 9. CI, diff migrazioni, smoke `dev-online` e review manuale.
-10. Merge/approval su `main` prepara il deploy produzione.
+10. Merge/approval su `master` prepara il deploy produzione.
 11. GitHub Environment `production` richiede approvazione manuale.
 12. Deploy produzione, migrazioni controllate, smoke e annotazione release.
 
@@ -168,7 +168,7 @@ Regole repository:
 
 - `develop` protetto: PR obbligatoria, `release:check` verde, niente push
   diretti.
-- `main` protetto: PR solo da `develop`, reviewer obbligatorio, ambiente
+- `master` protetto: PR solo da `develop`, reviewer obbligatorio, ambiente
   `production` con approvazione manuale.
 - Segreti mai nel repository.
 - Migrazioni gia rilasciate non si modificano.
@@ -280,8 +280,8 @@ dominio pubblico deve redirigere o restituire 404/403.
 Trigger:
 
 - PR verso `develop`;
-- PR verso `main`;
-- push su `develop` e `main`.
+- PR verso `master`;
+- push su `develop` e `master`.
 
 Step:
 
@@ -317,7 +317,7 @@ Step:
 
 Trigger:
 
-- push su `main`;
+- push su `master`;
 - `workflow_dispatch` con commit/tag.
 
 Protezione:
@@ -325,7 +325,7 @@ Protezione:
 - GitHub Environment `production`;
 - reviewer obbligatorio;
 - nessun deploy automatico senza approvazione;
-- controllo che commit sia contenuto in `main`;
+- controllo che commit sia contenuto in `master`;
 - controllo che `develop` o staging abbiano gia passato smoke.
 
 Step:
@@ -938,7 +938,7 @@ Google OAuth redirect:
 
 Da GitHub:
 
-1. Aprire PR `develop -> main`.
+1. Aprire PR `develop -> master`.
 2. Attendere CI verde.
 3. Verificare changelog, migrazioni, env nuove.
 4. Approvare PR.
@@ -949,7 +949,7 @@ Da GitHub:
 Da CLI:
 
 ```bash
-gh workflow run deploy-prod.yml --ref main
+gh workflow run deploy-prod.yml --ref master
 gh run watch
 ```
 
@@ -988,7 +988,7 @@ Checklist:
 Rollback applicativo:
 
 ```bash
-gh workflow run rollback-prod.yml --ref main -f image_tag="<previous-sha>"
+gh workflow run rollback-prod.yml --ref master -f image_tag="<previous-sha>"
 gh run watch
 ```
 

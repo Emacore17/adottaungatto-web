@@ -1,0 +1,21 @@
+title = "adottaungatto gitleaks config"
+
+# Parte dalle regole di default di gitleaks e aggiunge una allowlist per i
+# placeholder noti: file di esempio, documentazione e credenziali demo locali
+# (non sono segreti reali).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Esempi env, documentazione e credenziali demo/locali"
+paths = [
+  '''\.env\.example''',
+  '''\.env\.production\.example''',
+  '''(^|/)README\.md$''',
+  '''(^|/)docs/''',
+]
+regexes = [
+  '''demo-password-123''',
+  '''minioadmin''',
+  '''adottaungatto:adottaungatto''',
+]
