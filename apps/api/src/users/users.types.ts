@@ -39,3 +39,33 @@ export type AccountDeactivationResponse = {
 export type AccountDeletionResponse = {
   deleted: true
 }
+
+export type AccountExportListing = {
+  id: string
+  title: string
+  slug: string
+  lifecycleStatus: string
+  moderationStatus: string
+  createdAt: string
+}
+
+export type AccountExportFavorite = {
+  listingId: string
+  createdAt: string
+}
+
+export type AccountExportContactRequest = {
+  id: string
+  listingId: string
+  message: string
+  status: string
+  createdAt: string
+}
+
+export type AccountDataExport = {
+  exportedAt: string
+  account: CurrentUserProfile
+  listings: AccountExportListing[]
+  favorites: AccountExportFavorite[]
+  contactRequestsSent: AccountExportContactRequest[]
+}

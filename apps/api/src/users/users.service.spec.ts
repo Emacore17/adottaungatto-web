@@ -266,4 +266,80 @@ describe("UsersService", () => {
       })
     ).rejects.toBeInstanceOf(NotFoundException)
   })
+
+  it("exports the account data", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([
+          {
+            id: "user-id",
+            email: "user@example.com",
+            email_verified_at: "2026-04-01T10:00:00.000Z",
+            display_name: "Emanuele",
+            profile_type: "private",
+            status: "active",
+            phone_e164: null,
+            phone_verified_at: null,
+            show_phone_on_listings: false,
+            roles: ["registered_user"],
+            listing_moderation_decision_email_enabled: true,
+            listing_report_decision_email_enabled: true,
+            created_at: "2026-04-01T09:00:00.000Z",
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: "listing-1",
+            title: "Gatto cerca casa",
+            slug: "gatto-cerca-casa",
+            lifecycle_status: "draft",
+            moderation_status: "draft",
+            created_at: "2026-05-01T00:00:00.000Z",
+          },
+        ])
+        .mockResolvedValueOnce([
+          { listing_id: "listing-9", created_at: "2026-05-02T00:00:00.000Z" },
+        ])
+        .mockResolvedValueOnce([
+          {
+            id: "contact-1",
+            listing_id: "listing-5",
+            message: "Ciao, e' ancora disponibile?",
+            status: "pending",
+            created_at: "2026-05-03T00:00:00.000Z",
+          },
+        ]),
+    } as unknown as DatabaseService
+    const service = new UsersService(databaseService)
+
+    const result = await service.exportCurrentAccount("user-id")
+
+    expect(result.account.id).toBe("user-id")
+    expect(result.account.email).toBe("user@example.com")
+    expect(result.listings).toEqual([
+      {
+        id: "listing-1",
+        title: "Gatto cerca casa",
+        slug: "gatto-cerca-casa",
+        lifecycleStatus: "draft",
+        moderationStatus: "draft",
+        createdAt: "2026-05-01T00:00:00.000Z",
+      },
+    ])
+    expect(result.favorites).toEqual([
+      { listingId: "listing-9", createdAt: "2026-05-02T00:00:00.000Z" },
+    ])
+    expect(result.contactRequestsSent).toEqual([
+      {
+        id: "contact-1",
+        listingId: "listing-5",
+        message: "Ciao, e' ancora disponibile?",
+        status: "pending",
+        createdAt: "2026-05-03T00:00:00.000Z",
+      },
+    ])
+    expect(typeof result.exportedAt).toBe("string")
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(4)
+  })
 })

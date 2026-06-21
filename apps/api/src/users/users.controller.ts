@@ -46,6 +46,19 @@ export class UsersController {
   }
 
   @UseGuards(BearerAuthGuard)
+  @Get("me/export")
+  async exportMe(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Req() request: UsersRateLimitRequest
+  ) {
+    await this.rateLimitService.enforce(
+      getAccountDangerZoneRateLimitRules(auth.user.id, request)
+    )
+
+    return this.usersService.exportCurrentAccount(auth.user.id)
+  }
+
+  @UseGuards(BearerAuthGuard)
   @Patch("me")
   async updateMe(
     @CurrentAuth() auth: CurrentAuthSessionResponse,

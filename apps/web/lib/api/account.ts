@@ -523,6 +523,23 @@ export function deleteAccountDraft(
   )
 }
 
+export type AccountDataExport = {
+  exportedAt: string
+  account: Record<string, unknown>
+  listings: Record<string, unknown>[]
+  favorites: Record<string, unknown>[]
+  contactRequestsSent: Record<string, unknown>[]
+}
+
+export function exportAccountData(
+  bearerToken: string
+): Promise<ApiResult<AccountDataExport>> {
+  return apiFetch<AccountDataExport>("/users/me/export", {
+    bearerToken,
+    cache: "no-store",
+  })
+}
+
 function createQueryPath(path: string, query: Record<string, unknown>) {
   const params = new URLSearchParams()
 

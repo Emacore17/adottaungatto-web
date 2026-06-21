@@ -1,5 +1,10 @@
 import Link from "next/link"
-import { ArrowLeftIcon, PauseCircleIcon, Trash2Icon } from "lucide-react"
+import {
+  ArrowLeftIcon,
+  DownloadIcon,
+  PauseCircleIcon,
+  Trash2Icon,
+} from "lucide-react"
 
 import {
   deactivateAccountAction,
@@ -63,6 +68,24 @@ export default async function AccountDangerPage({
       <AccountFeedback status={status} />
 
       <div className="grid gap-5">
+        <Card>
+          <CardHeader>
+            <CardTitle>Esporta i tuoi dati</CardTitle>
+            <CardDescription>
+              Scarica in formato JSON il tuo profilo, gli annunci, i preferiti e
+              le richieste di contatto inviate.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild variant="outline">
+              <a href="/api/account/export">
+                <DownloadIcon data-icon="inline-start" aria-hidden="true" />
+                Scarica i miei dati
+              </a>
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Disattiva account</CardTitle>

@@ -23,8 +23,11 @@ import { API_ENV } from "../config/config.module.js"
 import type { ApiEnv } from "../config/env.js"
 import { DatabaseService } from "../database/database.service.js"
 import type {
+  AccountDataExport,
   AccountDeactivationResponse,
   AccountDeletionResponse,
+  AccountExportContactRequest,
+  AccountExportListing,
   CurrentUserNotificationPreferences,
   CurrentUserProfile,
   PhoneVerificationConfirmResponse,
@@ -335,6 +338,56 @@ const deleteCurrentAccountSql = `
   from updated_user
 `
 
+const accountExportListingsSql = `
+  select
+    id::text,
+    title,
+    slug,
+    lifecycle_status::text as lifecycle_status,
+    moderation_status::text as moderation_status,
+    created_at
+  from listings
+  where owner_user_id = $1::uuid
+    and deleted_at is null
+  order by created_at desc
+`
+
+const accountExportFavoritesSql = `
+  select listing_id::text, created_at
+  from listing_favorites
+  where user_id = $1::uuid
+  order by created_at desc
+`
+
+const accountExportContactRequestsSql = `
+  select id::text, listing_id::text, message, status::text as status, created_at
+  from listing_contact_requests
+  where requester_user_id = $1::uuid
+  order by created_at desc
+`
+
+type AccountExportListingRow = {
+  id: string
+  title: string
+  slug: string
+  lifecycle_status: string
+  moderation_status: string
+  created_at: Date | string
+}
+
+type AccountExportFavoriteRow = {
+  listing_id: string
+  created_at: Date | string
+}
+
+type AccountExportContactRequestRow = {
+  id: string
+  listing_id: string
+  message: string
+  status: string
+  created_at: Date | string
+}
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name)
@@ -357,6 +410,36 @@ export class UsersService {
     }
 
     return mapCurrentUserProfile(row)
+  }
+
+  async exportCurrentAccount(userId: string): Promise<AccountDataExport> {
+    // currentProfile lancia NotFound se l'account non esiste o e' eliminato.
+    const account = await this.currentProfile(userId)
+    const [listings, favorites, contactRequests] = await Promise.all([
+      this.databaseService.queryRows<AccountExportListingRow>(
+        accountExportListingsSql,
+        [userId]
+      ),
+      this.databaseService.queryRows<AccountExportFavoriteRow>(
+        accountExportFavoritesSql,
+        [userId]
+      ),
+      this.databaseService.queryRows<AccountExportContactRequestRow>(
+        accountExportContactRequestsSql,
+        [userId]
+      ),
+    ])
+
+    return {
+      exportedAt: new Date().toISOString(),
+      account,
+      listings: listings.map(mapAccountExportListing),
+      favorites: favorites.map((row) => ({
+        listingId: row.listing_id,
+        createdAt: toIsoString(row.created_at),
+      })),
+      contactRequestsSent: contactRequests.map(mapAccountExportContactRequest),
+    }
   }
 
   async updateCurrentProfile(
@@ -604,6 +687,31 @@ function mapNotificationPreferences(
     listingModerationDecisionEmail:
       row.listing_moderation_decision_email_enabled,
     listingReportDecisionEmail: row.listing_report_decision_email_enabled,
+  }
+}
+
+function mapAccountExportListing(
+  row: AccountExportListingRow
+): AccountExportListing {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    lifecycleStatus: row.lifecycle_status,
+    moderationStatus: row.moderation_status,
+    createdAt: toIsoString(row.created_at),
+  }
+}
+
+function mapAccountExportContactRequest(
+  row: AccountExportContactRequestRow
+): AccountExportContactRequest {
+  return {
+    id: row.id,
+    listingId: row.listing_id,
+    message: row.message,
+    status: row.status,
+    createdAt: toIsoString(row.created_at),
   }
 }
 
