@@ -14,8 +14,8 @@ function SiteFooter() {
           <div className="flex flex-col gap-4 lg:col-span-2">
             <SiteLogoLink logoClassName="h-7 w-auto" />
             <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Adozioni responsabili di gatti, da rifugi, associazioni e
-              famiglie italiane.
+              Adozioni responsabili di gatti, da rifugi, associazioni e famiglie
+              italiane.
             </p>
           </div>
 
@@ -46,9 +46,24 @@ function SiteFooter() {
           <div className="flex flex-col gap-3">
             <h2 className="text-sm font-bold text-foreground">Legale</h2>
             <nav aria-label="Legale" className="flex flex-col gap-2">
-              <span className="text-sm text-muted-foreground">Privacy</span>
-              <span className="text-sm text-muted-foreground">Termini</span>
-              <span className="text-sm text-muted-foreground">Cookie</span>
+              <Link
+                href={routes.privacy}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Privacy
+              </Link>
+              <Link
+                href={routes.terms}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Termini
+              </Link>
+              <Link
+                href={routes.cookie}
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Cookie
+              </Link>
             </nav>
           </div>
         </div>

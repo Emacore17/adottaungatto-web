@@ -67,4 +67,7 @@ export const routes = {
   accountDanger: "/account/settings/account",
   moderation: "/moderation",
   moderationQueue: "/moderation/queue",
+  privacy: "/privacy",
+  cookie: "/cookie",
+  terms: "/termini",
 }

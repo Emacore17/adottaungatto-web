@@ -4,6 +4,7 @@ import type { Viewport } from "next"
 import "@workspace/ui/globals.css"
 import { RealtimeNotificationsProvider } from "@/components/providers/realtime-notifications-provider"
 import { ThemeProvider } from "@/components/providers/theme-provider"
+import { CookieConsent } from "@/components/shared/cookie-consent"
 import { resolveAuthenticatedUser } from "@/lib/auth/resolve-user"
 import { siteConfig } from "@/lib/config/site"
 import { createPageMetadata } from "@/lib/seo/metadata"
@@ -45,7 +46,7 @@ export default async function RootLayout({
     <html
       lang="it"
       suppressHydrationWarning
-      className={cn("antialiased font-sans", jakarta.variable)}
+      className={cn("font-sans antialiased", jakarta.variable)}
     >
       <body className="min-h-svh bg-background text-foreground">
         <ThemeProvider>
@@ -56,6 +57,7 @@ export default async function RootLayout({
             {children}
           </RealtimeNotificationsProvider>
           <Toaster closeButton position="bottom-right" richColors />
+          <CookieConsent />
         </ThemeProvider>
       </body>
     </html>
