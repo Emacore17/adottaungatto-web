@@ -59,10 +59,20 @@ export class MailService implements OnApplicationShutdown {
   private readonly transporter: Transporter
 
   constructor(@Inject(API_ENV) private readonly env: ApiEnv) {
+    // auth opzionale: in locale Mailpit non richiede credenziali; i provider
+    // reali (Resend, Brevo, SendGrid) richiedono user + password/API key.
+    const auth =
+      env.MAIL_USER || env.MAIL_PASS
+        ? { user: env.MAIL_USER, pass: env.MAIL_PASS }
+        : undefined
+
     this.transporter = nodemailer.createTransport({
       host: env.MAIL_HOST,
       port: env.MAIL_PORT,
-      secure: false,
+      // true per SMTPS (porta 465); false usa STARTTLS quando disponibile
+      // (porta 587), come richiesto dai provider transazionali.
+      secure: env.MAIL_SECURE,
+      auth,
     })
   }
 

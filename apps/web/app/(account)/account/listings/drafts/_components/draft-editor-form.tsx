@@ -14,6 +14,7 @@ import type { ListingDraft } from "@/lib/api/account"
 import type { PlaceAutocompleteItem } from "@/lib/api/places"
 import type { PublicCatBreed } from "@/lib/api/types"
 import type { CurrentUserProfile } from "@/lib/api/users"
+import { phoneVerificationEnabled } from "@/lib/config/env"
 import { phoneCountryCodes, splitPhoneNumber } from "@/lib/phone"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
@@ -229,111 +230,123 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
                   </FieldContent>
                 </Field>
 
-                <div className="rounded-md border border-border bg-secondary/40 p-4">
-                  <div className="grid gap-4">
-                    <Field>
-                      <FieldLabel htmlFor="contactPhoneMode">
-                        Telefono nell&apos;annuncio
-                      </FieldLabel>
-                      <Select
-                        name="contactPhoneMode"
-                        defaultValue={defaultContactPhoneMode}
-                      >
-                        <SelectTrigger
-                          id="contactPhoneMode"
-                          aria-label="Telefono annuncio"
-                        >
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            Non mostrare telefono
-                          </SelectItem>
-                          <SelectItem
-                            value="account"
-                            disabled={!accountPhoneReady}
-                          >
-                            Usa telefono account
-                          </SelectItem>
-                          <SelectItem value="listing">
-                            Usa telefono solo per questo annuncio
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FieldDescription>
-                        Il numero diventa pubblico solo dopo la verifica.
-                      </FieldDescription>
-                    </Field>
-
-                    {!accountPhoneReady ? (
-                      <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
-                        Per usare il telefono account devi prima aggiungerlo e
-                        verificarlo nel profilo.
-                      </p>
-                    ) : null}
-
-                    <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                {phoneVerificationEnabled ? (
+                  <div className="rounded-md border border-border bg-secondary/40 p-4">
+                    <div className="grid gap-4">
                       <Field>
-                        <FieldLabel htmlFor="listingPhoneCountryCode">
-                          Prefisso
+                        <FieldLabel htmlFor="contactPhoneMode">
+                          Telefono nell&apos;annuncio
                         </FieldLabel>
                         <Select
-                          name="listingPhoneCountryCode"
-                          defaultValue={listingPhone.countryCode}
+                          name="contactPhoneMode"
+                          defaultValue={defaultContactPhoneMode}
                         >
                           <SelectTrigger
-                            id="listingPhoneCountryCode"
-                            aria-label="Prefisso"
+                            id="contactPhoneMode"
+                            aria-label="Telefono annuncio"
                           >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {phoneCountryCodes.map((country) => (
-                              <SelectItem
-                                key={country.code}
-                                value={country.code}
-                              >
-                                {country.label}
-                              </SelectItem>
-                            ))}
+                            <SelectItem value="none">
+                              Non mostrare telefono
+                            </SelectItem>
+                            <SelectItem
+                              value="account"
+                              disabled={!accountPhoneReady}
+                            >
+                              Usa telefono account
+                            </SelectItem>
+                            <SelectItem value="listing">
+                              Usa telefono solo per questo annuncio
+                            </SelectItem>
                           </SelectContent>
                         </Select>
+                        <FieldDescription>
+                          Il numero diventa pubblico solo dopo la verifica.
+                        </FieldDescription>
                       </Field>
-                      <Field>
-                        <FieldLabel htmlFor="listingPhoneNationalNumber">
-                          Numero per questo annuncio
-                        </FieldLabel>
-                        <Input
-                          id="listingPhoneNationalNumber"
-                          name="listingPhoneNationalNumber"
-                          defaultValue={listingPhone.nationalNumber}
-                          inputMode="tel"
-                          maxLength={20}
-                          placeholder="3331234567"
-                        />
-                      </Field>
-                    </div>
 
-                    {!profile?.phoneE164 ? (
-                      <Field orientation="horizontal">
-                        <Checkbox
-                          id="saveListingPhoneToAccount"
-                          name="saveListingPhoneToAccount"
-                          value="true"
-                        />
-                        <FieldContent>
-                          <FieldLabel htmlFor="saveListingPhoneToAccount">
-                            Aggiungi questo numero anche all&apos;account
+                      {!accountPhoneReady ? (
+                        <p className="rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground">
+                          Per usare il telefono account devi prima aggiungerlo e
+                          verificarlo nel profilo.
+                        </p>
+                      ) : null}
+
+                      <div className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+                        <Field>
+                          <FieldLabel htmlFor="listingPhoneCountryCode">
+                            Prefisso
                           </FieldLabel>
-                          <FieldDescription>
-                            Lo salvi nel profilo, poi lo verifichi dalle
-                            impostazioni account.
-                          </FieldDescription>
-                        </FieldContent>
-                      </Field>
-                    ) : null}
+                          <Select
+                            name="listingPhoneCountryCode"
+                            defaultValue={listingPhone.countryCode}
+                          >
+                            <SelectTrigger
+                              id="listingPhoneCountryCode"
+                              aria-label="Prefisso"
+                            >
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {phoneCountryCodes.map((country) => (
+                                <SelectItem
+                                  key={country.code}
+                                  value={country.code}
+                                >
+                                  {country.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </Field>
+                        <Field>
+                          <FieldLabel htmlFor="listingPhoneNationalNumber">
+                            Numero per questo annuncio
+                          </FieldLabel>
+                          <Input
+                            id="listingPhoneNationalNumber"
+                            name="listingPhoneNationalNumber"
+                            defaultValue={listingPhone.nationalNumber}
+                            inputMode="tel"
+                            maxLength={20}
+                            placeholder="3331234567"
+                          />
+                        </Field>
+                      </div>
+
+                      {!profile?.phoneE164 ? (
+                        <Field orientation="horizontal">
+                          <Checkbox
+                            id="saveListingPhoneToAccount"
+                            name="saveListingPhoneToAccount"
+                            value="true"
+                          />
+                          <FieldContent>
+                            <FieldLabel htmlFor="saveListingPhoneToAccount">
+                              Aggiungi questo numero anche all&apos;account
+                            </FieldLabel>
+                            <FieldDescription>
+                              Lo salvi nel profilo, poi lo verifichi dalle
+                              impostazioni account.
+                            </FieldDescription>
+                          </FieldContent>
+                        </Field>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="rounded-md border border-border bg-secondary/40 p-4">
+                    <input type="hidden" name="contactPhoneMode" value="none" />
+                    <p className="text-sm leading-6 text-foreground">
+                      Per ora il contatto con chi vuole adottare avviene solo
+                      via email: ricevi le richieste nella tua casella, senza
+                      mostrare il numero. Il contatto telefonico sara&apos;
+                      disponibile a breve.
+                    </p>
+                  </div>
+                )}
               </div>
             </FieldSet>
           </FieldGroup>
@@ -345,7 +358,7 @@ function DraftEditorForm({ breeds, draft, profile }: DraftEditorFormProps) {
             </Button>
           </div>
         </form>
-        {draft?.contactPhone.mode === "listing" ? (
+        {phoneVerificationEnabled && draft?.contactPhone.mode === "listing" ? (
           <ListingPhoneVerificationPanel draft={draft} nextPath={currentPath} />
         ) : null}
       </CardContent>

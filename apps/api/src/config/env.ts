@@ -79,7 +79,10 @@ const apiEnvBaseSchema = z.object({
     .default(60),
   MAIL_FROM: z.string().email().default("no-reply@adottaungatto.local"),
   MAIL_HOST: z.string().default("localhost"),
+  MAIL_PASS: z.string().default(""),
   MAIL_PORT: z.coerce.number().int().positive().default(1025),
+  MAIL_SECURE: booleanEnv(false),
+  MAIL_USER: z.string().default(""),
   OBSERVABILITY_ALERT_ERROR_RATE_THRESHOLD: z.coerce
     .number()
     .positive()
@@ -100,6 +103,11 @@ const apiEnvBaseSchema = z.object({
     .positive()
     .default(1000),
   PASSWORD_RESET_TTL_MINUTES: z.coerce.number().int().positive().default(30),
+  // Verifica telefono via SMS: tenere off finche' non e' integrato un provider
+  // SMS reale (es. Twilio). Off => il contatto telefonico e' disabilitato e gli
+  // annunci si pubblicano con contatto email. In local/test resta sempre attiva
+  // (codice via log/devCode) a prescindere da questo flag.
+  PHONE_VERIFICATION_ENABLED: booleanEnv(false),
   PHONE_VERIFICATION_TTL_MINUTES: z.coerce
     .number()
     .int()
@@ -130,6 +138,18 @@ const apiEnvSchema = apiEnvBaseSchema.superRefine((env, ctx) => {
 
   if (env.MAIL_HOST === "localhost" || env.MAIL_HOST === "127.0.0.1") {
     addProductionIssue(ctx, "MAIL_HOST", "must not point to localhost")
+  }
+
+  if (env.MAIL_HOST.trim() === "" || env.MAIL_HOST === "smtp.invalid") {
+    addProductionIssue(ctx, "MAIL_HOST", "must be a real SMTP host")
+  }
+
+  if (env.MAIL_USER.trim() === "") {
+    addProductionIssue(ctx, "MAIL_USER", "is required for authenticated SMTP")
+  }
+
+  if (env.MAIL_PASS.trim() === "") {
+    addProductionIssue(ctx, "MAIL_PASS", "is required for authenticated SMTP")
   }
 
   if (env.S3_ACCESS_KEY_ID === "minioadmin") {

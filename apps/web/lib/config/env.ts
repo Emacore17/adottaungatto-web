@@ -51,3 +51,12 @@ export const webEnv = {
 }
 
 export const isProduction = webEnv.appEnv === "production"
+
+// Allineato all'API: in local/test la verifica telefono e' sempre attiva;
+// altrove dipende dal flag, che resta off finche' non c'e' un provider SMS
+// reale. Quando off, il form annuncio nasconde il contatto telefonico e si
+// pubblica con contatto email.
+export const phoneVerificationEnabled =
+  webEnv.appEnv === "local" || webEnv.appEnv === "test"
+    ? true
+    : readBoolean(process.env.PHONE_VERIFICATION_ENABLED, false)

@@ -58,10 +58,14 @@ const maxListingImages = 10
 const publicListingRankingVersion = "postgres-v1" as const
 const defaultPublicListingRadiusKm = 50
 
-type ListingsEnv = Pick<ApiEnv, "APP_ENV" | "PHONE_VERIFICATION_TTL_MINUTES">
+type ListingsEnv = Pick<
+  ApiEnv,
+  "APP_ENV" | "PHONE_VERIFICATION_ENABLED" | "PHONE_VERIFICATION_TTL_MINUTES"
+>
 
 const defaultListingsEnv: ListingsEnv = {
   APP_ENV: "local",
+  PHONE_VERIFICATION_ENABLED: false,
   PHONE_VERIFICATION_TTL_MINUTES: 10,
 }
 
@@ -1859,6 +1863,12 @@ export class ListingsService {
     userId: string,
     id: string
   ): Promise<ListingPhoneVerificationRequestResponse> {
+    if (!isPhoneVerificationEnabled(this.env)) {
+      throw new ServiceUnavailableException(
+        "Phone verification is currently unavailable."
+      )
+    }
+
     const code = createPhoneVerificationCode()
     const expiresAt = new Date(
       Date.now() + this.env.PHONE_VERIFICATION_TTL_MINUTES * 60 * 1000
@@ -1900,6 +1910,12 @@ export class ListingsService {
     id: string,
     input: ListingPhoneVerificationConfirmInput
   ): Promise<ListingPhoneVerificationConfirmResponse> {
+    if (!isPhoneVerificationEnabled(this.env)) {
+      throw new ServiceUnavailableException(
+        "Phone verification is currently unavailable."
+      )
+    }
+
     const [codeRow] =
       await this.databaseService.queryRows<ListingPhoneVerificationCodeRow>(
         activeListingPhoneVerificationCodeSql,
@@ -2270,6 +2286,16 @@ export class ListingsService {
       return []
     }
 
+    if (!isPhoneVerificationEnabled(this.env)) {
+      return [
+        {
+          path: ["contactPhoneMode"],
+          message:
+            "Phone contact is temporarily unavailable. Set contact to email only before submitting for review.",
+        },
+      ]
+    }
+
     if (draft.contact_phone_mode === "account") {
       const [userPhone] =
         await this.databaseService.queryRows<CurrentUserPhoneForListingRow>(
@@ -2324,6 +2350,17 @@ function createPhoneVerificationCode() {
 
 function canExposePhoneVerificationCode(env: ListingsEnv) {
   return env.APP_ENV === "local" || env.APP_ENV === "test"
+}
+
+// In local/test la verifica telefono e' sempre disponibile (codice via
+// log/devCode). Negli altri ambienti dipende dal flag, che resta off finche'
+// non e' integrato un provider SMS reale.
+function isPhoneVerificationEnabled(env: ListingsEnv) {
+  if (env.APP_ENV === "local" || env.APP_ENV === "test") {
+    return true
+  }
+
+  return env.PHONE_VERIFICATION_ENABLED
 }
 
 export function createListingSlug(title: string): string {

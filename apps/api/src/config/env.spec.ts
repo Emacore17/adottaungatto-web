@@ -85,20 +85,56 @@ describe("loadApiEnv", () => {
 
   it("accepts explicit non-local production infrastructure", () => {
     const env = loadApiEnv({
-      APP_ENV: "production",
-      APP_URL: "https://adottaungatto.it",
-      DATABASE_URL: "postgresql://user:pass@postgres.example.com:5432/app",
-      MAIL_HOST: "smtp.example.com",
-      REDIS_URL: "redis://redis.example.com:6379",
-      S3_ACCESS_KEY_ID: "prod-access-key",
-      S3_BUCKET: "adottaungatto-prod",
-      S3_ENDPOINT: "https://s3.example.com",
-      S3_PUBLIC_ENDPOINT: "https://cdn.example.com",
-      S3_REGION: "eu-south-1",
-      S3_SECRET_ACCESS_KEY: "prod-secret-key",
+      ...productionEnv,
     })
 
     expect(env.APP_ENV).toBe("production")
     expect(env.APP_URL).toBe("https://adottaungatto.it")
   })
+
+  it("rejects a production SMTP host without credentials", () => {
+    expect(() =>
+      loadApiEnv({
+        ...productionEnv,
+        MAIL_USER: "",
+        MAIL_PASS: "",
+      })
+    ).toThrow()
+  })
+
+  it("rejects an invalid production SMTP host", () => {
+    expect(() =>
+      loadApiEnv({
+        ...productionEnv,
+        MAIL_HOST: "smtp.invalid",
+      })
+    ).toThrow()
+  })
+
+  it("loads authenticated SMTP settings", () => {
+    const env = loadApiEnv({
+      ...productionEnv,
+      MAIL_SECURE: "true",
+    })
+
+    expect(env.MAIL_USER).toBe("resend")
+    expect(env.MAIL_PASS).toBe("re_example_key")
+    expect(env.MAIL_SECURE).toBe(true)
+  })
 })
+
+const productionEnv = {
+  APP_ENV: "production",
+  APP_URL: "https://adottaungatto.it",
+  DATABASE_URL: "postgresql://user:pass@postgres.example.com:5432/app",
+  MAIL_HOST: "smtp.resend.com",
+  MAIL_USER: "resend",
+  MAIL_PASS: "re_example_key",
+  REDIS_URL: "redis://redis.example.com:6379",
+  S3_ACCESS_KEY_ID: "prod-access-key",
+  S3_BUCKET: "adottaungatto-prod",
+  S3_ENDPOINT: "https://s3.example.com",
+  S3_PUBLIC_ENDPOINT: "https://cdn.example.com",
+  S3_REGION: "eu-south-1",
+  S3_SECRET_ACCESS_KEY: "prod-secret-key",
+} as const
