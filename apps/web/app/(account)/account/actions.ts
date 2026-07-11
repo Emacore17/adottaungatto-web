@@ -13,7 +13,10 @@ import {
   listingPhoneVerificationConfirmSchema,
 } from "@workspace/validation/listings"
 import { notificationIdParamSchema } from "@workspace/validation/notifications"
-import { authChangePasswordSchema } from "@workspace/validation/auth"
+import {
+  authChangePasswordSchema,
+  authSessionIdParamSchema,
+} from "@workspace/validation/auth"
 import {
   userAccountPasswordConfirmationSchema,
   userPhoneVerificationConfirmSchema,
@@ -37,6 +40,7 @@ import {
   updateAccountDraft,
 } from "@/lib/api/account"
 import {
+  getCurrentUserProfile,
   updateCurrentUserNotificationPreferences,
   updateCurrentUserProfile,
   confirmCurrentUserPhoneVerification,
@@ -44,7 +48,11 @@ import {
   deleteCurrentUserAccount,
   requestCurrentUserPhoneVerification,
 } from "@/lib/api/users"
-import { changePassword } from "@/lib/api/auth"
+import {
+  changePassword,
+  requestEmailVerification,
+  revokeSession,
+} from "@/lib/api/auth"
 import { clearSessionCookie, setSessionCookie } from "@/lib/auth/cookies"
 import { getSessionToken } from "@/lib/auth/session"
 import { normalizePhoneE164, phoneE164Pattern } from "@/lib/phone"
@@ -135,6 +143,52 @@ export async function changePasswordAction(formData: FormData) {
   await setSessionCookie(result.data.session)
   revalidateAccountPaths()
   redirectWithStatus(nextPath, "settings", "password-saved")
+}
+
+export async function revokeSessionAction(formData: FormData) {
+  const nextPath = readNextPath(formData, routes.accountSecurity)
+  const token = await requireActionToken(nextPath)
+  const parsed = authSessionIdParamSchema.safeParse({
+    sessionId: readFormString(formData, "sessionId"),
+  })
+
+  if (!parsed.success) {
+    redirectWithStatus(nextPath, "settings", "session-invalid")
+  }
+
+  const result = await revokeSession(token, parsed.data.sessionId)
+
+  if (!result.ok && result.status === 401) {
+    redirect(routes.login(nextPath))
+  }
+
+  if (!result.ok) {
+    redirectWithStatus(nextPath, "settings", "session-api")
+  }
+
+  revalidateAccountPaths()
+  redirectWithStatus(nextPath, "settings", "session-revoked")
+}
+
+export async function resendEmailVerificationAction(formData: FormData) {
+  const nextPath = readNextPath(formData, routes.accountSettings)
+  const token = await requireActionToken(nextPath)
+  const result = await requestEmailVerification(token)
+
+  if (!result.ok && result.status === 401) {
+    redirect(routes.login(nextPath))
+  }
+
+  if (!result.ok) {
+    redirectWithStatus(nextPath, "error", "verify-api")
+  }
+
+  revalidateAccountPaths()
+  redirectWithStatus(
+    nextPath,
+    "verify",
+    result.data.alreadyVerified ? "verify-already" : "verify-sent"
+  )
 }
 
 export async function requestPhoneVerificationAction(formData: FormData) {
@@ -508,6 +562,16 @@ export async function submitDraftForReviewAction(formData: FormData) {
 
   if (!id.success) {
     redirectWithStatus(nextPath, "error", "invalid")
+  }
+
+  const profile = await getCurrentUserProfile(token)
+
+  if (!profile.ok && profile.status === 401) {
+    redirect(routes.login(nextPath))
+  }
+
+  if (profile.ok && !profile.data.emailVerifiedAt) {
+    redirectWithStatus(nextPath, "error", "email-unverified")
   }
 
   const result = await submitAccountDraftForReview(token, id.data.id)
@@ -1011,7 +1075,8 @@ function redirectWithStatus(
     | "saved"
     | "settings"
     | "submitted"
-    | "uploaded",
+    | "uploaded"
+    | "verify",
   value: string,
   extraParams: Record<string, string | null | undefined> = {}
 ): never {

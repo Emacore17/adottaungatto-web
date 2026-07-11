@@ -67,3 +67,27 @@ export type CurrentAuthSessionResponse = {
 export type LogoutResponse = {
   revoked: boolean
 }
+
+export type AuthSessionSummary = {
+  id: string
+  current: boolean
+  createdAt: string
+  lastSeenAt: string | null
+  expiresAt: string
+}
+
+export type AuthSessionListResponse = {
+  sessions: AuthSessionSummary[]
+}
+
+export type SessionRevocationResponse = {
+  revoked: boolean
+}
+
+export type OAuthProfileInput = {
+  provider: string
+  providerAccountId: string
+  email: string
+  emailVerified: boolean
+  displayName: string
+}

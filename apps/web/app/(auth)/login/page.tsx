@@ -2,6 +2,7 @@ import Link from "next/link"
 import { KeyRoundIcon, LogInIcon, UserPlusIcon } from "lucide-react"
 
 import { AuthShell } from "@/app/(auth)/_components/auth-shell"
+import { GoogleLoginButton } from "@/app/(auth)/_components/google-login-button"
 import { loginAction } from "@/app/(auth)/login/actions"
 import { routes } from "@/lib/routes"
 import { Button } from "@workspace/ui/components/button"
@@ -23,6 +24,7 @@ type LoginPageProps = {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const params = await searchParams
   const next = typeof params.next === "string" ? params.next : routes.account
+  const googleError = params.error === "google"
   const hasError = typeof params.error === "string"
   const resetDone = params.reset === "success"
   const accountStatus =
@@ -69,7 +71,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </Field>
               {hasError ? (
                 <p className="text-sm text-destructive">
-                  Credenziali non valide.
+                  {googleError
+                    ? "Accesso con Google non riuscito. Riprova."
+                    : "Credenziali non valide."}
                 </p>
               ) : null}
               {resetDone ? (
@@ -103,6 +107,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 Crea account
               </Link>
             </Button>
+            <GoogleLoginButton label="Continua con Google" />
           </CardFooter>
         </form>
       </Card>

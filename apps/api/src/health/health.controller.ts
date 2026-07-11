@@ -2,16 +2,23 @@ import {
   Controller,
   Get,
   Inject,
+  Logger,
   ServiceUnavailableException,
+  UseGuards,
 } from "@nestjs/common"
 import { performance } from "node:perf_hooks"
 
+import { BearerAuthGuard } from "../auth/auth.guard.js"
+import { RequireRoles } from "../auth/roles.decorator.js"
+import { RolesGuard } from "../auth/roles.guard.js"
 import { DatabaseService } from "../database/database.service.js"
 import { ObservabilityService } from "../observability/observability.service.js"
 import { RedisService } from "../redis/redis.service.js"
 
 @Controller("health")
 export class HealthController {
+  private readonly logger = new Logger(HealthController.name)
+
   constructor(
     @Inject(DatabaseService)
     private readonly databaseService: DatabaseService,
@@ -55,10 +62,6 @@ export class HealthController {
             service: "unknown",
             status: "error",
             latencyMs: 0,
-            message:
-              check.reason instanceof Error
-                ? check.reason.message
-                : String(check.reason),
           }
     )
     const isReady = results.every((result) => result.status === "ok")
@@ -78,11 +81,18 @@ export class HealthController {
     }
   }
 
+  // Metriche e alert espongono contatori interni (route, latenze, in-flight):
+  // riservati agli amministratori. La liveness/readiness restano pubbliche per
+  // load balancer e orchestratori.
+  @UseGuards(BearerAuthGuard, RolesGuard)
+  @RequireRoles("admin")
   @Get("metrics")
   getMetrics() {
     return this.observabilityService.snapshot()
   }
 
+  @UseGuards(BearerAuthGuard, RolesGuard)
+  @RequireRoles("admin")
   @Get("alerts")
   getAlerts() {
     return this.observabilityService.alerts()
@@ -117,13 +127,18 @@ export class HealthController {
       }
     } catch (error: unknown) {
       const latencyMs = Math.round(performance.now() - startedAt)
-      const message = error instanceof Error ? error.message : String(error)
+
+      // Il dettaglio dell'errore (host, DSN, stack) resta nei log server-side e
+      // non viene mai restituito nella risposta HTTP.
+      this.logger.error(
+        `Health check failed for ${service}`,
+        error instanceof Error ? error.stack : String(error)
+      )
 
       return {
         service,
         status: "error",
         latencyMs,
-        message,
       }
     }
   }

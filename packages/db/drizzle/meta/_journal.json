@@ -162,6 +162,13 @@
       "when": 1779009567195,
       "tag": "0022_wooden_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782554322546,
+      "tag": "0023_new_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

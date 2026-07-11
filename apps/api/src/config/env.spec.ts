@@ -121,6 +121,35 @@ describe("loadApiEnv", () => {
     expect(env.MAIL_PASS).toBe("re_example_key")
     expect(env.MAIL_SECURE).toBe(true)
   })
+
+  it("keeps Google OAuth disabled by default", () => {
+    const env = loadApiEnv({})
+
+    expect(env.GOOGLE_OAUTH_ENABLED).toBe(false)
+  })
+
+  it("rejects enabling Google OAuth in production without credentials", () => {
+    expect(() =>
+      loadApiEnv({
+        ...productionEnv,
+        GOOGLE_OAUTH_ENABLED: "true",
+      })
+    ).toThrow()
+  })
+
+  it("accepts Google OAuth in production with full credentials", () => {
+    const env = loadApiEnv({
+      ...productionEnv,
+      GOOGLE_OAUTH_ENABLED: "true",
+      GOOGLE_CLIENT_ID: "client-id.apps.googleusercontent.com",
+      GOOGLE_CLIENT_SECRET: "client-secret",
+      GOOGLE_OAUTH_REDIRECT_URI:
+        "https://api.adottaungatto.it/auth/oauth/google/callback",
+    })
+
+    expect(env.GOOGLE_OAUTH_ENABLED).toBe(true)
+    expect(env.GOOGLE_CLIENT_ID).toBe("client-id.apps.googleusercontent.com")
+  })
 })
 
 const productionEnv = {

@@ -70,6 +70,10 @@ const testEnv: ApiEnv = {
   DATABASE_URL:
     "postgresql://adottaungatto:adottaungatto@localhost:5432/adottaungatto",
   EMAIL_VERIFICATION_TTL_MINUTES: 60,
+  GOOGLE_CLIENT_ID: "",
+  GOOGLE_CLIENT_SECRET: "",
+  GOOGLE_OAUTH_ENABLED: false,
+  GOOGLE_OAUTH_REDIRECT_URI: "",
   MAIL_FROM: "no-reply@adottaungatto.local",
   MAIL_HOST: "localhost",
   MAIL_PASS: "",

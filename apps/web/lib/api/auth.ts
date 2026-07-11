@@ -42,6 +42,12 @@ export type PasswordResetRequestResponse = {
   sent: boolean
 }
 
+export type EmailVerificationRequestResponse = {
+  alreadyVerified: boolean
+  expiresAt: string | null
+  sent: boolean
+}
+
 export type PasswordResetResponse = {
   reset: boolean
 }
@@ -51,6 +57,22 @@ export type PasswordChangeResponse = {
   session: AuthSession & {
     token: string
   }
+}
+
+export type AuthSessionSummary = {
+  id: string
+  current: boolean
+  createdAt: string
+  lastSeenAt: string | null
+  expiresAt: string
+}
+
+export type AuthSessionListResponse = {
+  sessions: AuthSessionSummary[]
+}
+
+export type SessionRevocationResponse = {
+  revoked: boolean
 }
 
 export function login(
@@ -90,6 +112,29 @@ export function logout(token: string): Promise<ApiResult<LogoutResponse>> {
   })
 }
 
+export function finishGoogleLogin(
+  code: string
+): Promise<ApiResult<AuthSessionResponse>> {
+  return apiFetch<AuthSessionResponse>("/auth/oauth/google/finish", {
+    body: { code },
+    cache: "no-store",
+    method: "POST",
+  })
+}
+
+export function requestEmailVerification(
+  bearerToken: string
+): Promise<ApiResult<EmailVerificationRequestResponse>> {
+  return apiFetch<EmailVerificationRequestResponse>(
+    "/auth/email-verification/request",
+    {
+      bearerToken,
+      cache: "no-store",
+      method: "POST",
+    }
+  )
+}
+
 export function requestPasswordReset(
   input: AuthRequestPasswordResetInput
 ): Promise<ApiResult<PasswordResetRequestResponse>> {
@@ -123,4 +168,27 @@ export function changePassword(
     cache: "no-store",
     method: "POST",
   })
+}
+
+export function listSessions(
+  bearerToken: string
+): Promise<ApiResult<AuthSessionListResponse>> {
+  return apiFetch<AuthSessionListResponse>("/auth/sessions", {
+    bearerToken,
+    cache: "no-store",
+  })
+}
+
+export function revokeSession(
+  bearerToken: string,
+  sessionId: string
+): Promise<ApiResult<SessionRevocationResponse>> {
+  return apiFetch<SessionRevocationResponse>(
+    `/auth/sessions/${sessionId}`,
+    {
+      bearerToken,
+      cache: "no-store",
+      method: "DELETE",
+    }
+  )
 }

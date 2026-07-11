@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { AuthShell } from "@/app/(auth)/_components/auth-shell"
+import { GoogleLoginButton } from "@/app/(auth)/_components/google-login-button"
 import { RegisterOnboarding } from "@/app/(auth)/register/_components/register-onboarding"
 import { registerAction } from "@/app/(auth)/register/actions"
 import { routes } from "@/lib/routes"
@@ -30,6 +31,9 @@ export default async function RegisterPage({
       title="Crea il tuo spazio"
     >
       <RegisterOnboarding action={registerAction} errorCode={errorCode} />
+      <div className="mx-auto w-full max-w-xl px-6">
+        <GoogleLoginButton label="Registrati con Google" />
+      </div>
     </AuthShell>
   )
 }

@@ -238,6 +238,206 @@ describe("AuthService", () => {
     expect(logoutParameters[0]).toBe(hashSessionToken("clear-token"))
   })
 
+  it("lists active sessions and flags the current one", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([
+        {
+          session_id: "session-current",
+          created_at: "2026-06-01T10:00:00.000Z",
+          last_seen_at: "2026-06-02T09:00:00.000Z",
+          expires_at: "2026-07-01T10:00:00.000Z",
+        },
+        {
+          session_id: "session-other",
+          created_at: "2026-05-01T10:00:00.000Z",
+          last_seen_at: null,
+          expires_at: "2026-06-30T10:00:00.000Z",
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.listSessions("user-id", "session-current")
+    ).resolves.toEqual({
+      sessions: [
+        {
+          id: "session-current",
+          current: true,
+          createdAt: "2026-06-01T10:00:00.000Z",
+          lastSeenAt: "2026-06-02T09:00:00.000Z",
+          expiresAt: "2026-07-01T10:00:00.000Z",
+        },
+        {
+          id: "session-other",
+          current: false,
+          createdAt: "2026-05-01T10:00:00.000Z",
+          lastSeenAt: null,
+          expiresAt: "2026-06-30T10:00:00.000Z",
+        },
+      ],
+    })
+    const [, listParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[0]!
+    expect(listParameters[0]).toBe("user-id")
+  })
+
+  it("revokes a session scoped to the owner", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([{ id: "session-other" }]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.revokeSession("user-id", "session-other")
+    ).resolves.toEqual({ revoked: true })
+    const [, revokeParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[0]!
+    expect(revokeParameters).toEqual(["session-other", "user-id"])
+  })
+
+  it("reports no revocation when the session is not owned or already gone", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.revokeSession("user-id", "missing-session")
+    ).resolves.toEqual({ revoked: false })
+  })
+
+  it("logs in via an existing linked OAuth identity", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([{ user_id: "user-id" }])
+        .mockResolvedValueOnce([
+          {
+            id: "user-id",
+            email: "user@example.com",
+            display_name: "Google User",
+            profile_type: "private",
+            status: "active",
+            roles: ["registered_user"],
+          },
+        ])
+        .mockResolvedValueOnce([
+          { session_id: "session-id", expires_at: "2026-07-01T10:00:00.000Z" },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    const response = await service.loginWithOAuth({
+      provider: "google",
+      providerAccountId: "google-sub-123",
+      email: "user@example.com",
+      emailVerified: true,
+      displayName: "Google User",
+    })
+
+    expect(response.user.id).toBe("user-id")
+    expect(typeof response.session.token).toBe("string")
+    expect(response.session.token.length).toBeGreaterThan(0)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(3)
+  })
+
+  it("links an OAuth identity to a user matched by email", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            id: "existing-id",
+            email: "user@example.com",
+            display_name: "Existing",
+            profile_type: "private",
+            status: "active",
+            password_hash: "scrypt$...",
+            roles: ["registered_user"],
+          },
+        ])
+        .mockResolvedValueOnce([{ id: "identity-id" }])
+        .mockResolvedValueOnce([{ id: "existing-id" }])
+        .mockResolvedValueOnce([
+          { session_id: "session-id", expires_at: "2026-07-01T10:00:00.000Z" },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    const response = await service.loginWithOAuth({
+      provider: "google",
+      providerAccountId: "google-sub-123",
+      email: "USER@Example.com",
+      emailVerified: true,
+      displayName: "Google User",
+    })
+
+    expect(response.user.id).toBe("existing-id")
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(5)
+    const [, identityParameters = []] = vi.mocked(databaseService.queryRows).mock
+      .calls[2]!
+    expect(identityParameters).toEqual([
+      "existing-id",
+      "google",
+      "google-sub-123",
+      "USER@Example.com",
+    ])
+  })
+
+  it("creates a new user for an unseen OAuth identity", async () => {
+    const databaseService = {
+      queryRows: vi
+        .fn()
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          {
+            id: "new-id",
+            email: "user@example.com",
+            display_name: "Google User",
+            profile_type: "private",
+            status: "active",
+            roles: ["registered_user"],
+          },
+        ])
+        .mockResolvedValueOnce([
+          { session_id: "session-id", expires_at: "2026-07-01T10:00:00.000Z" },
+        ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    const response = await service.loginWithOAuth({
+      provider: "google",
+      providerAccountId: "google-sub-123",
+      email: "user@example.com",
+      emailVerified: true,
+      displayName: "Google User",
+    })
+
+    expect(response.user.id).toBe("new-id")
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(4)
+  })
+
+  it("rejects OAuth logins without a verified email", async () => {
+    const databaseService = {
+      queryRows: vi.fn(),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.loginWithOAuth({
+        provider: "google",
+        providerAccountId: "google-sub-123",
+        email: "user@example.com",
+        emailVerified: false,
+        displayName: "Google User",
+      })
+    ).rejects.toBeInstanceOf(ForbiddenException)
+    expect(databaseService.queryRows).not.toHaveBeenCalled()
+  })
+
   it("requests an email verification token", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([
@@ -544,6 +744,10 @@ const testEnv: ApiEnv = {
   DATABASE_URL:
     "postgresql://adottaungatto:adottaungatto@localhost:5432/adottaungatto",
   EMAIL_VERIFICATION_TTL_MINUTES: 60,
+  GOOGLE_CLIENT_ID: "",
+  GOOGLE_CLIENT_SECRET: "",
+  GOOGLE_OAUTH_ENABLED: false,
+  GOOGLE_OAUTH_REDIRECT_URI: "",
   MAIL_FROM: "no-reply@adottaungatto.local",
   MAIL_HOST: "localhost",
   MAIL_PASS: "",

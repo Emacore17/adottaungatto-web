@@ -2,10 +2,14 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Inject,
+  Param,
   Post,
+  Query,
   Req,
+  Res,
   UseGuards,
 } from "@nestjs/common"
 import {
@@ -14,7 +18,10 @@ import {
   authRegisterSchema,
   authRequestPasswordResetSchema,
   authResetPasswordSchema,
+  authSessionIdParamSchema,
   authVerifyEmailSchema,
+  googleOAuthCallbackSchema,
+  googleOAuthFinishSchema,
 } from "@workspace/validation"
 import type {
   AuthChangePasswordInput,
@@ -40,7 +47,14 @@ import { BearerAuthGuard } from "./auth.guard.js"
 import { AuthService } from "./auth.service.js"
 import { CurrentAuth, CurrentAuthToken } from "./current-auth.decorator.js"
 import type { CurrentAuthSessionResponse } from "./auth.types.js"
+import { GoogleOAuthService } from "./google-oauth.service.js"
 import { RateLimitService } from "../rate-limit/rate-limit.service.js"
+
+// Tipizzazione strutturale minima: evita una dipendenza diretta da "fastify"
+// (e' transitiva via @nestjs/platform-fastify).
+type RedirectReply = {
+  redirect: (url: string) => unknown
+}
 
 @Controller("auth")
 export class AuthController {
@@ -48,7 +62,9 @@ export class AuthController {
     @Inject(AuthService)
     private readonly authService: AuthService,
     @Inject(RateLimitService)
-    private readonly rateLimitService: RateLimitService
+    private readonly rateLimitService: RateLimitService,
+    @Inject(GoogleOAuthService)
+    private readonly googleOAuthService: GoogleOAuthService
   ) {}
 
   @Post("register")
@@ -172,6 +188,60 @@ export class AuthController {
   @Get("me")
   async me(@CurrentAuth() auth: CurrentAuthSessionResponse) {
     return auth
+  }
+
+  @Get("oauth/google/start")
+  async googleStart(@Res() reply: RedirectReply) {
+    const url = await this.googleOAuthService.createAuthorizationUrl()
+
+    return reply.redirect(url)
+  }
+
+  @Get("oauth/google/callback")
+  async googleCallback(
+    @Query() query: unknown,
+    @Res() reply: RedirectReply
+  ) {
+    try {
+      const parsed = googleOAuthCallbackSchema.parse(query)
+      const handoffCode = await this.googleOAuthService.handleCallback(parsed)
+
+      return reply.redirect(this.googleOAuthService.webRedirectUrl(handoffCode))
+    } catch {
+      return reply.redirect(this.googleOAuthService.webErrorUrl())
+    }
+  }
+
+  @Post("oauth/google/finish")
+  async googleFinish(@Body() body: unknown) {
+    try {
+      const input = googleOAuthFinishSchema.parse(body)
+
+      return this.googleOAuthService.finishLogin(input.code)
+    } catch (error) {
+      throwValidationError(error, "Invalid Google login code.")
+    }
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Get("sessions")
+  async listSessions(@CurrentAuth() auth: CurrentAuthSessionResponse) {
+    return this.authService.listSessions(auth.user.id, auth.session.id)
+  }
+
+  @UseGuards(BearerAuthGuard)
+  @Delete("sessions/:sessionId")
+  async revokeSession(
+    @CurrentAuth() auth: CurrentAuthSessionResponse,
+    @Param() params: unknown
+  ) {
+    try {
+      const { sessionId } = authSessionIdParamSchema.parse(params)
+
+      return this.authService.revokeSession(auth.user.id, sessionId)
+    } catch (error) {
+      throwValidationError(error, "Invalid session id.")
+    }
   }
 
   @UseGuards(BearerAuthGuard)

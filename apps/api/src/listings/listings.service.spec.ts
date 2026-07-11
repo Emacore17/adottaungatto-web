@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common"
+import { listingImageMaxSizeBytes } from "@workspace/validation"
 import { describe, expect, it, vi } from "vitest"
 
 import type { DatabaseService } from "../database/database.service.js"
@@ -914,6 +915,23 @@ describe("ListingsService", () => {
     })
   })
 
+  it("rejects submissions when the owner email is not verified", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValueOnce([
+        {
+          ...createDraftRow(),
+          owner_email_verified_at: null,
+        },
+      ]),
+    } as unknown as DatabaseService
+    const { service } = createService(databaseService)
+
+    await expect(
+      service.submitDraftForReview("user-id", "listing-id")
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(databaseService.queryRows).toHaveBeenCalledTimes(1)
+  })
+
   it("rejects incomplete drafts before review submission", async () => {
     const databaseService = {
       queryRows: vi.fn().mockResolvedValue([
@@ -1371,6 +1389,50 @@ describe("ListingsService", () => {
       service.confirmDraftImageUpload("user-id", "listing-id", "image-id")
     ).rejects.toBeInstanceOf(BadRequestException)
   })
+
+  it("rejects and removes an uploaded object whose bytes are not a valid image", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([createImageRow()]),
+    } as unknown as DatabaseService
+    const objectStorageService = createObjectStorageService()
+
+    // Contenuto arbitrario (es. HTML) mascherato da image/jpeg.
+    vi.mocked(objectStorageService.readObjectHeader).mockResolvedValue(
+      new Uint8Array([
+        0x3c, 0x68, 0x74, 0x6d, 0x6c, 0x3e, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      ])
+    )
+    const { service } = createService(databaseService, objectStorageService)
+
+    await expect(
+      service.confirmDraftImageUpload("user-id", "listing-id", "image-id")
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(objectStorageService.removeObject).toHaveBeenCalledWith(
+      "local/listings/listing-id/original/image.jpg"
+    )
+  })
+
+  it("rejects and removes an uploaded object that exceeds the size limit", async () => {
+    const databaseService = {
+      queryRows: vi.fn().mockResolvedValue([createImageRow()]),
+    } as unknown as DatabaseService
+    const objectStorageService = createObjectStorageService()
+
+    vi.mocked(objectStorageService.statObject).mockResolvedValue({
+      checksum: "object-etag",
+      sizeBytes: listingImageMaxSizeBytes + 1,
+    })
+    const { service } = createService(databaseService, objectStorageService)
+
+    await expect(
+      service.confirmDraftImageUpload("user-id", "listing-id", "image-id")
+    ).rejects.toBeInstanceOf(BadRequestException)
+    expect(objectStorageService.removeObject).toHaveBeenCalledWith(
+      "local/listings/listing-id/original/image.jpg"
+    )
+    // Oltre limite: non deve nemmeno leggere i byte del contenuto.
+    expect(objectStorageService.readObjectHeader).not.toHaveBeenCalled()
+  })
 })
 
 function createService(
@@ -1388,6 +1450,12 @@ function createService(
   }
 }
 
+// Magic bytes JPEG validi: la conferma verifica lato server che il contenuto
+// caricato corrisponda al mimeType dichiarato.
+const validJpegHeader = new Uint8Array([
+  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01,
+])
+
 function createObjectStorageService() {
   return {
     createListingImageUpload: vi.fn().mockResolvedValue({
@@ -1399,6 +1467,8 @@ function createObjectStorageService() {
       checksum: "object-etag",
       sizeBytes: 123_456,
     }),
+    readObjectHeader: vi.fn().mockResolvedValue(validJpegHeader),
+    removeObject: vi.fn().mockResolvedValue(undefined),
   } as unknown as ObjectStorageService
 }
 
@@ -1435,6 +1505,7 @@ function createDraftRow() {
     contact_phone_mode: "none",
     contact_phone_e164: null,
     contact_phone_verified_at: null,
+    owner_email_verified_at: "2026-01-01T00:00:00.000Z",
     moderation_status: "draft",
     lifecycle_status: "draft",
     created_at: "2026-04-01T09:00:00.000Z",

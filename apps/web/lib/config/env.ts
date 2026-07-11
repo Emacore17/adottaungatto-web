@@ -26,6 +26,10 @@ export const webEnv = {
     process.env.API_INTERNAL_URL ?? process.env.API_URL,
     "http://localhost:4000"
   ),
+  googleOAuthEnabled: readBoolean(
+    process.env.NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED,
+    false
+  ),
   publicApiBaseUrl: readUrl(
     process.env.NEXT_PUBLIC_API_URL ?? process.env.API_URL,
     "http://localhost:4000"

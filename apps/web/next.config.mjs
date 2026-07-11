@@ -28,8 +28,32 @@ const imageRemotePatterns = [
 ].filter(Boolean)
 const listingImageFormBodySizeLimit = "110mb"
 
+// Header di sicurezza statici applicati a ogni risposta. La Content-Security-Policy
+// non e' qui ma nel middleware (`apps/web/middleware.ts`): richiede un nonce
+// per-richiesta che next.config non puo' generare.
+const staticSecurityHeaders = [
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-DNS-Prefetch-Control", value: "off" },
+  {
+    key: "Permissions-Policy",
+    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+  },
+  ...(isProduction
+    ? [
+        {
+          key: "Strict-Transport-Security",
+          value: "max-age=31536000; includeSubDomains; preload",
+        },
+      ]
+    : []),
+]
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Non rivelare il framework/versione nell'header X-Powered-By.
+  poweredByHeader: false,
   experimental: {
     proxyClientMaxBodySize: listingImageFormBodySizeLimit,
     serverActions: {
@@ -40,6 +64,14 @@ const nextConfig = {
     remotePatterns: imageRemotePatterns,
   },
   transpilePackages: ["@workspace/ui", "@workspace/validation"],
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: staticSecurityHeaders,
+      },
+    ]
+  },
 }
 
 export default nextConfig

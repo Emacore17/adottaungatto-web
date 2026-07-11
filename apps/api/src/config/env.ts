@@ -77,6 +77,13 @@ const apiEnvBaseSchema = z.object({
     .int()
     .positive()
     .default(60),
+  // Social login Google (OAuth 2.0). Off di default: gli endpoint rispondono
+  // 503 finche' non sono configurati client id/secret e il redirect URI
+  // registrato nella Google Console. Vedi docs/deploy-strategy.md.
+  GOOGLE_CLIENT_ID: z.string().default(""),
+  GOOGLE_CLIENT_SECRET: z.string().default(""),
+  GOOGLE_OAUTH_ENABLED: booleanEnv(false),
+  GOOGLE_OAUTH_REDIRECT_URI: z.string().default(""),
   MAIL_FROM: z.string().email().default("no-reply@adottaungatto.local"),
   MAIL_HOST: z.string().default("localhost"),
   MAIL_PASS: z.string().default(""),
@@ -162,6 +169,38 @@ const apiEnvSchema = apiEnvBaseSchema.superRefine((env, ctx) => {
 
   if (env.S3_BUCKET === "adottaungatto-local") {
     addProductionIssue(ctx, "S3_BUCKET", "must not use the local bucket name")
+  }
+
+  if (env.GOOGLE_OAUTH_ENABLED) {
+    if (env.GOOGLE_CLIENT_ID.trim() === "") {
+      addProductionIssue(
+        ctx,
+        "GOOGLE_CLIENT_ID",
+        "is required when GOOGLE_OAUTH_ENABLED is true"
+      )
+    }
+
+    if (env.GOOGLE_CLIENT_SECRET.trim() === "") {
+      addProductionIssue(
+        ctx,
+        "GOOGLE_CLIENT_SECRET",
+        "is required when GOOGLE_OAUTH_ENABLED is true"
+      )
+    }
+
+    if (env.GOOGLE_OAUTH_REDIRECT_URI.trim() === "") {
+      addProductionIssue(
+        ctx,
+        "GOOGLE_OAUTH_REDIRECT_URI",
+        "is required when GOOGLE_OAUTH_ENABLED is true"
+      )
+    } else {
+      rejectLocalUrl(
+        ctx,
+        env.GOOGLE_OAUTH_REDIRECT_URI,
+        "GOOGLE_OAUTH_REDIRECT_URI"
+      )
+    }
   }
 })
 

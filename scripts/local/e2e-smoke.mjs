@@ -166,6 +166,10 @@ try {
   accountEmail = primaryAuth.email
   check("auth primary session", typeof token === "string" && token.length > 0)
 
+  if (primaryAuth.registered) {
+    await verifyPrimaryEmail(accountEmail)
+  }
+
   const session = await api("GET", "/auth/me", undefined, token)
   check("auth me", session.user.email === accountEmail)
 
@@ -917,6 +921,7 @@ async function createPrimaryAuth() {
 
     return {
       email: primaryEmail,
+      registered: true,
       token: registration.data.session.token,
     }
   }
@@ -939,8 +944,40 @@ async function createPrimaryAuth() {
 
   return {
     email: login.user.email,
+    registered: false,
     token: login.session.token,
   }
+}
+
+async function verifyPrimaryEmail(email) {
+  const normalizedEmail = email.toLowerCase()
+  const inbox = await rawJson(`${mailpitBaseUrl}/api/v1/messages?limit=50`)
+  const message = inbox?.messages?.find(
+    (item) =>
+      (item.Subject ?? "").toLowerCase().includes("verifica") &&
+      (item.To ?? []).some(
+        (recipient) => recipient.Address?.toLowerCase() === normalizedEmail
+      )
+  )
+  check("email verification message delivered", Boolean(message))
+
+  if (!message) {
+    return
+  }
+
+  const detail = await rawJson(`${mailpitBaseUrl}/api/v1/message/${message.ID}`)
+  const body = `${detail?.HTML ?? ""} ${detail?.Text ?? ""}`
+  const verificationToken = body.match(/verify-email\?token=([^"&\s<]+)/)?.[1]
+  check("email verification token present", Boolean(verificationToken))
+
+  if (!verificationToken) {
+    return
+  }
+
+  const verified = await api("POST", "/auth/email-verification/verify", {
+    token: decodeURIComponent(verificationToken),
+  })
+  check("email verified", verified.verified === true)
 }
 
 async function loginDemoInternalModerator() {

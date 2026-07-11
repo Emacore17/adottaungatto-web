@@ -261,6 +261,27 @@ export const sessions = pgTable(
   })
 )
 
+export const oauthIdentities = pgTable(
+  "oauth_identities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    email: text("email"),
+    ...timestamps,
+  },
+  (table) => ({
+    providerAccountIdx: uniqueIndex("oauth_identities_provider_account_idx").on(
+      table.provider,
+      table.providerAccountId
+    ),
+    userIdx: index("oauth_identities_user_idx").on(table.userId),
+  })
+)
+
 export const emailVerificationTokens = pgTable(
   "email_verification_tokens",
   {

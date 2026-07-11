@@ -12,6 +12,12 @@ const messages = {
   "phone-verified": "Numero dell'annuncio verificato.",
 } as const
 
+const verifyMessages = {
+  "verify-sent":
+    "Ti abbiamo inviato una nuova email di verifica. Controlla la posta (anche lo spam).",
+  "verify-already": "La tua email risulta gia verificata.",
+} as const
+
 const errors = {
   api: "Salvataggio non riuscito. Riprova.",
   invalid: "Controlla titolo, descrizione, comune e prezzo.",
@@ -22,18 +28,23 @@ const errors = {
   "image-cover": "Copertina non aggiornata.",
   "image-delete": "Foto non eliminata.",
   "image-order": "Ordine foto non salvato.",
+  "email-unverified":
+    "Verifica il tuo indirizzo email prima di inviare l'annuncio in revisione.",
   "not-ready":
     "Aggiungi i dati obbligatori, una foto pronta e verifica il telefono se lo mostri.",
   "phone-code-api": "Codice non inviato. Salva un numero e riprova.",
   "phone-code-invalid": "Codice non valido o scaduto.",
+  "verify-api":
+    "Non e' stato possibile inviare l'email di verifica. Riprova tra poco.",
 } as const
 
 function DraftActionMessage({ searchParams }: DraftActionMessageProps) {
   const success = pickMessage(searchParams, messages)
   const phoneSuccess = pickMessage(searchParams, messages, "phone")
+  const verifySuccess = pickMessage(searchParams, verifyMessages, "verify")
   const error = pickMessage(searchParams, errors, "error")
 
-  if (!success && !phoneSuccess && !error) {
+  if (!success && !phoneSuccess && !verifySuccess && !error) {
     return null
   }
 
@@ -46,7 +57,7 @@ function DraftActionMessage({ searchParams }: DraftActionMessageProps) {
           : "rounded-md border border-border bg-brand-olive-soft px-4 py-3 text-sm text-foreground"
       }
     >
-      {error ?? phoneSuccess ?? success}
+      {error ?? phoneSuccess ?? verifySuccess ?? success}
       {readParam(searchParams.phoneCode) ? (
         <span className="mt-1 block font-mono text-xs">
           Codice sviluppo: {readParam(searchParams.phoneCode)}

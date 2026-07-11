@@ -23,6 +23,7 @@ import type { ApiEnv } from "../config/env.js"
 import { DatabaseService } from "../database/database.service.js"
 import { MailService } from "../mail/mail.service.js"
 import type {
+  AuthSessionListResponse,
   AuthSessionResponse,
   AuthUser,
   AuthUserProfileType,
@@ -31,9 +32,11 @@ import type {
   EmailVerificationRequestResponse,
   EmailVerificationVerifyResponse,
   LogoutResponse,
+  OAuthProfileInput,
   PasswordChangeResponse,
   PasswordResetRequestResponse,
   PasswordResetResponse,
+  SessionRevocationResponse,
 } from "./auth.types.js"
 
 const passwordKeyLength = 64
@@ -74,6 +77,13 @@ type SessionRow = {
 
 type RevokedSessionRow = {
   id: string
+}
+
+type UserSessionRow = {
+  session_id: string
+  created_at: Date | string
+  last_seen_at: Date | string | null
+  expires_at: Date | string
 }
 
 type EmailVerificationRequestRow = {
@@ -191,6 +201,108 @@ const insertSessionSql = `
   returning id::text as session_id, expires_at
 `
 
+const findOauthIdentitySql = `
+  select user_id::text as user_id
+  from oauth_identities
+  where provider = $1
+    and provider_account_id = $2
+  limit 1
+`
+
+const authUserByIdWithRolesSql = `
+  select
+    users.id::text,
+    users.email,
+    users.display_name,
+    users.profile_type::text as profile_type,
+    users.status::text as status,
+    coalesce(
+      array_agg(roles.code order by roles.code)
+        filter (where roles.code is not null),
+      '{}'::text[]
+    ) as roles
+  from users
+  left join user_roles on user_roles.user_id = users.id
+  left join roles on roles.id = user_roles.role_id
+  where users.id = $1::uuid
+    and users.deleted_at is null
+  group by users.id
+  limit 1
+`
+
+const insertOauthIdentitySql = `
+  insert into oauth_identities (user_id, provider, provider_account_id, email)
+  values ($1::uuid, $2, $3, $4)
+  on conflict (provider, provider_account_id) do nothing
+  returning id::text
+`
+
+const markOauthEmailVerifiedSql = `
+  update users
+  set email_verified_at = coalesce(email_verified_at, now()),
+      status = case
+        when status = 'pending_verification' then 'active'::user_status
+        else status
+      end,
+      updated_at = now()
+  where id = $1::uuid
+    and deleted_at is null
+  returning id::text
+`
+
+const createOauthUserSql = `
+  with inserted_user as (
+    insert into users (
+      email,
+      email_normalized,
+      password_hash,
+      display_name,
+      profile_type,
+      status,
+      email_verified_at
+    )
+    values (
+      $1,
+      $2,
+      null,
+      $3,
+      'private'::profile_type,
+      'active'::user_status,
+      now()
+    )
+    returning
+      id,
+      email,
+      display_name,
+      profile_type::text as profile_type,
+      status::text as status
+  ),
+  inserted_role as (
+    insert into user_roles (user_id, role_id)
+    select inserted_user.id, roles.id
+    from inserted_user
+    join roles on roles.code = 'registered_user'
+    on conflict do nothing
+    returning role_id
+  ),
+  inserted_identity as (
+    insert into oauth_identities (user_id, provider, provider_account_id, email)
+    select inserted_user.id, $4, $5, $1
+    from inserted_user
+    returning id
+  )
+  select
+    inserted_user.id::text as id,
+    inserted_user.email,
+    inserted_user.display_name,
+    inserted_user.profile_type,
+    inserted_user.status,
+    array['registered_user']::text[] as roles
+  from inserted_user
+  left join inserted_role on true
+  left join inserted_identity on true
+`
+
 const currentSessionSql = `
   select
     users.id::text,
@@ -221,6 +333,28 @@ const logoutSql = `
   update sessions
   set revoked_at = now()
   where token_hash = $1
+    and revoked_at is null
+  returning id::text
+`
+
+const listUserSessionsSql = `
+  select
+    id::text as session_id,
+    created_at,
+    last_seen_at,
+    expires_at
+  from sessions
+  where user_id = $1::uuid
+    and revoked_at is null
+    and expires_at > now()
+  order by created_at desc
+`
+
+const revokeUserSessionSql = `
+  update sessions
+  set revoked_at = now()
+  where id = $1::uuid
+    and user_id = $2::uuid
     and revoked_at is null
   returning id::text
 `
@@ -474,6 +608,10 @@ export class AuthService {
     )
 
     if (!user?.password_hash) {
+      // Anti-enumerazione: se l'account non esiste (o non ha password, es. solo
+      // OAuth) eseguiamo comunque un confronto scrypt fittizio, cosi' il tempo di
+      // risposta non rivela l'esistenza dell'email.
+      await verifyPassword(input.password, await getDummyPasswordHash())
       throwInvalidCredentials()
     }
 
@@ -484,6 +622,85 @@ export class AuthService {
 
     if (!passwordMatches) {
       throwInvalidCredentials()
+    }
+
+    assertUserCanAuthenticate(user)
+
+    const token = createSessionToken()
+    const [session] = await this.databaseService.queryRows<SessionRow>(
+      insertSessionSql,
+      [user.id, hashSessionToken(token), getSessionExpiresAt().toISOString()]
+    )
+
+    if (!session) {
+      throw new UnauthorizedException("Could not create user session.")
+    }
+
+    return {
+      user: mapUser(user),
+      session: {
+        id: session.session_id,
+        token,
+        expiresAt: toIsoString(session.expires_at),
+      },
+    }
+  }
+
+  async loginWithOAuth(input: OAuthProfileInput): Promise<AuthSessionResponse> {
+    if (!input.email || !input.emailVerified) {
+      throw new ForbiddenException(
+        "The OAuth provider did not return a verified email."
+      )
+    }
+
+    const [identity] = await this.databaseService.queryRows<{
+      user_id: string
+    }>(findOauthIdentitySql, [input.provider, input.providerAccountId])
+
+    let user: AuthUserRow | undefined
+
+    if (identity) {
+      ;[user] = await this.databaseService.queryRows<AuthUserRow>(
+        authUserByIdWithRolesSql,
+        [identity.user_id]
+      )
+    } else {
+      const [existing] =
+        await this.databaseService.queryRows<AuthUserLookupRow>(userByEmailSql, [
+          normalizeEmail(input.email),
+        ])
+
+      if (existing) {
+        await this.databaseService.queryRows<RevokedSessionRow>(
+          insertOauthIdentitySql,
+          [
+            existing.id,
+            input.provider,
+            input.providerAccountId,
+            input.email,
+          ]
+        )
+        await this.databaseService.queryRows<RevokedSessionRow>(
+          markOauthEmailVerifiedSql,
+          [existing.id]
+        )
+        user = existing
+      } else {
+        ;[user] = await this.databaseService.queryRows<AuthUserRow>(
+          createOauthUserSql,
+          [
+            input.email,
+            normalizeEmail(input.email),
+            input.displayName,
+            input.provider,
+            input.providerAccountId,
+          ]
+        )
+      }
+    }
+
+    if (!user) {
+      throw new UnauthorizedException("Could not establish an OAuth session.")
     }
 
     assertUserCanAuthenticate(user)
@@ -533,6 +750,38 @@ export class AuthService {
     const rows = await this.databaseService.queryRows<RevokedSessionRow>(
       logoutSql,
       [hashSessionToken(token)]
+    )
+
+    return { revoked: rows.length > 0 }
+  }
+
+  async listSessions(
+    userId: string,
+    currentSessionId: string
+  ): Promise<AuthSessionListResponse> {
+    const rows = await this.databaseService.queryRows<UserSessionRow>(
+      listUserSessionsSql,
+      [userId]
+    )
+
+    return {
+      sessions: rows.map((row) => ({
+        id: row.session_id,
+        current: row.session_id === currentSessionId,
+        createdAt: toIsoString(row.created_at),
+        lastSeenAt: row.last_seen_at ? toIsoString(row.last_seen_at) : null,
+        expiresAt: toIsoString(row.expires_at),
+      })),
+    }
+  }
+
+  async revokeSession(
+    userId: string,
+    sessionId: string
+  ): Promise<SessionRevocationResponse> {
+    const rows = await this.databaseService.queryRows<RevokedSessionRow>(
+      revokeUserSessionSql,
+      [sessionId, userId]
     )
 
     return { revoked: rows.length > 0 }
@@ -745,6 +994,18 @@ export async function verifyPassword(
     candidate.length === parsed.key.length &&
     timingSafeEqual(candidate, parsed.key)
   )
+}
+
+// Hash scrypt fittizio, calcolato una sola volta, usato per pareggiare il tempo
+// del login quando l'account non esiste (difesa timing anti-enumerazione).
+let dummyPasswordHashPromise: Promise<string> | undefined
+
+function getDummyPasswordHash(): Promise<string> {
+  dummyPasswordHashPromise ??= hashPassword(
+    randomBytes(32).toString("base64url")
+  )
+
+  return dummyPasswordHashPromise
 }
 
 export function createSessionToken(): string {

@@ -52,6 +52,21 @@ export const authChangePasswordSchema = z
     path: ["password"],
   })
 
+export const authSessionIdParamSchema = z.object({
+  sessionId: z.string().uuid(),
+})
+
+export const googleOAuthCallbackSchema = z.object({
+  code: z.string().min(1).max(2048),
+  state: z.string().min(1).max(512),
+})
+
+export const googleOAuthFinishSchema = z.object({
+  code: z.string().min(1).max(512),
+})
+
+export type GoogleOAuthFinishInput = z.infer<typeof googleOAuthFinishSchema>
+
 export type AuthRegisterInput = z.infer<typeof authRegisterSchema>
 
 export type AuthLoginInput = z.infer<typeof authLoginSchema>

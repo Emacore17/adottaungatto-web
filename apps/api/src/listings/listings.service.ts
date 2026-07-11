@@ -16,6 +16,7 @@ import type {
   ListingDraftCreateInput,
   ListingDraftListQuery,
   ListingDraftUpdateInput,
+  ListingImageMimeType,
   ListingImageOrderInput,
   ListingImageUploadRequestInput,
   ListingPhoneVerificationConfirmInput,
@@ -57,6 +58,51 @@ import type {
 const maxListingImages = 10
 const publicListingRankingVersion = "postgres-v1" as const
 const defaultPublicListingRadiusKm = 50
+
+// Verifica magic bytes lato server: i byte iniziali devono corrispondere al
+// mimeType dichiarato. Il mimeType del client e' spoofabile e la presigned PUT
+// non lo vincola, quindi questa e' l'unica difesa affidabile contro il caricamento
+// di contenuto arbitrario (HTML/SVG/eseguibili) sotto una chiave immagine.
+const imageSignatureHeaderBytes = 12
+const imageSignatureChecks: Record<
+  ListingImageMimeType,
+  (header: Uint8Array) => boolean
+> = {
+  "image/jpeg": (header) =>
+    header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff,
+  "image/png": (header) =>
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47 &&
+    header[4] === 0x0d &&
+    header[5] === 0x0a &&
+    header[6] === 0x1a &&
+    header[7] === 0x0a,
+  // RIFF....WEBP
+  "image/webp": (header) =>
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50,
+}
+
+function hasAllowedImageSignature(
+  header: Uint8Array,
+  mimeType: ListingImageMimeType
+): boolean {
+  const check = imageSignatureChecks[mimeType]
+
+  if (!check || header.length < imageSignatureHeaderBytes) {
+    return false
+  }
+
+  return check(header)
+}
 
 type ListingsEnv = Pick<
   ApiEnv,
@@ -111,6 +157,10 @@ type ListingOwnerRow<
 }
 
 type ListingDraftRow = ListingOwnerRow<"draft", "draft">
+
+type ListingDraftForSubmissionRow = ListingDraftRow & {
+  owner_email_verified_at: Date | string | null
+}
 
 type EditableListingDraftRow = ListingOwnerRow<
   "draft" | "pending_review",
@@ -826,9 +876,12 @@ const getUserDraftSql = `
 `
 
 const getUserDraftForSubmissionSql = `
-  select ${listingDraftSelectFields}
+  select
+    ${listingDraftSelectFields},
+    owner.email_verified_at as owner_email_verified_at
   from listings listing
   ${listingDraftJoins}
+  join users owner on owner.id = listing.owner_user_id
   where ${activeDraftWhereSql}
     and listing.id = $2::uuid
   limit 1
@@ -1958,13 +2011,27 @@ export class ListingsService {
     userId: string,
     id: string
   ): Promise<ListingDraftSubmissionResponse> {
-    const [draft] = await this.databaseService.queryRows<ListingDraftRow>(
-      getUserDraftForSubmissionSql,
-      [userId, id]
-    )
+    const [draft] =
+      await this.databaseService.queryRows<ListingDraftForSubmissionRow>(
+        getUserDraftForSubmissionSql,
+        [userId, id]
+      )
 
     if (!draft) {
       throw new NotFoundException("Listing draft not found.")
+    }
+
+    if (!draft.owner_email_verified_at) {
+      throw new BadRequestException({
+        message: "Listing draft is not ready for review.",
+        issues: [
+          {
+            path: ["email"],
+            message:
+              "Verify your email address before submitting a listing for review.",
+          },
+        ],
+      })
     }
 
     const issues = validateDraftSubmission(draft)
@@ -2130,6 +2197,15 @@ export class ListingsService {
 
     const stat = await this.statListingImageObject(image.object_key_original)
 
+    // La presigned PUT non vincola dimensione ne' contenuto: un client puo'
+    // chiamare la URL direttamente, saltando i controlli lato web. Ri-validiamo
+    // qui, prima di marcare l'immagine come confermata.
+    await this.assertUploadedImageIsValid(
+      image.object_key_original,
+      image.mime_type,
+      stat.sizeBytes
+    )
+
     const [confirmed] = await this.databaseService.queryRows<ListingImageRow>(
       confirmDraftImageSql,
       [userId, listingId, imageId, stat.sizeBytes, stat.checksum]
@@ -2261,6 +2337,50 @@ export class ListingsService {
       throw new BadRequestException(
         "Listing image object was not found in storage."
       )
+    }
+  }
+
+  private async assertUploadedImageIsValid(
+    objectKey: string,
+    mimeType: ListingImageMimeType,
+    sizeBytes: number
+  ) {
+    if (sizeBytes > listingImageMaxSizeBytes) {
+      await this.discardListingImageObject(objectKey)
+      throw new BadRequestException(
+        "Listing image exceeds the maximum allowed size."
+      )
+    }
+
+    let header: Uint8Array
+
+    try {
+      header = await this.objectStorageService.readObjectHeader(
+        objectKey,
+        imageSignatureHeaderBytes
+      )
+    } catch {
+      throw new BadRequestException(
+        "Listing image object could not be read from storage."
+      )
+    }
+
+    if (!hasAllowedImageSignature(header, mimeType)) {
+      await this.discardListingImageObject(objectKey)
+      throw new BadRequestException(
+        "Listing image content does not match an allowed image type."
+      )
+    }
+  }
+
+  // Rimuove l'oggetto rifiutato dallo storage per non lasciare contenuto
+  // arbitrario/oversize sotto una chiave immagine. Best-effort: un errore di
+  // cancellazione non deve mascherare la ragione del rifiuto.
+  private async discardListingImageObject(objectKey: string) {
+    try {
+      await this.objectStorageService.removeObject(objectKey)
+    } catch {
+      // Ignorato di proposito.
     }
   }
 

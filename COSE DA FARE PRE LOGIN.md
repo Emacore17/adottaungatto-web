@@ -133,14 +133,26 @@ legali). Avanzamento verso MVP pubblico: ~75%.
 - **Perché**: cercato `mfa/totp/2fa` → **nessuna implementazione**. I doc la
   richiedono per i ruoli interni.
 
-### 9. Gate verifica email — [TU] + [CODICE]
-- [ ] Decidere se il login / la pubblicazione richiedono email verificata.
-- **Perché**: `login()` (`auth.service.ts:470`) controlla solo password + status,
-  **non** la verifica email → oggi la verifica è informativa.
+### 9. Gate verifica email — [CODICE] ✅ FATTO (scelta: solo pubblicazione)
+- [x] **Scelta**: login resta libero; la **pubblicazione** richiede email
+      verificata (meno attrito).
+- [x] **Codice API**: `submitDraftForReview` rifiuta se `email_verified_at` è
+      nullo (issue `email`), nessuna query extra (campo letto nel draft fetch).
+- [x] **Codice web**: il pannello "Invio a revisione" avvisa e disabilita il
+      submit se l'email non è verificata, con bottone "Invia di nuovo l'email";
+      pre-check lato action con messaggio dedicato.
+- [x] **Smoke E2E**: l'utente primario ora verifica l'email (via Mailpit) prima
+      di pubblicare.
+- **Nota**: `login()` continua a non richiedere email verificata (per scelta).
 
-### 10. Gestione sessioni attive da UI — [CODICE]
-- [ ] Lista sessioni + revoca selettiva.
-- **Perché**: `/account/settings/security` fa **solo cambio password**.
+### 10. Gestione sessioni attive da UI — [CODICE] ✅ FATTO
+- [x] **API**: `GET /auth/sessions` (lista sessioni attive, marca quella
+      corrente) + `DELETE /auth/sessions/:sessionId` (revoca selettiva, scoping
+      per owner).
+- [x] **Web**: `/account/settings/security` ora mostra le sessioni attive con
+      data di avvio/ultimo accesso/scadenza e un bottone "Revoca" per le
+      sessioni diverse da quella corrente.
+- [x] **Test**: service + controller (lista/revoca, scoping, id non valido).
 
 ### 11. Scanning in CI — [CODICE] ✅ FATTO (resta DAST + branch protection)
 - [x] Secret scanning: `security.yml` (gitleaks) + `.gitleaks.toml` allowlist.
@@ -169,16 +181,32 @@ legali). Avanzamento verso MVP pubblico: ~75%.
 
 ## 🟡 PRODOTTO / UX (per renderlo "vero")
 
-### 14. Migliorare autenticazione — [CODICE]
-- [ ] Social login **Google** (i doc assumono `GOOGLE_CLIENT_ID` ma **non è
-      implementato**).
+### 14. Migliorare autenticazione — [CODICE] ✅ SCAFFOLD (flag off) · [TU] creds
+- [x] **Social login Google** (OAuth 2.0, Authorization Code + PKCE) dietro flag
+      `GOOGLE_OAUTH_ENABLED` (off di default → endpoint 503). API:
+      `/auth/oauth/google/start` (state+PKCE+nonce in Redis), `.../callback`
+      (scambio code → userinfo → find-or-create utente + identità in nuova
+      tabella `oauth_identities`, sessione, handoff monouso), `.../finish`.
+      Web: bottone "Continua con Google" (gated da `NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED`)
+      + route `/auth/google/finish` che imposta il cookie. Test unitari su
+      find-or-create, URL/PKCE, handoff, gating; guard env in produzione.
+- [ ] **[TU]** Creare le credenziali OAuth nella Google Cloud Console, impostare
+      `GOOGLE_CLIENT_ID/SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` (= API `.../callback`),
+      `GOOGLE_OAUTH_ENABLED=true` (API) e `NEXT_PUBLIC_GOOGLE_OAUTH_ENABLED=true`
+      (web), poi **verificare end-to-end** (il round-trip reale con Google non è
+      testabile senza credenziali).
 - [ ] (Vedi MFA + UI sessioni sopra.)
 
-### 15. Rivedere "Crea annuncio" — [CODICE]
-- [ ] Sistemare il ramo del gate telefono (legato al punto #2).
-- [ ] Verificare messaggi d'errore quando email/SMTP non risponde.
+### 15. Rivedere "Crea annuncio" — [CODICE] ✅ FATTO
+- [x] **Messaggi d'errore email/SMTP**: l'invio a revisione **non** invia email
+      in modo sincrono (crea solo notifica + SSE), quindi un guasto SMTP non
+      rompe la pubblicazione. L'unica dipendenza email del flusso è il gate
+      verifica email (#9): aggiunto messaggio dedicato `email-unverified` +
+      avviso/bottone "Invia di nuovo l'email" nel pannello di invio.
+- [x] **Gate telefono**: già coerente con #2 (quando il flag SMS è off il form
+      nasconde il telefono e si pubblica con email). Nessuna modifica necessaria.
 - **Nota**: il flusso UI è completo (dati → foto presigned → galleria/cover →
-  invio a revisione → conferma); il problema è il gate telefono, non la UI.
+  invio a revisione → conferma).
 
 ### 16. Performance validata — [INFRA] + [CODICE]
 - [ ] Load test reale (ricerca, dettaglio, login, upload, code moderazione).

@@ -105,6 +105,9 @@ export default async function EditDraftPage({
           ) : (
             <DraftSubmitPanel
               draftId={draft.data.id}
+              emailVerified={
+                profile.ok ? Boolean(profile.data.emailVerifiedAt) : true
+              }
               isReady={flow.reviewReady}
               nextPath={currentPath}
               readinessMessage={flow.reviewMessage}

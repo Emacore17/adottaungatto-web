@@ -71,6 +71,47 @@ export class ObjectStorageService {
     }
   }
 
+  // Legge i primi byteCount byte dell'oggetto per la verifica dei magic bytes
+  // lato server: la presigned PUT non vincola il contenuto, quindi non ci si puo'
+  // fidare del mimeType dichiarato dal client.
+  async readObjectHeader(
+    objectKey: string,
+    byteCount: number
+  ): Promise<Uint8Array> {
+    await this.ensureBucket()
+
+    const stream = await this.client.getPartialObject(
+      this.env.S3_BUCKET,
+      objectKey,
+      0,
+      byteCount
+    )
+    const chunks: Buffer[] = []
+    let total = 0
+
+    try {
+      for await (const chunk of stream) {
+        const buffer = chunk as Buffer
+        chunks.push(buffer)
+        total += buffer.length
+
+        if (total >= byteCount) {
+          break
+        }
+      }
+    } finally {
+      stream.destroy()
+    }
+
+    return Buffer.concat(chunks).subarray(0, byteCount)
+  }
+
+  async removeObject(objectKey: string): Promise<void> {
+    await this.ensureBucket()
+
+    await this.client.removeObject(this.env.S3_BUCKET, objectKey)
+  }
+
   private async ensureBucket() {
     this.bucketReady ??= this.createBucketIfMissing().catch((error) => {
       this.bucketReady = undefined
